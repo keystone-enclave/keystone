@@ -1,0 +1,15 @@
+[submodule "riscv-gnu-toolchain"]
+	path = riscv-gnu-toolchain
+	url = https://github.com/riscv/riscv-gnu-toolchain
+[submodule "busybear-linux"]
+	path = busybear-linux
+	url = git@github.com:dayeol/busybear-linux
+[submodule "riscv-linux"]
+	path = riscv-linux
+	url = git@github.com:dayeol/riscv-linux
+[submodule "riscv-pk"]
+	path = riscv-pk
+	url = git@github.com:dayeol/riscv-pk
+[submodule "riscv-qemu"]
+	path = riscv-qemu
+	url = git@github.com:dayeol/riscv-qemu
