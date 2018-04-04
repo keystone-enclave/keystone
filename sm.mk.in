@@ -1,0 +1,9 @@
+sm_hdrs = \
+  sm.h \
+
+sm_c_srcs = \
+  sm.c \
+
+sm_test_srcs =
+
+sm_install_prog_srcs = 
