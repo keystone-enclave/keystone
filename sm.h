@@ -2,13 +2,21 @@
 #define sm_h
 
 //FIXME: just arbitrary 128MB range
-#define SM_PMP_START	0x50000000
-#define SM_PMP_END		0x58000000
-
+#define N_PMP				16
 #include <stdint.h>
 #include "encoding.h"
-void sm_pmp_region_init(uintptr_t start, uintptr_t end);
+int sm_region_init(uintptr_t addr, uint64_t size, uint8_t perm);
 
 void sm_init(void);
 
+#define ASM_PMP_CONFIG(n, g, addr, pmpc) \
+{	\
+	asm volatile ("la t0, 1f\n\t" \
+								"csrrw t0, mtvec, t0\n\t" \
+								"csrw pmpaddr"#n", %0\n\t" \
+								"csrw pmpcfg"#g", %1\n\t" \
+								".align 2\n\t" \
+								"1: csrw mtvec, t0" \
+								: : "r" (addr), "r" (pmpc) : "t0"); \
+}
 #endif
