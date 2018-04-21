@@ -1,10 +1,15 @@
 #include "sm.h"
 #include "mtrap.h"
 
+typedef unsigned char byte;
 int32_t region_bitmap = 0;
 uint8_t pmpc[N_PMP>>2] = {0,};
 uintptr_t pmpa[N_PMP] = {0,};
 
+extern byte sanctum_sm_signature[64];
+extern byte sanctum_dev_public_key[32];
+
+extern unsigned int sanctum_sm_size[1];
 #define LIST_OF_PMP_REGS	X(0,0)  X(1,0)  X(2,0)  X(3,0) \
  													X(4,1)  X(5,1)  X(6,1)  X(7,1) \
 													X(8,2)  X(9,2)  X(10,2) X(11,2) \
@@ -36,16 +41,16 @@ int sm_region_init(uintptr_t start, uint64_t size, uint8_t perm)
 		if(! (region_bitmap & (0x1 << region_idx)))
 			break;
 	}
-	printm("region_idx: %d, region_cfg: %d\n", region_idx, region_idx >> 2);
+	//printm("region_idx: %d, region_cfg: %d\n", region_idx, region_idx >> 2);
 	pmpc[region_idx>>2] |= ((PMP_NAPOT | perm)  << (8*(region_idx%4)));
 	pmpa[region_idx] = (start|(size-1))>>3;	
 
 	pmp_config(region_idx, region_idx>>2, pmpa[region_idx], pmpc[region_idx>>2]);
 
-	printm("%x (%x)\n", pmpa[region_idx], pmpc[region_idx>>2]);	
+	//printm("%x (%x)\n", pmpa[region_idx], pmpc[region_idx>>2]);	
 	region_bitmap |= (0x1 << region_idx);
 
-	printm("region_idx: %d, bitmap: 0x%x\n", region_idx, region_bitmap);
+	//printm("region_idx: %d, bitmap: 0x%x\n", region_idx, region_bitmap);
 
 	return region_idx;
 }
@@ -55,6 +60,30 @@ void sm_set_mtvec()
 	
 }
 
+void sm_print_cert()
+{
+	int i;
+
+	printm("Booting from Security Monitor\n");
+	printm("Size: %d\n", sanctum_sm_size[0]);
+
+	printm("============ PUBKEY =============\n");
+	for(i=0; i<8; i+=1)
+	{
+		printm("%x",*((int*)sanctum_dev_public_key+i));
+		if(i%4==3) printm("\n");
+	}	
+	printm("=================================\n");
+	
+	printm("=========== SIGNATURE ===========\n");
+	for(i=0; i<16; i+=1)
+	{
+		printm("%x",*((int*)sanctum_sm_signature+i));
+		if(i%4==3) printm("\n");
+	}
+	printm("=================================\n");
+}
+
 void sm_init(void)
 {
 	//set PMP region
@@ -62,4 +91,6 @@ void sm_init(void)
 	sm_region_init(0x80000000, 0x200000, 0);
 	//sm_region_init(0, (-1UL), PMP_R | PMP_X | PMP_W);
 	sm_set_mtvec();
+
+	sm_print_cert();
 }
