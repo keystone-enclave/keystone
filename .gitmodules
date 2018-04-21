@@ -13,3 +13,6 @@
 [submodule "riscv-qemu"]
 	path = riscv-qemu
 	url = git@github.com:dayeol/riscv-qemu
+[submodule "sanctum_bootloader"]
+	path = sanctum_bootloader
+	url = https://github.com/dayeol/sanctum_bootloader
