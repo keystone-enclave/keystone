@@ -38,7 +38,7 @@ cd riscv-qemu
 make
 cd ..
 ```
-**RISC-V Linux **
+**RISC-V Linux**
 ```bash
 cd riscv-linux
 cp ../busybear-linux/conf/linux.config .config
@@ -58,7 +58,7 @@ cd build
 make
 ```
 
-** Bootloader (for boot ROM)**
+**Bootloader (for boot ROM)**
 ```bash
 cd sanctum_bootloader
 make 
