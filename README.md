@@ -54,9 +54,11 @@ cd build
 ../configure \
     --enable-logo \
     --host=riscv64-unknown-elf \
-    --with-payload=../../riscv-linux/vmlinux
+    --with-payload=../../riscv-linux/vmlinux \
+    --enable-sm
 make
 ```
+Make sure to add `--enable-sm` to `configure`, so that the security monitor is included in the bbl
 
 **Bootloader (for boot ROM)**
 ```bash
