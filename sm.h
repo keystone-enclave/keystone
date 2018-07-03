@@ -4,7 +4,9 @@
 //FIXME: just arbitrary 128MB range
 #define N_PMP				16
 #include <stdint.h>
+#include "sm-sbi.h"
 #include "encoding.h"
+
 int sm_region_init(uintptr_t addr, uint64_t size, uint8_t perm);
 
 void sm_init(void);

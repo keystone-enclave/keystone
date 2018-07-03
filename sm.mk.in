@@ -1,8 +1,19 @@
 sm_hdrs = \
   sm.h \
+	sm-sbi.h \
+  enclave_syscall.h \
 
 sm_c_srcs = \
   sm.c \
+	sm-sbi.c \
+  enclave_syscall.c \
+  aes/aes.c \
+  sha3/sha3.c \
+  ed25519/keypair.c \
+  ed25519/sign.c \
+  ed25519/fe.c \
+  ed25519/ge.c \
+  ed25519/sc.c
 
 sm_test_srcs =
 
