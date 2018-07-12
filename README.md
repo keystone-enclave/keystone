@@ -38,7 +38,7 @@ cd riscv-qemu
 make
 cd ..
 ```
-**RISC-V Linux **
+**RISC-V Linux**
 ```bash
 cd riscv-linux
 cp ../busybear-linux/conf/linux.config .config
@@ -54,11 +54,13 @@ cd build
 ../configure \
     --enable-logo \
     --host=riscv64-unknown-elf \
-    --with-payload=../../riscv-linux/vmlinux
+    --with-payload=../../riscv-linux/vmlinux \
+    --enable-sm
 make
 ```
+Make sure to add `--enable-sm` to `configure`, so that the security monitor is included in the bbl
 
-** Bootloader (for boot ROM)**
+**Bootloader (for boot ROM)**
 ```bash
 cd sanctum_bootloader
 make 
