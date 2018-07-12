@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdarg.h>
-#include "enclave_syscall.h"
+#include "sm-abi.h"
 
 #define AES256 1
 #define CTR 1
@@ -83,6 +83,7 @@ void u_ecall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
 
   uintptr_t n = regs[17], arg0 = regs[10], arg1 = regs[11], arg2 = regs[12], arg3 = regs[13], retval, ipi_type;
 
+  printm("user ecall n:%d\n",n);
   switch (n)
   {
     // Security monitor calls
@@ -101,6 +102,11 @@ void u_ecall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
     case ABI_SM_POET:
       retval = sm_poet( (uint8_t*)virt_to_phys(arg0), (uint8_t*)virt_to_phys(arg1), (uint8_t*)virt_to_phys(arg2), (uint32_t)arg3 );
       break;
+    case ABI_SM_COPY_FROM_ENCLAVE:
+      retval = -ENOSYS;
+      break;
+    case ABI_SM_COPY_TO_ENCLAVE:
+      retval = -ENOSYS;
     default:
       retval = -ENOSYS;
       break;

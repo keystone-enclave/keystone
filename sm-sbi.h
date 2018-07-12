@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-uintptr_t mcall_sm_create_enclave();
-uintptr_t mcall_sm_destroy_enclave();
+int mcall_sm_create_enclave(unsigned long base, unsigned long size);
+int mcall_sm_destroy_enclave(unsigned long eid);
 
 #endif

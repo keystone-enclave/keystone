@@ -7,7 +7,8 @@
 #include "sm-sbi.h"
 #include "encoding.h"
 
-int sm_region_init(uintptr_t addr, uint64_t size, uint8_t perm);
+#define SMM_BASE  0x80000000
+#define SMM_SIZE  0x200000
 
 void sm_init(void);
 
