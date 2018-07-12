@@ -6,7 +6,7 @@
 	url = git@github.com:keystone-enclave/busybear-linux
 [submodule "riscv-linux"]
 	path = riscv-linux
-	url = git@github.com:riscv/riscv-linux
+	url = git@github.com:keystone-enclave/riscv-linux
 [submodule "riscv-pk"]
 	path = riscv-pk
 	url = git@github.com:keystone-enclave/riscv-pk
@@ -16,3 +16,6 @@
 [submodule "sanctum_bootloader"]
 	path = sanctum_bootloader
 	url = https://github.com/keystone-enclave/sanctum_bootloader
+[submodule "sdk"]
+	path = sdk
+	url = https://github.com/keystone-enclave/keystone-sdk
