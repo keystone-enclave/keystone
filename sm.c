@@ -9,15 +9,15 @@ extern byte sanctum_dev_public_key[32];
 
 extern unsigned int sanctum_sm_size[1];
 
-int sm_region_init(uintptr_t start, uint64_t size, uint8_t perm)
+int smm_init(uintptr_t start, uint64_t size, uint8_t perm)
 {
   int region = pmp_region_init(start, size, perm);
   if(region < 0)
   {
-    printm("sm: failed to initialize PMP region\n");
+    printm("sm: failed to initialize a PMP region\n");
     return -1;
   }
-  printm("sm initialized a secure region (idx:%d)\n", region);
+  printm("sm: SMM PMP region index = %d\n", region);
 
   int reg = pmp_set(region);
   if(reg < 0)
@@ -28,11 +28,6 @@ int sm_region_init(uintptr_t start, uint64_t size, uint8_t perm)
   }
 
   return 0;
-}
-
-void sm_set_mtvec()
-{
-	
 }
 
 void sm_print_cert()
@@ -61,11 +56,8 @@ void sm_print_cert()
 
 void sm_init(void)
 {
-	//set PMP region
-	
-	sm_region_init(0x80000000, 0x200000, 0);
-	//sm_region_init(0, (-1UL), PMP_R | PMP_X | PMP_W);
-	sm_set_mtvec();
+	// initialize SMM
+	smm_init(SMM_BASE, SMM_SIZE, 0);
 
 	sm_print_cert();
 }
