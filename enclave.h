@@ -19,5 +19,6 @@ struct enclave_t
 
 int create_enclave(uintptr_t base, uintptr_t size);
 int destroy_enclave(int eid);
-
+int copy_to_enclave(int eid, void* ptr, size_t size);
+int copy_from_enclave(int eid, void* ptr, size_t size);
 #endif

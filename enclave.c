@@ -1,5 +1,6 @@
 #include "enclave.h"
 #include "pmp.h"
+#include <string.h>
 
 #define ENCL_MAX  16
 static uint64_t encl_bitmap = 0;
@@ -30,7 +31,7 @@ int encl_free_idx(int idx)
     return -1;
 
   UNSET_BIT(encl_bitmap, idx);
-  return idx;
+  return 0;
 }
 
 int create_enclave(uintptr_t base, uintptr_t size)
@@ -65,11 +66,34 @@ int destroy_enclave(int eid)
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
 
-  // TODO
   // 1. clear all the data in the enclave page
+  // TODO
+  
   // 2. free pmp range pages
+  // TODO Page table not implemented 
+  
   // 3. unset pmp
+  pmp_region_free(enclaves[eid].rid);
   // 4. release eid
+  encl_free_idx(eid);
+  
+  return 0;
+}
 
+int copy_to_enclave(int eid, void* ptr, size_t size)
+{
+  struct enclave_t encl = enclaves[eid];
+  void* epm = pmp_get_addr(encl.rid);
+  
+  memcpy(epm, ptr, size);
+  return 0;
+}
+
+int copy_from_enclave(int eid, void* ptr, size_t size)
+{
+  struct enclave_t encl = enclaves[eid];
+  void* epm = pmp_get_addr(encl.rid);
+
+  memcpy(ptr, epm, size);
   return 0;
 }
