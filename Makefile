@@ -24,6 +24,9 @@ copy: $(BINS)
 		cd ..; ./copy_sdk_bin.sh $(bin)\
 	)
 
+update-header:
+	cp ../riscv-linux/arch/riscv/drivers/keystone_user.h ./include/keystone_user.h
+
 clean:
 	rm $(BINS) $(OBJS)
 
