@@ -102,11 +102,6 @@ void u_ecall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
     case ABI_SM_POET:
       retval = sm_poet( (uint8_t*)virt_to_phys(arg0), (uint8_t*)virt_to_phys(arg1), (uint8_t*)virt_to_phys(arg2), (uint32_t)arg3 );
       break;
-    case ABI_SM_COPY_FROM_ENCLAVE:
-      retval = -ENOSYS;
-      break;
-    case ABI_SM_COPY_TO_ENCLAVE:
-      retval = -ENOSYS;
     default:
       retval = -ENOSYS;
       break;
@@ -205,4 +200,3 @@ uint64_t sm_poet(uint8_t * out_hmac, uint8_t * out_signature, uint8_t * in_messa
 
   return 0;
 }
-

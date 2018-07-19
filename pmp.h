@@ -13,10 +13,12 @@
 #define UNSET_BIT(bitmap, n) (bitmap &= ~(0x1 << n))
 #define TEST_BIT(bitmap, n) (bitmap & (0x1 << n))
 
-void pmp_region_debug_print(int region);
+int pmp_region_debug_print(int region);
 int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm);
+int pmp_region_free(int region);
 int pmp_set(int n);
 int pmp_unset(int n);
+void* pmp_get_addr(int region);
 
 struct pmp_region
 {

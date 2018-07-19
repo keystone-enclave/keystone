@@ -54,10 +54,18 @@ void sm_print_cert()
 	printm("=================================\n");
 }
 
+void set_tvm()
+{
+  uintptr_t mstatus = read_csr(mstatus);
+  mstatus = mstatus | MSTATUS_TVM;
+  write_csr(mstatus, mstatus);
+}
+
 void sm_init(void)
 {
 	// initialize SMM
 	smm_init(SMM_BASE, SMM_SIZE, 0);
 
+  set_tvm();
 	sm_print_cert();
 }
