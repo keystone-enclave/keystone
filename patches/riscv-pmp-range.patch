@@ -1,0 +1,41 @@
+From feb176b84270891dedc485aea790bc058f94c036 Mon Sep 17 00:00:00 2001
+From: Dayeol Lee <dayeol@berkeley.edu>
+Date: Tue, 17 Jul 2018 21:10:05 +0000
+Subject: [PATCH] target/riscv/pmp.c: Fix PMP range boundary address bug
+
+A wrong address is passed to `pmp_is_in_range` while checking if a
+memory access is within a PMP range.
+Since the ending address of the pmp range (i.e., pmp_state.addr[i].ea)
+is set to the last address in the range (i.e., pmp base + pmp size - 1),
+memory accesses containg the last address in the range will always fail.
+
+For example, assume that a PMP range is 4KB from 0x87654000 such that
+the last address within the range is 0x87654fff.
+1-byte access to 0x87654fff should be considered to be fully inside the
+PMP range.
+However the access now fails and complains partial inclusion because
+pmp_is_in_range(env, i, addr + size) returns 0 whereas
+pmp_is_in_range(env, i, addr) returns 1.
+
+Signed-off-by: Dayeol Lee <dayeol@berkeley.edu>
+Reviewed-by: Alistair Francis <alistair.francis@wdc.com>
+---
+ target/riscv/pmp.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/target/riscv/pmp.c b/target/riscv/pmp.c
+index c4c6b09..459e556 100644
+--- a/target/riscv/pmp.c
++++ b/target/riscv/pmp.c
+@@ -245,7 +245,7 @@ bool pmp_hart_has_privs(CPURISCVState *env, target_ulong addr,
+          from low to high */
+     for (i = 0; i < MAX_RISCV_PMPS; i++) {
+         s = pmp_is_in_range(env, i, addr);
+-        e = pmp_is_in_range(env, i, addr + size);
++        e = pmp_is_in_range(env, i, addr + size - 1);
+ 
+         /* partially inside */
+         if ((s + e) == 1) {
+-- 
+2.7.4
+
