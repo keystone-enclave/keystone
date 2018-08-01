@@ -1,5 +1,6 @@
 #include "enclave.h"
 #include "pmp.h"
+#include "page.h"
 #include <string.h>
 
 #define ENCL_MAX  16
@@ -34,6 +35,14 @@ int encl_free_idx(int idx)
   return 0;
 }
 
+unsigned long get_host_satp(int eid)
+{
+  if(!TEST_BIT(encl_bitmap, eid))
+    return -1;
+
+  return enclaves[eid].host_satp;
+}
+
 int create_enclave(uintptr_t base, uintptr_t size)
 {
   uint8_t perm = 0;
@@ -57,6 +66,7 @@ int create_enclave(uintptr_t base, uintptr_t size)
   enclaves[ret].eid = ret;
   enclaves[ret].rid = region;
   enclaves[ret].state = FRESH;
+  enclaves[ret].host_satp = read_csr(satp);
 
   return 0;
 }
@@ -82,6 +92,8 @@ int destroy_enclave(int eid)
 
 int copy_to_enclave(int eid, void* ptr, size_t size)
 {
+  if(!TEST_BIT(encl_bitmap, eid))
+    return -1;
   struct enclave_t encl = enclaves[eid];
   void* epm = pmp_get_addr(encl.rid);
   
@@ -91,6 +103,9 @@ int copy_to_enclave(int eid, void* ptr, size_t size)
 
 int copy_from_enclave(int eid, void* ptr, size_t size)
 {
+  if(!TEST_BIT(encl_bitmap, eid))
+    return -1;
+
   struct enclave_t encl = enclaves[eid];
   void* epm = pmp_get_addr(encl.rid);
 
