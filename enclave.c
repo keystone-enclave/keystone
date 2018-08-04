@@ -49,6 +49,10 @@ int create_enclave(uintptr_t base, uintptr_t size)
   int ret, region;
   
   // TODO: check if base/size legitimate
+  // - if size larger than minimum requirement (16 KB)
+  // - if base and (base+size) not belong to other enclaves
+  // - if size is multiple of 4KB (smaller than 4KB not supported) 
+
   // 1. reserve pmp range
   ret = pmp_region_init(base, size, perm);
   RET_ON_ERR(ret);
@@ -67,6 +71,14 @@ int create_enclave(uintptr_t base, uintptr_t size)
   enclaves[ret].rid = region;
   enclaves[ret].state = FRESH;
   enclaves[ret].host_satp = read_csr(satp);
+
+  // 4. initialize page table
+  // first page always be the top-level pt 
+  unsigned int total_pages = (RISCV_PGSIZE + size - 1)>>RISCV_PGSHIFT;
+  epm_init(&enclaves[ret].epm, base, total_pages);
+  //epm->total = (PAGE_SIZE + size - 1) >> PAGE_SHIFT;
+  //enclaves[ret].ptbr = ept_init(base);
+
 
   return 0;
 }
@@ -90,14 +102,20 @@ int destroy_enclave(int eid)
   return 0;
 }
 
-int copy_to_enclave(int eid, void* ptr, size_t size)
+int copy_to_enclave(int eid, uintptr_t encl_addr, uintptr_t ptr, size_t size)
 {
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
+
+  printm("encl_addr: %lx\n",encl_addr);
   struct enclave_t encl = enclaves[eid];
-  void* epm = pmp_get_addr(encl.rid);
+
+  //void* epm = pmp_get_addr(encl.rid);
   
-  memcpy(epm, ptr, size);
+  uintptr_t paddr = epm_alloc_page(&encl.epm, encl_addr);
+  //TODO size is not always 4K. this code assumes 4K.
+
+  memcpy((void*)paddr, (void*)ptr, size);
   return 0;
 }
 
@@ -110,5 +128,23 @@ int copy_from_enclave(int eid, void* ptr, size_t size)
   void* epm = pmp_get_addr(encl.rid);
 
   memcpy(ptr, epm, size);
+  return 0;
+}
+
+int run_enclave(int eid, uintptr_t ptr)
+{
+  if(!TEST_BIT(encl_bitmap, eid))
+    return -1;
+  
+  printm("ptr: %llx\n",ptr);
+
+  struct enclave_t encl = enclaves[eid]; 
+  encl.mepc = read_csr(mepc);
+  write_csr(mepc, ptr);
+  write_csr(satp, epm_satp(&encl.epm));
+  pmp_unset(encl.rid);
+  printm("entering enclave...\n");
+  asm volatile("mret": :);
+
   return 0;
 }

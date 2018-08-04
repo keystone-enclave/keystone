@@ -22,9 +22,9 @@ int mcall_sm_copy_from_enclave(unsigned long eid, unsigned long ptr, unsigned lo
   return copy_from_enclave(eid, (void*) ptr, (size_t) size);
 }
 
-int mcall_sm_copy_to_enclave(unsigned long eid, unsigned long ptr, unsigned long size)
+int mcall_sm_copy_to_enclave(unsigned long eid, unsigned long addr, unsigned long ptr, unsigned long size)
 {
   if(get_host_satp(eid) != read_csr(satp))
     return -EFAULT;
-  return copy_to_enclave(eid, (void*) ptr, (size_t) size);
+  return copy_to_enclave(eid, (uintptr_t) addr,(uintptr_t) ptr, (size_t) size);
 }

@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "sm-abi.h"
+#include "enclave.h"
 
 #define AES256 1
 #define CTR 1
@@ -102,11 +103,21 @@ void u_ecall_trap(uintptr_t* regs, uintptr_t mcause, uintptr_t mepc)
     case ABI_SM_POET:
       retval = sm_poet( (uint8_t*)virt_to_phys(arg0), (uint8_t*)virt_to_phys(arg1), (uint8_t*)virt_to_phys(arg2), (uint32_t)arg3 );
       break;
+    case ABI_SM_RUN:
+      retval = mcall_sm_run_enclave((unsigned int) arg0, (uintptr_t)arg1);
+      break;
     default:
       retval = -ENOSYS;
       break;
   }
   regs[10] = retval;
+}
+
+int mcall_sm_run_enclave(unsigned int eid, uintptr_t ptr)
+{
+  if(get_host_satp(eid) != read_csr(satp))
+    return -EPERM;
+  return run_enclave(eid, ptr);
 }
 
 uint64_t sm_fetch_field(void* out_field, uint64_t field_id) {
