@@ -22,7 +22,6 @@ void init_free_pages(pg_list_t* pg_list, paddr_t base, unsigned int count)
 
 paddr_t get_free_page(pg_list_t* pg_list)
 {
-  printm("get_free_page\n");
   paddr_t free_page;
   if(pg_list->head != 0) {
     free_page = pg_list->head;
@@ -34,6 +33,7 @@ paddr_t get_free_page(pg_list_t* pg_list)
       pg_list->head = next;
     }
     pg_list->count--;
+    printm("get_free_page: free_page = 0x%llx\n", free_page);
     return free_page;
   }
   printm("out of free page\n");
@@ -112,6 +112,7 @@ static pte_t* __ept_walk(epm_t* epm, uintptr_t addr)
 
 static pte_t* __ept_walk_create(epm_t* epm, uintptr_t addr)
 {
+  printm("__ept_walk_create: addr = 0x%llx\n", addr);
   return __ept_walk_internal(epm, addr, 1);
 }
 
@@ -123,9 +124,11 @@ static int __ept_va_avail(epm_t* epm, uintptr_t vaddr)
 
 paddr_t epm_alloc_page(epm_t* epm, vaddr_t addr)
 {
+  printm("epm_alloc_page: addr = 0x%llx\n", addr);
   pte_t* pte = __ept_walk_create(epm, addr);
   paddr_t page_addr = get_free_page(&epm->freelist);
-  *pte = pte_create(ppn(page_addr), PTE_R | PTE_W | PTE_X);
+  printm("epm_alloc_page: page_addr = 0x%llx\n", page_addr);
+  *pte = pte_create(ppn(page_addr), PTE_R | PTE_W | PTE_X | PTE_V | PTE_U);
   return page_addr;
   /*
   pte_t* ptbr = epm->ptbr;

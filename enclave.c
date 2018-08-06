@@ -107,15 +107,20 @@ int copy_to_enclave(int eid, uintptr_t encl_addr, uintptr_t ptr, size_t size)
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
 
-  printm("encl_addr: %lx\n",encl_addr);
+  printm("[sm] copy_to_enclave: eid[%d], va = 0x%llx, pa = 0x%llx, size = %d\n",eid, encl_addr, ptr, size);
   struct enclave_t encl = enclaves[eid];
 
   //void* epm = pmp_get_addr(encl.rid);
   
   uintptr_t paddr = epm_alloc_page(&encl.epm, encl_addr);
   //TODO size is not always 4K. this code assumes 4K.
-
   memcpy((void*)paddr, (void*)ptr, size);
+
+  //debug dump
+  for(int i=0; i<size; i++){
+    printm("dump: 0x%.2x\n", ((char*)paddr)[i]);
+  }
+
   return 0;
 }
 
@@ -140,11 +145,15 @@ int run_enclave(int eid, uintptr_t ptr)
 
   struct enclave_t encl = enclaves[eid]; 
   encl.mepc = read_csr(mepc);
+  printm("orig. empc: 0x%llx\n",encl.mepc);
   write_csr(mepc, ptr);
   write_csr(satp, epm_satp(&encl.epm));
   pmp_unset(encl.rid);
   printm("entering enclave...\n");
-  asm volatile("mret": :);
-
+  asm volatile("csrrw sp, mscratch, sp\n"
+      "ld a0, 10*(1<<3)(sp)\n"
+      "ld a1, 10*(1<<3)(sp)\n"
+      "mret"
+      : :);
   return 0;
 }
