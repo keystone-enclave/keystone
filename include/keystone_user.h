@@ -15,15 +15,22 @@
   _IOW(KEYSTONE_IOC_MAGIC, 0x02, struct keystone_ioctl_enclave_data)
 #define KEYSTONE_IOC_COPY_FROM_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x03, struct keystone_ioctl_enclave_data)
+#define KEYSTONE_IOC_RUN_ENCLAVE \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x04, struct keystone_ioctl_run_enclave)
 
 struct keystone_ioctl_enclave_id {
   __u64 eid;
 };
 
 struct keystone_ioctl_enclave_data {
+  __u64 eid;
   __u64 ptr;
   __u64 size;
 };
 
+struct keystone_ioctl_run_enclave {
+  __u64 eid;
+  __u64 ptr;
+};
 
 #endif
