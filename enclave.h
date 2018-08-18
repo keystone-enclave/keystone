@@ -2,7 +2,6 @@
 #define _ENCLAVE_H_
 
 #include "pmp.h"
-#include "page.h"
 
 typedef enum {
   INVALID = -1,
@@ -16,8 +15,8 @@ struct enclave_t
   int eid; //enclave id
   int rid; //region id
   unsigned long host_satp;
+  unsigned long encl_satp;
   enclave_state_t state;
-  epm_t epm;
   uintptr_t mepc;
 };
 

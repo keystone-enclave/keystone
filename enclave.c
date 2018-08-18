@@ -1,6 +1,7 @@
+#include "bits.h"
+#include "vm.h"
 #include "enclave.h"
 #include "pmp.h"
-#include "page.h"
 #include <string.h>
 
 #define ENCL_MAX  16
@@ -71,14 +72,7 @@ int create_enclave(uintptr_t base, uintptr_t size)
   enclaves[ret].rid = region;
   enclaves[ret].state = FRESH;
   enclaves[ret].host_satp = read_csr(satp);
-
-  // 4. initialize page table
-  // first page always be the top-level pt 
-  unsigned int total_pages = (RISCV_PGSIZE + size - 1)>>RISCV_PGSHIFT;
-  epm_init(&enclaves[ret].epm, base, total_pages);
-  //epm->total = (PAGE_SIZE + size - 1) >> PAGE_SHIFT;
-  //enclaves[ret].ptbr = ept_init(base);
-
+  enclaves[ret].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
 
   return 0;
 }
@@ -107,19 +101,19 @@ int copy_to_enclave(int eid, uintptr_t encl_addr, uintptr_t ptr, size_t size)
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
 
-  printm("[sm] copy_to_enclave: eid[%d], va = 0x%llx, pa = 0x%llx, size = %d\n",eid, encl_addr, ptr, size);
+  //printm("[sm] copy_to_enclave: eid[%d], va = 0x%llx, pa = 0x%llx, size = %d\n",eid, encl_addr, ptr, size);
   struct enclave_t encl = enclaves[eid];
 
   //void* epm = pmp_get_addr(encl.rid);
   
-  uintptr_t paddr = epm_alloc_page(&encl.epm, encl_addr);
+  //uintptr_t paddr = epm_alloc_page(&encl.epm, encl_addr);
   //TODO size is not always 4K. this code assumes 4K.
-  memcpy((void*)paddr, (void*)ptr, size);
+  //memcpy((void*)paddr, (void*)ptr, size);
 
   //debug dump
-  for(int i=0; i<size; i++){
+  /*for(int i=0; i<size; i++){
     printm("dump: 0x%.2x\n", ((char*)paddr)[i]);
-  }
+  }*/
 
   return 0;
 }
@@ -132,7 +126,7 @@ int copy_from_enclave(int eid, void* ptr, size_t size)
   struct enclave_t encl = enclaves[eid];
   void* epm = pmp_get_addr(encl.rid);
 
-  memcpy(ptr, epm, size);
+  //memcpy(ptr, epm, size);
   return 0;
 }
 
@@ -141,13 +135,14 @@ int run_enclave(int eid, uintptr_t ptr)
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
   
-  printm("ptr: %llx\n",ptr);
+  //printm("ptr: %llx\n",ptr);
 
   struct enclave_t encl = enclaves[eid]; 
   encl.mepc = read_csr(mepc);
-  printm("orig. empc: 0x%llx\n",encl.mepc);
+  printm("orig. empc: 0x%lx\n",encl.mepc);
   write_csr(mepc, ptr);
-  write_csr(satp, epm_satp(&encl.epm));
+  printm("enclave_satp = 0x%lx\n", encl.encl_satp);
+  write_csr(satp, encl.encl_satp);
   pmp_unset(encl.rid);
   printm("entering enclave...\n");
   asm volatile("csrrw sp, mscratch, sp\n"
