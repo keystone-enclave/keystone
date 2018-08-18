@@ -9,7 +9,6 @@ sm_c_srcs = \
   sm-abi.c \
   pmp.c \
   enclave.c \
-	page.c \
 	aes/aes.c \
   sha3/sha3.c \
   ed25519/keypair.c \
@@ -17,6 +16,8 @@ sm_c_srcs = \
   ed25519/fe.c \
   ed25519/ge.c \
   ed25519/sc.c
+
+sm_asm_srcs = \
 
 sm_test_srcs =
 

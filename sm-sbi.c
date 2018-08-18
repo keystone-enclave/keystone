@@ -28,3 +28,10 @@ int mcall_sm_copy_to_enclave(unsigned long eid, unsigned long addr, unsigned lon
     return -EFAULT;
   return copy_to_enclave(eid, (uintptr_t) addr,(uintptr_t) ptr, (size_t) size);
 }
+
+int mcall_sm_run_enclave(unsigned long eid, unsigned long ptr)
+{
+  if(get_host_satp(eid) != read_csr(satp))
+    return -EPERM;
+  return run_enclave((unsigned int) eid, (uintptr_t) ptr);
+}
