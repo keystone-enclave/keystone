@@ -6,6 +6,9 @@
 
 #define ENCL_MAX  16
 static uint64_t encl_bitmap = 0;
+static int running_encl_id = -1;
+
+extern void save_host_regs(void);
 
 #define RET_ON_ERR(ret) {if(ret<0) return ret;}
 
@@ -73,7 +76,6 @@ int create_enclave(uintptr_t base, uintptr_t size)
   enclaves[ret].state = FRESH;
   enclaves[ret].host_satp = read_csr(satp);
   enclaves[ret].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
-
   return 0;
 }
 
@@ -130,7 +132,7 @@ int copy_from_enclave(int eid, void* ptr, size_t size)
   return 0;
 }
 
-int run_enclave(int eid, uintptr_t ptr)
+reg run_enclave(int eid, uintptr_t ptr)
 {
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
@@ -138,17 +140,62 @@ int run_enclave(int eid, uintptr_t ptr)
   //printm("ptr: %llx\n",ptr);
 
   struct enclave_t encl = enclaves[eid]; 
-  encl.mepc = read_csr(mepc);
-  printm("orig. empc: 0x%lx\n",encl.mepc);
-  write_csr(mepc, ptr);
+
+  enclaves[eid].host_mepc = read_csr(mepc);
+  enclaves[eid].host_stvec = read_csr(stvec);
+  write_csr(mepc, 0xffffffffc0000000 ); // address of trampoline (runtime)
   printm("enclave_satp = 0x%lx\n", encl.encl_satp);
+  printm("host satp = 0x%lx\n",encl.host_satp);
   write_csr(satp, encl.encl_satp);
+ 
+  // delegate user ecall (syscall) 
+  //uintptr_t exceptions = read_csr(medeleg);
+  //exceptions &= ~(1U << CAUSE_USER_ECALL);
+  //write_csr(medeleg, exceptions);
+
+  write_csr(stvec, 0xffffffffc0000018);
   pmp_unset(encl.rid);
-  printm("entering enclave...\n");
-  asm volatile("csrrw sp, mscratch, sp\n"
-      "ld a0, 10*(1<<3)(sp)\n"
-      "ld a1, 10*(1<<3)(sp)\n"
+
+  printm("entering enclave %d...\n",eid);  
+  
+  running_encl_id = eid;
+
+  asm volatile(
+      "mv tp, %0\n"
+      "jal save_host_regs\n"
+      : : "rK"(&encl.host_ctx));
+/*  
+  asm volatile(
+      "csrrw sp, mscratch, sp\n"
+      "mv a0, %0\n"
       "mret"
-      : :);
-  return 0;
+      : : "rK"(ptr));*/
+  return (reg)ptr;
 }
+
+uint64_t exit_enclave(uint64_t retval)
+{
+  if(running_encl_id < 0)
+    return -1;
+  
+  struct enclave_t encl = enclaves[running_encl_id];
+
+  pmp_set(encl.rid);
+  printm("exiting enclave %d...\n",running_encl_id);
+  running_encl_id = -1;
+
+  //uintptr_t exceptions = read_csr(medeleg);
+  //exceptions |= (1U << CAUSE_USER_ECALL);
+  //write_csr(medeleg, exceptions);
+  write_csr(stvec, encl.host_stvec);
+  printm("mepc = 0x%lx\n",encl.host_mepc);
+  write_csr(mepc, encl.host_mepc);
+  printm("satp = 0x%lx\n",encl.host_satp);
+  write_csr(satp, encl.host_satp);
+
+//  asm volatile(
+//      "csrrw sp, mscratch, sp\n"
+//      "mret");
+  return retval;
+}
+
