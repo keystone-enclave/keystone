@@ -12,6 +12,5 @@ uint64_t sm_sign_message(uint8_t out_signature[64], void* in_message, uint32_t m
 
 uint64_t sm_poet(uint8_t * out_hmac, uint8_t * out_signature, uint8_t * in_message, uint32_t in_message_len);
 
-
 #endif
 

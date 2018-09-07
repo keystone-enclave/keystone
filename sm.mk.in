@@ -18,6 +18,7 @@ sm_c_srcs = \
   ed25519/sc.c
 
 sm_asm_srcs = \
+  sanitizer.S \
 
 sm_test_srcs =
 

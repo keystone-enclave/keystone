@@ -35,3 +35,8 @@ int mcall_sm_run_enclave(unsigned long eid, unsigned long ptr)
     return -EPERM;
   return run_enclave((unsigned int) eid, (uintptr_t) ptr);
 }
+
+int mcall_sm_exit_enclave(unsigned long retval)
+{
+  return exit_enclave((uint64_t)retval);
+}
