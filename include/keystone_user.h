@@ -20,6 +20,8 @@
 
 struct keystone_ioctl_enclave_id {
   __u64 eid;
+  __u64 ptr;
+  __u64 size;
 };
 
 struct keystone_ioctl_enclave_data {
@@ -31,6 +33,7 @@ struct keystone_ioctl_enclave_data {
 struct keystone_ioctl_run_enclave {
   __u64 eid;
   __u64 ptr;
+  __u64 ret;
 };
 
 #endif

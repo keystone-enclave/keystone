@@ -1,8 +1,8 @@
-.section .data
-
+.section .text
 
 add:
-  add a0, a0, a1
-  add a0, a1, a1
-  add a1, a0, a0
-  ret
+  li a0, 0xdeadbeef
+  add a0, a0, a0
+return:
+  li a7, 1101 
+  ecall

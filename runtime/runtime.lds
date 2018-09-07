@@ -4,7 +4,10 @@ SECTIONS
 {
   . = 0x0;
   _start = .;
-  .text : { *(.text) }
+  .text : { 
+    *(.text.trampoline);
+    *(.text)
+  }
   . = ALIGN(0x1000);
   .rodata : 
   { 

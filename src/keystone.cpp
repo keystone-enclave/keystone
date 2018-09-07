@@ -14,13 +14,16 @@ Keystone::~Keystone()
   destroy();
 }
 
-keystone_status_t Keystone::init()
+keystone_status_t Keystone::init(void* ptr, size_t size)
 {
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if(fd < 0)
     PERROR("cannot open device file");
 
   struct keystone_ioctl_enclave_id enclp;
+
+  enclp.ptr = (unsigned long) ptr;
+  enclp.size = (unsigned long) size;
   int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
 
   if(ret < 0) {
@@ -92,46 +95,13 @@ keystone_status_t Keystone::run(void* ptr)
 
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
 
+  printf("%ld\n", run.ret);
 	if(ret < 0)
   {
 		PERROR("failed to run enclave - ioctl() failed");
     return KEYSTONE_ERROR;
 	}
+
 	return KEYSTONE_SUCCESS;
 }
 
-/*
-keystone_status_t Keystone::initRuntime(const char* filename)
-{
-  int ret;
-  struct keystone_ioctl_init_runtime init_runtime;
-
-  struct stat st;
-  stat(filename, &st);
-
-  size_t size = st.st_size;
-  
-  int rtfd = open(filename, O_RDONLY, 0);
-  if(rtfd < 0) {
-    PERROR("failed to open runtime - open() failed");
-    return KEYSTONE_ERROR;
-  }
-
-  void* runtime = mmap(NULL, size, PROT_READ, MAP_PRIVATE, rtfd, 0); 
-  if(runtime == MAP_FAILED) {
-    PERROR("failed to load runtime - mmap() failed");
-    return KEYSTONE_ERROR;
-  }
-
-  init_runtime.eid = eid;
-  init_runtime.ptr = (unsigned long) runtime;
-  ret = ioctl(fd, KEYSTONE_IOC_INIT_RUNTIME, &init_runtime);
-  if(ret < 0) {
-    PERROR("failed to initialize runtime - ioctl() failed");
-    return KEYSTONE_ERROR;
-  }
-
-  munmap(runtime, size);
-  close(rtfd);
-  return KEYSTONE_SUCCESS;
-} */
