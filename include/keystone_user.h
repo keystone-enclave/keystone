@@ -21,7 +21,8 @@
 struct keystone_ioctl_enclave_id {
   __u64 eid;
   __u64 ptr;
-  __u64 size;
+  __u64 code_size;
+  __u64 mem_size;
 };
 
 struct keystone_ioctl_enclave_data {

@@ -14,7 +14,7 @@ Keystone::~Keystone()
   destroy();
 }
 
-keystone_status_t Keystone::init(void* ptr, size_t size)
+keystone_status_t Keystone::init(void* ptr, size_t code_size, size_t mem_size)
 {
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if(fd < 0)
@@ -23,7 +23,8 @@ keystone_status_t Keystone::init(void* ptr, size_t size)
   struct keystone_ioctl_enclave_id enclp;
 
   enclp.ptr = (unsigned long) ptr;
-  enclp.size = (unsigned long) size;
+  enclp.code_size = (unsigned long) code_size;
+  enclp.mem_size = (unsigned long) mem_size;
   int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
 
   if(ret < 0) {
