@@ -3,9 +3,8 @@ OUTPUT_ARCH( "riscv" )
 SECTIONS 
 {
   . = 0x0;
-  _start = .;
   .text : { 
-    *(.text.trampoline);
+    *(.text.trampoline)
     *(.text)
   }
   . = ALIGN(0x1000);
