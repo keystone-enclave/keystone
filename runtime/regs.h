@@ -3,10 +3,13 @@
 #define LOAD ld
 #define LWU lwu
 #define LOG_REGBYTES  3
-#define CONTEXT_SIZE (REGBYTES*32)
+#define CONTEXT_SIZE (REGBYTES*32) 
 
 #ifndef __ASSEMBLER__
-struct pt_regs {
+
+#include "mm.h"
+
+struct regs {
 	unsigned long sepc;
 	unsigned long ra;
 	unsigned long sp;
@@ -43,7 +46,7 @@ struct pt_regs {
 	unsigned long sstatus;
 	unsigned long sbadaddr;
 	unsigned long scause;
-        /* a0 value before the syscall */
-        unsigned long orig_a0;
+  /* a0 value before the syscall */
+  unsigned long orig_a0;
 };
 #endif

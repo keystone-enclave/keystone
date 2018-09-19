@@ -1,20 +1,10 @@
 #include "regs.h"
 
 .text
-_start:
 //entry point to the runtime!
-trampoline:
-  //keep original stack pointer for the OS
-  mv t0, sp
-  // runtime stack starts from 0 and grows downward
-  li sp, 0
-
-  addi sp, sp, -REGBYTES
-  STORE t0, (sp)
-
-  csrw sepc, a0
-  csrrw sp, sscratch, sp // TODO: user stack is not stored in sscratch at this point
-  sret
+_start:  
+  j entry
+  nop
 
 encl_trap_handler:
   csrrw sp, sscratch, sp
@@ -23,14 +13,16 @@ encl_trap_handler:
   STORE a0, 10*REGBYTES(sp)
   STORE a1, 11*REGBYTES(sp)
 
-  csrr a1, scause
-  bge a1, zero, 1f
+  csrr a0, scause
+  bge a0, zero, 1f 
 
   /* handle interrupts */
+  slli a0, a0, 1
+  srli a0, a0, 1
+  
   j not_implemented
 1:
   /* handle syscalls */
-  # Preserve the registers.  Compute the address of the trap handler.
   STORE ra, 1*REGBYTES(sp)
   STORE gp, 3*REGBYTES(sp)
   STORE tp, 4*REGBYTES(sp)
@@ -62,18 +54,34 @@ encl_trap_handler:
   csrrw t0, sscratch, x0           # t0 <- user sp
   STORE t0, 2*REGBYTES(sp)         # sp 
 
-1:auipc t0, %pcrel_hi(rt_trap_table)  # t0 <- %hi(trap_table)
-  sll t1, a1, LOG_REGBYTES                    # t1 <- scause << 2 or 3
-  add t1, t0, t1                   # t1 <- %hi(trap_table)[scause]
-  LWU t1, %pcrel_lo(1b)(t1)         # t1 <- trap_table[scause]
-#  csrr a2, sepc                    # a2 <- mepc
-#  mv a0, sp                        # a0 <- regs
+  la t0, rt_trap_table
+  sll t1, a0, LOG_REGBYTES
+  add t1, t0, t1
+  LOAD t1, 0(t1)
 
-1:auipc t0, %pcrel_hi(_start)
-  addi t0, t0, %pcrel_lo(1b)
-  add t1, t1, t0
   jalr t1
   
+  j not_implemented
+
+entry:
+  //keep original stack pointer for the OS
+  mv t0, sp
+  // runtime stack starts from 0 and grows downward
+  li sp, 0
+
+  //TODO is it okay to store this here?
+  addi sp, sp, -2*REGBYTES
+  STORE t0, (sp)
+  STORE a0, REGBYTES(sp)
+
+  call init_mm
+
+trampoline:
+  LOAD a0, REGBYTES(sp)
+  csrw sepc, a0
+  csrrw sp, sscratch, sp // TODO: user stack is not stored in sscratch at this point
+  sret
+
 exit_enclave:
   # TODO: clear all the registers except sp
   LOAD a0, 10*REGBYTES(sp) # restore return
@@ -83,6 +91,7 @@ exit_enclave:
   li a7, 1101
   ecall
 
+  
 not_implemented:
   li a7, 1111
   ecall

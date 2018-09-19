@@ -1,7 +1,7 @@
 #include "regs.h"
 
- void rt_page_fault(struct pt_regs* regs)
+ void rt_page_fault(struct regs* ctx)
 {
-  regs->a0 = regs->a1 + regs->a2;
+  ctx->a0 = ctx->a1 + ctx->a2;
   return;
 }

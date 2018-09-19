@@ -2,9 +2,11 @@ OUTPUT_ARCH( "riscv" )
 
 SECTIONS 
 {
-  . = 0x0;
+  . = 0xffffffffc0000000;
+  PROVIDE(rt_base = .);
   .text : { 
-    *(.text.trampoline)
+    *(.text._start)
+    *(.text.encl_trap_handler)
     *(.text)
   }
   . = ALIGN(0x1000);

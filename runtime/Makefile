@@ -1,6 +1,6 @@
 CC = riscv64-unknown-linux-gnu-gcc
 CFLAGS = -Wall -Werror -fPIC
-SRCS = page_fault.c
+SRCS = page_fault.c mm.c
 ASM_SRCS = entry.S
 RUNTIME = keystone-rt
 LINK = riscv64-unknown-linux-gnu-ld
