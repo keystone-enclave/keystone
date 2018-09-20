@@ -1,9 +1,9 @@
-#define REGBYTES 64
 #define STORE sd
 #define LOAD ld
 #define LWU lwu
 #define LOG_REGBYTES  3
-#define CONTEXT_SIZE (REGBYTES*32) 
+#define REGBYTES (1<<LOG_REGBYTES)
+#define CONTEXT_SIZE (REGBYTES*(32+5)) 
 
 #ifndef __ASSEMBLER__
 
@@ -41,12 +41,13 @@ struct regs {
 	unsigned long t3;
 	unsigned long t4;
 	unsigned long t5;
-	unsigned long t6;
+	unsigned long t6; //31
 	/* Supervisor CSRs */
-	unsigned long sstatus;
-	unsigned long sbadaddr;
-	unsigned long scause;
-  /* a0 value before the syscall */
-  unsigned long orig_a0;
+	unsigned long sstatus;//32
+	unsigned long sbadaddr;//33
+	unsigned long scause;//34
+  /* Enclave execution information */
+  unsigned long encl_entry;//35
+  unsigned long host_sp;//
 };
 #endif

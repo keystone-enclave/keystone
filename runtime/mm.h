@@ -1,5 +1,5 @@
 #ifndef __MM_H__
-#define __MM_H__i
+#define __MM_H__
 
 extern unsigned long rt_base;
 

@@ -1,7 +1,17 @@
 #include "regs.h"
+#include "mm.h"
 
- void rt_page_fault(struct regs* ctx)
+extern struct enclave_mm mm;
+
+void rt_page_fault(struct regs* ctx)
 {
-  ctx->a0 = ctx->a1 + ctx->a2;
+  unsigned long addr, cause;
+
+  addr = ctx->sbadaddr;
+  cause = ctx->scause;
+  
+  addr = cause;
+  cause = addr;
+
   return;
 }
