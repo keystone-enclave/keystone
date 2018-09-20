@@ -33,6 +33,7 @@ save_host_regs:
   STORE x30, 30*REGBYTES(tp)
   STORE x31, 31*REGBYTES(tp)
   STORE x4, 4*REGBYTES(tp)
+  STORE sp, 2*REGBYTES(tp)
   ret
 
 clean_regs:
