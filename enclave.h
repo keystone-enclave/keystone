@@ -55,16 +55,14 @@ struct enclave_t
 {
   int eid; //enclave id
   int rid; //region id
-  unsigned long host_satp;
+  unsigned long host_satp; //supervisor satp
   unsigned long encl_satp;
   enclave_state_t state;
-  unsigned long host_mepc;
-  unsigned long host_stvec;
-  
+  unsigned long host_mepc; //supervisor return pc
+  unsigned long host_stvec; //supervisor stvec
   /* context */
   struct ctx_t host_ctx;
 };
-
 
 unsigned long get_host_satp(int eid);
 int create_enclave(uintptr_t base, uintptr_t size);

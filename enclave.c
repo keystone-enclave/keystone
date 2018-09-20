@@ -153,7 +153,8 @@ reg run_enclave(int eid, uintptr_t ptr)
   //exceptions &= ~(1U << CAUSE_USER_ECALL);
   //write_csr(medeleg, exceptions);
 
-  write_csr(stvec, 0xffffffffc0000018);
+  //disable timer interrupt
+  clear_csr(mie, MIP_MTIP);
   pmp_unset(encl.rid);
 
   printm("entering enclave %d...\n",eid);  
@@ -188,6 +189,7 @@ uint64_t exit_enclave(uint64_t retval)
   //exceptions |= (1U << CAUSE_USER_ECALL);
   //write_csr(medeleg, exceptions);
   write_csr(stvec, encl.host_stvec);
+  set_csr(mie, MIP_MTIP);
   printm("mepc = 0x%lx\n",encl.host_mepc);
   write_csr(mepc, encl.host_mepc);
   printm("satp = 0x%lx\n",encl.host_satp);

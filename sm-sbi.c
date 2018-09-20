@@ -40,3 +40,9 @@ int mcall_sm_exit_enclave(unsigned long retval)
 {
   return exit_enclave((uint64_t)retval);
 }
+
+int mcall_sm_not_implemented(unsigned long cause)
+{
+  printm("sm ecall is not implemented for %ld\n", cause);
+  return exit_enclave((uint64_t)-1UL);
+}
