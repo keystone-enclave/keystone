@@ -1,5 +1,7 @@
 #include "regs.h"
 
+#define ENCL_STACK_SIZE (8*1024)
+
 .text
 //entry point to the runtime!
 _start:  
@@ -17,10 +19,7 @@ encl_trap_handler:
   bge a0, zero, 1f 
 
   /* handle interrupts */
-  slli a0, a0, 1
-  srli a0, a0, 1
-  
-  j not_implemented
+  j not_implemented 
 1:
   /* handle syscalls */
   STORE ra, 1*REGBYTES(sp)
@@ -64,28 +63,39 @@ encl_trap_handler:
   j not_implemented
 
 entry:
-  //keep original stack pointer for the OS
+  /* keep the original stack pointer for the OS */
   mv t0, sp
-  // runtime stack starts from 0 and grows downward
+  /* runtime stack starts from 0x0 and grows downward! */
   li sp, 0
-
-  //TODO is it okay to store this here?
+  
   addi sp, sp, -2*REGBYTES
   STORE t0, (sp)
   STORE a0, REGBYTES(sp)
 
+  /* TODO: stack size should be flexible */
+  li a0, ENCL_STACK_SIZE
   call init_mm
 
+  /* set user stack below the runtime */
+  la a0, _start 
+  csrw sscratch, a0
+
 trampoline:
+  la a0, encl_trap_handler
+  csrw stvec, a0
+  
   LOAD a0, REGBYTES(sp)
   csrw sepc, a0
-  csrrw sp, sscratch, sp // TODO: user stack is not stored in sscratch at this point
+  csrrw sp, sscratch, sp
+  
   sret
 
 exit_enclave:
   # TODO: clear all the registers except sp
   LOAD a0, 10*REGBYTES(sp) # restore return
   li t0, CONTEXT_SIZE
+
+  # restore the OS sp
   add sp, sp, t0
   LOAD sp, (sp)
   li a7, 1101
