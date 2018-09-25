@@ -65,7 +65,9 @@ void sm_init(void)
 {
 	// initialize SMM
 	smm_init(SMM_BASE, SMM_SIZE, 0);
+  set_os_pmp_region();
+	
 
-  set_tvm();
+  //set_tvm();
 	sm_print_cert();
 }
