@@ -18,6 +18,7 @@ int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm);
 int pmp_region_free(int region);
 int pmp_set(int n);
 int pmp_unset(int n);
+int set_os_pmp_region(void); 
 void* pmp_get_addr(int region);
 
 struct pmp_region
@@ -29,5 +30,4 @@ struct pmp_region
   uintptr_t addr;
   int reg_idx;
 };
-
 #endif

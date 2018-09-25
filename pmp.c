@@ -2,19 +2,26 @@
 
 uint32_t reg_bitmap = 0;
 uint32_t region_def_bitmap = 0;
-uintptr_t pmpcfg[PMP_N_REG>>2] = {0,};
-uintptr_t pmpaddr[PMP_N_REG] = {0,};
 
 struct pmp_region regions[PMP_MAX_N_REGION];
 
-#define LIST_OF_PMP_REGS	X(0,0)  X(1,0)  X(2,0)  X(3,0) \
+#if __riscv_xlen == 64
+# define LIST_OF_PMP_REGS	X(0,0)  X(1,0)  X(2,0)  X(3,0) \
+ 													X(4,0)  X(5,0)  X(6,0)  X(7,0) \
+													X(8,2)  X(9,2)  X(10,2) X(11,2) \
+													X(12,2) X(13,2) X(14,2) X(15,2)
+# define PMP_PER_GROUP  8
+#else
+# define LIST_OF_PMP_REGS	X(0,0)  X(1,0)  X(2,0)  X(3,0) \
  													X(4,1)  X(5,1)  X(6,1)  X(7,1) \
 													X(8,2)  X(9,2)  X(10,2) X(11,2) \
 													X(12,3) X(13,3) X(14,3) X(15,3)
+# define PMP_PER_GROUP  4
+#endif
 
 #define PMP_SET(n, g, addr, pmpc) \
 { uintptr_t oldcfg = read_csr(pmpcfg##g); \
-  pmpc |= (oldcfg & ~(0xff << 8*(n%4))); \
+  pmpc |= (oldcfg & ~((uintptr_t)0xff << 8*(n%PMP_PER_GROUP))); \
 	asm volatile ("la t0, 1f\n\t" \
 								"csrrw t0, mtvec, t0\n\t" \
 								"csrw pmpaddr"#n", %0\n\t" \
@@ -26,7 +33,7 @@ struct pmp_region regions[PMP_MAX_N_REGION];
 
 #define PMP_UNSET(n, g) \
 { uintptr_t pmpc = read_csr(pmpcfg##g); \
-  pmpc &= ~(0xff << 8*(n%4)); \
+  pmpc &= ~((uintptr_t)0xff << 8*(n%PMP_PER_GROUP)); \
   asm volatile ("la t0, 1f \n\t" \
                 "csrrw t0, mtvec, t0 \n\t" \
                 "csrw pmpaddr"#n", %0\n\t" \
@@ -68,22 +75,18 @@ int get_free_reg_idx() {
   return search_rightmost_unset(reg_bitmap, PMP_N_REG);
 }
 
-int pmp_set(int region_idx)
-{
+int pmp_set_bind_reg(int region_idx, int reg_idx)
+{ 
   if(!is_pmp_region_valid(region_idx)) 
     PMP_ERROR(-EINVAL, "Invalid PMP region index");
   
   if(is_pmp_region_set(region_idx))
     PMP_ERROR(-EINVAL, "PMP region already set");
 
-  int reg_idx = get_free_reg_idx();
-  if(reg_idx < 0) 
-    PMP_ERROR(-EBUSY, "No available PMP register");
-
-  uintptr_t pmpcfg = (uintptr_t) regions[region_idx].cfg << (8*(reg_idx%4));
+  uintptr_t pmpcfg = (uintptr_t) regions[region_idx].cfg << (8*(reg_idx%PMP_PER_GROUP));
   uintptr_t pmpaddr = regions[region_idx].addr;
 
-  printm("pmp_set(): reg %d, pmpcfg:%x, pmpaddr<<2:%x\n", reg_idx, pmpcfg, pmpaddr<<2);
+  printm("pmp_set(): reg %d, pmpcfg:%lx, pmpaddr<<2:%lx\n", reg_idx, pmpcfg, pmpaddr<<2);
 
 	SET_BIT(reg_bitmap, reg_idx);
 	regions[region_idx].reg_idx = reg_idx;
@@ -93,11 +96,19 @@ int pmp_set(int region_idx)
 #define X(n,g) case n: { PMP_SET(n, g, pmpaddr, pmpcfg); return 0; }
 	LIST_OF_PMP_REGS
 #undef X
-  }
-
+  } 
   // NEVER reach here
   // bbl is not properly configured.
   PMP_ERROR(-EFAULT, "Unreachable code");
+}
+
+int pmp_set(int region_idx)
+{ 
+  int reg_idx = get_free_reg_idx();
+  if(reg_idx < 0) 
+    PMP_ERROR(-EBUSY, "No available PMP register");
+
+  return pmp_set_bind_reg(region_idx, reg_idx);
 }
 
 int pmp_unset(int region_idx)
@@ -194,6 +205,22 @@ int pmp_region_free(int region_idx)
   UNSET_BIT(region_def_bitmap, region_idx);
   
   return 0;
+}
+
+int set_os_pmp_region()
+{
+  int region_idx = get_free_region_idx();
+  int reg_idx = PMP_N_REG - 1; //last PMP reg
+  uint8_t perm = PMP_W | PMP_X | PMP_R; 
+  regions[region_idx].start = 0;
+  regions[region_idx].size = -1UL;
+  regions[region_idx].perm = perm;
+  regions[region_idx].cfg = (PMP_NAPOT | perm);
+  regions[region_idx].addr = (-1UL);
+  regions[region_idx].reg_idx = -1;
+  SET_BIT(region_def_bitmap, region_idx);
+
+  return pmp_set_bind_reg(region_idx, reg_idx);
 }
 
 void* pmp_get_addr(int region_idx)
