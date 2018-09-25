@@ -12,7 +12,7 @@
 	url = git@github.com:keystone-enclave/riscv-pk
 [submodule "riscv-qemu"]
 	path = riscv-qemu
-	url = git@github.com:keystone-enclave/riscv-qemu-enclave
+	url = git@github.com:riscv/riscv-qemu
 [submodule "sanctum_bootloader"]
 	path = sanctum_bootloader
 	url = https://github.com/keystone-enclave/sanctum_bootloader
