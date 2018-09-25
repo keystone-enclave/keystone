@@ -1,4 +1,3 @@
 cd riscv-qemu
-patch target/riscv/pmp.c < ../patches/riscv-pmp-napot.patch
-patch target/riscv/pmp.c < ../patches/riscv-pmp-range.patch
+patch hw/riscv/boot.c < ../patches/qemu-kernel-reloc.patch
 
