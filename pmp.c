@@ -6,29 +6,29 @@ uint32_t region_def_bitmap = 0;
 struct pmp_region regions[PMP_MAX_N_REGION];
 
 #if __riscv_xlen == 64
-# define LIST_OF_PMP_REGS	X(0,0)  X(1,0)  X(2,0)  X(3,0) \
- 													X(4,0)  X(5,0)  X(6,0)  X(7,0) \
-													X(8,2)  X(9,2)  X(10,2) X(11,2) \
-													X(12,2) X(13,2) X(14,2) X(15,2)
+# define LIST_OF_PMP_REGS  X(0,0)  X(1,0)  X(2,0)  X(3,0) \
+                           X(4,0)  X(5,0)  X(6,0)  X(7,0) \
+                           X(8,2)  X(9,2)  X(10,2) X(11,2) \
+                          X(12,2) X(13,2) X(14,2) X(15,2)
 # define PMP_PER_GROUP  8
 #else
-# define LIST_OF_PMP_REGS	X(0,0)  X(1,0)  X(2,0)  X(3,0) \
- 													X(4,1)  X(5,1)  X(6,1)  X(7,1) \
-													X(8,2)  X(9,2)  X(10,2) X(11,2) \
-													X(12,3) X(13,3) X(14,3) X(15,3)
+# define LIST_OF_PMP_REGS  X(0,0)  X(1,0)  X(2,0)  X(3,0) \
+                           X(4,1)  X(5,1)  X(6,1)  X(7,1) \
+                           X(8,2)  X(9,2)  X(10,2) X(11,2) \
+                           X(12,3) X(13,3) X(14,3) X(15,3)
 # define PMP_PER_GROUP  4
 #endif
 
 #define PMP_SET(n, g, addr, pmpc) \
 { uintptr_t oldcfg = read_csr(pmpcfg##g); \
   pmpc |= (oldcfg & ~((uintptr_t)0xff << 8*(n%PMP_PER_GROUP))); \
-	asm volatile ("la t0, 1f\n\t" \
-								"csrrw t0, mtvec, t0\n\t" \
-								"csrw pmpaddr"#n", %0\n\t" \
-								"csrw pmpcfg"#g", %1\n\t" \
-								".align 2\n\t" \
-								"1: csrw mtvec, t0" \
-								: : "r" (addr), "r" (pmpc) : "t0"); \
+  asm volatile ("la t0, 1f\n\t" \
+                "csrrw t0, mtvec, t0\n\t" \
+                "csrw pmpaddr"#n", %0\n\t" \
+                "csrw pmpcfg"#g", %1\n\t" \
+                ".align 2\n\t" \
+                "1: csrw mtvec, t0" \
+                : : "r" (addr), "r" (pmpc) : "t0"); \
 }
 
 #define PMP_UNSET(n, g) \
@@ -86,15 +86,15 @@ int pmp_set_bind_reg(int region_idx, int reg_idx)
   uintptr_t pmpcfg = (uintptr_t) regions[region_idx].cfg << (8*(reg_idx%PMP_PER_GROUP));
   uintptr_t pmpaddr = regions[region_idx].addr;
 
-  printm("pmp_set(): reg %d, pmpcfg:%lx, pmpaddr<<2:%lx\n", reg_idx, pmpcfg, pmpaddr<<2);
+  //printm("pmp_set(): reg %d, pmpcfg:%lx, pmpaddr<<2:%lx\n", reg_idx, pmpcfg, pmpaddr<<2);
 
-	SET_BIT(reg_bitmap, reg_idx);
-	regions[region_idx].reg_idx = reg_idx;
+  SET_BIT(reg_bitmap, reg_idx);
+  regions[region_idx].reg_idx = reg_idx;
 
   int n=reg_idx, g=reg_idx>>2;
   switch(n) {
 #define X(n,g) case n: { PMP_SET(n, g, pmpaddr, pmpcfg); return 0; }
-	LIST_OF_PMP_REGS
+  LIST_OF_PMP_REGS
 #undef X
   } 
   // NEVER reach here
@@ -160,15 +160,15 @@ int pmp_region_debug_print(int region_idx)
 
 int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm)
 {
-	// do not allow over 256 MB
-	if(size > PMP_MAX_SIZE)
+  // do not allow over 256 MB
+  if(size > PMP_MAX_SIZE)
     PMP_ERROR(-ENOSYS, "PMP size over 256MB not implemented");
 
-	// size should be power of 2
-	if(!(size && !(size&(size-1))))
+  // size should be power of 2
+  if(!(size && !(size&(size-1))))
     PMP_ERROR(-EINVAL, "PMP size should be power of 2");
   
-	//find avaiable pmp region idx
+  //find avaiable pmp region idx
   int region_idx = get_free_region_idx();
   if(region_idx < 0)
     PMP_ERROR(-EFAULT, "Reached the maximum number of PMP regions");

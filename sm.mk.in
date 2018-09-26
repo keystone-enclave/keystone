@@ -1,12 +1,10 @@
 sm_hdrs = \
   sm.h \
   sm-sbi.h \
-  sm-abi.h \
 
 sm_c_srcs = \
   sm.c \
   sm-sbi.c \
-  sm-abi.c \
   pmp.c \
   enclave.c \
 	aes/aes.c \

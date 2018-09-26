@@ -57,7 +57,7 @@ int create_enclave(uintptr_t base, uintptr_t size)
   // - if base and (base+size) not belong to other enclaves
   // - if size is multiple of 4KB (smaller than 4KB not supported) 
 
-  // 1. reserve pmp range
+  // 1. create a PMP region binded to the enclave
   ret = pmp_region_init(base, size, perm);
   RET_ON_ERR(ret);
 
@@ -67,10 +67,19 @@ int create_enclave(uintptr_t base, uintptr_t size)
   ret = pmp_set(region); 
   RET_ON_ERR(ret);
 
+  // IMPORTANT TODO: verify if the enclave is correctly initialized
+  // e.g., verify_enclave(base, size);
+  // This should do the followings:
+  //   (1) Traverse the page table to see if any address points to the outside of EPM
+  //   (2) Zero out every page table entry that is not valid
+  //   (3) Zero out every page that is not pointed by the page table
+  //   (4) Measure the enclave --> the measurement will be passed through the API
+
   // 3. allocate eid
   ret = encl_alloc_idx();
   RET_ON_ERR(ret);
 
+  // 4. initialize enclave metadata
   enclaves[ret].eid = ret;
   enclaves[ret].rid = region;
   enclaves[ret].state = FRESH;
@@ -84,15 +93,12 @@ int destroy_enclave(int eid)
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
 
-  // 1. clear all the data in the enclave page
-  // TODO
+  // TODO: 1. clear all the data in the enclave page
   
-  // 2. free pmp range pages
-  // TODO Page table not implemented 
-  
-  // 3. unset pmp
+  // 2. free pmp region
   pmp_region_free(enclaves[eid].rid);
-  // 4. release eid
+
+  // 3. release eid
   encl_free_idx(eid);
   
   return 0;
@@ -102,20 +108,10 @@ int copy_to_enclave(int eid, uintptr_t encl_addr, uintptr_t ptr, size_t size)
 {
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
-
-  //printm("[sm] copy_to_enclave: eid[%d], va = 0x%llx, pa = 0x%llx, size = %d\n",eid, encl_addr, ptr, size);
+  
   struct enclave_t encl = enclaves[eid];
 
-  //void* epm = pmp_get_addr(encl.rid);
-  
-  //uintptr_t paddr = epm_alloc_page(&encl.epm, encl_addr);
-  //TODO size is not always 4K. this code assumes 4K.
-  //memcpy((void*)paddr, (void*)ptr, size);
-
-  //debug dump
-  /*for(int i=0; i<size; i++){
-    printm("dump: 0x%.2x\n", ((char*)paddr)[i]);
-  }*/
+  /* TODO: NOT IMPLEMENTED */
 
   return 0;
 }
@@ -128,7 +124,8 @@ int copy_from_enclave(int eid, void* ptr, size_t size)
   struct enclave_t encl = enclaves[eid];
   void* epm = pmp_get_addr(encl.rid);
 
-  //memcpy(ptr, epm, size);
+  /* TODO: NOT IMPLEMENTED */
+  
   return 0;
 }
 
@@ -136,41 +133,39 @@ reg run_enclave(int eid, uintptr_t ptr)
 {
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
-  
-  //printm("ptr: %llx\n",ptr);
-
   struct enclave_t encl = enclaves[eid]; 
 
+  // save host return pc
   enclaves[eid].host_mepc = read_csr(mepc);
+
+  // save host interrupt handler
   enclaves[eid].host_stvec = read_csr(stvec);
+
+  // entry point after return (mret)
   write_csr(mepc, 0xffffffffc0000000 ); // address of trampoline (runtime)
-  printm("enclave_satp = 0x%lx\n", encl.encl_satp);
-  printm("host satp = 0x%lx\n",encl.host_satp);
+
+  // switch to enclave page table
   write_csr(satp, encl.encl_satp);
  
-  // delegate user ecall (syscall) 
-  //uintptr_t exceptions = read_csr(medeleg);
-  //exceptions &= ~(1U << CAUSE_USER_ECALL);
-  //write_csr(medeleg, exceptions);
-
-  //disable timer interrupt
+  // disable timer interrupt
   clear_csr(mie, MIP_MTIP);
+  
+  // unset PMP
   pmp_unset(encl.rid);
 
-  printm("entering enclave %d...\n",eid);  
-  
+  // TODO: this works for now 
+  // because only one enclave will run on a SM.
+  // We should make SM identify the enclave by using { encl_satp -> eid } map
   running_encl_id = eid;
 
+  /*
   asm volatile(
       "mv tp, %0\n"
       "jal save_host_regs\n"
       : : "rK"(&encl.host_ctx));
-/*  
-  asm volatile(
-      "csrrw sp, mscratch, sp\n"
-      "mv a0, %0\n"
-      "mret"
-      : : "rK"(ptr));*/
+  */
+
+  // return enclave entry point (this is the first argument to the runtime)
   return (reg)ptr;
 }
 
@@ -178,26 +173,26 @@ uint64_t exit_enclave(uint64_t retval)
 {
   if(running_encl_id < 0)
     return -1;
-  
+ 
+  // get the running enclave on this SM 
   struct enclave_t encl = enclaves[running_encl_id];
 
+  // set PMP
   pmp_set(encl.rid);
-  printm("exiting enclave %d...\n",running_encl_id);
   running_encl_id = -1;
 
-  //uintptr_t exceptions = read_csr(medeleg);
-  //exceptions |= (1U << CAUSE_USER_ECALL);
-  //write_csr(medeleg, exceptions);
+  // restore interrupt handler
   write_csr(stvec, encl.host_stvec);
+
+  // enable timer interrupt
   set_csr(mie, MIP_MTIP);
-  printm("mepc = 0x%lx\n",encl.host_mepc);
+
+  // restore host return pc
   write_csr(mepc, encl.host_mepc);
-  printm("satp = 0x%lx\n",encl.host_satp);
+
+  // switch to host page table
   write_csr(satp, encl.host_satp);
 
-//  asm volatile(
-//      "csrrw sp, mscratch, sp\n"
-//      "mret");
   return retval;
 }
 
