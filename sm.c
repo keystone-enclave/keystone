@@ -6,7 +6,6 @@ typedef unsigned char byte;
 
 extern byte sanctum_sm_signature[64];
 extern byte sanctum_dev_public_key[32];
-
 extern unsigned int sanctum_sm_size[1];
 
 int smm_init(uintptr_t start, uint64_t size, uint8_t perm)
@@ -17,9 +16,10 @@ int smm_init(uintptr_t start, uint64_t size, uint8_t perm)
     printm("sm: failed to initialize a PMP region\n");
     return -1;
   }
-  printm("sm: SMM PMP region index = %d\n", region);
+  //printm("sm: SMM PMP region index = %d\n", region);
 
   int reg = pmp_set(region);
+  
   if(reg < 0)
   {
     printm("sm: failed to set PMP\n");
@@ -54,20 +54,14 @@ void sm_print_cert()
 	printm("=================================\n");
 }
 
-void set_tvm()
-{
-  uintptr_t mstatus = read_csr(mstatus);
-  mstatus = mstatus | MSTATUS_TVM;
-  write_csr(mstatus, mstatus);
-}
-
 void sm_init(void)
 {
 	// initialize SMM
 	smm_init(SMM_BASE, SMM_SIZE, 0);
-  set_os_pmp_region();
-	
 
-  //set_tvm();
-	sm_print_cert();
+  // reserve the last PMP register for the OS
+  set_os_pmp_region();
+  
+  // for debug
+  // sm_print_cert();
 }
