@@ -1,15 +1,16 @@
 CC = riscv64-unknown-linux-gnu-g++
-APP_DIR = apps/
+HOST_DIR = hosts/
+APP_DIR = hosts/apps/
 SRC_DIR = src/
 INCLUDE_DIR = include/
 CCFLAGS = -I $(INCLUDE_DIR)
 SRCS = keystone.cpp
-APP_SRCS = hello.c hello_long.c
+HOST_SRCS = hello.c hello_long.c
 ENCLAVE_SRCS= simple_func
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
-BINS = $(patsubst %.c,%.riscv,$(APP_SRCS))
+BINS = $(patsubst %.c,%.riscv,$(HOST_SRCS))
 
 
 DISK_IMAGE = ../busybear-linux/busybear.bin
@@ -23,7 +24,7 @@ all: $(OBJS) $(BINS)
 %.o: $(addprefix $(SRC_DIR), %.cpp)
 	$(CC) $(CCFLAGS) -c $<
 
-%.riscv: $(addprefix $(APP_DIR), %.c) $(OBJS)
+%.riscv: $(addprefix $(HOST_DIR), %.c) $(OBJS)
 	$(CC) $(CCFLAGS) -o $@ $^
 
 copy: $(BINS)
