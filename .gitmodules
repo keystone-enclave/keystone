@@ -19,3 +19,6 @@
 [submodule "sdk"]
 	path = sdk
 	url = git@github.com:eyrie-enclave/eyrie-sdk
+[submodule "runtime"]
+	path = runtime
+	url = https://github.com/eyrie-enclave/eyrie-runtime
