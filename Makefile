@@ -15,7 +15,6 @@ BINS = $(patsubst %.c,%.riscv,$(APP_SRCS))
 DISK_IMAGE = ../busybear-linux/busybear.bin
 MOUNT_DIR = ./tmp_busybear
 
-
 all: $(OBJS) $(BINS)
 	$(foreach enclave, $(addprefix $(APP_DIR), $(ENCLAVE_SRCS)),\
 		$(MAKE) -C $(enclave) \
@@ -32,7 +31,7 @@ copy: $(BINS)
 	sudo mount $(DISK_IMAGE) $(MOUNT_DIR)
 	$(foreach bin, $^, \
 		echo "Copying binary $(bin)"; \
-		sudo cp $(bin) $(MOUNT_DIR)/root/ \
+		sudo cp $(bin) $(MOUNT_DIR)/root/; \
 	)
 	sudo umount $(MOUNT_DIR)
 	rmdir $(MOUNT_DIR)
