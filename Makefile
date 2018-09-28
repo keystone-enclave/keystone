@@ -4,7 +4,7 @@ SRC_DIR = src/
 INCLUDE_DIR = include/
 CCFLAGS = -I $(INCLUDE_DIR)
 SRCS = keystone.cpp
-APP_SRCS = hello.c
+APP_SRCS = hello.c hello_long.c
 ENCLAVE_SRCS= simple_func
 
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
