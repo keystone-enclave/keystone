@@ -1,6 +1,6 @@
 [submodule "riscv-gnu-toolchain"]
 	path = riscv-gnu-toolchain
-	url = https://github.com/riscv/riscv-gnu-toolchain
+	url = git@github.com:riscv/riscv-gnu-toolchain
 [submodule "busybear-linux"]
 	path = busybear-linux
 	url = git@github.com:eyrie-enclave/busybear-linux
@@ -21,4 +21,4 @@
 	url = git@github.com:eyrie-enclave/eyrie-sdk
 [submodule "runtime"]
 	path = runtime
-	url = https://github.com/eyrie-enclave/eyrie-runtime
+	url = git@github.com:eyrie-enclave/eyrie-runtime
