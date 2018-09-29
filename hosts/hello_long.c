@@ -13,8 +13,8 @@ int main()
   keystone_status_t err;
   char buf[SECRET_SIZE] = {0,};
 
-  enclave.init((void*) add_long_o, add_long_o_len, 4097);
-  enclave.run((void*)add_long_o);
+  enclave.init("add_long.eapp_riscv", 4097);
+  enclave.run();
 
   return 0;
 }

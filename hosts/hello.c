@@ -14,7 +14,7 @@ int main()
   char buf[SECRET_SIZE] = {0,};
 
   enclave.init((void*) add_o, add_o_len, 4097);
-  enclave.run((void*)add_o);
+  enclave.run();
 
   return 0;
 }
