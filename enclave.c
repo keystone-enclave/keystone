@@ -2,6 +2,7 @@
 #include "vm.h"
 #include "enclave.h"
 #include "pmp.h"
+#include "page.h"
 #include <string.h>
 
 #define ENCL_MAX  16
@@ -59,13 +60,28 @@ int detect_region_overlap(int eid, uintptr_t addr, uintptr_t size)
          ((uintptr_t) epm_base + epm_size > addr);
 }
 
+int init_enclave(uintptr_t base, uintptr_t size)
+{
+  int ret;
+  int ptlevel = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS;
+  
+  // this function does the followings:
+  // (1) Traverse the page table to see if any address points to the outside of EPM
+  // (2) Zero out every page table entry that is not valid
+  ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size);
+  
+  // FIXME: probably we will also need to:
+  // (3) Zero out every page that is not pointed by the page table
+
+  return ret;
+}
+
 int create_enclave(uintptr_t base, uintptr_t size)
 {
   uint8_t perm = 0;
   int ret, region;
   int i;
-  // TODO: check if base/size legitimate
-  // - if size larger than minimum requirement (16 KB)
+  // - TODO: if size larger than minimum requirement (16 KB)
   // - if base and (base+size) not belong to other enclaves
   for(i=0; i<ENCL_MAX; i++)
   {
@@ -79,7 +95,7 @@ int create_enclave(uintptr_t base, uintptr_t size)
   }   
 
   // - if size is multiple of 4KB (smaller than 4KB not supported) 
-  if( size & 0xfff )
+  if(size & (RISCV_PGSIZE-1))
     return -EINVAL;
 
   // 1. create a PMP region binded to the enclave
@@ -90,19 +106,15 @@ int create_enclave(uintptr_t base, uintptr_t size)
   // 2. set pmp
   ret = pmp_set(region); 
   RET_ON_ERR(ret);
-  // IMPORTANT TODO: verify if the enclave is correctly initialized
-  // e.g., verify_enclave(base, size);
-  // This should do the followings:
-  //   (1) Traverse the page table to see if any address points to the outside of EPM
-  //   (2) Zero out every page table entry that is not valid
-  //   (3) Zero out every page that is not pointed by the page table
-  //   (4) Measure the enclave --> the measurement will be passed through the API
+ 
+  // 3. initialize and verify enclave memory layout. 
+  init_enclave(base, size);
 
-  // 3. allocate eid
+  // 4. allocate eid
   ret = encl_alloc_idx();
   RET_ON_ERR(ret);
 
-  // 4. initialize enclave metadata
+  // 5. initialize enclave metadata
   enclaves[ret].eid = ret;
   enclaves[ret].rid = region;
   enclaves[ret].state = FRESH;
@@ -116,8 +128,11 @@ int destroy_enclave(int eid)
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
 
-  // TODO: 1. clear all the data in the enclave page
-  
+  // 1. clear all the data in the enclave page
+  void* base = pmp_get_addr(enclaves[eid].rid);
+  uintptr_t size = pmp_get_size(enclaves[eid].rid);
+  memset((void*) base, 0, size);
+
   // 2. free pmp region
   pmp_region_free(enclaves[eid].rid);
 
@@ -176,7 +191,7 @@ reg run_enclave(int eid, uintptr_t ptr)
   // unset PMP
   pmp_unset(encl.rid);
 
-  // TODO: this works for now 
+  // FIXME: this works for now 
   // because only one enclave will run on a SM.
   // We should make SM identify the enclave by using { encl_satp -> eid } map
   running_encl_id = eid;
