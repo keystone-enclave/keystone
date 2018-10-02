@@ -1,3 +1,5 @@
 *.riscv
+*.eapp_riscv
 *.swp
 *.o
+bins/

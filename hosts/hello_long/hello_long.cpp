@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include "keystone.h"
-#include "apps/simple_func/add_long.h"
+#include "apps/add_long.h"
 
 #define SECRET_DATA "hello, world!\n"
 #define SECRET_SIZE 15
