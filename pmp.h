@@ -20,6 +20,7 @@ int pmp_set(int n);
 int pmp_unset(int n);
 int set_os_pmp_region(void); 
 void* pmp_get_addr(int region);
+uint64_t pmp_get_size(int region);
 
 struct pmp_region
 {

@@ -47,26 +47,49 @@ unsigned long get_host_satp(int eid)
   return enclaves[eid].host_satp;
 }
 
+int detect_region_overlap(int eid, uintptr_t addr, uintptr_t size)
+{
+  void* epm_base;
+  uint64_t epm_size;
+
+  epm_base = pmp_get_addr(enclaves[eid].rid);
+  epm_size = pmp_get_size(enclaves[eid].rid);
+
+  return ((uintptr_t) epm_base < addr + size) &&
+         ((uintptr_t) epm_base + epm_size > addr);
+}
+
 int create_enclave(uintptr_t base, uintptr_t size)
 {
   uint8_t perm = 0;
   int ret, region;
-  
+  int i;
   // TODO: check if base/size legitimate
   // - if size larger than minimum requirement (16 KB)
   // - if base and (base+size) not belong to other enclaves
+  for(i=0; i<ENCL_MAX; i++)
+  {
+    if(!TEST_BIT(encl_bitmap, i))
+      continue;
+    if(detect_region_overlap(i, base, size))
+    {
+      printm("region overlaps with enclave %d\n", i);
+      return -EINVAL;
+    }
+  }   
+
   // - if size is multiple of 4KB (smaller than 4KB not supported) 
+  if( size & 0xfff )
+    return -EINVAL;
 
   // 1. create a PMP region binded to the enclave
   ret = pmp_region_init(base, size, perm);
   RET_ON_ERR(ret);
 
   region = ret;
-
   // 2. set pmp
   ret = pmp_set(region); 
   RET_ON_ERR(ret);
-
   // IMPORTANT TODO: verify if the enclave is correctly initialized
   // e.g., verify_enclave(base, size);
   // This should do the followings:
