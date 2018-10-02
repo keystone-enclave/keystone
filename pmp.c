@@ -233,3 +233,14 @@ void* pmp_get_addr(int region_idx)
   
   return (void*)regions[region_idx].start;
 }
+
+uint64_t pmp_get_size(int region_idx)
+{
+  if(!TEST_BIT(region_def_bitmap, region_idx))
+  {
+    printm("pmp_get_size(): Invalid PMP region index\n");
+    return 0;
+  }
+
+  return regions[region_idx].size;
+}
