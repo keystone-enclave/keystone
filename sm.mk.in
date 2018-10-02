@@ -7,6 +7,7 @@ sm_c_srcs = \
   sm-sbi.c \
   pmp.c \
   enclave.c \
+	page.c \
 	aes/aes.c \
   sha3/sha3.c \
   ed25519/keypair.c \
