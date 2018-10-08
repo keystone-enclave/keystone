@@ -4,6 +4,7 @@
 #include "pmp.h"
 
 typedef enum {
+  DESTROYED = -2,
   INVALID = -1,
   FRESH = 0,
   INITIALIZED,
@@ -57,19 +58,19 @@ struct enclave_t
   int eid; //enclave id
   int rid; //region id
   unsigned long host_satp; //supervisor satp
-  unsigned long encl_satp;
-  enclave_state_t state;
-  unsigned long host_mepc; //supervisor return pc
-  unsigned long host_stvec; //supervisor stvec
-  /* context */
-  struct ctx_t host_ctx;
+  unsigned long encl_satp; // enclave's page table base
+  enclave_state_t state; // global state of the enclave
+  unsigned int n_thread;
+
+  /* execution context */
+  unsigned long host_mepc[MAX_HARTS]; //supervisor return pc
+  unsigned long host_stvec[MAX_HARTS]; //supervisor stvec
+  //struct ctx_t host_ctx;
 };
 
 unsigned long get_host_satp(int eid);
 int create_enclave(uintptr_t base, uintptr_t size);
 int destroy_enclave(int eid);
-int copy_to_enclave(int eid, uintptr_t addr, uintptr_t ptr, size_t size);
-int copy_from_enclave(int eid, void* ptr, size_t size);
 reg run_enclave(int eid, uintptr_t ptr);
 uint64_t exit_enclave(uint64_t ret);
 #endif
