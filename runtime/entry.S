@@ -4,45 +4,8 @@
 
 .text
 //entry point to the runtime!
-_start:  
-entry:
-  /* keep the original stack pointer for the OS */
-  mv t0, sp
-  /* runtime stack starts from 0x0 and grows downward! */
-  li sp, 0
-  addi sp, sp, -CONTEXT_SIZE
-  STORE t0, 36*REGBYTES(sp)
-  STORE a0, 35*REGBYTES(sp)
-
-  /* TODO: stack size should be flexible */
-  li a0, ENCL_STACK_SIZE
-  call init_mm
-
-  /* set user stack below the runtime */
-  la a0, _start 
-  csrw sscratch, a0
-
-trampoline:
-  la a0, encl_trap_handler
-  csrw stvec, a0
-  
-  LOAD a0, 35*REGBYTES(sp)
-  csrw sepc, a0
-  csrrw sp, sscratch, sp
-  
-  sret
-
-encl_trap_handler:
-  csrrw sp, sscratch, sp
-
-  STORE a0, 10*REGBYTES(sp)
-
-  csrr a0, scause
-  bge a0, zero, 1f 
-
-  /* handle interrupts */
-  j not_implemented 
-1:
+.altmacro
+.macro SAVE_ALL_BUT_SP
   /* handle exceptions */
   STORE ra, 1*REGBYTES(sp)
   STORE gp, 3*REGBYTES(sp)
@@ -52,6 +15,7 @@ encl_trap_handler:
   STORE t2, 7*REGBYTES(sp)
   STORE s0, 8*REGBYTES(sp)
   STORE s1, 9*REGBYTES(sp)
+  STORE a0, 10*REGBYTES(sp)
   STORE a1, 11*REGBYTES(sp)
   STORE a2, 12*REGBYTES(sp)
   STORE a3, 13*REGBYTES(sp)
@@ -73,29 +37,42 @@ encl_trap_handler:
   STORE t4, 29*REGBYTES(sp)
   STORE t5, 30*REGBYTES(sp)
   STORE t6, 31*REGBYTES(sp)
-  
-  csrrw t0, sscratch, x0           # t0 <- user sp
-  STORE t0, 2*REGBYTES(sp)         # sp 
-  
-  #csrr t0, sstatus
-  #STORE t0, 32*REGBYTES(sp)
-  
-  #csrr t0, sbadaddr
-  #STORE t0, 33*REGBYTES(sp)
-  
-  #csrr t0, scause
-  #STORE t0, 34*REGBYTES(sp)  
+.endm 
 
-  la t0, rt_trap_table
-  sll t1, a0, LOG_REGBYTES
-  add t1, t0, t1
-  LOAD t1, 0(t1)
+.macro CLEAR_ALL_BUT_SP
+  mv ra, x0
+  mv gp, x0
+  mv tp, x0
+  mv t0, x0
+  mv t1, x0
+  mv t2, x0
+  mv s0, x0
+  mv s1, x0
+  mv a0, x0
+  mv a1, x0
+  mv a2, x0
+  mv a3, x0
+  mv a4, x0
+  mv a5, x0
+  mv a6, x0
+  mv a7, x0
+  mv s2, x0
+  mv s3, x0
+  mv s4, x0
+  mv s5, x0
+  mv s6, x0
+  mv s7, x0
+  mv s8, x0
+  mv s9, x0
+  mv s10, x0
+  mv s11, x0
+  mv t3, x0
+  mv t4, x0
+  mv t5, x0
+  mv t6, x0
+.endm
 
-  jalr t1
- 
-  //restore user stack
-  LOAD t0, 2*REGBYTES(sp)
-  csrw sscratch, t0
+.macro RESTORE_ALL_BUT_SP
 
   // restore context 
   LOAD ra, 1*REGBYTES(sp)
@@ -106,7 +83,7 @@ encl_trap_handler:
   LOAD t2, 7*REGBYTES(sp)
   LOAD s0, 8*REGBYTES(sp)
   LOAD s1, 9*REGBYTES(sp)
-  LOAD a0, 11*REGBYTES(sp)
+  LOAD a0, 10*REGBYTES(sp)
   LOAD a1, 11*REGBYTES(sp)
   LOAD a2, 12*REGBYTES(sp)
   LOAD a3, 13*REGBYTES(sp)
@@ -128,16 +105,109 @@ encl_trap_handler:
   LOAD t4, 29*REGBYTES(sp)
   LOAD t5, 30*REGBYTES(sp)
   LOAD t6, 31*REGBYTES(sp)
+.endm 
+
+
+_start:  
+entry:
+  /* keep the original stack pointer for the OS */
+  mv t0, sp
+  /* runtime stack starts from 0x0 and grows downward! */
+  li sp, 0
+  addi sp, sp, -HOST_CONTEXT_SIZE
+ 
+  SAVE_ALL_BUT_SP
+
+  // save host_sp
+  STORE t0, 36*REGBYTES(sp)
+  // save encl_entry
+  STORE a0, 35*REGBYTES(sp)
+
+  /* TODO: stack size should be flexible */
+  li a0, ENCL_STACK_SIZE
+  call init_mm
+
+  /* set user stack below the runtime */
+  la a0, _start 
+  csrw sscratch, a0
+
+  la a0, encl_trap_handler
+  csrw stvec, a0
+ 
+  // restore encl_entry
+  LOAD a0, 35*REGBYTES(sp)
+  csrw sepc, a0
+  csrrw sp, sscratch, sp
+ 
+  // start running enclave
+  sret
+
+encl_trap_handler:
+  csrrw sp, sscratch, sp
+
+  addi sp, sp, -ENCL_CONTEXT_SIZE
+
+  SAVE_ALL_BUT_SP
+
+  csrrw t0, sscratch, x0           # t0 <- user sp
+  STORE t0, 2*REGBYTES(sp)         # user sp 
+  
+  csrr a0, scause
+  bge a0, zero, 1f 
+
+  /* handle interrupts */
+  j not_implemented 
+1:
+  /* handle exceptions */
+  csrr t0, sstatus
+  STORE t0, 32*REGBYTES(sp)
+  
+  csrr t0, sbadaddr
+  STORE t0, 33*REGBYTES(sp)
    
+  csrr t0, scause
+  STORE t0, 34*REGBYTES(sp)  
+
+  la t0, rt_trap_table
+  sll t1, a0, LOG_REGBYTES
+  add t1, t0, t1
+  LOAD t1, 0(t1)
+
+  jalr t1
+ 
+  RESTORE_ALL_BUT_SP
+  
+  // restore user stack
+  LOAD t0, 2*REGBYTES(sp)
+  csrw sscratch, t0
+  
+  addi sp, sp, ENCL_CONTEXT_SIZE
+
   csrrw sp, sscratch, sp
   sret
 
 exit_enclave:
-  # TODO: clear all the registers except sp
-  LOAD a0, 10*REGBYTES(sp) # restore return
+  /* restore return value */
+  LOAD a0, 10*REGBYTES(sp)
 
-  # restore the OS sp
+  /* move stack pointer to host context */
+  addi sp, sp, ENCL_CONTEXT_SIZE
+
+  /* store the return value to the host context;
+   * this is to use RESTORE_ALL_BUT_SP macro... 
+   * alternatively, we can do like LOAD a0, -22*REGBYTES(sp) */
+  STORE a0, 10*REGBYTES(sp)
+
+  /* clear all registers but sp */
+  RESTORE_ALL_BUT_SP
+
+  /* restore return */
+  LOAD a0, 10*REGBYTES(sp)
+
+  /* restore the OS sp */
   LOAD sp, 36*REGBYTES(sp)
+
+  /* SBI exit enclave */
   li a7, 1101
   ecall
 

@@ -3,12 +3,13 @@
 #define LWU lwu
 #define LOG_REGBYTES  3
 #define REGBYTES (1<<LOG_REGBYTES)
-#define CONTEXT_SIZE (REGBYTES*(32+5)) 
+#define ENCL_CONTEXT_SIZE (REGBYTES*32)
+#define HOST_CONTEXT_SIZE (REGBYTES*37)
+
 
 #ifndef __ASSEMBLER__
 
 #include "mm.h"
-
 struct regs {
 	unsigned long sepc;
 	unsigned long ra;
@@ -41,7 +42,11 @@ struct regs {
 	unsigned long t3;
 	unsigned long t4;
 	unsigned long t5;
-	unsigned long t6; //31
+	unsigned long t6;
+};
+
+struct host_ctx {
+  struct regs regs;
 	/* Supervisor CSRs */
 	unsigned long sstatus;//32
 	unsigned long sbadaddr;//33
@@ -50,4 +55,8 @@ struct regs {
   unsigned long encl_entry;//35
   unsigned long host_sp;//
 };
+
+typedef struct regs encl_ctx;
+
+
 #endif
