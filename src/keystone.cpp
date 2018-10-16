@@ -14,7 +14,8 @@ Keystone::~Keystone()
   destroy();
 }
 
-keystone_status_t Keystone::init(void* ptr, size_t code_size, size_t mem_size)
+
+keystone_status_t Keystone::init_raw_mem(void* ptr, size_t code_size, size_t mem_size)
 {
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if(fd < 0)
@@ -38,12 +39,16 @@ keystone_status_t Keystone::init(void* ptr, size_t code_size, size_t mem_size)
   return KEYSTONE_SUCCESS;
 }
 
-keystone_status_t Keystone::init(char* filepath, size_t mem_size)
-{
+
+
+keystone_status_t Keystone::init_elf(char* filepath, size_t mem_size, unsigned long usr_entry_ptr){
+
   FILE* app_file;
   void* app_code_buffer;
   size_t res, code_size;
   int ret;
+
+  this->entry_ptr = usr_entry_ptr;
   
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if(fd < 0){
@@ -77,6 +82,8 @@ keystone_status_t Keystone::init(char* filepath, size_t mem_size)
   enclp.ptr = (unsigned long) app_code_buffer;
   enclp.code_size = (unsigned long) code_size;
   enclp.mem_size = (unsigned long) mem_size;
+
+  //printf("Enclave info: ptr:%p code_sz:%ul mem_sz:%ul\n",app_code_buffer, code_size, mem_size);
   ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
 
   if(ret < 0) {
@@ -84,6 +91,8 @@ keystone_status_t Keystone::init(char* filepath, size_t mem_size)
     goto err_all;
   }
 
+  printf("Created enclave\n");
+  
   eid = enclp.eid;
   this->ptr = app_code_buffer;
   
@@ -153,17 +162,20 @@ keystone_status_t Keystone::run()
   int	ret;
   struct keystone_ioctl_run_enclave run;
   run.eid = eid;
-  run.ptr = (unsigned long) this->ptr;
+
+  run.ptr = this->entry_ptr;
+
+  printf("Starting enclave!\n");
 
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
 
   printf("%ld\n", run.ret);
-	if(ret < 0)
-  {
-		PERROR("failed to run enclave - ioctl() failed");
-    return KEYSTONE_ERROR;
-	}
-
-	return KEYSTONE_SUCCESS;
+  if(ret < 0)
+    {
+      PERROR("failed to run enclave - ioctl() failed");
+      return KEYSTONE_ERROR;
+    }
+  
+  return KEYSTONE_SUCCESS;
 }
 
