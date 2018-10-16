@@ -6,7 +6,6 @@
 //entry point to the runtime!
 .altmacro
 .macro SAVE_ALL_BUT_SP
-  /* handle exceptions */
   STORE ra, 1*REGBYTES(sp)
   STORE gp, 3*REGBYTES(sp)
   STORE tp, 4*REGBYTES(sp)
@@ -107,56 +106,61 @@
   LOAD t6, 31*REGBYTES(sp)
 .endm 
 
-
-_start:  
-entry:
+_start:
   /* keep the original stack pointer for the OS */
-  mv t0, sp
+  csrw sscratch, sp
+  
   /* runtime stack starts from 0x0 and grows downward! */
   li sp, 0
   addi sp, sp, -HOST_CONTEXT_SIZE
- 
+
+  /* save host context */
   SAVE_ALL_BUT_SP
 
-  // save host_sp
-  STORE t0, 36*REGBYTES(sp)
-  // save encl_entry
-  STORE a0, 35*REGBYTES(sp)
+  /* save host_sp */
+  csrrw t0, sscratch, x0
+  STORE t0, 2*REGBYTES(sp)
 
   /* TODO: stack size should be flexible */
   li a0, ENCL_STACK_SIZE
   call init_mm
 
+  call init_timer
+
   /* set user stack below the runtime */
-  la a0, _start 
+  la a0, rt_base
   csrw sscratch, a0
 
   la a0, encl_trap_handler
   csrw stvec, a0
- 
-  // restore encl_entry
-  LOAD a0, 35*REGBYTES(sp)
+
+  /* restore encl_entry */
+  LOAD a0, 10*REGBYTES(sp)
   csrw sepc, a0
+  
+  /* start running enclave */
   csrrw sp, sscratch, sp
- 
-  // start running enclave
   sret
 
+.align 6
 encl_trap_handler:
   csrrw sp, sscratch, sp
 
   addi sp, sp, -ENCL_CONTEXT_SIZE
 
+  /* save enclave context */
   SAVE_ALL_BUT_SP
-
   csrrw t0, sscratch, x0           # t0 <- user sp
   STORE t0, 2*REGBYTES(sp)         # user sp 
   
-  csrr a0, scause
-  bge a0, zero, 1f 
+  csrr s2, scause
+  bge s2, zero, 1f 
 
   /* handle interrupts */
-  j not_implemented 
+  mv a0, sp
+  la t0, handle_interrupts
+  jalr t0
+  j return_to_encl
 1:
   /* handle exceptions */
   csrr t0, sstatus
@@ -167,14 +171,15 @@ encl_trap_handler:
    
   csrr t0, scause
   STORE t0, 34*REGBYTES(sp)  
-
+  
   la t0, rt_trap_table
-  sll t1, a0, LOG_REGBYTES
+  sll t1, s2, LOG_REGBYTES
   add t1, t0, t1
   LOAD t1, 0(t1)
 
   jalr t1
  
+return_to_encl:
   RESTORE_ALL_BUT_SP
   
   // restore user stack
@@ -205,7 +210,7 @@ exit_enclave:
   LOAD a0, 10*REGBYTES(sp)
 
   /* restore the OS sp */
-  LOAD sp, 36*REGBYTES(sp)
+  LOAD sp, 2*REGBYTES(sp)
 
   /* SBI exit enclave */
   li a7, 1101
