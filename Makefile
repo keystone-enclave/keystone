@@ -6,7 +6,7 @@ INCLUDE_DIR = include/
 CCFLAGS = -I $(INCLUDE_DIR)
 SRCS = keystone.cpp
 
-HOSTS = hello_long
+HOSTS = hello_long hello
 
 HOST_DIRS = $(patsubst %,$(HOST_DIR)%,$(HOSTS))#$(wildcard $(HOST_DIR)*/)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
