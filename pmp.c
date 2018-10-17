@@ -20,9 +20,6 @@ static spinlock_t pmp_ipi_global_lock = SPINLOCK_INIT;
 
 static spinlock_t pmp_lock = SPINLOCK_INIT;
 
-#ifdef SM_ENABLED
-extern void send_ipi_many(uintptr_t*, int);
-#endif
 static int is_pmp_region_valid(int region_idx) {
   return TEST_BIT(region_def_bitmap, region_idx);
 }
@@ -94,7 +91,7 @@ static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type)
 int pmp_unset_global(int region_idx)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(-EINVAL, "Invalid PMP region index");
+    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
 
   /* We avoid any complex PMP-related IPI management
    * by ensuring only one hart can enter this region at a time */
@@ -106,14 +103,14 @@ int pmp_unset_global(int region_idx)
   /* unset PMP of itself */
   pmp_unset(region_idx);
   
-  return 0;
+  return PMP_SUCCESS;
 }
 
 /* populate pmp set command to every other hart */
 int pmp_set_global(int region_idx)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(-EINVAL, "Invalid PMP region index");
+    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
 
   /* We avoid any complex PMP-related IPI management
    * by ensuring only one hart can enter this region at a time */
@@ -124,13 +121,13 @@ int pmp_set_global(int region_idx)
 #endif
   /* set PMP of itself */
   pmp_set(region_idx);
-  return 0;
+  return PMP_SUCCESS;
 }
 
 int pmp_set(int region_idx)
 { 
   if(!is_pmp_region_valid(region_idx)) 
-    PMP_ERROR(-EINVAL, "Invalid PMP region index");
+    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
   
   int reg_idx = regions[region_idx].reg_idx;
   uintptr_t pmpcfg = (uintptr_t) regions[region_idx].cfg << (8*(reg_idx%PMP_PER_GROUP));
@@ -150,13 +147,13 @@ int pmp_set(int region_idx)
       die("pmp_set failed: this must not be tolerated\n");
   } 
 
-  return 0;
+  return PMP_SUCCESS;
 }
 
 int pmp_unset(int region_idx)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(-EINVAL,"Invalid PMP region index");
+    PMP_ERROR(PMP_REGION_INVALID,"Invalid PMP region index");
 
   int reg_idx = regions[region_idx].reg_idx;
   int n=reg_idx, g=reg_idx>>2;
@@ -173,13 +170,13 @@ int pmp_unset(int region_idx)
   //    read_csr(mhartid), reg_idx, regions[region_idx].addr, regions[region_idx].size);
   //spinlock_unlock(&pmp_lock);
   
-  return 0;
+  return PMP_SUCCESS;
 }
 
 int pmp_region_debug_print(int region_idx)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(-EINVAL,"Invalid PMP region index");
+    PMP_ERROR(PMP_REGION_INVALID,"Invalid PMP region index");
  
   uintptr_t start = regions[region_idx].start;
   uint64_t size = regions[region_idx].size;
@@ -196,24 +193,25 @@ int pmp_region_debug_print(int region_idx)
     "reg_idx: %d\n"
    , start, size, size, perm, cfg, addr<<3, reg_idx ); 
 
-  return 0;  
+  return PMP_SUCCESS;  
 }
 
 
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority priority)
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority priority, int* rid)
 {
   int ret;
   spinlock_lock(&pmp_lock);
-  ret = pmp_region_init(start, size, perm, priority);
+  ret = pmp_region_init(start, size, perm, priority, rid);
   spinlock_unlock(&pmp_lock);
   return ret;
 }
 
-int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm,enum pmp_priority priority)
+int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm,enum pmp_priority priority, int* rid)
 {
   uintptr_t pmp_address;
   int reg_idx = -1;
   int region_idx = -1;
+  
   /* if region covers the entire RAM */
   if(size == -1UL && start == 0)
   {
@@ -223,47 +221,49 @@ int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm,enum pmp_priori
   {
     // size should be power of 2
     if(!(size && !(size&(size-1))))
-      PMP_ERROR(-EINVAL, "PMP size should be power of 2");
+      PMP_ERROR(PMP_REGION_SIZE_INVALID, "PMP size should be power of 2");
 
     // size should be page granularity
     if(size & (RISCV_PGSIZE - 1))
-      PMP_ERROR(-EINVAL, "PMP granularity is RISCV_PGSIZE");
+      PMP_ERROR(PMP_REGION_NOT_PAGE_GRANULARITY, "PMP granularity is RISCV_PGSIZE");
 
     // the starting address must be naturally aligned
     if(start & (size-1))
-      PMP_ERROR(-EINVAL, "PMP region should be naturally aligned");
+      PMP_ERROR(PMP_REGION_NOT_ALIGNED, "PMP region should be naturally aligned");
 
     pmp_address = (start | (size/2-1)) >> 2;
   }
   //find avaiable pmp region idx
   region_idx = get_free_region_idx();
   if(region_idx < 0 || region_idx > PMP_MAX_N_REGION)
-    PMP_ERROR(-EFAULT, "Reached the maximum number of PMP regions");
+    PMP_ERROR(PMP_REGION_MAX_REACHED, "Reached the maximum number of PMP regions");
+  
+  *rid = region_idx;
 
   switch(priority)
   {
     case(PMP_PRI_ANY): {
       reg_idx = get_free_reg_idx();
       if(reg_idx < 0)
-        PMP_ERROR(-EFAULT, "No available PMP register");
+        PMP_ERROR(PMP_REGION_MAX_REACHED, "No available PMP register");
       if(TEST_BIT(reg_bitmap, reg_idx) || reg_idx >= PMP_N_REG)
-        PMP_ERROR(-EFAULT, "PMP register unavailable");
+        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     case(PMP_PRI_TOP): {
       reg_idx = 0;
       if(TEST_BIT(reg_bitmap, reg_idx))
-        PMP_ERROR(-EFAULT, "PMP register unavailable");
+        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     case(PMP_PRI_BOTTOM): {
       reg_idx = PMP_N_REG - 1;
       if(TEST_BIT(reg_bitmap, reg_idx))
-        PMP_ERROR(-EFAULT, "PMP register unavailable");
+        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     default: {
-      PMP_ERROR(-EINVAL, "Invalid priority");
+      PMP_ERROR(PMP_UNKNOWN_ERROR, "Invalid priority");
     }
   }
 
@@ -276,8 +276,8 @@ int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm,enum pmp_priori
   regions[region_idx].reg_idx = reg_idx;
   SET_BIT(region_def_bitmap, region_idx);
   SET_BIT(reg_bitmap, reg_idx);
-  
-  return region_idx;
+ 
+  return PMP_SUCCESS;
 }
 
 int pmp_region_free_atomic(int region_idx)
@@ -288,7 +288,7 @@ int pmp_region_free_atomic(int region_idx)
   if(!is_pmp_region_valid(region_idx))
   {
     spinlock_unlock(&pmp_lock);
-    PMP_ERROR(-EINVAL, "Invalid PMP region index");
+    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
   }
   /*
   if(is_pmp_region_set(region_idx)) {
@@ -310,7 +310,7 @@ int pmp_region_free_atomic(int region_idx)
   
   spinlock_unlock(&pmp_lock);
   
-  return 0;
+  return PMP_SUCCESS;
 }
 
 void* pmp_get_addr(int region_idx)

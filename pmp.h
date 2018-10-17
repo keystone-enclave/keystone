@@ -62,8 +62,8 @@ enum pmp_priority {
 }
 
 int pmp_region_debug_print(int region);
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority pri);
-int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority pri);
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority pri, int* rid);
+int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority pri, int* rid);
 int pmp_region_free_atomic(int region);
 int pmp_set(int n);
 int pmp_set_global(int n);
