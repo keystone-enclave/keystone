@@ -16,8 +16,9 @@ extern unsigned int sanctum_sm_size[1];
 int smm_init()
 {
   uint8_t perm = 0;
-  int region = pmp_region_init(SMM_BASE, SMM_SIZE, perm, PMP_PRI_TOP);
-  if(region < 0)
+  int region = -1;
+  int ret = pmp_region_init(SMM_BASE, SMM_SIZE, perm, PMP_PRI_TOP, &region);
+  if(ret)
     return -1;
 
   return region;
@@ -26,10 +27,9 @@ int smm_init()
 int osm_init()
 {
   uint8_t perm = PMP_W | PMP_X | PMP_R; 
-  printm("osm_init\n");
-  int region = pmp_region_init(0, -1UL, perm, PMP_PRI_BOTTOM); 
-  printm("osm_init done\n");
-  if(region < 0)
+  int region = -1;
+  int ret = pmp_region_init(0, -1UL, perm, PMP_PRI_BOTTOM, &region); 
+  if(ret)
     return -1;
 
   return region;

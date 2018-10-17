@@ -36,6 +36,42 @@ save_host_regs:
   STORE sp, 2*REGBYTES(tp)
   ret
 
+restore_host_regs:
+  .global restore_host_regs
+  LOAD x1, 1*REGBYTES(tp)
+  LOAD x3, 3*REGBYTES(tp)
+  //LOAD x4, 4*REGBYTES(tp)
+  LOAD x5, 5*REGBYTES(tp)
+  LOAD x6, 6*REGBYTES(tp)
+  LOAD x7, 7*REGBYTES(tp)
+  LOAD x8, 8*REGBYTES(tp)
+  LOAD x9, 9*REGBYTES(tp)
+  LOAD x10, 10*REGBYTES(tp)
+  LOAD x11, 11*REGBYTES(tp)
+  LOAD x12, 12*REGBYTES(tp)
+  LOAD x13, 13*REGBYTES(tp)
+  LOAD x14, 14*REGBYTES(tp)
+  LOAD x15, 15*REGBYTES(tp)
+  LOAD x16, 16*REGBYTES(tp)
+  LOAD x17, 17*REGBYTES(tp)
+  LOAD x18, 18*REGBYTES(tp)
+  LOAD x19, 19*REGBYTES(tp)
+  LOAD x20, 20*REGBYTES(tp)
+  LOAD x21, 21*REGBYTES(tp)
+  LOAD x22, 22*REGBYTES(tp)
+  LOAD x23, 23*REGBYTES(tp)
+  LOAD x24, 24*REGBYTES(tp)
+  LOAD x25, 25*REGBYTES(tp)
+  LOAD x26, 26*REGBYTES(tp)
+  LOAD x27, 27*REGBYTES(tp)
+  LOAD x28, 28*REGBYTES(tp)
+  LOAD x29, 29*REGBYTES(tp)
+  LOAD x30, 30*REGBYTES(tp)
+  LOAD x31, 31*REGBYTES(tp)
+  LOAD x4, 4*REGBYTES(tp)
+  LOAD sp, 2*REGBYTES(tp)
+  ret
+
 clean_regs:
   li x1, 0
   li x2, 0

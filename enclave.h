@@ -3,6 +3,9 @@
 
 #include "pmp.h"
 
+/* TODO: does not support multithreaded enclave yet */
+#define MAX_ENCL_THREADS 1
+
 typedef enum {
   DESTROYED = -2,
   INVALID = -1,
@@ -16,7 +19,6 @@ typedef uint32_t reg;
 #else
 typedef uint64_t reg;
 #endif
-
 
 struct ctx_t
 {
@@ -53,6 +55,12 @@ struct ctx_t
   reg t6;
 };
 
+struct enclave_thread_t
+{
+  uintptr_t entry;
+  unsigned long* retptr; // pointer to the host return value
+};
+
 struct enclave_t
 {
   int eid; //enclave id
@@ -63,14 +71,19 @@ struct enclave_t
   unsigned int n_thread;
 
   /* execution context */
-  unsigned long host_mepc[MAX_HARTS]; //supervisor return pc
-  unsigned long host_stvec[MAX_HARTS]; //supervisor stvec
-  //struct ctx_t host_ctx;
+  unsigned long host_mepc[MAX_HARTS]; // supervisor return pc
+  unsigned long host_stvec[MAX_HARTS]; // supervisor stvec
+  
+  /* enclave execution context */
+  struct enclave_thread_t threads[MAX_ENCL_THREADS];
 };
 
 unsigned long get_host_satp(int eid);
-int create_enclave(uintptr_t base, uintptr_t size);
-int destroy_enclave(int eid);
-reg run_enclave(int eid, uintptr_t ptr);
-uint64_t exit_enclave(uint64_t ret);
+uintptr_t create_enclave(uintptr_t base, uintptr_t size);
+uintptr_t destroy_enclave(int eid);
+uintptr_t run_enclave(int eid, uintptr_t entry, uintptr_t retptr);
+uintptr_t exit_enclave(unsigned long retval);
+uintptr_t stop_enclave(uint64_t request);
+uintptr_t resume_enclave(int eid);
+
 #endif

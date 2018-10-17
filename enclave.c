@@ -7,13 +7,15 @@
 #include "atomic.h"
 
 #define ENCL_MAX  16
-#define RET_ON_ERR(ret) {if(ret<0) return ret;}
 
 static uint64_t encl_bitmap = 0;
 
 struct enclave_t enclaves[ENCL_MAX];
 
 static spinlock_t encl_lock = SPINLOCK_INIT;
+
+extern void save_host_regs(void);
+extern void restore_host_regs(void);
 
 /* FIXME: this takes O(n), change it to use a hash table */
 int encl_satp_to_eid(reg satp)
@@ -104,7 +106,7 @@ int init_enclave_memory(uintptr_t base, uintptr_t size)
   return ret;
 }
 
-int create_enclave(uintptr_t base, uintptr_t size)
+uintptr_t create_enclave(uintptr_t base, uintptr_t size)
 {
   uint8_t perm = 0;
   int eid;
@@ -113,10 +115,11 @@ int create_enclave(uintptr_t base, uintptr_t size)
   int region_overlap = 0;
   
   // 1. create a PMP region binded to the enclave
-  ret = pmp_region_init_atomic(base, size, perm, PMP_PRI_ANY);
-  if(ret < 0)
+  
+  ret = ENCLAVE_PMP_FAILURE;
+
+  if(pmp_region_init_atomic(base, size, perm, PMP_PRI_ANY, &region))
     goto error;
-  region = ret;
 
   // - if base and (base+size) not belong to other enclaves
   spinlock_lock(&encl_lock);
@@ -130,25 +133,21 @@ int create_enclave(uintptr_t base, uintptr_t size)
   }
   spinlock_unlock(&encl_lock);
 
+  
   if(region_overlap)
   {
     printm("region overlaps with enclave %d\n", i);
-    ret = -EINVAL;
     goto free_region;
   }
 
   // 2. allocate eid
-  ret = encl_alloc_idx();
-  if(ret < 0)
+  eid = encl_alloc_idx();
+  if(eid < 0)
     goto free_region;
-  eid = ret;
 
   // 3. set pmp
-  ret = pmp_set_global(region); 
-  //ret = pmp_set(region);
-  if(ret < 0)
+  if(pmp_set_global(region))
     goto free_encl_idx;
-
   
   // 4. initialize and verify enclave memory layout. 
   init_enclave_memory(base, size);
@@ -164,7 +163,7 @@ int create_enclave(uintptr_t base, uintptr_t size)
   enclaves[eid].state = INITIALIZED;
   spinlock_unlock(&encl_lock);
   
-  return 0;
+  return ENCLAVE_SUCCESS;
  
 free_encl_idx:
   encl_free_idx(eid);
@@ -174,7 +173,7 @@ error:
   return ret;
 }
 
-int destroy_enclave(int eid)
+uintptr_t destroy_enclave(int eid)
 {
   int destroyable;
 
@@ -189,7 +188,7 @@ int destroy_enclave(int eid)
   spinlock_unlock(&encl_lock);
 
   if(!destroyable)
-    return -1;
+    return ENCLAVE_NOT_DESTROYABLE;
   
   // 1. clear all the data in the enclave page
   // requires no lock (single runner)
@@ -210,16 +209,20 @@ int destroy_enclave(int eid)
   // 3. release eid
   encl_free_idx(eid);
   
-  return 0;
+  return ENCLAVE_SUCCESS;
 }
 
-reg run_enclave(int eid, uintptr_t ptr)
+#define RUNTIME_START_ADDRESS 0xffffffffc0000000
+
+uintptr_t run_enclave(int eid, uintptr_t entry, uintptr_t retptr)
 {
   int runable;
   int hart_id;
 
   spinlock_lock(&encl_lock);
-  runable = TEST_BIT(encl_bitmap, eid) && (enclaves[eid].state >= 0);
+  runable = TEST_BIT(encl_bitmap, eid) 
+    && (enclaves[eid].state >= 0) 
+    && enclaves[eid].n_thread < MAX_ENCL_THREADS;
   if(runable) {
     enclaves[eid].state = RUNNING;
     enclaves[eid].n_thread++;
@@ -227,45 +230,63 @@ reg run_enclave(int eid, uintptr_t ptr)
   spinlock_unlock(&encl_lock);
 
   if(!runable)
-    return -1;
+    return ENCLAVE_NOT_RUNNABLE;
+
+  /* TODO: We must not allow SM to write retptr ... 
+   * this is just for temporary.
+   * we need some API to map part of OS VA to the runtime VA */
+  if( detect_region_overlap(eid, retptr, sizeof(unsigned long)) ) {
+    return ENCLAVE_ILLEGAL_ARGUMENT;
+  }
+
+  /* check if the entry point is valid */
+  if(entry >= RUNTIME_START_ADDRESS)
+    return ENCLAVE_ILLEGAL_ARGUMENT;
+  
+  /* TODO: only one thread is supported */
+  enclaves[eid].threads[0].retptr = (unsigned long*)retptr;
 
   hart_id = read_csr(mhartid);
-  
+ 
   /* save host context */
   enclaves[eid].host_mepc[hart_id] = read_csr(mepc);
   enclaves[eid].host_stvec[hart_id] = read_csr(stvec);
 
   // entry point after return (mret)
-  write_csr(mepc, 0xffffffffc0000000 ); // address of trampoline (runtime)
+  write_csr(mepc, RUNTIME_START_ADDRESS); // address of trampoline (runtime)
 
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
  
-  // disable timer interrupt
+  // disable timer set by the OS 
   clear_csr(mie, MIP_MTIP);
-  
+
   // unset PMP
   pmp_unset(enclaves[eid].rid);
 
-  // return enclave entry point (this is the first argument to the runtime)
-  return (reg)ptr;
+  return ENCLAVE_SUCCESS;
 }
 
-uint64_t exit_enclave(uint64_t retval)
+uintptr_t exit_enclave(unsigned long retval)
 {
   int eid = encl_satp_to_eid(read_csr(satp));
   int exitable;
   int hart_id = read_csr(mhartid);
 
   if(eid < 0)
-    return -1;
+    return ENCLAVE_INVALID_ID;
  
   spinlock_lock(&encl_lock);
   exitable = enclaves[eid].state == RUNNING;
   spinlock_unlock(&encl_lock);
 
   if(!exitable)
-    return -1;
+    return ENCLAVE_NOT_RUNNING;
+
+  /* TODO: this must be not allowed */
+  /* TODO: only one thread for now */
+  *(enclaves[eid].threads[0].retptr) = retval;
+  
 
   // get the running enclave on this SM 
   struct enclave_t encl = enclaves[eid];
@@ -290,6 +311,34 @@ uint64_t exit_enclave(uint64_t retval)
     enclaves[eid].state = INITIALIZED;
   spinlock_unlock(&encl_lock);
 
-  return retval;
+  return ENCLAVE_SUCCESS;
 }
 
+uint64_t stop_enclave(uint64_t request)
+{
+  int eid = encl_satp_to_eid(read_csr(satp));
+  int stoppable;
+  int hart_id = read_csr(mhartid);
+  if(eid < 0)
+    return ENCLAVE_INVALID_ID;
+
+  spinlock_lock(&encl_lock);
+  stoppable = enclaves[eid].state == RUNNING;
+
+  /* TODO: currently enclave cannot have multiple threads */
+  if(stoppable)
+    enclaves[eid].threads[0].entry = read_csr(mepc);
+  spinlock_unlock(&encl_lock);
+
+  if(!stoppable)
+    return ENCLAVE_NOT_RUNNING;
+
+  struct enclave_t encl = enclaves[eid];
+  pmp_set(encl.rid);
+  write_csr(stvec, encl.host_stvec[hart_id]);
+  write_csr(mepc, encl.host_mepc[hart_id]);
+  write_csr(satp, encl.host_satp);
+  set_csr(mie, MIP_MTIP);
+
+  return ENCLAVE_INTERRUPTED; 
+}
