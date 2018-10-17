@@ -1,5 +1,6 @@
 .section .text
 
+eapp_entry:
 add:
   addi sp, sp, -64
   li a0, 0xdeadbeef

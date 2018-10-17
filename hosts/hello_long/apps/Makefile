@@ -1,14 +1,23 @@
 CC = riscv64-unknown-linux-gnu-gcc
-OBJCOPY = riscv64-unknown-linux-gnu-objcopy
-XXD = xxd
+CFLAGS = -Wall -Werror -fPIC
+LINK = riscv64-unknown-linux-gnu-ld
+LINKFLAGS = -static
+APP_LDS = ../../../scripts/app.lds
 
-all: add_long.eapp_riscv
+APPS = add_long
+APP_BINS = $(patsubst %,%.eapp_riscv,$(APPS))
 
-add_long.eapp_riscv:
-	./generate_func.sh 4096 func_long.s
-	$(CC) -I../../../include -pie -c func_long.s
-	$(OBJCOPY) -O binary --only-section=.text func_long.o add_long.o
-	$(XXD) -i -a add_long.o > add_long.h
-	mv add_long.o add_long.eapp_riscv
+all: $(APP_BINS)
+
+%.o: %.s
+	$(CC) -I../../../include -c $<
+
+%.eapp_riscv: %.o $(APP_LDS)
+	$(LINK) $(LINKFLAGS) -o $@ $< -T $(APP_LDS)
+	../../../scripts/parse_elf.sh $@ $*_entry
+
+add_long.s: generate_func.sh nop.s func_base.s
+	./generate_func.sh 4097 add_long.s
+
 clean:
-	rm -f *.o add_long.h *.eapp_riscv
+	rm -f *.o *.eapp_riscv $(patsubst %,%_entry.h,$(APPS)) add_long.s
