@@ -153,9 +153,17 @@ encl_trap_handler:
   csrrw t0, sscratch, x0           # t0 <- user sp
   STORE t0, 2*REGBYTES(sp)         # user sp 
   
-  csrr s2, scause
-  bge s2, zero, 1f 
+  csrr t0, sstatus
+  STORE t0, 32*REGBYTES(sp)
+  
+  csrr t0, sbadaddr
+  STORE t0, 33*REGBYTES(sp)
 
+  csrr s2, scause
+  STORE s2, 34*REGBYTES(sp)  
+  
+  bge s2, zero, 1f 
+  
   /* handle interrupts */
   mv a0, sp
   la t0, handle_interrupts
@@ -163,15 +171,7 @@ encl_trap_handler:
   j return_to_encl
 1:
   /* handle exceptions */
-  csrr t0, sstatus
-  STORE t0, 32*REGBYTES(sp)
-  
-  csrr t0, sbadaddr
-  STORE t0, 33*REGBYTES(sp)
-   
-  csrr t0, scause
-  STORE t0, 34*REGBYTES(sp)  
-  
+ 
   la t0, rt_trap_table
   sll t1, s2, LOG_REGBYTES
   add t1, t0, t1
