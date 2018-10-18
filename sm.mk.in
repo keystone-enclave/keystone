@@ -5,6 +5,7 @@ sm_hdrs = \
 sm_c_srcs = \
   sm.c \
   sm-sbi.c \
+	thread.c \
   pmp.c \
   enclave.c \
 	page.c \
