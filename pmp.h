@@ -34,7 +34,7 @@ enum pmp_priority {
 
 #define PMP_SET(n, g, addr, pmpc) \
 { uintptr_t oldcfg = read_csr(pmpcfg##g); \
-  pmpc |= (oldcfg & ~((uintptr_t)0xff << 8*(n%PMP_PER_GROUP))); \
+  pmpc |= (oldcfg & ~((uintptr_t)0xff << (uintptr_t)8*(n%PMP_PER_GROUP))); \
   asm volatile ("la t0, 1f\n\t" \
                 "csrrw t0, mtvec, t0\n\t" \
                 "csrw pmpaddr"#n", %0\n\t" \
@@ -46,7 +46,7 @@ enum pmp_priority {
 
 #define PMP_UNSET(n, g) \
 { uintptr_t pmpc = read_csr(pmpcfg##g); \
-  pmpc &= ~((uintptr_t)0xff << 8*(n%PMP_PER_GROUP)); \
+  pmpc &= ~((uintptr_t)0xff << (uintptr_t)8*(n%PMP_PER_GROUP)); \
   asm volatile ("la t0, 1f \n\t" \
                 "csrrw t0, mtvec, t0 \n\t" \
                 "csrw pmpaddr"#n", %0\n\t" \

@@ -31,14 +31,15 @@
 #define ENCLAVE_NOT_ACCESSIBLE              7
 #define ENCLAVE_ILLEGAL_ARGUMENT            8
 #define ENCLAVE_NOT_RUNNING                 9
+#define ENCLAVE_NOT_RESUMABLE               10
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0
-#define PMP_REGION_SIZE_INVALID             10
-#define PMP_REGION_NOT_PAGE_GRANULARITY     11
-#define PMP_REGION_NOT_ALIGNED              12
-#define PMP_REGION_MAX_REACHED              13
-#define PMP_REGION_INVALID                  14
+#define PMP_REGION_SIZE_INVALID             20
+#define PMP_REGION_NOT_PAGE_GRANULARITY     21
+#define PMP_REGION_NOT_ALIGNED              22
+#define PMP_REGION_MAX_REACHED              23
+#define PMP_REGION_INVALID                  24
 
 void sm_init(void);
 

@@ -33,7 +33,7 @@ struct enclave_t
 };
 
 unsigned long get_host_satp(int eid);
-uintptr_t create_enclave(uintptr_t base, uintptr_t size);
+uintptr_t create_enclave(uintptr_t base, uintptr_t size, uintptr_t eidptr);
 uintptr_t destroy_enclave(int eid);
 
 uintptr_t run_enclave(uintptr_t* regs, int eid, uintptr_t entry, uintptr_t retptr);

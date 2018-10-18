@@ -3,10 +3,10 @@
 #include "enclave.h"
 #include <errno.h>
 
-uintptr_t mcall_sm_create_enclave(unsigned long base, unsigned long size)
+uintptr_t mcall_sm_create_enclave(unsigned long base, unsigned long size, unsigned long eidptr)
 {
   int ret;
-  ret = create_enclave((uintptr_t) base, (uintptr_t) size);
+  ret = create_enclave((uintptr_t) base, (uintptr_t) size, (uintptr_t) eidptr);
   return ret;
 }
 

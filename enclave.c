@@ -90,6 +90,25 @@ int detect_region_overlap(int eid, uintptr_t addr, uintptr_t size)
          ((uintptr_t) epm_base + epm_size > addr);
 }
 
+void copy_word_to_host(uintptr_t* ptr, uintptr_t value)
+{
+  int region_overlap = 0, i;
+  spinlock_lock(&encl_lock);
+  for(i=0; i<ENCL_MAX; i++)
+  {
+    if(!TEST_BIT(encl_bitmap, i))
+      continue;
+    region_overlap |= detect_region_overlap(i, (uintptr_t) ptr, sizeof(uintptr_t));
+    if(region_overlap)
+      break;
+  }
+  if(!region_overlap)
+    *ptr = value;
+  else
+    *ptr = -1UL;
+  spinlock_unlock(&encl_lock);
+}
+
 int init_enclave_memory(uintptr_t base, uintptr_t size)
 {
   int ret;
@@ -106,7 +125,7 @@ int init_enclave_memory(uintptr_t base, uintptr_t size)
   return ret;
 }
 
-uintptr_t create_enclave(uintptr_t base, uintptr_t size)
+uintptr_t create_enclave(uintptr_t base, uintptr_t size, uintptr_t eidptr)
 {
   uint8_t perm = 0;
   int eid;
@@ -162,7 +181,9 @@ uintptr_t create_enclave(uintptr_t base, uintptr_t size)
   spinlock_lock(&encl_lock);
   enclaves[eid].state = INITIALIZED;
   spinlock_unlock(&encl_lock);
-  
+ 
+  copy_word_to_host((uintptr_t*)eidptr, eid);
+
   return ENCLAVE_SUCCESS;
  
 free_encl_idx:
@@ -229,26 +250,22 @@ uintptr_t run_enclave(uintptr_t* host_regs, int eid, uintptr_t entry, uintptr_t 
   }
   spinlock_unlock(&encl_lock);
 
-  if(!runable)
+  if(!runable) {
     return ENCLAVE_NOT_RUNNABLE;
-
-  /* TODO: We must not allow SM to write retptr ... 
-   * this is just for temporary.
-   * we need some API to map part of OS VA to the runtime VA */
-  if( detect_region_overlap(eid, retptr, sizeof(unsigned long)) ) {
-    return ENCLAVE_ILLEGAL_ARGUMENT;
   }
 
   /* check if the entry point is valid */
   if(entry >= RUNTIME_START_ADDRESS)
+  {
     return ENCLAVE_ILLEGAL_ARGUMENT;
-  
+  }
   /* TODO: only one thread is supported */
   set_retptr(&enclaves[eid].threads[0], (unsigned long*)retptr);
 
   hart_id = read_csr(mhartid);
  
   /* save host context */
+  swap_prev_state(&enclaves[eid].threads[0], host_regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
   enclaves[eid].host_stvec[hart_id] = read_csr(stvec);
 
@@ -282,18 +299,16 @@ uintptr_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 
   if(!exitable)
     return ENCLAVE_NOT_RUNNING;
-
-  /* TODO: this must be not allowed */
-  /* TODO: only one thread for now */
-  write_to_retptr(&enclaves[eid].threads[0], retval);
   
   // get the running enclave on this SM 
   struct enclave_t encl = enclaves[eid];
+  copy_word_to_host((uintptr_t*)encl.threads[0].retptr, retval);
 
   // set PMP
   pmp_set(encl.rid);
 
   /* restore host context */
+  swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   write_csr(stvec, encl.host_stvec[hart_id]);
   swap_prev_mepc(&enclaves[eid].threads[0], 0); 
 
@@ -321,31 +336,59 @@ uint64_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   if(eid < 0)
     return ENCLAVE_INVALID_ID;
 
-  printm("the enclave is stopped\n");
   spinlock_lock(&encl_lock);
   stoppable = enclaves[eid].state == RUNNING;
 
-  /* TODO: currently enclave cannot have multiple threads */
-  if(stoppable)
-    swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   spinlock_unlock(&encl_lock);
 
-  printm("stoppable: %d\n", stoppable);
   if(!stoppable)
     return ENCLAVE_NOT_RUNNING;
 
+  /* TODO: currently enclave cannot have multiple threads */
+  swap_prev_state(&enclaves[eid].threads[0], encl_regs);
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+  
   struct enclave_t encl = enclaves[eid];
   pmp_set(encl.rid);
   write_csr(stvec, encl.host_stvec[hart_id]);
   write_csr(satp, encl.host_satp);
   set_csr(mie, MIP_MTIP);
   
-  printm("returning stop_enclave \n");
-
   return ENCLAVE_INTERRUPTED; 
 }
 
 uint64_t resume_enclave(uintptr_t* host_regs, int eid)
 {
-  return ENCLAVE_NOT_IMPLEMENTED;
+  int resumable;
+  int hart_id;
+
+  spinlock_lock(&encl_lock);
+  resumable = TEST_BIT(encl_bitmap, eid) 
+    && (enclaves[eid].state == RUNNING) // not necessary 
+    && enclaves[eid].n_thread > 0; // not necessary
+  spinlock_unlock(&encl_lock);
+
+  if(!resumable) {
+    return ENCLAVE_NOT_RESUMABLE;
+  }
+
+  hart_id = read_csr(mhartid);
+ 
+  /* save host context */
+  swap_prev_state(&enclaves[eid].threads[0], host_regs);
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
+  enclaves[eid].host_stvec[hart_id] = read_csr(stvec);
+
+  // switch to enclave page table
+  write_csr(satp, enclaves[eid].encl_satp);
+ 
+  // disable timer set by the OS 
+  clear_csr(mie, MIP_MTIP);
+  clear_csr(mip, MIP_MTIP);
+  clear_csr(mip, MIP_STIP);
+
+  // unset PMP
+  pmp_unset(enclaves[eid].rid);
+  
+  return ENCLAVE_SUCCESS;
 }
