@@ -1,20 +1,22 @@
 CC = riscv64-unknown-linux-gnu-g++
 HOST_DIR = hosts/
 SRC_DIR = src/
+ENC_SRC_DIR = enc_src/
 BINS_DIR = bins/
 INCLUDE_DIR = include/
 CCFLAGS = -I $(INCLUDE_DIR)
 SRCS = keystone.cpp
 
-HOSTS = hello_long hello dummy_loop
+HOSTS = hello_long hello dummy_loop complex_elf
 
-HOST_DIRS = $(patsubst %,$(HOST_DIR)%,$(HOSTS))#$(wildcard $(HOST_DIR)*/)
+HOST_DIRS = $(patsubst %,$(HOST_DIR)%,$(HOSTS))
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 DISK_IMAGE = ../busybear-linux/busybear.bin
 MOUNT_DIR = ./tmp_busybear
 
 all: $(OBJS)
+	make -C $(ENC_SRC_DIR)
 	echo $(HOST_DIRS)
 	$(foreach enclave, $(HOST_DIRS),\
 		$(MAKE) -C $(enclave); \
@@ -40,6 +42,7 @@ update-header:
 clean:
 	rm $(OBJS)
 	rm -rf $(BINS_DIR)
+	make -C $(ENC_SRC_DIR) clean
 	$(foreach enclave, $(HOST_DIRS),\
 		$(MAKE) -C $(enclave) clean;\
 	)
