@@ -18,7 +18,7 @@ extern void save_host_regs(void);
 extern void restore_host_regs(void);
 
 /* FIXME: this takes O(n), change it to use a hash table */
-int encl_satp_to_eid(reg satp)
+int encl_satp_to_eid(uintptr_t satp)
 {
   int i;
   for(i=0; i<ENCL_MAX; i++)
@@ -29,7 +29,7 @@ int encl_satp_to_eid(reg satp)
   return -1;
 }
 /* FIXME: this takes O(n), change it to use a hash table */
-int host_satp_to_eid(reg satp)
+int host_satp_to_eid(uintptr_t satp)
 {
   int i;
   for(i=0; i<ENCL_MAX; i++)
@@ -214,7 +214,7 @@ uintptr_t destroy_enclave(int eid)
 
 #define RUNTIME_START_ADDRESS 0xffffffffc0000000
 
-uintptr_t run_enclave(int eid, uintptr_t entry, uintptr_t retptr)
+uintptr_t run_enclave(uintptr_t* host_regs, int eid, uintptr_t entry, uintptr_t retptr)
 {
   int runable;
   int hart_id;
@@ -244,12 +244,12 @@ uintptr_t run_enclave(int eid, uintptr_t entry, uintptr_t retptr)
     return ENCLAVE_ILLEGAL_ARGUMENT;
   
   /* TODO: only one thread is supported */
-  enclaves[eid].threads[0].retptr = (unsigned long*)retptr;
+  set_retptr(&enclaves[eid].threads[0], (unsigned long*)retptr);
 
   hart_id = read_csr(mhartid);
  
   /* save host context */
-  enclaves[eid].host_mepc[hart_id] = read_csr(mepc);
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
   enclaves[eid].host_stvec[hart_id] = read_csr(stvec);
 
   // entry point after return (mret)
@@ -267,7 +267,7 @@ uintptr_t run_enclave(int eid, uintptr_t entry, uintptr_t retptr)
   return ENCLAVE_SUCCESS;
 }
 
-uintptr_t exit_enclave(unsigned long retval)
+uintptr_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 {
   int eid = encl_satp_to_eid(read_csr(satp));
   int exitable;
@@ -285,9 +285,8 @@ uintptr_t exit_enclave(unsigned long retval)
 
   /* TODO: this must be not allowed */
   /* TODO: only one thread for now */
-  *(enclaves[eid].threads[0].retptr) = retval;
+  write_to_retptr(&enclaves[eid].threads[0], retval);
   
-
   // get the running enclave on this SM 
   struct enclave_t encl = enclaves[eid];
 
@@ -296,7 +295,7 @@ uintptr_t exit_enclave(unsigned long retval)
 
   /* restore host context */
   write_csr(stvec, encl.host_stvec[hart_id]);
-  write_csr(mepc, encl.host_mepc[hart_id]);
+  swap_prev_mepc(&enclaves[eid].threads[0], 0); 
 
   // switch to host page table
   write_csr(satp, encl.host_satp);
@@ -314,7 +313,7 @@ uintptr_t exit_enclave(unsigned long retval)
   return ENCLAVE_SUCCESS;
 }
 
-uint64_t stop_enclave(uint64_t request)
+uint64_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
 {
   int eid = encl_satp_to_eid(read_csr(satp));
   int stoppable;
@@ -322,23 +321,31 @@ uint64_t stop_enclave(uint64_t request)
   if(eid < 0)
     return ENCLAVE_INVALID_ID;
 
+  printm("the enclave is stopped\n");
   spinlock_lock(&encl_lock);
   stoppable = enclaves[eid].state == RUNNING;
 
   /* TODO: currently enclave cannot have multiple threads */
   if(stoppable)
-    enclaves[eid].threads[0].entry = read_csr(mepc);
+    swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   spinlock_unlock(&encl_lock);
 
+  printm("stoppable: %d\n", stoppable);
   if(!stoppable)
     return ENCLAVE_NOT_RUNNING;
 
   struct enclave_t encl = enclaves[eid];
   pmp_set(encl.rid);
   write_csr(stvec, encl.host_stvec[hart_id]);
-  write_csr(mepc, encl.host_mepc[hart_id]);
   write_csr(satp, encl.host_satp);
   set_csr(mie, MIP_MTIP);
+  
+  printm("returning stop_enclave \n");
 
   return ENCLAVE_INTERRUPTED; 
+}
+
+uint64_t resume_enclave(uintptr_t* host_regs, int eid)
+{
+  return ENCLAVE_NOT_IMPLEMENTED;
 }

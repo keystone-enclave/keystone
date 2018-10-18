@@ -19,19 +19,31 @@ uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
   return ret;
 }
 
-uintptr_t mcall_sm_run_enclave(unsigned long eid, unsigned long ptr, unsigned long retval)
+uintptr_t mcall_sm_run_enclave(uintptr_t* host_regs, unsigned long eid, unsigned long ptr, unsigned long retval)
 {
   if(get_host_satp(eid) != read_csr(satp))
     return ENCLAVE_NOT_ACCESSIBLE;
-  return run_enclave((unsigned int) eid, (uintptr_t) ptr, (uintptr_t) retval);
+  return run_enclave(host_regs, (unsigned int) eid, (uintptr_t) ptr, (uintptr_t) retval);
 }
 
-uintptr_t mcall_sm_exit_enclave(unsigned long retval)
+uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
 {
-  return exit_enclave((unsigned long) retval);
+  if(get_host_satp(eid) != read_csr(satp))
+    return ENCLAVE_NOT_ACCESSIBLE;
+  return resume_enclave(host_regs, (unsigned int) eid);
 }
 
-uintptr_t mcall_sm_not_implemented(unsigned long cause)
+uintptr_t mcall_sm_exit_enclave(uintptr_t* encl_regs, unsigned long retval)
+{
+  return exit_enclave(encl_regs, (unsigned long) retval);
+}
+
+uintptr_t mcall_sm_stop_enclave(uintptr_t* encl_regs, unsigned long request)
+{
+  return stop_enclave(encl_regs, (uint64_t)request);
+}
+
+uintptr_t mcall_sm_not_implemented(uintptr_t* encl_regs, unsigned long cause)
 {
   if((long)cause < 0)
   {
@@ -44,5 +56,5 @@ uintptr_t mcall_sm_not_implemented(unsigned long cause)
   {
     printm("the runtime could not handle exception %ld\n", cause);
   }
-  return exit_enclave((uint64_t)-1UL);
+  return exit_enclave(encl_regs, (uint64_t)-1UL);
 }
