@@ -28,8 +28,8 @@ keystone_status_t Keystone::init_raw_mem(void* ptr, size_t code_size, size_t mem
   enclp.mem_size = (unsigned long) mem_size;
   int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
 
-  if(ret < 0) {
-    PERROR("failed to create enclave - ioctl() failed");
+  if(ret) {
+    printf("failed to create enclave - ioctl() failed: %d", ret);
     return KEYSTONE_ERROR;
   }
 
@@ -86,8 +86,8 @@ keystone_status_t Keystone::init_elf(char* filepath, size_t mem_size, unsigned l
   //printf("Enclave info: ptr:%p code_sz:%ul mem_sz:%ul\n",app_code_buffer, code_size, mem_size);
   ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
 
-  if(ret < 0) {
-    PERROR("failed to create enclave - ioctl() failed");
+  if(ret) {
+    printf("failed to create enclave - ioctl() failed: %d", ret);
     goto err_all;
   }
 
@@ -113,47 +113,11 @@ keystone_status_t Keystone::destroy()
   enclp.eid = eid;
   int ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &enclp);
 
-  if(ret < 0) {
-    PERROR("failed to destroy enclave - ioctl() failed");
+  if(ret) {
+    printf("failed to destroy enclave - ioctl() failed: %d", ret);
     return KEYSTONE_ERROR;
   }
 
-  return KEYSTONE_SUCCESS;
-}
-
-keystone_status_t Keystone::copyFromEnclave(void* ptr, size_t size)
-{
-  int ret;
-  
-  struct keystone_ioctl_enclave_data data;
-  data.eid = eid;
-  data.ptr = (unsigned long) ptr;
-  data.size = (unsigned long) size;
-
-  ret = ioctl(fd, KEYSTONE_IOC_COPY_FROM_ENCLAVE, &data);
-  if(ret < 0) {
-    PERROR("failed to copy from enclave - ioctl() failed\n");
-    return KEYSTONE_ERROR;
-  }
-
-  return KEYSTONE_SUCCESS;
-}
-
-keystone_status_t Keystone::copyToEnclave(void* ptr, size_t size)
-{
-  int ret;
-
-  struct keystone_ioctl_enclave_data data;
-  data.eid = eid;
-  data.ptr = (unsigned long) ptr;
-  data.size = (unsigned long) size;
-
-  ret = ioctl(fd, KEYSTONE_IOC_COPY_TO_ENCLAVE, &data);
-  if(ret < 0)
-  {
-    PERROR("failed to copy to enclave - ioctl() failed\n");
-    return KEYSTONE_ERROR;
-  }
   return KEYSTONE_SUCCESS;
 }
 
@@ -170,9 +134,9 @@ keystone_status_t Keystone::run()
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
 
   printf("%ld\n", run.ret);
-  if(ret < 0)
+  if(ret)
     {
-      PERROR("failed to run enclave - ioctl() failed");
+      printf("failed to run enclave - ioctl() failed: %d", ret);
       return KEYSTONE_ERROR;
     }
   
