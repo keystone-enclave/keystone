@@ -14,33 +14,6 @@ Keystone::~Keystone()
   destroy();
 }
 
-
-keystone_status_t Keystone::init_raw_mem(void* ptr, size_t code_size, size_t mem_size)
-{
-  fd = open(KEYSTONE_DEV_PATH, O_RDWR);
-  if(fd < 0)
-    PERROR("cannot open device file");
-
-  struct keystone_ioctl_enclave_id enclp;
-
-  enclp.ptr = (unsigned long) ptr;
-  enclp.code_size = (unsigned long) code_size;
-  enclp.mem_size = (unsigned long) mem_size;
-  int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
-
-  if(ret) {
-    printf("failed to create enclave - ioctl() failed: %d", ret);
-    return KEYSTONE_ERROR;
-  }
-
-  eid = enclp.eid;
-  this->ptr = ptr;
-  
-  return KEYSTONE_SUCCESS;
-}
-
-
-
 keystone_status_t Keystone::init_elf(char* filepath, size_t mem_size, unsigned long usr_entry_ptr){
 
   FILE* app_file;

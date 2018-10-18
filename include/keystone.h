@@ -36,8 +36,6 @@ private:
 public:
   Keystone();
   ~Keystone();
-  keystone_status_t init_raw_mem(void* ptr, size_t code_size, size_t mem_size);
-  keystone_status_t init_raw_file(char* filepath, size_t mem_size);
   keystone_status_t init_elf(char* filepath, size_t mem_size, unsigned long usr_entry_ptrx);
   keystone_status_t destroy();
   keystone_status_t copyFromEnclave(void* ptr, size_t size);
