@@ -11,7 +11,7 @@
 
 #include "mm.h"
 struct regs_t {
-	unsigned long slot;
+	unsigned long sepc; // use this slot as sepc
 	unsigned long ra;
 	unsigned long sp;
 	unsigned long gp;
@@ -43,10 +43,6 @@ struct regs_t {
 	unsigned long t4;
 	unsigned long t5;
 	unsigned long t6;
-};
-
-struct host_ctx_t { 
-  struct regs_t regs;
 };
 
 struct encl_ctx_t {

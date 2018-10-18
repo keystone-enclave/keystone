@@ -4,6 +4,16 @@
 #include <stdint.h>
 
 #define SBI_SET_TIMER 0
+#define SBI_CONSOLE_PUTCHAR 1
+#define SBI_CONSOLE_GETCHAR 2
+
+#define SBI_SM_CREATE_ENCLAVE   101
+#define SBI_SM_DESTROY_ENCLAVE  102
+#define SBI_SM_RUN_ENCLAVE      105
+#define SBI_SM_STOP_ENCLAVE     106
+#define SBI_SM_RESUME_ENCLAVE   107
+#define SBI_SM_EXIT_ENCLAVE     1101
+#define SBI_SM_NOT_IMPLEMENTED  1111
 
 #define SBI_CALL(which, arg0, arg1, arg2) ({			\
 	register uintptr_t a0 asm ("a0") = (uintptr_t)(arg0);	\
@@ -28,6 +38,10 @@ static inline void sbi_set_timer(uint64_t stime_value){
 #else
 	SBI_CALL_1(SBI_SET_TIMER, stime_value);
 #endif
+}
+
+static inline void sbi_stop_enclave(uint64_t request) {
+  SBI_CALL_1(SBI_SM_STOP_ENCLAVE, request);
 }
 
 #endif

@@ -107,37 +107,24 @@
 .endm 
 
 _start:
-  /* keep the original stack pointer for the OS */
-  csrw sscratch, sp
-  
   /* runtime stack starts from 0x0 and grows downward! */
   li sp, 0
-  addi sp, sp, -HOST_CONTEXT_SIZE
 
-  /* save host context */
-  SAVE_ALL_BUT_SP
-
-  /* save host_sp */
-  csrrw t0, sscratch, x0
-  STORE t0, 2*REGBYTES(sp)
-
+  la t0, encl_trap_handler
+  csrw stvec, t0
+  
   /* TODO: stack size should be flexible */
-  li a0, ENCL_STACK_SIZE
+  csrw sepc, a0
+  
+  li t0, ENCL_STACK_SIZE
   call init_mm
 
   call init_timer
 
   /* set user stack below the runtime */
-  la a0, rt_base
-  csrw sscratch, a0
+  la t0, rt_base
+  csrw sscratch, t0
 
-  la a0, encl_trap_handler
-  csrw stvec, a0
-
-  /* restore encl_entry */
-  LOAD a0, 10*REGBYTES(sp)
-  csrw sepc, a0
-  
   /* start running enclave */
   csrrw sp, sscratch, sp
   sret
@@ -150,9 +137,13 @@ encl_trap_handler:
 
   /* save enclave context */
   SAVE_ALL_BUT_SP
+
   csrrw t0, sscratch, x0           # t0 <- user sp
   STORE t0, 2*REGBYTES(sp)         # user sp 
-  
+ 
+  csrr t0, sepc
+  STORE t0, (sp)
+
   csrr t0, sstatus
   STORE t0, 32*REGBYTES(sp)
   
@@ -160,31 +151,50 @@ encl_trap_handler:
   STORE t0, 33*REGBYTES(sp)
 
   csrr s2, scause
-  STORE s2, 34*REGBYTES(sp)  
   
   bge s2, zero, 1f 
-  
+ 
   /* handle interrupts */
+  
+  /* clear the MSB */
+  slli s2, s2, 1
+  srli s2, s2, 1
+  STORE s2, 34*REGBYTES(sp)  
+  
+  /* clear enclave context */
+  CLEAR_ALL_BUT_SP
+  
   mv a0, sp
+
   la t0, handle_interrupts
   jalr t0
+  
   j return_to_encl
 1:
   /* handle exceptions */
- 
+  STORE s2, 34*REGBYTES(sp)  
+
   la t0, rt_trap_table
   sll t1, s2, LOG_REGBYTES
   add t1, t0, t1
   LOAD t1, 0(t1)
 
+  mv a0, sp
+  
   jalr t1
  
 return_to_encl:
-  RESTORE_ALL_BUT_SP
+  LOAD t0, (sp)
+  csrw sepc, t0
+
+  la t0, encl_trap_handler
+  csrw stvec, t0
   
   // restore user stack
   LOAD t0, 2*REGBYTES(sp)
   csrw sscratch, t0
+  
+  RESTORE_ALL_BUT_SP
   
   addi sp, sp, ENCL_CONTEXT_SIZE
 
@@ -195,28 +205,12 @@ exit_enclave:
   /* restore return value */
   LOAD a0, 10*REGBYTES(sp)
 
-  /* move stack pointer to host context */
-  addi sp, sp, ENCL_CONTEXT_SIZE
-
-  /* store the return value to the host context;
-   * this is to use RESTORE_ALL_BUT_SP macro... 
-   * alternatively, we can do like LOAD a0, -22*REGBYTES(sp) */
-  STORE a0, 10*REGBYTES(sp)
-
-  /* clear all registers but sp */
-  RESTORE_ALL_BUT_SP
-
-  /* restore return */
-  LOAD a0, 10*REGBYTES(sp)
-
-  /* restore the OS sp */
-  LOAD sp, 2*REGBYTES(sp)
-
   /* SBI exit enclave */
   li a7, 1101
   ecall
 
 not_implemented:
+  csrr a0, scause
   li a7, 1111
   ecall
 

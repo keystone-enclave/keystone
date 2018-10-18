@@ -1,6 +1,6 @@
 CC = riscv64-unknown-linux-gnu-gcc
 CFLAGS = -Wall -Werror -fPIC
-SRCS = page_fault.c mm.c interrupt.c
+SRCS = page_fault.c mm.c interrupt.c printf.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = riscv64-unknown-linux-gnu-ld
