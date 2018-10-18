@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-uintptr_t mcall_sm_create_enclave(unsigned long base, unsigned long size);
+uintptr_t mcall_sm_create_enclave(unsigned long base, unsigned long size, unsigned long eidptr);
 uintptr_t mcall_sm_destroy_enclave(unsigned long eid);
 
 uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid, unsigned long ptr, unsigned long retptr);

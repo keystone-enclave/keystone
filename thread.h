@@ -49,6 +49,5 @@ struct thread_state_t
 /* swap previous and current thread states */
 void swap_prev_state(struct thread_state_t* state, uintptr_t* regs);
 void swap_prev_mepc(struct thread_state_t* state, uintptr_t mepc);
-void write_to_retptr(struct thread_state_t* state, unsigned long retval);
 void set_retptr(struct thread_state_t* state, unsigned long* retptr);
 #endif /* thread */

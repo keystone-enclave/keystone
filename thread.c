@@ -1,8 +1,10 @@
 #include "thread.h"
 #include "mtrap.h"
+
 void swap_prev_state(struct thread_state_t* thread, uintptr_t* regs)
 {
   int i;
+
   uintptr_t* prev = (uintptr_t*) &thread->prev_state;
   for(i=1; i<32; i++)
   {
@@ -21,11 +23,6 @@ void swap_prev_mepc(struct thread_state_t* thread, uintptr_t current_mepc)
   write_csr(mepc, tmp);
 }
 
-/* FIXME: this is illegal in security perspective, because host can give any retptr */
-void write_to_retptr(struct thread_state_t* thread, unsigned long retval)
-{
-  *(thread->retptr) = retval;
-}
 void set_retptr(struct thread_state_t* thread, unsigned long* retptr)
 {
   thread->retptr = retptr;
