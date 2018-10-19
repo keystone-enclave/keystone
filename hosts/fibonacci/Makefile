@@ -4,8 +4,8 @@ CCFLAGS = -I../../include
 APP_DIR = apps/
 KEYSTONE_OBJ = ../../keystone.o
 
-HOSTS = complex_elf.cpp
-APPS = c_elf
+HOSTS = fibonacci.cpp
+APPS = fib
 
 OBJS = $(patsubst %.cpp,%.o,$(HOSTS))
 BINS = $(patsubst %.cpp,%.riscv,$(HOSTS))

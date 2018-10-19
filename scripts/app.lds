@@ -2,7 +2,7 @@ OUTPUT_ARCH( "riscv" )
 
 SECTIONS 
 {
-  . = 0xa0000000;
+  . = 0x00001000;
   .text : { 
     *(.text._start)
     *(.text)
@@ -15,5 +15,6 @@ SECTIONS
   }
   .data : { *(.data) }
   .bss : { *(.bss) }
+  .debug : { *(.debug) }
   _end = .;
 }
