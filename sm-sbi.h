@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+typedef uintptr_t enclave_ret_t;
+
 uintptr_t mcall_sm_create_enclave(unsigned long base, unsigned long size, unsigned long eidptr);
 uintptr_t mcall_sm_destroy_enclave(unsigned long eid);
 

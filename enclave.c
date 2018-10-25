@@ -18,24 +18,28 @@ extern void save_host_regs(void);
 extern void restore_host_regs(void);
 
 /* FIXME: this takes O(n), change it to use a hash table */
-int encl_satp_to_eid(uintptr_t satp)
+int encl_satp_to_eid(uintptr_t satp, unsigned int* eid)
 {
-  int i;
+  unsigned int i;
   for(i=0; i<ENCL_MAX; i++)
   {
-    if(enclaves[i].encl_satp == satp)
+    if(enclaves[i].encl_satp == satp){
+      *eid = i;
       return i;
+    }
   }
   return -1;
 }
 /* FIXME: this takes O(n), change it to use a hash table */
-int host_satp_to_eid(uintptr_t satp)
+int host_satp_to_eid(uintptr_t satp, unsigned int* eid)
 {
-  int i;
+  unsigned int i;
   for(i=0; i<ENCL_MAX; i++)
   {
-    if(enclaves[i].host_satp == satp)
+    if(enclaves[i].host_satp == satp){
+      *eid = i;
       return i;
+    }
   }
   return -1;
 }
@@ -70,7 +74,7 @@ int encl_free_idx(int idx)
   return 0;
 }
 
-unsigned long get_host_satp(int eid)
+unsigned long get_host_satp(unsigned int eid)
 {
   if(!TEST_BIT(encl_bitmap, eid))
     return -1;
@@ -78,10 +82,10 @@ unsigned long get_host_satp(int eid)
   return enclaves[eid].host_satp;
 }
 
-int detect_region_overlap(int eid, uintptr_t addr, uintptr_t size)
+int detect_region_overlap(unsigned int eid, uintptr_t addr, uintptr_t size)
 {
   void* epm_base;
-  uint64_t epm_size;
+  size_t epm_size;
 
   epm_base = pmp_get_addr(enclaves[eid].rid);
   epm_size = pmp_get_size(enclaves[eid].rid);
@@ -125,11 +129,12 @@ int init_enclave_memory(uintptr_t base, uintptr_t size)
   return ret;
 }
 
-uintptr_t create_enclave(uintptr_t base, uintptr_t size, uintptr_t eidptr)
+enclave_ret_t create_enclave(uintptr_t base, uintptr_t size, unsigned int* eidptr)
 {
   uint8_t perm = 0;
-  int eid;
-  int ret, region;
+  unsigned int eid;
+  enclave_ret_t ret;
+  int region;
   int i;
   int region_overlap = 0;
   
@@ -183,7 +188,7 @@ uintptr_t create_enclave(uintptr_t base, uintptr_t size, uintptr_t eidptr)
   enclaves[eid].state = INITIALIZED;
   spinlock_unlock(&encl_lock);
  
-  copy_word_to_host((uintptr_t*)eidptr, eid);
+  copy_word_to_host((uintptr_t*)eidptr, (uintptr_t)eid);
 
   return ENCLAVE_SUCCESS;
  
@@ -195,7 +200,7 @@ error:
   return ret;
 }
 
-uintptr_t destroy_enclave(int eid)
+enclave_ret_t destroy_enclave(unsigned int eid)
 {
   int destroyable;
 
@@ -215,7 +220,7 @@ uintptr_t destroy_enclave(int eid)
   // 1. clear all the data in the enclave page
   // requires no lock (single runner)
   void* base = pmp_get_addr(enclaves[eid].rid);
-  uintptr_t size = pmp_get_size(enclaves[eid].rid);
+  size_t size = pmp_get_size(enclaves[eid].rid);
   //memset((void*) base, 0, size);
 
   // 2. free pmp region
@@ -236,7 +241,7 @@ uintptr_t destroy_enclave(int eid)
 
 #define RUNTIME_START_ADDRESS 0xffffffffc0000000
 
-uintptr_t run_enclave(uintptr_t* host_regs, int eid, uintptr_t entry, uintptr_t retptr)
+enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid, uintptr_t entry, unsigned long* retptr)
 {
   int runable;
   int hart_id;
@@ -261,7 +266,7 @@ uintptr_t run_enclave(uintptr_t* host_regs, int eid, uintptr_t entry, uintptr_t 
     return ENCLAVE_ILLEGAL_ARGUMENT;
   }
   /* TODO: only one thread is supported */
-  set_retptr(&enclaves[eid].threads[0], (unsigned long*)retptr);
+  set_retptr(&enclaves[eid].threads[0], retptr);
 
   hart_id = read_csr(mhartid);
  
@@ -288,13 +293,13 @@ uintptr_t run_enclave(uintptr_t* host_regs, int eid, uintptr_t entry, uintptr_t 
   return ENCLAVE_SUCCESS;
 }
 
-uintptr_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
+enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 {
-  int eid = encl_satp_to_eid(read_csr(satp));
+  unsigned int eid;
   int exitable;
   int hart_id = read_csr(mhartid);
 
-  if(eid < 0)
+  if(encl_satp_to_eid(read_csr(satp),&eid) < 0)
     return ENCLAVE_INVALID_ID;
  
   spinlock_lock(&encl_lock);
@@ -306,7 +311,7 @@ uintptr_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   
   // get the running enclave on this SM 
   struct enclave_t encl = enclaves[eid];
-  copy_word_to_host((uintptr_t*)encl.threads[0].retptr, retval);
+  copy_word_to_host(encl.threads[0].retptr, retval);
 
   // set PMP
   pmp_set(encl.rid);
@@ -332,12 +337,12 @@ uintptr_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   return ENCLAVE_SUCCESS;
 }
 
-uint64_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
+enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
 {
-  int eid = encl_satp_to_eid(read_csr(satp));
+  unsigned int eid;
   int stoppable;
   int hart_id = read_csr(mhartid);
-  if(eid < 0)
+  if(encl_satp_to_eid(read_csr(satp),&eid) < 0)
     return ENCLAVE_INVALID_ID;
 
   spinlock_lock(&encl_lock);
@@ -361,7 +366,7 @@ uint64_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   return ENCLAVE_INTERRUPTED; 
 }
 
-uint64_t resume_enclave(uintptr_t* host_regs, int eid)
+enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
 {
   int resumable;
   int hart_id;
