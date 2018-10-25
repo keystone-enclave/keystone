@@ -18,7 +18,7 @@ typedef enum {
 
 struct enclave_t
 {
-  int eid; //enclave id
+  unsigned int eid; //enclave id
   int rid; //region id
   unsigned long host_satp; //supervisor satp
   unsigned long encl_satp; // enclave's page table base
@@ -32,13 +32,13 @@ struct enclave_t
   struct thread_state_t threads[MAX_ENCL_THREADS];
 };
 
-unsigned long get_host_satp(int eid);
-uintptr_t create_enclave(uintptr_t base, uintptr_t size, uintptr_t eidptr);
-uintptr_t destroy_enclave(int eid);
+unsigned long get_host_satp(unsigned int eid);
+enclave_ret_t create_enclave(uintptr_t base, size_t size, unsigned int* eidptr);
+enclave_ret_t destroy_enclave(unsigned int eid);
 
-uintptr_t run_enclave(uintptr_t* regs, int eid, uintptr_t entry, uintptr_t retptr);
-uintptr_t exit_enclave(uintptr_t* regs, unsigned long retval);
-uintptr_t stop_enclave(uintptr_t* regs, uint64_t request);
-uintptr_t resume_enclave(uintptr_t* regs, int eid);
+enclave_ret_t run_enclave(uintptr_t* regs, unsigned int eid, uintptr_t entry, unsigned long* retptr);
+enclave_ret_t exit_enclave(uintptr_t* regs, unsigned long retval);
+enclave_ret_t stop_enclave(uintptr_t* regs, uint64_t request);
+enclave_ret_t resume_enclave(uintptr_t* regs, unsigned int eid);
 
 #endif

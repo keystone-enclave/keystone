@@ -19,19 +19,19 @@
 #define SBI_SM_NOT_IMPLEMENTED  1111
 
 /* error codes */
-#define ENCLAVE_NOT_IMPLEMENTED             -2U
-#define ENCLAVE_UNKNOWN_ERROR               -1U
-#define ENCLAVE_SUCCESS                     0
-#define ENCLAVE_INVALID_ID                  1
-#define ENCLAVE_INTERRUPTED                 2
-#define ENCLAVE_PMP_FAILURE                 3
-#define ENCLAVE_NOT_RUNNABLE                4
-#define ENCLAVE_NOT_DESTROYABLE             5
-#define ENCLAVE_REGION_OVERLAPS             6
-#define ENCLAVE_NOT_ACCESSIBLE              7
-#define ENCLAVE_ILLEGAL_ARGUMENT            8
-#define ENCLAVE_NOT_RUNNING                 9
-#define ENCLAVE_NOT_RESUMABLE               10
+#define ENCLAVE_NOT_IMPLEMENTED             (enclave_ret_t)-2U
+#define ENCLAVE_UNKNOWN_ERROR               (enclave_ret_t)-1U
+#define ENCLAVE_SUCCESS                     (enclave_ret_t)0
+#define ENCLAVE_INVALID_ID                  (enclave_ret_t)1
+#define ENCLAVE_INTERRUPTED                 (enclave_ret_t)2
+#define ENCLAVE_PMP_FAILURE                 (enclave_ret_t)3
+#define ENCLAVE_NOT_RUNNABLE                (enclave_ret_t)4
+#define ENCLAVE_NOT_DESTROYABLE             (enclave_ret_t)5
+#define ENCLAVE_REGION_OVERLAPS             (enclave_ret_t)6
+#define ENCLAVE_NOT_ACCESSIBLE              (enclave_ret_t)7
+#define ENCLAVE_ILLEGAL_ARGUMENT            (enclave_ret_t)8
+#define ENCLAVE_NOT_RUNNING                 (enclave_ret_t)9
+#define ENCLAVE_NOT_RESUMABLE               (enclave_ret_t)10
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0
