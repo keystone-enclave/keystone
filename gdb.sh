@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ./riscv-qemu/riscv64-softmmu/qemu-system-riscv64 -S -s -D debug.log -nographic -machine virt \
 	-secure-boot sanctum_bootloader/boot_trng.bin \
   -kernel riscv-pk/build/bbl -append "root=/dev/vda ro console=ttyS0" \
