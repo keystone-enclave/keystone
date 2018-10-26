@@ -1,0 +1,47 @@
+# Partially adapted from qemu:
+# https://git.qemu.org/?p=qemu.git;a=blob_plain;f=HACKING;hb=HEAD
+
+Coding Guidelines for Keystone
+==================================
+
+This is a work in progress, if you see things that should be added,
+add them.
+
+If you see files that don't conform, submit a refactor-only
+change. Ensure that the refactor doesn't break anything.
+
+Scalar Types
+-------------
+
+If you're using "int" or "long", odds are good that there's a better type.
+If a variable is counting something, it should be declared with an
+unsigned type.
+
+If it's memory-size related, size_t should be a good choice (use
+ssize_t only if required).
+
+uintptr_t is our default type for offsets and pointers of
+indeterminite type. This is commonly used for passing code entry
+pointers and similar. If you know what the pointer goes to, use the
+appropriate pointer type (ex: unsigned long*).
+
+Casts
+-----
+
+For SM code and similar, avoid explicit casts if possible. Any time
+you want to use an explicit cast try to use the matching type instead.
+
+
+Const pointers
+--------------
+
+* THIS IS NOT BEING DONE YET *
+
+Ensure that all of your pointers are "const-correct".  Unless a
+pointer is used to modify the pointed-to storage, give it the "const"
+attribute.  That way, the reader knows up-front that this is a
+read-only pointer.  Perhaps more importantly, if we're diligent about
+this, when you see a non-const pointer, you're guaranteed that it is
+used to modify the storage it points to, or it is aliased to another
+pointer that is.
+

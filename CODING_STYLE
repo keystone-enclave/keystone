@@ -1,0 +1,127 @@
+# Adapted from the Xen and qemu coding styles:
+# Xen: http://xenbits.xen.org/gitweb/?p=xen.git;a=blob;f=CODING_STYLE
+# qemu: https://git.qemu.org/?p=qemu.git;a=blob_plain;f=CODING_STYLE;hb=HEAD
+
+Coding Style for Keystone 
+===================================
+
+This is a work in progress, if you see things that should be added,
+add them.
+
+If you see files that don't conform, submit a change. Format changes
+should be in their own format-only commit.
+
+This style may not end up applying to all subprojects. It does apply
+to SM code and other low-level C like the runtime. The Linux driver
+code is exempted, and should probably follow Linux style(?)
+
+See CODING_GUIDELINES for more specific comments on type usage/etc
+
+Indentation
+-----------
+
+Indenting uses spaces, not tabs - in contrast to Linux.
+
+The only exception is Makefiles, which are required to use tabs.
+
+An indent level consists of four spaces.  Code within blocks is
+indented by one extra indent level.  The enclosing braces of a block
+are indented the same as the code _outside_ the block.  e.g.
+
+void fun(void)
+{
+    /* One level of indent. */
+
+    {
+         /* A second level of indent. */
+    }
+}
+
+White space
+-----------
+
+Space characters are used to spread out logical statements, such as in
+the condition of an if or while.  Spaces are placed between the
+keyword and the brackets surrounding the condition, between the
+brackets and the condition itself, and around binary operators (except
+the structure access operators, '.' and '->'). e.g.
+
+if ( (wibble & wombat) == 42 )
+{
+    ...
+
+There should be no trailing white space at the end of lines (including
+after the opening /* of a comment block).
+
+
+Naming Things
+-------------
+
+Variables are lower_case_with_underscores; easy to type and read.
+Structured type names are in CamelCase; harder to type but standing
+out.  Enum type names and function type names should also be in
+CamelCase.  Scalar type names are
+lower_case_with_underscores_ending_with_a_t, like the POSIX uint64_t
+and family. We are aware this violates POSIX standards.
+
+Use abbreviations where obvious and/or standardized in Keystone. ex:
+enclave->encl, enclave application->eapp, etc
+
+If you use an uncommon abbreviation define it in a comment at the
+relevant declaration.
+
+Line Length
+-----------
+
+Lines should be less than 80 characters in length.  Long lines should
+be split at sensible places and the trailing portions indented.
+
+User visible strings (e.g., printk() messages) should not be split so
+they can searched for more easily.
+
+Bracing
+-------
+
+Every indented statement is braced; even if the block contains just one
+statement.  The opening brace is on the line that contains the control
+flow statement that introduces the new block; the closing brace is on the
+same line as the else keyword, or on a line by itself if there is no else
+keyword.  Example:
+
+    if (a == 5) {
+        printf("a was 5.\n");
+    } else if (a == 6) {
+        printf("a was 6.\n");
+    } else {
+        printf("a was something else entirely.\n");
+    }
+
+Note that 'else if' is considered a single statement; otherwise a long if/
+else if/else if/.../else sequence would need an indent for every else
+statement.
+
+An exception is the opening brace for a function; for reasons of tradition
+and clarity it comes on a line by itself:
+
+    void a_function(void)
+    {
+        do_something();
+    }
+
+Comments
+--------
+
+Only C style /* ... */ comments are to be used.  C++ style // comments
+should not be used.  Multi-word comments should begin with a capital
+letter.  Comments containing a single sentence may end with a full
+stop; comments containing several sentences must have a full stop
+after each sentence.
+
+Multi-line comment blocks should start and end with comment markers on
+separate lines and each line should begin with a leading '*'.
+
+/*
+ * Example, multi-line comment block.
+ *
+ * Note beginning and end markers on separate lines and leading '*'.
+ */
