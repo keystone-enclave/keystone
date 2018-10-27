@@ -115,9 +115,6 @@ _start:
   
   /* TODO: stack size should be flexible */
   csrw sepc, a0
-  
-  li t0, ENCL_STACK_SIZE
-  call init_mm
 
   call init_timer
 
