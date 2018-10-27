@@ -118,7 +118,7 @@ int init_enclave_memory(uintptr_t base, uintptr_t size)
   // (1) Traverse the page table to see if any address points to the outside of EPM
   // (2) Zero out every page table entry that is not valid
   ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size);
-  
+  //print_pgtable(ptlevel, (pte_t*) base, 0);
   // FIXME: probably we will also need to:
   // (3) Zero out every page that is not pointed by the page table
 
@@ -175,6 +175,7 @@ uintptr_t create_enclave(uintptr_t base, uintptr_t size, uintptr_t eidptr)
   enclaves[eid].eid = eid;
   enclaves[eid].rid = region;
   enclaves[eid].host_satp = read_csr(satp);
+  //print_pgtable(3, (pte_t*) (read_csr(satp) << RISCV_PGSHIFT), 0);
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
   enclaves[eid].n_thread = 0;
 
@@ -277,6 +278,9 @@ uintptr_t run_enclave(uintptr_t* host_regs, int eid, uintptr_t entry, uintptr_t 
  
   // disable timer set by the OS 
   clear_csr(mie, MIP_MTIP);
+  clear_csr(mip, MIP_MSIP);
+  clear_csr(mip, MIP_STIP);
+  clear_csr(mip, MIP_SSIP);
 
   // unset PMP
   pmp_unset(enclaves[eid].rid);

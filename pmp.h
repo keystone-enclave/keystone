@@ -5,7 +5,7 @@
 #include "mtrap.h"
 #include <errno.h>
 
-#define PMP_N_REG         16 //number of PMP registers
+#define PMP_N_REG         8 //number of PMP registers
 #define PMP_MAX_N_REGION  PMP_N_REG //maximum number of PMP regions
 
 #define SET_BIT(bitmap, n) (bitmap |= (0x1 << n))
@@ -39,8 +39,9 @@ enum pmp_priority {
                 "csrrw t0, mtvec, t0\n\t" \
                 "csrw pmpaddr"#n", %0\n\t" \
                 "csrw pmpcfg"#g", %1\n\t" \
+                "sfence.vma\n\t"\
                 ".align 2\n\t" \
-                "1: csrw mtvec, t0" \
+                "1: csrw mtvec, t0 \n\t" \
                 : : "r" (addr), "r" (pmpc) : "t0"); \
 }
 
@@ -51,6 +52,7 @@ enum pmp_priority {
                 "csrrw t0, mtvec, t0 \n\t" \
                 "csrw pmpaddr"#n", %0\n\t" \
                 "csrw pmpcfg"#g", %1\n\t" \
+                "sfence.vma\n\t"\
                 ".align 2\n\t" \
                 "1: csrw mtvec, t0" \
                 : : "r" (0), "r" (pmpc) : "t0"); \
