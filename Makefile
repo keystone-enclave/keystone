@@ -32,7 +32,7 @@ copy: all
 	)
 	mkdir -p $(MOUNT_DIR)
 	sudo mount $(DISK_IMAGE) $(MOUNT_DIR)
-	sudo cp $(BINS_DIR)/* $(MOUNT_DIR)/root/;
+	sudo rsync -a $(BINS_DIR)/ $(MOUNT_DIR)/root/
 	sudo umount $(MOUNT_DIR)
 	rmdir $(MOUNT_DIR)
 

@@ -2,4 +2,7 @@
 *.eapp_riscv
 *.swp
 *.o
+*.a
+*~
+*_entry.h
 bins/
