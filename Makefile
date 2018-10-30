@@ -7,7 +7,7 @@ INCLUDE_DIR = include/
 CCFLAGS = -I $(INCLUDE_DIR)
 SRCS = keystone.cpp
 
-HOSTS = hello_long hello dummy_loop complex_elf fibonacci fibonacci_bench
+HOSTS = hello_long hello dummy_loop complex_elf fibonacci fibonacci_bench malloc
 
 HOST_DIRS = $(patsubst %,$(HOST_DIR)%,$(HOSTS))
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))

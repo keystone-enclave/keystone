@@ -7,7 +7,7 @@ AR = riscv64-unknown-elf-ar
 ARFLAGS = rcs
 
 ASM_SRCS = encret.s
-C_SRCS =
+C_SRCS = tiny-malloc.c string.c
 
 A_OBJS = $(patsubst %.s,%.o,$(ASM_SRCS))
 C_OBJS = $(patsubst %.c,%.o,$(C_SRCS))
@@ -18,7 +18,7 @@ encret.o: encret.s
 	$(CC) -I$(INCLUDE_DIR) -c $<
 
 libeapp_utils.a: $(A_OBJS) $(C_OBJS)
-	$(AR) $(ARFLAGS) ../$@ $<
+	$(AR) $(ARFLAGS) ../$@ $^
 
 %.o: %.c
 	$(CC) -I$(INCLUDE_DIR) -c $<
