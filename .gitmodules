@@ -3,22 +3,22 @@
 	url = git@github.com:riscv/riscv-gnu-toolchain
 [submodule "busybear-linux"]
 	path = busybear-linux
-	url = git@github.com:eyrie-enclave/busybear-linux
+	url = git@github.com:keystone-enclave/busybear-linux
 [submodule "riscv-linux"]
 	path = riscv-linux
-	url = git@github.com:eyrie-enclave/riscv-linux
+	url = git@github.com:keystone-enclave/riscv-linux
 [submodule "riscv-pk"]
 	path = riscv-pk
-	url = git@github.com:eyrie-enclave/riscv-pk
+	url = git@github.com:keystone-enclave/riscv-pk
 [submodule "riscv-qemu"]
 	path = riscv-qemu
 	url = git@github.com:riscv/riscv-qemu
 [submodule "sanctum_bootloader"]
 	path = sanctum_bootloader
-	url = git@github.com:eyrie-enclave/sanctum_bootloader
+	url = git@github.com:keystone-enclave/sanctum_bootloader
 [submodule "sdk"]
 	path = sdk
-	url = git@github.com:eyrie-enclave/eyrie-sdk
+	url = git@github.com:keystone-enclave/keystone-sdk
 [submodule "runtime"]
 	path = runtime
-	url = git@github.com:eyrie-enclave/eyrie-runtime
+	url = git@github.com:keystone-enclave/keystone-runtime
