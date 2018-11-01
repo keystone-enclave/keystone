@@ -245,7 +245,6 @@ enclave_ret_t destroy_enclave(unsigned int eid)
 enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid, uintptr_t entry, unsigned long* retptr)
 {
   int runable;
-  int hart_id;
 
   spinlock_lock(&encl_lock);
   runable = TEST_BIT(encl_bitmap, eid) 
@@ -269,12 +268,10 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid, uintptr_t entr
   /* TODO: only one thread is supported */
   set_retptr(&enclaves[eid].threads[0], retptr);
 
-  hart_id = read_csr(mhartid);
- 
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], host_regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
-  enclaves[eid].host_stvec[hart_id] = read_csr(stvec);
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
   // entry point after return (mret)
   write_csr(mepc, RUNTIME_START_ADDRESS); // address of trampoline (runtime)
@@ -304,7 +301,6 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 {
   unsigned int eid;
   int exitable;
-  int hart_id = read_csr(mhartid);
 
   if(encl_satp_to_eid(read_csr(satp),&eid) < 0)
     return ENCLAVE_INVALID_ID;
@@ -327,7 +323,7 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   copy_word_to_host(encl.threads[0].retptr, retval);
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
-  write_csr(stvec, encl.host_stvec[hart_id]);
+  swap_prev_stvec(&enclaves[eid].threads[0], 0);
   swap_prev_mepc(&enclaves[eid].threads[0], 0); 
 
   // switch to host page table
@@ -350,7 +346,6 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
 {
   unsigned int eid;
   int stoppable;
-  int hart_id = read_csr(mhartid);
   if(encl_satp_to_eid(read_csr(satp),&eid) < 0)
     return ENCLAVE_INVALID_ID;
 
@@ -365,12 +360,12 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   /* TODO: currently enclave cannot have multiple threads */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));  
   struct enclave_t encl = enclaves[eid];
+  
   pmp_set(encl.rid, PMP_NO_PERM);
   osm_pmp_set(PMP_ALL_PERM);
 
-  write_csr(stvec, encl.host_stvec[hart_id]);
   write_csr(satp, encl.host_satp);
   set_csr(mie, MIP_MTIP);
   
@@ -380,7 +375,6 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
 enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
 {
   int resumable;
-  int hart_id;
 
   spinlock_lock(&encl_lock);
   resumable = TEST_BIT(encl_bitmap, eid) 
@@ -392,12 +386,10 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
     return ENCLAVE_NOT_RESUMABLE;
   }
 
-  hart_id = read_csr(mhartid);
- 
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], host_regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
-  enclaves[eid].host_stvec[hart_id] = read_csr(stvec);
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
@@ -413,5 +405,6 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
   // set PMP
   pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM); 
+
   return ENCLAVE_SUCCESS;
 }
