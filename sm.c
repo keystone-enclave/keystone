@@ -4,7 +4,7 @@
 #include "atomic.h"
 
 static int sm_init_done = 0;
-static int sm_region_id, os_region_id;
+static int sm_region_id = 0, os_region_id = 0;
 static spinlock_t sm_init_lock = SPINLOCK_INIT;
 
 typedef unsigned char byte;
@@ -13,11 +13,16 @@ extern byte sanctum_sm_signature[64];
 extern byte sanctum_dev_public_key[32];
 extern unsigned int sanctum_sm_size[1];
 
+int osm_pmp_set(uint8_t perm)
+{
+  /* in case of OSM, PMP cfg is exactly the opposite.*/
+  return pmp_set(os_region_id, perm);
+}
+
 int smm_init()
 {
-  uint8_t perm = 0;
   int region = -1;
-  int ret = pmp_region_init(SMM_BASE, SMM_SIZE, perm, PMP_PRI_TOP, &region);
+  int ret = pmp_region_init(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region);
   if(ret)
     return -1;
 
@@ -26,9 +31,8 @@ int smm_init()
 
 int osm_init()
 {
-  uint8_t perm = PMP_W | PMP_X | PMP_R; 
   int region = -1;
-  int ret = pmp_region_init(0, -1UL, perm, PMP_PRI_BOTTOM, &region); 
+  int ret = pmp_region_init(0, -1UL, PMP_PRI_BOTTOM, &region); 
   if(ret)
     return -1;
 
@@ -78,8 +82,8 @@ void sm_init(void)
     sm_init_done = 1;
   }
   
-  pmp_set(sm_region_id);
-  pmp_set(os_region_id);
+  pmp_set(sm_region_id, PMP_NO_PERM);
+  pmp_set(os_region_id, PMP_ALL_PERM);
   
   spinlock_unlock(&sm_init_lock);
   

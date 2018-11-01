@@ -43,4 +43,5 @@
 
 void sm_init(void);
 
+int osm_pmp_set(uint8_t perm);
 #endif

@@ -9,7 +9,12 @@ static uint32_t region_def_bitmap = 0;
 static struct pmp_region regions[PMP_MAX_N_REGION];
 
 /* PMP IPI mailbox */
-static int ipi_mailbox[MAX_HARTS] = {0,};
+typedef struct {
+  uint8_t pending;
+  uint8_t perm;
+} ipi_msg_t;
+
+static ipi_msg_t ipi_mailbox[MAX_HARTS] = {0,};
 static int ipi_region_idx = -1;
 static enum ipi_type {IPI_PMP_INVALID=-1, 
                       IPI_PMP_SET, 
@@ -45,27 +50,33 @@ int get_free_reg_idx() {
 
 void handle_pmp_ipi(uintptr_t* regs, uintptr_t dummy, uintptr_t mepc)
 {
-  if(ipi_type == IPI_PMP_SET)
-    pmp_set(ipi_region_idx);
-  else
+  if(ipi_type == IPI_PMP_SET) 
+  {
+    uint8_t perm = ipi_mailbox[read_csr(mhartid)].perm;
+    pmp_set(ipi_region_idx, perm);
+  }
+  else 
+  {
     pmp_unset(ipi_region_idx);
+  }
 
-  ipi_mailbox[read_csr(mhartid)] = 0;
+  ipi_mailbox[read_csr(mhartid)].pending = 0;
   return;
 }
 
-static void send_pmp_ipi(uintptr_t recipient)
+static void send_pmp_ipi(uintptr_t recipient, uint8_t perm)
 {
   if (((disabled_hart_mask >> recipient) & 1)) return;
   /* never send IPI to my self; it will result in a deadlock */
   if (recipient == read_csr(mhartid)) return;
   atomic_or(&OTHER_HLS(recipient)->mipi_pending, IPI_PMP);
   mb();
+  ipi_mailbox[recipient].pending = 1;
+  ipi_mailbox[recipient].perm = perm & PMP_ALL_PERM;
   *OTHER_HLS(recipient)->ipi = 1;
-  ipi_mailbox[recipient] = 1;
 }
 
-static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type)
+static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type, uint8_t perm)
 {
   uintptr_t mask = hart_mask;
   ipi_region_idx = region_idx;
@@ -74,14 +85,14 @@ static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type)
   for(uintptr_t i=0, m=mask; m; i++, m>>=1)
   {
     if(m & 1) {
-      send_pmp_ipi(i);
+      send_pmp_ipi(i, perm);
     }
   }
 
   /* wait until every other hart sets PMP */
   for(uintptr_t i=0, m=mask; m; i++, m>>=1) {
     if(m & 1) {
-      while( atomic_read(&ipi_mailbox[i]) ) {
+      while( atomic_read(&ipi_mailbox[i].pending) ) {
         continue;
       }
     }
@@ -97,7 +108,7 @@ int pmp_unset_global(int region_idx)
    * by ensuring only one hart can enter this region at a time */
 #ifdef __riscv_atomic
   spinlock_lock(&pmp_ipi_global_lock);
-  send_and_sync_pmp_ipi(region_idx, IPI_PMP_UNSET);
+  send_and_sync_pmp_ipi(region_idx, IPI_PMP_UNSET, PMP_NO_PERM);
   spinlock_unlock(&pmp_ipi_global_lock);
 #endif
   /* unset PMP of itself */
@@ -107,7 +118,7 @@ int pmp_unset_global(int region_idx)
 }
 
 /* populate pmp set command to every other hart */
-int pmp_set_global(int region_idx)
+int pmp_set_global(int region_idx, uint8_t perm)
 {
   if(!is_pmp_region_valid(region_idx))
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
@@ -116,28 +127,29 @@ int pmp_set_global(int region_idx)
    * by ensuring only one hart can enter this region at a time */
 #ifdef __riscv_atomic
   spinlock_lock(&pmp_ipi_global_lock);
-  send_and_sync_pmp_ipi(region_idx, IPI_PMP_SET);
+  send_and_sync_pmp_ipi(region_idx, IPI_PMP_SET, perm);
   spinlock_unlock(&pmp_ipi_global_lock);
 #endif
   /* set PMP of itself */
-  pmp_set(region_idx);
+  pmp_set(region_idx, perm);
   return PMP_SUCCESS;
 }
 
-int pmp_set(int region_idx)
+int pmp_set(int region_idx, uint8_t perm)
 { 
   if(!is_pmp_region_valid(region_idx)) 
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
-  
+ 
+  uint8_t perm_bits = perm & PMP_ALL_PERM;
   int reg_idx = regions[region_idx].reg_idx;
-  uintptr_t pmpcfg = (uintptr_t) regions[region_idx].cfg << (8*(reg_idx%PMP_PER_GROUP));
+  uintptr_t pmpcfg = (uintptr_t) (regions[region_idx].addrmode | perm_bits) << (8*(reg_idx%PMP_PER_GROUP));
   uintptr_t pmpaddr = regions[region_idx].addr;
 
-  /*spinlock_lock(&pmp_lock);
-  printm("pmp_set() [hart %d]: pmpreg %d, address:%lx, size:%lx\n", 
-      read_csr(mhartid), reg_idx, regions[region_idx].addr<<2, regions[region_idx].size);
+  spinlock_lock(&pmp_lock);
+  printm("pmp_set() [hart %d]: pmpreg %d, address:%lx, size:%lx, perm: 0x%x\n", 
+      read_csr(mhartid), reg_idx, regions[region_idx].addr<<2, regions[region_idx].size, perm);
   spinlock_unlock(&pmp_lock);
-  */
+  
   int n=reg_idx;
   switch(n) {
 #define X(n,g) case n: { PMP_SET(n, g, pmpaddr, pmpcfg); break; }
@@ -165,7 +177,7 @@ int pmp_unset(int region_idx)
       die("pmp_unset failed: this must not be tolerated\n");
   }
   
-  /*spinlock_lock(&pmp_lock);
+  /* spinlock_lock(&pmp_lock);
   printm("pmp_unset() [hart %d]: pmpreg %d, address:%lx, size:%lx\n", 
       read_csr(mhartid), reg_idx, regions[region_idx].addr<<2, regions[region_idx].size);
   spinlock_unlock(&pmp_lock);
@@ -180,33 +192,31 @@ int pmp_region_debug_print(int region_idx)
  
   uintptr_t start = regions[region_idx].start;
   uint64_t size = regions[region_idx].size;
-  uint8_t perm = regions[region_idx].perm;
-  uint8_t cfg = regions[region_idx].cfg;
+  uint8_t addrmode = regions[region_idx].addrmode;
   uintptr_t addr = regions[region_idx].addr;
   int reg_idx = regions[region_idx].reg_idx;
 
   printm("start: 0x%llx\n"
     "size: 0x%llx (%d)\n"
-    "perm: 0x%x\n"
-    "cfg: 0x%x\n"
+    "addrmode: 0x%x\n"
     "addr<<3: 0x%llx\n"
     "reg_idx: %d\n"
-   , start, size, size, perm, cfg, addr<<3, reg_idx ); 
+   , start, size, size, addrmode, addr<<3, reg_idx ); 
 
   return PMP_SUCCESS;  
 }
 
 
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority priority, int* rid)
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid)
 {
   int ret;
   spinlock_lock(&pmp_lock);
-  ret = pmp_region_init(start, size, perm, priority, rid);
+  ret = pmp_region_init(start, size, priority, rid);
   spinlock_unlock(&pmp_lock);
   return ret;
 }
 
-int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm,enum pmp_priority priority, int* rid)
+int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid)
 {
   uintptr_t pmp_address;
   int reg_idx = -1;
@@ -270,8 +280,7 @@ int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm,enum pmp_priori
   // initialize the region (only supports NAPOT)
   regions[region_idx].start = start;
   regions[region_idx].size = size;
-  regions[region_idx].perm = perm;
-  regions[region_idx].cfg = (PMP_NAPOT | perm);
+  regions[region_idx].addrmode = PMP_NAPOT;
   regions[region_idx].addr = pmp_address;
   regions[region_idx].reg_idx = reg_idx;
   SET_BIT(region_def_bitmap, region_idx);
@@ -303,8 +312,7 @@ int pmp_region_free_atomic(int region_idx)
   UNSET_BIT(reg_bitmap, reg_idx);
   regions[region_idx].start = 0;
   regions[region_idx].size = 0;
-  regions[region_idx].perm = 0;
-  regions[region_idx].cfg = 0;
+  regions[region_idx].addrmode = 0;
   regions[region_idx].addr = 0;
   regions[region_idx].reg_idx = -1;
   

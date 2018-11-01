@@ -1,3 +1,4 @@
+#include "sm.h"
 #include "bits.h"
 #include "vm.h"
 #include "enclave.h"
@@ -142,7 +143,7 @@ enclave_ret_t create_enclave(uintptr_t base, uintptr_t size, unsigned int* eidpt
   
   ret = ENCLAVE_PMP_FAILURE;
 
-  if(pmp_region_init_atomic(base, size, perm, PMP_PRI_ANY, &region))
+  if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region))
     goto error;
 
   // - if base and (base+size) not belong to other enclaves
@@ -170,7 +171,7 @@ enclave_ret_t create_enclave(uintptr_t base, uintptr_t size, unsigned int* eidpt
     goto free_region;
 
   // 3. set pmp
-  if(pmp_set_global(region))
+  if(pmp_set_global(region, PMP_NO_PERM))
     goto free_encl_idx;
   
   // 4. initialize and verify enclave memory layout. 
@@ -221,7 +222,7 @@ enclave_ret_t destroy_enclave(unsigned int eid)
   // requires no lock (single runner)
   void* base = pmp_get_addr(enclaves[eid].rid);
   size_t size = pmp_get_size(enclaves[eid].rid);
-  //memset((void*) base, 0, size);
+  memset((void*) base, 0, size);
 
   // 2. free pmp region
   pmp_unset_global(enclaves[eid].rid);
@@ -281,14 +282,20 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid, uintptr_t entr
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
  
-  // disable timer set by the OS 
+  // disable timer set by the OS, clear pending interrupts
   clear_csr(mie, MIP_MTIP);
   clear_csr(mip, MIP_MSIP);
   clear_csr(mip, MIP_STIP);
   clear_csr(mip, MIP_SSIP);
 
-  // unset PMP
-  pmp_unset(enclaves[eid].rid);
+  clear_csr(mip, MIP_MTIP);
+  clear_csr(mip, MIP_STIP);
+  clear_csr(mip, MIP_SSIP);
+  clear_csr(mip, MIP_SEIP);
+
+  // set PMP
+  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
+  osm_pmp_set(PMP_NO_PERM);
 
   return ENCLAVE_SUCCESS;
 }
@@ -311,11 +318,13 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   
   // get the running enclave on this SM 
   struct enclave_t encl = enclaves[eid];
-  copy_word_to_host(encl.threads[0].retptr, retval);
 
   // set PMP
-  pmp_set(encl.rid);
+  pmp_set(encl.rid, PMP_NO_PERM);
+  osm_pmp_set(PMP_ALL_PERM);
 
+  // copy return value to host
+  copy_word_to_host(encl.threads[0].retptr, retval);
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   write_csr(stvec, encl.host_stvec[hart_id]);
@@ -358,7 +367,9 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   
   struct enclave_t encl = enclaves[eid];
-  pmp_set(encl.rid);
+  pmp_set(encl.rid, PMP_NO_PERM);
+  osm_pmp_set(PMP_ALL_PERM);
+
   write_csr(stvec, encl.host_stvec[hart_id]);
   write_csr(satp, encl.host_satp);
   set_csr(mie, MIP_MTIP);
@@ -393,11 +404,14 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
  
   // disable timer set by the OS 
   clear_csr(mie, MIP_MTIP);
+
   clear_csr(mip, MIP_MTIP);
   clear_csr(mip, MIP_STIP);
+  clear_csr(mip, MIP_SSIP);
+  clear_csr(mip, MIP_SEIP);
 
-  // unset PMP
-  pmp_unset(enclaves[eid].rid);
-  
+  // set PMP
+  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
+  osm_pmp_set(PMP_NO_PERM); 
   return ENCLAVE_SUCCESS;
 }
