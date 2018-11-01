@@ -145,11 +145,11 @@ int pmp_set(int region_idx, uint8_t perm)
   uintptr_t pmpcfg = (uintptr_t) (regions[region_idx].addrmode | perm_bits) << (8*(reg_idx%PMP_PER_GROUP));
   uintptr_t pmpaddr = regions[region_idx].addr;
 
-  spinlock_lock(&pmp_lock);
+  /* spinlock_lock(&pmp_lock);
   printm("pmp_set() [hart %d]: pmpreg %d, address:%lx, size:%lx, perm: 0x%x\n", 
       read_csr(mhartid), reg_idx, regions[region_idx].addr<<2, regions[region_idx].size, perm);
   spinlock_unlock(&pmp_lock);
-  
+  */
   int n=reg_idx;
   switch(n) {
 #define X(n,g) case n: { PMP_SET(n, g, pmpaddr, pmpcfg); break; }
