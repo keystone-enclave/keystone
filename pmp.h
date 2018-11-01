@@ -18,6 +18,9 @@ enum pmp_priority {
   PMP_PRI_BOTTOM,
 };
 
+#define PMP_ALL_PERM  (PMP_W | PMP_X | PMP_R)
+#define PMP_NO_PERM   0
+
 #if __riscv_xlen == 64
 # define LIST_OF_PMP_REGS  X(0,0)  X(1,0)  X(2,0)  X(3,0) \
                            X(4,0)  X(5,0)  X(6,0)  X(7,0) \
@@ -39,6 +42,7 @@ enum pmp_priority {
                 "csrrw t0, mtvec, t0\n\t" \
                 "csrw pmpaddr"#n", %0\n\t" \
                 "csrw pmpcfg"#g", %1\n\t" \
+                "sfence.vma\n\t"\
                 ".align 2\n\t" \
                 "1: csrw mtvec, t0" \
                 : : "r" (addr), "r" (pmpc) : "t0"); \
@@ -51,6 +55,7 @@ enum pmp_priority {
                 "csrrw t0, mtvec, t0 \n\t" \
                 "csrw pmpaddr"#n", %0\n\t" \
                 "csrw pmpcfg"#g", %1\n\t" \
+                "sfence.vma\n\t"\
                 ".align 2\n\t" \
                 "1: csrw mtvec, t0" \
                 : : "r" (0), "r" (pmpc) : "t0"); \
@@ -62,11 +67,11 @@ enum pmp_priority {
 }
 
 int pmp_region_debug_print(int region);
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority pri, int* rid);
-int pmp_region_init(uintptr_t start, uint64_t size, uint8_t perm, enum pmp_priority pri, int* rid);
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid);
+int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid);
 int pmp_region_free_atomic(int region);
-int pmp_set(int n);
-int pmp_set_global(int n);
+int pmp_set(int n, uint8_t perm);
+int pmp_set_global(int n, uint8_t perm);
 int pmp_unset(int n);
 int pmp_unset_global(int n);
 void* pmp_get_addr(int region);
@@ -76,8 +81,7 @@ struct pmp_region
 {
   uintptr_t start;
   uint64_t size;
-  uint8_t perm;
-  uint8_t cfg;
+  uint8_t addrmode;
   uintptr_t addr;
   int reg_idx;
 };
