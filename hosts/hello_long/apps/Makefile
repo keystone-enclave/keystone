@@ -1,7 +1,0 @@
-APPS = add_long
-EXTRA_CLEAN = add_long.s
-
-add_long.s: generate_func.sh nop.s func_base.s
-	./generate_func.sh 4097 add_long.s
-
-include ../../../scripts/app.mk

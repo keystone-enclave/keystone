@@ -1,0 +1,28 @@
+CC = riscv64-unknown-linux-gnu-gcc
+CFLAGS = -Wall -Werror -fPIC
+LINK = riscv64-unknown-linux-gnu-ld
+LINKFLAGS = -static
+INCLUDE_DIR = ../include
+AR = riscv64-unknown-elf-ar
+ARFLAGS = rcs
+
+ASM_SRCS = src/encret.s
+C_SRCS = src/tiny-malloc.c src/string.c
+
+A_OBJS = $(patsubst %.s,%.o,$(ASM_SRCS))
+C_OBJS = $(patsubst %.c,%.o,$(C_SRCS))
+
+TARGET = libkeystone-app.a
+
+all: $(TARGET)
+
+$(A_OBJS): %.o : %.s
+	$(CC) -I$(INCLUDE_DIR) -c $< -o $@
+$(C_OBJS): %.o: %.c
+	$(CC) -I$(INCLUDE_DIR) -c $< -o $@
+$(TARGET): $(A_OBJS) $(C_OBJS)
+	$(AR) $(ARFLAGS) $@ $^
+
+
+clean:
+	rm -f $(A_OBJS) $(C_OBJS) $(TARGET)
