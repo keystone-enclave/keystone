@@ -3,10 +3,19 @@
 #include "enclave.h"
 #include <errno.h>
 
-uintptr_t mcall_sm_create_enclave(unsigned long base, unsigned long size, unsigned long eidptr)
+
+uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 {
+  struct keystone_sbi_create_t create_args_local;
   enclave_ret_t ret;
-  ret = create_enclave((uintptr_t) base, (size_t) size, (unsigned int*) eidptr);
+  ret = copy_region_from_host((struct keystone_sbi_create_t*)create_args,
+			      &create_args_local,
+			      sizeof(struct keystone_sbi_create_t));
+
+  if( ret != ENCLAVE_SUCCESS )
+    return ret;
+
+  ret = create_enclave(create_args_local);
   return ret;
 }
 
@@ -18,12 +27,24 @@ uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
   ret = destroy_enclave((unsigned int)eid);
   return ret;
 }
-
-uintptr_t mcall_sm_run_enclave(uintptr_t* host_regs, unsigned long eid, unsigned long ptr, unsigned long retval)
+uintptr_t mcall_sm_run_enclave(uintptr_t* regs, uintptr_t run_args, uintptr_t* entry_point)
 {
-  if(get_host_satp(eid) != read_csr(satp))
+  struct keystone_sbi_run_t run_args_local;
+  enclave_ret_t ret;
+  ret = copy_region_from_host((struct keystone_sbi_run_t*)run_args,
+			      &run_args_local,
+			      sizeof(struct keystone_sbi_run_t));
+
+  if( ret != ENCLAVE_SUCCESS )
+    return ret;
+
+  if(get_host_satp(run_args_local.eid) != read_csr(satp))
     return ENCLAVE_NOT_ACCESSIBLE;
-  return run_enclave(host_regs, (unsigned int) eid, (uintptr_t) ptr, (unsigned long*) retval);
+
+  ret = run_enclave(regs, run_args_local);
+  if( ret == ENCLAVE_SUCCESS )
+    *entry_point = run_args_local.entry_ptr;
+  return ret;
 }
 
 uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
