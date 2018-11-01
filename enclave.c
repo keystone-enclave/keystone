@@ -95,7 +95,7 @@ int detect_region_overlap(unsigned int eid, uintptr_t addr, uintptr_t size)
          ((uintptr_t) epm_base + epm_size > addr);
 }
 
-void copy_word_to_host(uintptr_t* ptr, uintptr_t value)
+int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
 {
   int region_overlap = 0, i;
   spinlock_lock(&encl_lock);
@@ -109,9 +109,37 @@ void copy_word_to_host(uintptr_t* ptr, uintptr_t value)
   }
   if(!region_overlap)
     *ptr = value;
-  else
-    *ptr = -1UL;
   spinlock_unlock(&encl_lock);
+
+  if(region_overlap)
+    return ENCLAVE_REGION_OVERLAPS;
+  else
+    return ENCLAVE_SUCCESS;
+}
+
+
+// Does not do checking of dest!
+int copy_region_from_host(void* source, void* dest, size_t size){
+
+  int region_overlap = 0, i;
+  spinlock_lock(&encl_lock);
+  for(i=0; i<ENCL_MAX; i++)
+  {
+    if(!TEST_BIT(encl_bitmap, i))
+      continue;
+    region_overlap |= detect_region_overlap(i, (uintptr_t)source, size);
+    if(region_overlap)
+      break;
+  }
+  if(!region_overlap)
+    memcpy(dest, source, size);
+  spinlock_unlock(&encl_lock);
+
+  if(region_overlap)
+    return ENCLAVE_REGION_OVERLAPS;
+  else
+    return ENCLAVE_SUCCESS;
+  
 }
 
 int init_enclave_memory(uintptr_t base, uintptr_t size)
@@ -129,9 +157,13 @@ int init_enclave_memory(uintptr_t base, uintptr_t size)
 
   return ret;
 }
-
-enclave_ret_t create_enclave(uintptr_t base, uintptr_t size, unsigned int* eidptr)
+enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
+//enclave_ret_t create_enclave(uintptr_t base, uintptr_t size, unsigned int* eidptr)
 {
+  uintptr_t base = create_args.epm_region.paddr;
+  size_t size = create_args.epm_region.size;
+  unsigned int* eidptr = create_args.eid_pptr;
+    
   uint8_t perm = 0;
   unsigned int eid;
   enclave_ret_t ret;
@@ -241,8 +273,12 @@ enclave_ret_t destroy_enclave(unsigned int eid)
 
 #define RUNTIME_START_ADDRESS 0xffffffffc0000000
 
-enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid, uintptr_t entry, unsigned long* retptr)
+enclave_ret_t run_enclave(uintptr_t* host_regs, struct keystone_sbi_run_t run_args)
 {
+  unsigned int eid = run_args.eid;
+  uintptr_t entry = run_args.entry_ptr;
+  unsigned long* retptr = run_args.ret_ptr;
+  
   int runable;
 
   spinlock_lock(&encl_lock);
@@ -269,6 +305,9 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid, uintptr_t entr
 
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], host_regs);
+
+  /* Swapping the mepc sets up the mret in mtrap.c to transfer control
+     to the enclave */
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
