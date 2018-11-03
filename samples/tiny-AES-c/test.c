@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include "eapp_utils.h"
+#include "malloc.h"
+#include "string.h"
 
 // Enable ECB, CTR and CBC mode. Note this can be done before including aes.h or at compile-time.
 // E.g. with GCC by using the -D flag: gcc -c aes.c -DCBC=0 -DCTR=1 -DECB=1
@@ -21,18 +24,18 @@ static int test_decrypt_ecb(void);
 static void test_encrypt_ecb_verbose(void);
 
 
-int main(void)
+int EAPP_ENTRY eapp_entry(void)
 {
     int exit;
 
 #if defined(AES256)
-    printf("\nTesting AES256\n\n");
+    //printf("\nTesting AES256\n\n");
 #elif defined(AES192)
-    printf("\nTesting AES192\n\n");
+    //printf("\nTesting AES192\n\n");
 #elif defined(AES128)
-    printf("\nTesting AES128\n\n");
+    //printf("\nTesting AES128\n\n");
 #else
-    printf("You need to specify a symbol between AES128, AES192 or AES256. Exiting");
+    //printf("You need to specify a symbol between AES128, AES192 or AES256. Exiting");
     return 0;
 #endif
 
@@ -41,7 +44,7 @@ int main(void)
 	test_decrypt_ecb() + test_encrypt_ecb();
     test_encrypt_ecb_verbose();
 
-    return exit;
+    EAPP_RETURN(exit);
 }
 
 
@@ -58,9 +61,9 @@ static void phex(uint8_t* str)
 #endif
 
     unsigned char i;
-    for (i = 0; i < len; ++i)
-        printf("%.2x", str[i]);
-    printf("\n");
+    //for (i = 0; i < len; ++i)
+        //printf("%.2x", str[i]);
+    //printf("\n");
 }
 
 static void test_encrypt_ecb_verbose(void)
@@ -78,20 +81,20 @@ static void test_encrypt_ecb_verbose(void)
                                (uint8_t) 0xf6, (uint8_t) 0x9f, (uint8_t) 0x24, (uint8_t) 0x45, (uint8_t) 0xdf, (uint8_t) 0x4f, (uint8_t) 0x9b, (uint8_t) 0x17, (uint8_t) 0xad, (uint8_t) 0x2b, (uint8_t) 0x41, (uint8_t) 0x7b, (uint8_t) 0xe6, (uint8_t) 0x6c, (uint8_t) 0x37, (uint8_t) 0x10 };
 
     // print text to encrypt, key and IV
-    printf("ECB encrypt verbose:\n\n");
-    printf("plain text:\n");
+    //printf("ECB encrypt verbose:\n\n");
+    //printf("plain text:\n");
     for (i = (uint8_t) 0; i < (uint8_t) 4; ++i)
     {
         phex(plain_text + i * (uint8_t) 16);
     }
-    printf("\n");
+    //printf("\n");
 
-    printf("key:\n");
+    //printf("key:\n");
     phex(key);
-    printf("\n");
+    //printf("\n");
 
     // print the resulting cipher as 4 x 16 byte strings
-    printf("ciphertext:\n");
+    //printf("ciphertext:\n");
     
     struct AES_ctx ctx;
     AES_init_ctx(&ctx, key);
@@ -101,7 +104,7 @@ static void test_encrypt_ecb_verbose(void)
       AES_ECB_encrypt(&ctx, plain_text + (i * 16));
       phex(plain_text + (i * 16));
     }
-    printf("\n");
+    //printf("\n");
 }
 
 
@@ -126,13 +129,14 @@ static int test_encrypt_ecb(void)
     AES_init_ctx(&ctx, key);
     AES_ECB_encrypt(&ctx, in);
 
-    printf("ECB encrypt: ");
+    //printf("ECB encrypt: ");
+
 
     if (0 == memcmp((char*) out, (char*) in, 16)) {
-        printf("SUCCESS!\n");
+        //printf("SUCCESS!\n");
 	return(0);
     } else {
-        printf("FAILURE!\n");
+        //printf("FAILURE!\n");
 	return(1);
     }
 }
@@ -171,13 +175,13 @@ static int test_decrypt_cbc(void)
     AES_init_ctx_iv(&ctx, key, iv);
     AES_CBC_decrypt_buffer(&ctx, in, 64);
 
-    printf("CBC decrypt: ");
+    //printf("CBC decrypt: ");
 
     if (0 == memcmp((char*) out, (char*) in, 64)) {
-        printf("SUCCESS!\n");
+        //printf("SUCCESS!\n");
 	return(0);
     } else {
-        printf("FAILURE!\n");
+        //printf("FAILURE!\n");
 	return(1);
     }
 }
@@ -214,13 +218,13 @@ static int test_encrypt_cbc(void)
     AES_init_ctx_iv(&ctx, key, iv);
     AES_CBC_encrypt_buffer(&ctx, in, 64);
 
-    printf("CBC encrypt: ");
+    //printf("CBC encrypt: ");
 
     if (0 == memcmp((char*) out, (char*) in, 64)) {
-        printf("SUCCESS!\n");
+        //printf("SUCCESS!\n");
 	return(0);
     } else {
-        printf("FAILURE!\n");
+        //printf("FAILURE!\n");
 	return(1);
     }
 }
@@ -269,13 +273,13 @@ static int test_xcrypt_ctr(const char* xcrypt)
     AES_init_ctx_iv(&ctx, key, iv);
     AES_CTR_xcrypt_buffer(&ctx, in, 64);
   
-    printf("CTR %s: ", xcrypt);
+    //printf("CTR %s: ", xcrypt);
   
     if (0 == memcmp((char *) out, (char *) in, 64)) {
-        printf("SUCCESS!\n");
+        //printf("SUCCESS!\n");
 	return(0);
     } else {
-        printf("FAILURE!\n");
+        //printf("FAILURE!\n");
 	return(1);
     }
 }
@@ -302,13 +306,13 @@ static int test_decrypt_ecb(void)
     AES_init_ctx(&ctx, key);
     AES_ECB_decrypt(&ctx, in);
 
-    printf("ECB decrypt: ");
+    //printf("ECB decrypt: ");
 
     if (0 == memcmp((char*) out, (char*) in, 16)) {
-        printf("SUCCESS!\n");
+        //printf("SUCCESS!\n");
 	return(0);
     } else {
-        printf("FAILURE!\n");
+        //printf("FAILURE!\n");
 	return(1);
     }
 }

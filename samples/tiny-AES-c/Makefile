@@ -2,11 +2,12 @@
 #CFLAGS       = -Wall -mmcu=atmega16 -Os -Wl,-Map,test.map
 #OBJCOPY      = avr-objcopy
 CC           = riscv64-unknown-linux-gnu-gcc
-LD           = $(CC)
+LD           = riscv64-unknown-linux-gnu-ld
 AR           = riscv64-unknown-linux-gnu-ar
 ARFLAGS      = rcs
-CFLAGS       = -Wall -Os -c
-LDFLAGS      = -Wall -Os -Wl,-Map,test.map
+CFLAGS       = -Wall -Os -c -I../../app/include
+LDFLAGS      = -T../../tests/app.lds
+
 ifdef AES192
 CFLAGS += -DAES192=1
 endif
@@ -39,7 +40,7 @@ aes.o : aes.c aes.h
 	echo [CC] $@ $(CFLAGS)
 	$(CC) $(CFLAGS) -o $@ $<
 
-test.elf : aes.o test.o
+test.elf : aes.o test.o ../../app/libkeystone-app.a
 	echo [LD] $@
 	$(LD) $(LDFLAGS) -o $@ $^
 
