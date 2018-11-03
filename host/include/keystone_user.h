@@ -8,9 +8,9 @@
 
 // ioctl definition
 #define KEYSTONE_IOC_CREATE_ENCLAVE \
-  _IOR(KEYSTONE_IOC_MAGIC, 0x00, struct keystone_ioctl_enclave_id)
+  _IOR(KEYSTONE_IOC_MAGIC, 0x00, struct keystone_ioctl_create_enclave)
 #define KEYSTONE_IOC_DESTROY_ENCLAVE \
-  _IOW(KEYSTONE_IOC_MAGIC, 0x01, struct keystone_ioctl_enclave_id)
+  _IOW(KEYSTONE_IOC_MAGIC, 0x01, struct keystone_ioctl_create_enclave)
 #define KEYSTONE_IOC_COPY_TO_ENCLAVE \
   _IOW(KEYSTONE_IOC_MAGIC, 0x02, struct keystone_ioctl_enclave_data)
 #define KEYSTONE_IOC_COPY_FROM_ENCLAVE \
@@ -18,22 +18,21 @@
 #define KEYSTONE_IOC_RUN_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x04, struct keystone_ioctl_run_enclave)
 
-struct keystone_ioctl_enclave_id {
+struct keystone_ioctl_create_enclave {
   __u64 eid;
-  __u64 ptr;
-  __u64 code_size;
-  __u64 mem_size;
-};
-
-struct keystone_ioctl_enclave_data {
-  __u64 eid;
-  __u64 ptr;
-  __u64 size;
+  __u64 eapp_ptr;
+  __u64 eapp_sz;
+  __u64 eapp_stack_sz;
+  __u64 runtime_ptr;
+  __u64 runtime_sz;
+  __u64 runtime_stack_sz;
 };
 
 struct keystone_ioctl_run_enclave {
   __u64 eid;
-  __u64 ptr;
+  __u64 entry;
+  __u64 args_ptr;
+  __u64 args_size;
   __u64 ret;
 };
 

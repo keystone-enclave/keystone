@@ -1,0 +1,3 @@
+[submodule "runtime"]
+	path = runtime
+	url = https://github.com/keystone-enclave/keystone-runtime

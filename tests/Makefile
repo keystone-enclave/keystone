@@ -5,6 +5,7 @@ SDK_HOST_DIR =../host
 SDK_HOST_LIB = $(SDK_HOST_DIR)/libkeystone.a
 SDK_INCLUDE_DIR = $(SDK_HOST_DIR)/include
 
+RUNTIME=eyrie-rt
 RUNNER=test-runner.riscv
 CCFLAGS = -I$(SDK_INCLUDE_DIR)
 LDFLAGS = -static -L$(SDK_HOST_DIR) -lkeystone
@@ -21,14 +22,15 @@ all: $(OBJS) $(SDK_HOST_LIB)
 	)
 	rm -f test
 	$(foreach test, $(TESTS), \
-		echo "./$(RUNNER) $(test).eapp_riscv" >> test; \
+		echo "echo 'testing $(test)'" >> test;\
+		echo "./$(RUNNER) $(test).eapp_riscv $(RUNTIME)" >> test; \
 	)
 	chmod +x test
 
 $(SDK_HOST_LIB):
 	make -C $(SDK_HOST_DIR)
 
-%.o: %.cpp
+$(OBJS): %.o: %.cpp
 	$(CC) $(CCFLAGS) -c $<
 
 clean:

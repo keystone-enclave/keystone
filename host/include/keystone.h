@@ -10,6 +10,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdarg.h>
+#include "loader.h"
 
 #define BOOST_STRINGIZE(X) BOOST_DO_STRINGIZE(X)
 #define BOOST_DO_STRINGIZE(X) #X
@@ -29,18 +30,18 @@ typedef enum {
 class Keystone
 {
 private:
+  ELFFile* runtimeFile;
+  ELFFile* enclaveFile;
   int eid;
   int fd;
-  void* ptr;
-  unsigned long entry_ptr;
 public:
   Keystone();
   ~Keystone();
-  keystone_status_t init_elf(char* filepath, size_t mem_size, unsigned long usr_entry_ptrx);
+  keystone_status_t init(char* filepath, char* runtime, size_t mem_size, unsigned long usr_entry_ptrx);
   keystone_status_t destroy();
   keystone_status_t copyFromEnclave(void* ptr, size_t size);
   keystone_status_t copyToEnclave(void* ptr, size_t size);
-  keystone_status_t run();
+  keystone_status_t run(uintptr_t* retval);
   keystone_status_t initRuntime(const char* filename);
 };
 

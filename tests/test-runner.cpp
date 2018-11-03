@@ -2,18 +2,22 @@
 #include <cstdio>
 #include "keystone.h"
 
+
 int main(int argc, char** argv)
 {
-  if(argc != 2)
+  if(argc != 3)
   {
-    printf("Usage: %s <eapp>\n");
+    printf("Usage: %s <eapp> <runtime>\n", argv[0]);
     return 0;
   }
   Keystone enclave;
   keystone_status_t err;
+  uintptr_t retval;
 
-  enclave.init_elf((char*)argv[1], 4097, 0x1000);
-  enclave.run();
+  enclave.init(argv[1], argv[2], 4096, 0x1000);
+  enclave.run(&retval);
+
+  printf("enclave return: %lu\n", retval);
 
   return 0;
 }

@@ -5,113 +5,102 @@
 
 Keystone::Keystone()
 {
+  runtimeFile = NULL;
+  enclaveFile = NULL;
   eid = -1;
 }
 
 Keystone::~Keystone()
 {
+  delete runtimeFile;
+  delete enclaveFile;
   destroy();
 }
 
-keystone_status_t Keystone::init_elf(char* filepath, size_t mem_size, unsigned long usr_entry_ptr){
+keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t mem_size, unsigned long usr_entry_ptr)
+{
+  if(runtimeFile || enclaveFile)
+  {
+    ERROR("ELF files already initialized");
+    return KEYSTONE_ERROR;
+  }
 
-  FILE* app_file;
-  void* app_code_buffer;
-  size_t res, code_size;
-  int ret;
-
-  this->entry_ptr = usr_entry_ptr;
+  runtimeFile = new ELFFile(runtimepath);
+  enclaveFile = new ELFFile(eapppath);
   
+  /* these should be parsed by ELF lib */
+  runtimeFile->setEntry(0xffffffffc0000000);
+  enclaveFile->setEntry(usr_entry_ptr); 
+ 
+  /* open device driver */
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if(fd < 0){
     PERROR("cannot open device file");
-    goto err_close;
+    return KEYSTONE_ERROR;
   }
   // Open up the target file and read it into memory
-  app_file = fopen(filepath,"r");
-  if(app_file == NULL){
-    PERROR("Unable to open enclave app file. - fopen() failed");
-    goto err_ret;
+  
+  if(!runtimeFile->isValid())
+  {
+    ERROR("runtime file is not valid");
+    return KEYSTONE_ERROR;
   }
-
-  fseek(app_file, 0, SEEK_END);
-  code_size=ftell(app_file);
-  app_code_buffer = malloc(code_size);
-  if(app_code_buffer == NULL){
-    PERROR("Unable to allocate space to read app file. - malloc() failed");
-    goto err_close;
-  }
-  rewind(app_file);
-  res = fread(app_code_buffer, 1, code_size, app_file);
-
-  if(res != code_size){
-    PERROR("Enclave application file loading error. - fread() failed");
-    goto err_all;
+  if(!enclaveFile->isValid())
+  {
+    ERROR("enclave file is not valid");
+    return KEYSTONE_ERROR;
   }
   
-  struct keystone_ioctl_enclave_id enclp;
+  struct keystone_ioctl_create_enclave enclp;
 
-  enclp.ptr = (unsigned long) app_code_buffer;
-  enclp.code_size = (unsigned long) code_size;
-  enclp.mem_size = (unsigned long) mem_size;
+  enclp.eapp_ptr = (unsigned long) enclaveFile->getPtr();
+  enclp.eapp_sz = (unsigned long) enclaveFile->getSize();
+  enclp.eapp_stack_sz = (unsigned long) mem_size;
+  enclp.runtime_ptr = (unsigned long) runtimeFile->getPtr();
+  enclp.runtime_sz = (unsigned long) runtimeFile->getSize();
+  enclp.runtime_stack_sz = (unsigned long) 4096*2;
 
   //printf("Enclave info: ptr:%p code_sz:%ul mem_sz:%ul\n",app_code_buffer, code_size, mem_size);
-  ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
-
+  int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
   if(ret) {
-    printf("failed to create enclave - ioctl() failed: %d", ret);
-    goto err_all;
+    ERROR("failed to create enclave - ioctl() failed: %d", ret);
+    return KEYSTONE_ERROR;
   }
-
-  printf("Created enclave\n");
-  
   eid = enclp.eid;
-  this->ptr = app_code_buffer;
-  
+
   return KEYSTONE_SUCCESS;
-  
- err_all:
-  free(app_code_buffer);
- err_close:
-  fclose(app_file);
- err_ret:
-  return KEYSTONE_ERROR;
 }
 
 
 keystone_status_t Keystone::destroy()
 {
-  struct keystone_ioctl_enclave_id enclp;
+  struct keystone_ioctl_create_enclave enclp;
   enclp.eid = eid;
   int ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &enclp);
 
   if(ret) {
-    printf("failed to destroy enclave - ioctl() failed: %d", ret);
+    ERROR("failed to destroy enclave - ioctl() failed: %d", ret);
     return KEYSTONE_ERROR;
   }
 
   return KEYSTONE_SUCCESS;
 }
 
-keystone_status_t Keystone::run()
+keystone_status_t Keystone::run(uintptr_t* retval)
 {
   int	ret;
   struct keystone_ioctl_run_enclave run;
   run.eid = eid;
-
-  run.ptr = this->entry_ptr;
-
-  printf("Starting enclave!\n");
+  run.entry = enclaveFile->getEntry();
 
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
-
-  printf("%ld\n", run.ret);
   if(ret)
-    {
-      printf("failed to run enclave - ioctl() failed: %d", ret);
-      return KEYSTONE_ERROR;
-    }
-  
+  {
+    ERROR("failed to run enclave - ioctl() failed: %d", ret);
+    return KEYSTONE_ERROR;
+  }
+  *retval = run.ret;
+
   return KEYSTONE_SUCCESS;
 }
 
