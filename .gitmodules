@@ -19,6 +19,3 @@
 [submodule "sdk"]
 	path = sdk
 	url = git@github.com:keystone-enclave/keystone-sdk
-[submodule "runtime"]
-	path = runtime
-	url = git@github.com:keystone-enclave/keystone-runtime
