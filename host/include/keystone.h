@@ -34,13 +34,15 @@ private:
   ELFFile* enclaveFile;
   int eid;
   int fd;
+  void* buffer;
+
+  keystone_status_t mapUntrusted(size_t size);
 public:
   Keystone();
   ~Keystone();
-  keystone_status_t init(char* filepath, char* runtime, size_t mem_size, unsigned long usr_entry_ptrx);
+  void* getBuffer();
+  keystone_status_t init(char* filepath, char* runtime, size_t mem_size, size_t untrusted_size, unsigned long usr_entry_ptrx);
   keystone_status_t destroy();
-  keystone_status_t copyFromEnclave(void* ptr, size_t size);
-  keystone_status_t copyToEnclave(void* ptr, size_t size);
   keystone_status_t run(uintptr_t* retval);
   keystone_status_t initRuntime(const char* filename);
 };

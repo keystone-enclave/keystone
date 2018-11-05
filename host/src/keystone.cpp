@@ -17,7 +17,7 @@ Keystone::~Keystone()
   destroy();
 }
 
-keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t mem_size, unsigned long usr_entry_ptr)
+keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack_size, size_t untrusted_size, unsigned long usr_entry_ptr)
 {
   if(runtimeFile || enclaveFile)
   {
@@ -55,12 +55,13 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t mem_s
 
   enclp.eapp_ptr = (unsigned long) enclaveFile->getPtr();
   enclp.eapp_sz = (unsigned long) enclaveFile->getSize();
-  enclp.eapp_stack_sz = (unsigned long) mem_size;
+  enclp.eapp_stack_sz = (unsigned long) stack_size;
   enclp.runtime_ptr = (unsigned long) runtimeFile->getPtr();
   enclp.runtime_sz = (unsigned long) runtimeFile->getSize();
   enclp.runtime_stack_sz = (unsigned long) 4096*2;
+  enclp.untrusted_sz = untrusted_size;
 
-  //printf("Enclave info: ptr:%p code_sz:%ul mem_sz:%ul\n",app_code_buffer, code_size, mem_size);
+  //printf("Enclave info: ptr:%p code_sz:%ul mem_sz:%ul\n",app_code_buffer, code_size, stack_size);
   int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
   if(ret) {
     ERROR("failed to create enclave - ioctl() failed: %d", ret);
@@ -68,9 +69,19 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t mem_s
   }
   eid = enclp.eid;
 
-  return KEYSTONE_SUCCESS;
+  return mapUntrusted(untrusted_size);
 }
 
+keystone_status_t Keystone::mapUntrusted(size_t size)
+{
+  buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+  if (buffer == NULL)
+  {
+    return KEYSTONE_ERROR;
+  }
+  return KEYSTONE_SUCCESS;
+}
 
 keystone_status_t Keystone::destroy()
 {

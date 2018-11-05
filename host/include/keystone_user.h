@@ -20,12 +20,16 @@
 
 struct keystone_ioctl_create_enclave {
   __u64 eid;
+  // Enclave App
   __u64 eapp_ptr;
   __u64 eapp_sz;
   __u64 eapp_stack_sz;
+  // Runtime
   __u64 runtime_ptr;
   __u64 runtime_sz;
   __u64 runtime_stack_sz;
+  // Untrusted Memory
+  __u64 untrusted_sz;
 };
 
 struct keystone_ioctl_run_enclave {

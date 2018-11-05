@@ -14,7 +14,7 @@ int main(int argc, char** argv)
   keystone_status_t err;
   uintptr_t retval;
 
-  enclave.init(argv[1], argv[2], 4096, 0x1000);
+  enclave.init(argv[1], argv[2], 4096, 4096, 0x1000);
   enclave.run(&retval);
 
   printf("enclave return: %lu\n", retval);
