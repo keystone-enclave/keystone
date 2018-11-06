@@ -8,7 +8,7 @@ SDK_INCLUDE_DIR = $(SDK_HOST_DIR)/include
 RUNTIME=eyrie-rt
 RUNNER=test-runner.riscv
 CCFLAGS = -I$(SDK_INCLUDE_DIR)
-LDFLAGS = -static -L$(SDK_HOST_DIR) -lkeystone
+LDFLAGS = -L$(SDK_HOST_DIR)
 
 TESTS=c stack fibonacci long-nop loop malloc fib-bench
 
