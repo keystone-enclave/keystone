@@ -175,7 +175,7 @@ encl_trap_handler:
   sll t1, s2, LOG_REGBYTES
   add t1, t0, t1
   LOAD t1, 0(t1)
-
+  
   mv a0, sp
   
   jalr t1
@@ -198,14 +198,6 @@ return_to_encl:
   csrrw sp, sscratch, sp
   sret
 
-exit_enclave:
-  /* restore return value */
-  LOAD a0, 10*REGBYTES(sp)
-
-  /* SBI exit enclave */
-  li a7, 1101
-  ecall
-
 not_implemented:
   csrr a0, scause
   li a7, 1111
@@ -222,7 +214,7 @@ rt_trap_table:
   .dword not_implemented //5
   .dword not_implemented //6
   .dword not_implemented //7 
-  .dword exit_enclave //8
+  .dword handle_syscall //8
   .dword not_implemented //9
   .dword not_implemented //10
   .dword not_implemented //11

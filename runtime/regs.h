@@ -8,49 +8,49 @@
 
 
 #ifndef __ASSEMBLER__
-
+#include <stdint.h>
 #include "mm.h"
 struct regs_t {
-	unsigned long sepc; // use this slot as sepc
-	unsigned long ra;
-	unsigned long sp;
-	unsigned long gp;
-	unsigned long tp;
-	unsigned long t0;
-	unsigned long t1;
-	unsigned long t2;
-	unsigned long s0;
-	unsigned long s1;
-	unsigned long a0;
-	unsigned long a1;
-	unsigned long a2;
-	unsigned long a3;
-	unsigned long a4;
-	unsigned long a5;
-	unsigned long a6;
-	unsigned long a7;
-	unsigned long s2;
-	unsigned long s3;
-	unsigned long s4;
-	unsigned long s5;
-	unsigned long s6;
-	unsigned long s7;
-	unsigned long s8;
-	unsigned long s9;
-	unsigned long s10;
-	unsigned long s11;
-	unsigned long t3;
-	unsigned long t4;
-	unsigned long t5;
-	unsigned long t6;
+	uintptr_t sepc; // use this slot as sepc
+	uintptr_t ra;
+	uintptr_t sp;
+	uintptr_t gp;
+	uintptr_t tp;
+	uintptr_t t0;
+	uintptr_t t1;
+	uintptr_t t2;
+	uintptr_t s0;
+	uintptr_t s1;
+	uintptr_t a0;
+	uintptr_t a1;
+	uintptr_t a2;
+	uintptr_t a3;
+	uintptr_t a4;
+	uintptr_t a5;
+	uintptr_t a6;
+	uintptr_t a7;
+	uintptr_t s2;
+	uintptr_t s3;
+	uintptr_t s4;
+	uintptr_t s5;
+	uintptr_t s6;
+	uintptr_t s7;
+	uintptr_t s8;
+	uintptr_t s9;
+	uintptr_t s10;
+	uintptr_t s11;
+	uintptr_t t3;
+	uintptr_t t4;
+	uintptr_t t5;
+	uintptr_t t6;
 };
 
 struct encl_ctx_t {
 	struct regs_t regs;
   /* Supervisor CSRs */
-	unsigned long sstatus;//32
-	unsigned long sbadaddr;//33
-	unsigned long scause;//34
+	uintptr_t sstatus;//32
+	uintptr_t sbadaddr;//33
+	uintptr_t scause;//34
 };
 
 
