@@ -97,6 +97,7 @@ keystone_status_t Keystone::destroy()
   return KEYSTONE_SUCCESS;
 }
 
+#define KEYSTONE_ENCLAVE_INTERRUPTED  2
 keystone_status_t Keystone::run(uintptr_t* retval)
 {
   int	ret;
@@ -105,11 +106,17 @@ keystone_status_t Keystone::run(uintptr_t* retval)
   run.entry = enclaveFile->getEntry();
 
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
+  while (ret == KEYSTONE_ENCLAVE_INTERRUPTED)
+  {
+    /* enclave is stopped in the middle. resuming */
+    ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
+  }
   if(ret)
   {
     ERROR("failed to run enclave - ioctl() failed: %d", ret);
     return KEYSTONE_ERROR;
   }
+
   *retval = run.ret;
 
   return KEYSTONE_SUCCESS;

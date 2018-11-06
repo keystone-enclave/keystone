@@ -17,6 +17,8 @@
   _IOR(KEYSTONE_IOC_MAGIC, 0x03, struct keystone_ioctl_enclave_data)
 #define KEYSTONE_IOC_RUN_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x04, struct keystone_ioctl_run_enclave)
+#define KEYSTONE_IOC_RESUME_ENCLAVE \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x05, struct keystone_ioctl_run_enclave)
 
 struct keystone_ioctl_create_enclave {
   __u64 eid;
