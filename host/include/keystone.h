@@ -21,6 +21,9 @@
 #define ERROR(str, ...) fprintf(stderr, MSG(str) "\n", ##__VA_ARGS__)
 #define PERROR(str) perror(MSG(str))
 
+class Keystone;
+typedef void (*OcallFunc)(Keystone*);
+
 typedef enum {
   KEYSTONE_ERROR=-1,
   KEYSTONE_SUCCESS,
@@ -35,12 +38,14 @@ private:
   int eid;
   int fd;
   void* buffer;
-
+  // TODO: static function table
+  OcallFunc oFuncs[10];
   keystone_status_t mapUntrusted(size_t size);
 public:
   Keystone();
   ~Keystone();
   void* getBuffer();
+  keystone_status_t registerOcall(unsigned int request, OcallFunc func);
   keystone_status_t init(char* filepath, char* runtime, size_t mem_size, size_t untrusted_size, unsigned long usr_entry_ptrx);
   keystone_status_t destroy();
   keystone_status_t run(uintptr_t* retval);

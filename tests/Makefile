@@ -10,7 +10,7 @@ RUNNER=test-runner.riscv
 CCFLAGS = -I$(SDK_INCLUDE_DIR)
 LDFLAGS = -L$(SDK_HOST_DIR)
 
-TESTS=c stack fibonacci long-nop loop malloc fib-bench
+TESTS=c stack fibonacci long-nop loop malloc fib-bench untrusted
 
 SRCS = $(patsubst %.riscv, %.cpp, $(RUNNER))
 OBJS = $(patsubst %.riscv, %.o,$(RUNNER)) $(KEYSTONE_OBJ)

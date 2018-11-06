@@ -1,65 +1,25 @@
-#CC           = avr-gcc
-#CFLAGS       = -Wall -mmcu=atmega16 -Os -Wl,-Map,test.map
-#OBJCOPY      = avr-objcopy
-CC           = riscv64-unknown-linux-gnu-gcc
-LD           = riscv64-unknown-linux-gnu-ld
-AR           = riscv64-unknown-linux-gnu-ar
-ARFLAGS      = rcs
-CFLAGS       = -Wall -Os -c -I../../app/include
-LDFLAGS      = -T../../tests/app.lds
+CC = riscv64-unknown-linux-gnu-g++
+OBJCOPY = riscv64-unknown-linux-gnu-objcopy
 
-ifdef AES192
-CFLAGS += -DAES192=1
-endif
-ifdef AES256
-CFLAGS += -DAES256=1
-endif
+SDK_HOST_DIR =../../host
+SDK_HOST_LIB = $(SDK_HOST_DIR)/libkeystone.a
+SDK_INCLUDE_DIR = $(SDK_HOST_DIR)/include
 
-OBJCOPYFLAGS = -j .text -O ihex
-OBJCOPY      = riscv64-unknown-linux-gnu-objcopy
+RUNNER=aes.riscv
+CCFLAGS = -I$(SDK_INCLUDE_DIR)
+LDFLAGS = -L$(SDK_HOST_DIR)
 
-# include path to AVR library
-INCLUDE_PATH = /usr/lib/avr/include
-# splint static check
-SPLINT       = splint test.c aes.c -I$(INCLUDE_PATH) +charindex -unrecog
+SRCS = $(patsubst %.riscv, %.cpp, $(RUNNER))
+OBJS = $(patsubst %.riscv, %.o,$(RUNNER)) $(KEYSTONE_OBJ)
 
-default: test.elf
+all: $(OBJS) $(SDK_HOST_LIB)
+	$(CC) $(CCFLAGS) $(LDFLAGS) -o $(RUNNER) $^
 
-.SILENT:
-.PHONY:  lint clean
+$(SDK_HOST_LIB):
+	make -C $(SDK_HOST_DIR)
 
-test.hex : test.elf
-	echo copy object-code to new image and format in hex
-	$(OBJCOPY) ${OBJCOPYFLAGS} $< $@
-
-test.o : test.c aes.h aes.o
-	echo [CC] $@ $(CFLAGS)
-	$(CC) $(CFLAGS) -o  $@ $<
-
-aes.o : aes.c aes.h
-	echo [CC] $@ $(CFLAGS)
-	$(CC) $(CFLAGS) -o $@ $<
-
-test.elf : aes.o test.o ../../app/libkeystone-app.a
-	echo [LD] $@
-	$(LD) $(LDFLAGS) -o $@ $^
-
-aes.a : aes.o
-	echo [AR] $@
-	$(AR) $(ARFLAGS) $@ $^
-
-lib : aes.a
-
-copy: test.elf
-	cp test.elf ../../bins/
+$(OBJS): %.o: %.cpp
+	$(CC) $(CCFLAGS) -c $<
 
 clean:
-	rm -f *.OBJ *.LST *.o *.gch *.out *.hex *.map *.elf *.a
-
-test:
-	make clean && make && ./test.elf
-	make clean && make AES192=1 && ./test.elf
-	make clean && make AES256=1 && ./test.elf
-
-lint:
-	$(call SPLINT)
+	rm -f *.o *.riscv

@@ -108,7 +108,10 @@ keystone_status_t Keystone::run(uintptr_t* retval)
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
   while (ret == KEYSTONE_ENCLAVE_INTERRUPTED)
   {
-    /* enclave is stopped in the middle. resuming */
+    /* enclave is stopped in the middle. */
+    if (oFuncs[run.ret] != NULL) {
+      oFuncs[run.ret](this);
+    }
     ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
   }
   if(ret)
@@ -122,3 +125,12 @@ keystone_status_t Keystone::run(uintptr_t* retval)
   return KEYSTONE_SUCCESS;
 }
 
+void* Keystone::getBuffer()
+{
+  return buffer;
+}
+
+keystone_status_t Keystone::registerOcall(unsigned int request, OcallFunc func)
+{
+  oFuncs[request] = func;
+}

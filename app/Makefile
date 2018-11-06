@@ -2,12 +2,12 @@ CC = riscv64-unknown-linux-gnu-gcc
 CFLAGS = -Wall -Werror -fPIC
 LINK = riscv64-unknown-linux-gnu-ld
 LINKFLAGS = -static
-INCLUDE_DIR = ../include
+INCLUDE_DIR = include
 AR = riscv64-unknown-elf-ar
 ARFLAGS = rcs
 
 ASM_SRCS = src/encret.s
-C_SRCS = src/tiny-malloc.c src/string.c
+C_SRCS = src/tiny-malloc.c src/string.c src/syscall.c
 
 A_OBJS = $(patsubst %.s,%.o,$(ASM_SRCS))
 C_OBJS = $(patsubst %.c,%.o,$(C_SRCS))
