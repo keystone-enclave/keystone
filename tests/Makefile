@@ -1,14 +1,14 @@
 CC = riscv64-unknown-linux-gnu-g++
 OBJCOPY = riscv64-unknown-linux-gnu-objcopy
 
-SDK_HOST_DIR =../host
-SDK_HOST_LIB = $(SDK_HOST_DIR)/libkeystone.a
-SDK_INCLUDE_DIR = $(SDK_HOST_DIR)/include
+SDK_LIB_DIR =../lib
+SDK_HOST_LIB = $(SDK_LIB_DIR)/libkeystone-host.a
+SDK_INCLUDE_DIR = $(SDK_LIB_DIR)/host/include
 
 RUNTIME=eyrie-rt
 RUNNER=test-runner.riscv
 CCFLAGS = -I$(SDK_INCLUDE_DIR)
-LDFLAGS = -L$(SDK_HOST_DIR)
+LDFLAGS = -L$(SDK_LIB_DIR)
 
 TESTS=c stack fibonacci long-nop loop malloc fib-bench untrusted
 

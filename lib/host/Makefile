@@ -7,7 +7,7 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 AR = riscv64-unknown-elf-ar
 ARFLAGS = rcs
 
-TARGET=libkeystone.a
+TARGET=../libkeystone-host.a
 
 all: $(TARGET)
 

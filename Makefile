@@ -4,8 +4,7 @@ MOUNT_DIR = ./tmp_busybear
 RUNTIME = eyrie-rt
 
 all:
-	make -C host
-	make -C app
+	make -C lib
 	make -C runtime
 	make -C tests
 	make -C samples
@@ -26,8 +25,7 @@ copy-tests:
 
 clean:
 	rm -rf bin
-	make -C host clean
-	make -C app clean
+	make -C lib clean
 	make -C runtime clean
 	make -C tests clean
 	make -C samples

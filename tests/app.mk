@@ -3,11 +3,11 @@ CFLAGS = -Wall -Werror
 LINK = riscv64-unknown-linux-gnu-ld
 AS = riscv64-unknown-linux-gnu-as
 
-SDK_APP_DIR = ../../app
-SDK_APP_LIB = $(SDK_APP_DIR)/libkeystone-app.a
-SDK_INCLUDE_DIR = $(SDK_APP_DIR)/include
+SDK_LIB_DIR = ../../lib
+SDK_APP_LIB = $(SDK_LIB_DIR)/libkeystone-eapp.a
+SDK_INCLUDE_DIR = $(SDK_LIB_DIR)/app/include
 
-LDFLAGS = -static -L$(SDK_APP_DIR) -lkeystone-app
+LDFLAGS = -static -L$(SDK_LIB_DIR) -lkeystone-eapp
 CFLAGS += -I$(SDK_INCLUDE_DIR)
 
 APP_C_OBJS = $(patsubst %.c,%.o, $(APP_C_SRCS))
