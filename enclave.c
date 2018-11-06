@@ -399,7 +399,10 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   /* TODO: currently enclave cannot have multiple threads */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));  
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
+
+  /* write the request to the ret ptr */
+  copy_word_to_host(enclaves[eid].threads[0].retptr, request);
   struct enclave_t encl = enclaves[eid];
   
   pmp_set(encl.rid, PMP_NO_PERM);
