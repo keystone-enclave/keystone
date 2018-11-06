@@ -7,7 +7,7 @@ AR = riscv64-unknown-elf-ar
 ARFLAGS = rcs
 
 ASM_SRCS = src/encret.s
-C_SRCS = src/tiny-malloc.c src/string.c src/syscall.c src/edge_call.c
+C_SRCS = src/tiny-malloc.c src/string.c src/syscall.c
 
 A_OBJS = $(patsubst %.s,%.o,$(ASM_SRCS))
 C_OBJS = $(patsubst %.c,%.o,$(C_SRCS))
