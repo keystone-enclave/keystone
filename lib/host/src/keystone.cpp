@@ -78,12 +78,14 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack
 
 keystone_status_t Keystone::mapUntrusted(size_t size)
 {
-  buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  shared_buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
-  if (buffer == NULL)
+  if (shared_buffer == NULL)
   {
     return KEYSTONE_ERROR;
   }
+  shared_buffer_size = size;
+
   return KEYSTONE_SUCCESS;
 }
 
@@ -127,9 +129,14 @@ keystone_status_t Keystone::run()
   return KEYSTONE_SUCCESS;
 }
 
-void* Keystone::getBuffer()
+void* Keystone::getSharedBuffer()
 {
-  return buffer;
+  return shared_buffer;
+}
+
+size_t Keystone::getSharedBufferSize()
+{
+  return shared_buffer_size;
 }
 
 keystone_status_t Keystone::registerOcall(unsigned int request, OcallFunc func)

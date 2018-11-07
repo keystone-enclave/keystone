@@ -37,14 +37,16 @@ private:
   ELFFile* enclaveFile;
   int eid;
   int fd;
-  void* buffer;
+  void* shared_buffer;
+  size_t shared_buffer_size;
   // TODO: static function table
   OcallFunc oFuncs[10];
   keystone_status_t mapUntrusted(size_t size);
 public:
   Keystone();
   ~Keystone();
-  void* getBuffer();
+  void* getSharedBuffer();
+  size_t getSharedBufferSize();
   keystone_status_t registerOcall(unsigned int request, OcallFunc func);
   keystone_status_t init(char* filepath, char* runtime, size_t mem_size, size_t untrusted_size, unsigned long usr_entry_ptrx);
   keystone_status_t destroy();

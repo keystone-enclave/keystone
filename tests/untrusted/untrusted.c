@@ -2,11 +2,15 @@
 #include "string.h"
 #include "syscall.h"
 
+#include "edge_wrapper.h"
+
 void EAPP_ENTRY eapp_entry(){
 
-  char* buffer = (char*)untrusted_mmap();
-  memcpy(buffer, "hello world!\n", 14);
-  ocall(1);
+  char* msg = "hello world!\n";
+  
+  edge_init();
+  
+  unsigned long ret = ocall_print_buffer(msg, 13);
 
-  EAPP_RETURN((unsigned long)buffer);
+  EAPP_RETURN(ret);
 }

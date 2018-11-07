@@ -2,11 +2,6 @@
 #include <cstdio>
 #include "keystone.h"
 
-void print_buffer(Keystone* enclave)
-{
-  printf("%s\n", enclave->getBuffer());
-}
-
 int main(int argc, char** argv)
 {
   if(argc != 3)
@@ -18,7 +13,6 @@ int main(int argc, char** argv)
   keystone_status_t err;
   uintptr_t retval;
 
-  enclave.registerOcall(1, print_buffer); 
   enclave.init(argv[1], argv[2], 4096, 4096, 0x1000);
   enclave.run();
 

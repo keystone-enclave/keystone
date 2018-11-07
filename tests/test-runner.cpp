@@ -1,11 +1,14 @@
 #include <iostream>
 #include <cstdio>
 #include "keystone.h"
+#include "edge_wrapper.h"
 
-void print_buffer(Keystone* enclave)
-{
-  printf("%s\n", enclave->getBuffer());
+
+unsigned long print_buffer(char* str){
+  printf("Enclave said: %s\n",str);
+  return strlen(str);
 }
+
 
 int main(int argc, char** argv)
 {
@@ -18,10 +21,11 @@ int main(int argc, char** argv)
   keystone_status_t err;
   uintptr_t retval;
 
-  enclave.registerOcall(1, print_buffer);
   enclave.init(argv[1], argv[2], 4096, 4096, 0x1000);
-  enclave.run();
 
+  edge_init(&enclave);
+
+  enclave.run();
 
   return 0;
 }
