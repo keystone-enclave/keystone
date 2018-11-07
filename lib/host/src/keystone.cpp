@@ -17,6 +17,8 @@ Keystone::~Keystone()
   destroy();
 }
 
+/* FIXME: someone should parse this */
+#define RUNTIME_ENTRY 0xffffffffc0000000
 keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack_size, size_t untrusted_size, unsigned long usr_entry_ptr)
 {
   if(runtimeFile || enclaveFile)
@@ -29,7 +31,7 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack
   enclaveFile = new ELFFile(eapppath);
   
   /* these should be parsed by ELF lib */
-  runtimeFile->setEntry(0xffffffffc0000000);
+  runtimeFile->setEntry(RUNTIME_ENTRY);
   enclaveFile->setEntry(usr_entry_ptr); 
  
   /* open device driver */
@@ -56,9 +58,11 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack
   enclp.eapp_ptr = (unsigned long) enclaveFile->getPtr();
   enclp.eapp_sz = (unsigned long) enclaveFile->getSize();
   enclp.eapp_stack_sz = (unsigned long) stack_size;
+  enclp.eapp_entry = (unsigned long) usr_entry_ptr; 
   enclp.runtime_ptr = (unsigned long) runtimeFile->getPtr();
   enclp.runtime_sz = (unsigned long) runtimeFile->getSize();
   enclp.runtime_stack_sz = (unsigned long) 4096*2;
+  enclp.runtime_entry = (unsigned long) RUNTIME_ENTRY;
   enclp.untrusted_sz = untrusted_size;
 
   //printf("Enclave info: ptr:%p code_sz:%ul mem_sz:%ul\n",app_code_buffer, code_size, stack_size);
@@ -97,20 +101,20 @@ keystone_status_t Keystone::destroy()
   return KEYSTONE_SUCCESS;
 }
 
-#define KEYSTONE_ENCLAVE_INTERRUPTED  2
-keystone_status_t Keystone::run(uintptr_t* retval)
+#define KEYSTONE_ENCLAVE_EDGE_CALL_HOST  11
+
+keystone_status_t Keystone::run()
 {
   int	ret;
   struct keystone_ioctl_run_enclave run;
   run.eid = eid;
-  run.entry = enclaveFile->getEntry();
 
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
-  while (ret == KEYSTONE_ENCLAVE_INTERRUPTED)
+  while (ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST)
   {
     /* enclave is stopped in the middle. */
-    if (oFuncs[run.ret] != NULL) {
-      oFuncs[run.ret](this);
+    if (oFuncs[1] != NULL) {
+      oFuncs[1](this);
     }
     ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
   }
@@ -119,8 +123,6 @@ keystone_status_t Keystone::run(uintptr_t* retval)
     ERROR("failed to run enclave - ioctl() failed: %d", ret);
     return KEYSTONE_ERROR;
   }
-
-  *retval = run.ret;
 
   return KEYSTONE_SUCCESS;
 }

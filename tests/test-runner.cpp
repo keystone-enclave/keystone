@@ -20,9 +20,8 @@ int main(int argc, char** argv)
 
   enclave.registerOcall(1, print_buffer);
   enclave.init(argv[1], argv[2], 4096, 4096, 0x1000);
-  enclave.run(&retval);
+  enclave.run();
 
-  printf("enclave return: %lu\n", retval);
 
   return 0;
 }
