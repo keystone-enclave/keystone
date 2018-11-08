@@ -44,12 +44,10 @@ struct thread_state_t
   uintptr_t prev_mepc;
   uintptr_t prev_stvec;
   struct ctx_t prev_state;
-  unsigned long* retptr; // pointer to the host return value
 };
 
 /* swap previous and current thread states */
 void swap_prev_state(struct thread_state_t* state, uintptr_t* regs);
 void swap_prev_mepc(struct thread_state_t* state, uintptr_t mepc);
 void swap_prev_stvec(struct thread_state_t* state, uintptr_t stvec);
-void set_retptr(struct thread_state_t* state, unsigned long* retptr);
 #endif /* thread */

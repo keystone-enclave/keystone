@@ -32,6 +32,7 @@
 #define ENCLAVE_ILLEGAL_ARGUMENT            (enclave_ret_t)8
 #define ENCLAVE_NOT_RUNNING                 (enclave_ret_t)9
 #define ENCLAVE_NOT_RESUMABLE               (enclave_ret_t)10
+#define ENCLAVE_EDGE_CALL_HOST              (enclave_ret_t)11
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0
@@ -40,6 +41,10 @@
 #define PMP_REGION_NOT_ALIGNED              22
 #define PMP_REGION_MAX_REACHED              23
 #define PMP_REGION_INVALID                  24
+#define PMP_REGION_OVERLAP                  25
+
+#define STOP_TIMER_INTERRUPT  0
+#define STOP_EDGE_CALL_HOST   1
 
 void sm_init(void);
 

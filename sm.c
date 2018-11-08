@@ -22,7 +22,7 @@ int osm_pmp_set(uint8_t perm)
 int smm_init()
 {
   int region = -1;
-  int ret = pmp_region_init(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region);
+  int ret = pmp_region_init_atomic(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region, 0);
   if(ret)
     return -1;
 
@@ -32,7 +32,7 @@ int smm_init()
 int osm_init()
 {
   int region = -1;
-  int ret = pmp_region_init(0, -1UL, PMP_PRI_BOTTOM, &region); 
+  int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1); 
   if(ret)
     return -1;
 

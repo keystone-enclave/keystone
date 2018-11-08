@@ -11,24 +11,14 @@ struct keystone_sbi_create_t
 {
   // Memory regions for the enclave
   struct keystone_sbi_pregion_t epm_region;
-  struct keystone_sbi_pregion_t copy_region;
+  struct keystone_sbi_pregion_t utm_region;
+
+  // Configurations
+  uintptr_t enclave_entry;
+  uintptr_t runtime_entry;
 
   // Outputs from the creation process
   unsigned int* eid_pptr;
 };
-
-
-struct keystone_sbi_run_t
-{
-  unsigned int eid;
-  uintptr_t entry_ptr;
-  uintptr_t* ret_ptr;  
-};
-
-struct keystone_sbi_general_t
-{
-  unsigned int eid;
-};
-
 
 #endif
