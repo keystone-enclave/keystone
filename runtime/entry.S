@@ -113,8 +113,7 @@ _start:
   la t0, encl_trap_handler
   csrw stvec, t0
   
-  /* TODO: stack size should be flexible */
-  csrw sepc, a0
+  csrw sepc, a1
 
   call init_timer
 
@@ -184,9 +183,6 @@ return_to_encl:
   LOAD t0, (sp)
   csrw sepc, t0
 
-  la t0, encl_trap_handler
-  csrw stvec, t0
-  
   // restore user stack
   LOAD t0, 2*REGBYTES(sp)
   csrw sscratch, t0
