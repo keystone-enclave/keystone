@@ -11,7 +11,7 @@ uintptr_t mcall_sm_create_enclave(uintptr_t create_args);
 
 uintptr_t mcall_sm_destroy_enclave(unsigned long eid);
 
-uintptr_t mcall_sm_run_enclave(uintptr_t* regs, uintptr_t run_args, uintptr_t* entry_point);
+uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid);
 uintptr_t mcall_sm_exit_enclave(uintptr_t* regs, unsigned long retval);
 uintptr_t mcall_sm_not_implemented(uintptr_t* regs, unsigned long a0);
 uintptr_t mcall_sm_stop_enclave(uintptr_t* regs, unsigned long request);

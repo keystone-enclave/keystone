@@ -29,8 +29,3 @@ void swap_prev_stvec(struct thread_state_t* thread, uintptr_t current_stvec)
   thread->prev_stvec = current_stvec;
   write_csr(stvec, tmp);
 }
-
-void set_retptr(struct thread_state_t* thread, unsigned long* retptr)
-{
-  thread->retptr = retptr;
-}

@@ -64,6 +64,43 @@ void handle_pmp_ipi(uintptr_t* regs, uintptr_t dummy, uintptr_t mepc)
   return;
 }
 
+static int detect_region_overlap(uintptr_t addr, uintptr_t size)
+{
+  void* epm_base;
+  size_t epm_size;
+  int region_overlap = 0, i;
+
+  /* CAUTION: the caller should use pmp_lock to synchronize */
+
+  for(i=0; i<PMP_MAX_N_REGION; i++)
+  {
+    if(!is_pmp_region_valid(i))
+      continue;
+
+    struct pmp_region region = regions[i];
+    if(region.allow_overlap) {
+      continue;
+    }
+    
+    epm_base = (void*) region.addr;
+    epm_size = region.size;
+
+    region_overlap |= ((uintptr_t) epm_base < addr + size) &&
+                      ((uintptr_t) epm_base + epm_size > addr);
+  }
+  
+  return region_overlap;
+}
+
+int detect_region_overlap_atomic(uintptr_t addr, uintptr_t size)
+{
+  int region_overlap = 0;
+  spinlock_lock(&pmp_lock);
+  region_overlap = detect_region_overlap(addr, size);
+  spinlock_unlock(&pmp_lock);
+  return region_overlap;
+}
+
 static void send_pmp_ipi(uintptr_t recipient, uint8_t perm)
 {
   if (((disabled_hart_mask >> recipient) & 1)) return;
@@ -207,21 +244,22 @@ int pmp_region_debug_print(int region_idx)
 }
 
 
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid)
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid, int allow_overlap)
 {
   int ret;
   spinlock_lock(&pmp_lock);
-  ret = pmp_region_init(start, size, priority, rid);
+  ret = pmp_region_init(start, size, priority, rid, allow_overlap);
   spinlock_unlock(&pmp_lock);
   return ret;
 }
 
-int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid)
+int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid, int allow_overlap)
 {
   uintptr_t pmp_address;
   int reg_idx = -1;
   int region_idx = -1;
-  
+  int region_overlap = 0, i = 0;
+
   /* if region covers the entire RAM */
   if(size == -1UL && start == 0)
   {
@@ -243,6 +281,14 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
 
     pmp_address = (start | (size/2-1)) >> 2;
   }
+
+  /* overlap detection */
+  if (!allow_overlap) {
+    if (detect_region_overlap(start, size)) {
+      return PMP_REGION_OVERLAP;
+    }
+  }
+
   //find avaiable pmp region idx
   region_idx = get_free_region_idx();
   if(region_idx < 0 || region_idx > PMP_MAX_N_REGION)
@@ -267,9 +313,9 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
       break;
     }
     case(PMP_PRI_BOTTOM): {
+      /* the bottom register can be used by multiple regions, 
+       * so we don't check its availability */
       reg_idx = PMP_N_REG - 1;
-      if(TEST_BIT(reg_bitmap, reg_idx))
-        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     default: {
@@ -283,6 +329,7 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
   regions[region_idx].addrmode = PMP_NAPOT;
   regions[region_idx].addr = pmp_address;
   regions[region_idx].reg_idx = reg_idx;
+  regions[region_idx].allow_overlap = allow_overlap;
   SET_BIT(region_def_bitmap, region_idx);
   SET_BIT(reg_bitmap, reg_idx);
  

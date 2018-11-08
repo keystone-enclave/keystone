@@ -27,23 +27,14 @@ uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
   ret = destroy_enclave((unsigned int)eid);
   return ret;
 }
-uintptr_t mcall_sm_run_enclave(uintptr_t* regs, uintptr_t run_args, uintptr_t* entry_point)
+uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
 {
-  struct keystone_sbi_run_t run_args_local;
   enclave_ret_t ret;
-  ret = copy_region_from_host((struct keystone_sbi_run_t*)run_args,
-			      &run_args_local,
-			      sizeof(struct keystone_sbi_run_t));
-
-  if( ret != ENCLAVE_SUCCESS )
-    return ret;
-
-  if(get_host_satp(run_args_local.eid) != read_csr(satp))
+  if(get_host_satp(eid) != read_csr(satp))
     return ENCLAVE_NOT_ACCESSIBLE;
 
-  ret = run_enclave(regs, run_args_local);
-  if( ret == ENCLAVE_SUCCESS )
-    *entry_point = run_args_local.entry_ptr;
+  ret = run_enclave(regs, (unsigned int) eid);
+  
   return ret;
 }
 

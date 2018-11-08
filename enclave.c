@@ -83,30 +83,11 @@ unsigned long get_host_satp(unsigned int eid)
   return enclaves[eid].host_satp;
 }
 
-int detect_region_overlap(unsigned int eid, uintptr_t addr, uintptr_t size)
-{
-  void* epm_base;
-  size_t epm_size;
-
-  epm_base = pmp_get_addr(enclaves[eid].rid);
-  epm_size = pmp_get_size(enclaves[eid].rid);
-
-  return ((uintptr_t) epm_base < addr + size) &&
-         ((uintptr_t) epm_base + epm_size > addr);
-}
-
 int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
 {
   int region_overlap = 0, i;
   spinlock_lock(&encl_lock);
-  for(i=0; i<ENCL_MAX; i++)
-  {
-    if(!TEST_BIT(encl_bitmap, i))
-      continue;
-    region_overlap |= detect_region_overlap(i, (uintptr_t) ptr, sizeof(uintptr_t));
-    if(region_overlap)
-      break;
-  }
+  region_overlap = detect_region_overlap_atomic((uintptr_t)ptr, sizeof(uintptr_t));
   if(!region_overlap)
     *ptr = value;
   spinlock_unlock(&encl_lock);
@@ -123,14 +104,7 @@ int copy_region_from_host(void* source, void* dest, size_t size){
 
   int region_overlap = 0, i;
   spinlock_lock(&encl_lock);
-  for(i=0; i<ENCL_MAX; i++)
-  {
-    if(!TEST_BIT(encl_bitmap, i))
-      continue;
-    region_overlap |= detect_region_overlap(i, (uintptr_t)source, size);
-    if(region_overlap)
-      break;
-  }
+  region_overlap = detect_region_overlap_atomic((uintptr_t) source, sizeof(uintptr_t));
   if(!region_overlap)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
@@ -142,7 +116,7 @@ int copy_region_from_host(void* source, void* dest, size_t size){
   
 }
 
-int init_enclave_memory(uintptr_t base, uintptr_t size)
+int init_enclave_memory(uintptr_t base, uintptr_t size, uintptr_t utbase, uintptr_t utsize)
 {
   int ret;
   int ptlevel = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS;
@@ -150,7 +124,7 @@ int init_enclave_memory(uintptr_t base, uintptr_t size)
   // this function does the followings:
   // (1) Traverse the page table to see if any address points to the outside of EPM
   // (2) Zero out every page table entry that is not valid
-  ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size);
+  ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size, utbase, utsize);
   
   // FIXME: probably we will also need to:
   // (3) Zero out every page that is not pointed by the page table
@@ -158,63 +132,50 @@ int init_enclave_memory(uintptr_t base, uintptr_t size)
   return ret;
 }
 enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
-//enclave_ret_t create_enclave(uintptr_t base, uintptr_t size, unsigned int* eidptr)
 {
   uintptr_t base = create_args.epm_region.paddr;
   size_t size = create_args.epm_region.size;
+  uintptr_t utbase = create_args.utm_region.paddr;
+  size_t utsize = create_args.utm_region.size;
   unsigned int* eidptr = create_args.eid_pptr;
     
   uint8_t perm = 0;
   unsigned int eid;
   enclave_ret_t ret;
-  int region;
+  int region, shared_region;
   int i;
   int region_overlap = 0;
   
   // 1. create a PMP region binded to the enclave
-  
   ret = ENCLAVE_PMP_FAILURE;
 
-  if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region))
+  if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region, 0))
     goto error;
 
-  // - if base and (base+size) not belong to other enclaves
-  spinlock_lock(&encl_lock);
-  for(i=0; i<ENCL_MAX; i++)
-  {
-    if(!TEST_BIT(encl_bitmap, i))
-      continue;
-    region_overlap |= detect_region_overlap(i, base, size);
-    if(region_overlap)
-      break;
-  }
-  spinlock_unlock(&encl_lock);
-
-  
-  if(region_overlap)
-  {
-    printm("region overlaps with enclave %d\n", i);
+  if(pmp_region_init_atomic(utbase, utsize, PMP_PRI_BOTTOM, &shared_region, 0))
     goto free_region;
-  }
 
   // 2. allocate eid
   eid = encl_alloc_idx();
   if(eid < 0)
-    goto free_region;
+    goto free_shared_region;
 
   // 3. set pmp
   if(pmp_set_global(region, PMP_NO_PERM))
     goto free_encl_idx;
   
   // 4. initialize and verify enclave memory layout. 
-  init_enclave_memory(base, size);
+  init_enclave_memory(base, size, utbase, utsize);
 
   // 5. initialize enclave metadata
   enclaves[eid].eid = eid;
   enclaves[eid].rid = region;
+  enclaves[eid].utrid = shared_region;
   enclaves[eid].host_satp = read_csr(satp);
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
   enclaves[eid].n_thread = 0;
+  enclaves[eid].enclave_entry = create_args.enclave_entry;
+  enclaves[eid].runtime_entry = create_args.runtime_entry;
 
   spinlock_lock(&encl_lock);
   enclaves[eid].state = INITIALIZED;
@@ -226,6 +187,8 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
  
 free_encl_idx:
   encl_free_idx(eid);
+free_shared_region:
+  pmp_region_free_atomic(shared_region);
 free_region:
   pmp_region_free_atomic(region);
 error:
@@ -258,12 +221,16 @@ enclave_ret_t destroy_enclave(unsigned int eid)
   // 2. free pmp region
   pmp_unset_global(enclaves[eid].rid);
   pmp_region_free_atomic(enclaves[eid].rid);
+  pmp_region_free_atomic(enclaves[eid].utrid);
 
   enclaves[eid].eid = 0;
   enclaves[eid].rid = 0;
+  enclaves[eid].utrid = 0;
   enclaves[eid].host_satp = 0;
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
+  enclaves[eid].enclave_entry = 0;
+  enclaves[eid].runtime_entry = 0;
 
   // 3. release eid
   encl_free_idx(eid);
@@ -271,14 +238,8 @@ enclave_ret_t destroy_enclave(unsigned int eid)
   return ENCLAVE_SUCCESS;
 }
 
-#define RUNTIME_START_ADDRESS 0xffffffffc0000000
-
-enclave_ret_t run_enclave(uintptr_t* host_regs, struct keystone_sbi_run_t run_args)
+enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
 {
-  unsigned int eid = run_args.eid;
-  uintptr_t entry = run_args.entry_ptr;
-  unsigned long* retptr = run_args.ret_ptr;
-  
   int runable;
 
   spinlock_lock(&encl_lock);
@@ -295,14 +256,6 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, struct keystone_sbi_run_t run_ar
     return ENCLAVE_NOT_RUNNABLE;
   }
 
-  /* check if the entry point is valid */
-  if(entry >= RUNTIME_START_ADDRESS)
-  {
-    return ENCLAVE_ILLEGAL_ARGUMENT;
-  }
-  /* TODO: only one thread is supported */
-  set_retptr(&enclaves[eid].threads[0], retptr);
-
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], host_regs);
 
@@ -311,9 +264,11 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, struct keystone_sbi_run_t run_ar
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
-  // entry point after return (mret)
-  write_csr(mepc, RUNTIME_START_ADDRESS); // address of trampoline (runtime)
 
+  // entry points
+  write_csr(mepc, enclaves[eid].runtime_entry);
+  host_regs[11] = enclaves[eid].enclave_entry;
+  
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
  
@@ -328,6 +283,7 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, struct keystone_sbi_run_t run_ar
   // set PMP
   pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM);
+  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
 
   return ENCLAVE_SUCCESS;
 }
@@ -354,8 +310,6 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   pmp_set(encl.rid, PMP_NO_PERM);
   osm_pmp_set(PMP_ALL_PERM);
 
-  // copy return value to host
-  copy_word_to_host(encl.threads[0].retptr, retval);
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   swap_prev_stvec(&enclaves[eid].threads[0], 0);
@@ -397,8 +351,6 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
-  /* write the request to the ret ptr */
-  copy_word_to_host(enclaves[eid].threads[0].retptr, request);
   struct enclave_t encl = enclaves[eid];
   
   pmp_set(encl.rid, PMP_NO_PERM);
@@ -406,8 +358,15 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
 
   write_csr(satp, encl.host_satp);
   set_csr(mie, MIP_MTIP);
-  
-  return ENCLAVE_INTERRUPTED; 
+ 
+  switch(request) {
+    case(STOP_TIMER_INTERRUPT):
+      return ENCLAVE_INTERRUPTED;
+    case(STOP_EDGE_CALL_HOST):
+      return ENCLAVE_EDGE_CALL_HOST;
+    default:
+      return ENCLAVE_UNKNOWN_ERROR;
+  }
 }
 
 enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
@@ -443,6 +402,7 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
   // set PMP
   pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM); 
+  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
 
   return ENCLAVE_SUCCESS;
 }

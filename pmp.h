@@ -6,7 +6,7 @@
 #include <errno.h>
 
 #define PMP_N_REG         16 //number of PMP registers
-#define PMP_MAX_N_REGION  PMP_N_REG //maximum number of PMP regions
+#define PMP_MAX_N_REGION  32 //maximum number of PMP regions
 
 #define SET_BIT(bitmap, n) (bitmap |= (0x1 << n))
 #define UNSET_BIT(bitmap, n) (bitmap &= ~(0x1 << n))
@@ -67,8 +67,8 @@ enum pmp_priority {
 }
 
 int pmp_region_debug_print(int region);
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid);
-int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid);
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid, int allow_overlap);
+int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid, int allow_overlap);
 int pmp_region_free_atomic(int region);
 int pmp_set(int n, uint8_t perm);
 int pmp_set_global(int n, uint8_t perm);
@@ -77,12 +77,15 @@ int pmp_unset_global(int n);
 void* pmp_get_addr(int region);
 uint64_t pmp_get_size(int region);
 
+int detect_region_overlap_atomic(uintptr_t base, uintptr_t size);
+
 struct pmp_region
 {
   uintptr_t start;
   uint64_t size;
   uint8_t addrmode;
   uintptr_t addr;
+  int allow_overlap;
   int reg_idx;
 };
 #endif
