@@ -5,10 +5,14 @@
 
 
 unsigned long print_buffer(char* str){
-  printf("Enclave said: %s\n",str);
+  printf("Enclave said: %s",str);
   return strlen(str);
 }
 
+void print_value(unsigned long val){
+  printf("Enclave said value: %u\n",val);
+  return;
+}
 
 int main(int argc, char** argv)
 {

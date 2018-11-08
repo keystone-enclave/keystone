@@ -4,7 +4,7 @@ SRC_DIR = src
 
 CCFLAGS = -I $(INCLUDE_DIR)
 
-SRCS = src/edge_call.c
+SRCS = src/edge_call.c src/edge_dispatch.c
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 AR = riscv64-unknown-elf-ar

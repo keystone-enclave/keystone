@@ -9,6 +9,13 @@
 typedef size_t edge_data_offset;
 
 
+typedef void (*edgecallwrapper)(void*,size_t);
+
+
+#define MAX_EDGE_CALL 10
+
+extern edgecallwrapper edge_call_table[10];
+
 /* Call status indicates if the wrapper code, pointers, offsets, etc went OK
  * It has no bearing on data contained in the returns. */
 #define CALL_STATUS_OK 0

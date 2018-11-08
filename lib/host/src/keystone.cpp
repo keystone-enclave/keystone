@@ -115,8 +115,8 @@ keystone_status_t Keystone::run()
   while (ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST)
   {
     /* enclave is stopped in the middle. */
-    if (oFuncs[1] != NULL) {
-      oFuncs[1](this);
+    if (oFuncDispatch != NULL) {
+      oFuncDispatch(getSharedBuffer(), getSharedBufferSize());
     }
     ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
   }
@@ -139,7 +139,7 @@ size_t Keystone::getSharedBufferSize()
   return shared_buffer_size;
 }
 
-keystone_status_t Keystone::registerOcall(unsigned int request, OcallFunc func)
+keystone_status_t Keystone::registerOcallDispatch(OcallFunc func)
 {
-  oFuncs[request] = func;
+  oFuncDispatch = func;
 }

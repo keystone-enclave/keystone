@@ -14,5 +14,8 @@ int edge_call_get_offset_from_ptr(uintptr_t shared_start, size_t shared_len,
 				  uintptr_t ptr, size_t data_len,
 				  edge_data_offset* offset);
 
+void incoming_call_dispatch(void* shared_buffer, size_t buffer_size);
+
+int register_call(unsigned long call_id, edgecallwrapper func);
 
 #endif /* __EDGE_CALL_H_ */
