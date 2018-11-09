@@ -1,10 +1,17 @@
 CC = riscv64-unknown-linux-gnu-gcc
 CFLAGS = -Wall -Werror -fPIC
-SRCS = page_fault.c mm.c interrupt.c printf.c syscall.c
+SRCS = page_fault.c mm.c interrupt.c printf.c syscall.c string.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = riscv64-unknown-linux-gnu-ld
-LINKFLAGS = -static
+LDFLAGS = -static
+
+SDK_LIB_DIR = ../lib
+SDK_INCLUDE_EDGE_DIR = $(SDK_LIB_DIR)/edge/include
+SDK_EDGE_LIB = $(SDK_LIB_DIR)/libkeystone-edge.a
+
+LDFLAGS += -L$(SDK_LIB_DIR)
+CFLAGS += -I$(SDK_INCLUDE_EDGE_DIR)
 
 DISK_IMAGE = ../busybear-linux/busybear.bin
 MOUNT_DIR = ./tmp_busybear
@@ -12,7 +19,12 @@ MOUNT_DIR = ./tmp_busybear
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 ASM_OBJS = $(patsubst %.S,%.o,$(ASM_SRCS))
 
-all: $(RUNTIME)
+TMPLIB = uaccess.o
+
+all: $(TMPLIB) $(RUNTIME)
+
+$(TMPLIB): 
+	make -C tmplib
 
 $(DISK_IMAGE):
 	echo "missing $(DISK_IMAGE)."
@@ -25,7 +37,7 @@ copy: $(RUNTIME) $(DISK_IMAGE)
 	sudo umount $(MOUNT_DIR)
 	rm -rf $(MOUNT_DIR)
 
-$(RUNTIME): $(ASM_OBJS) $(OBJS)
+$(RUNTIME): $(ASM_OBJS) $(OBJS) $(SDK_EDGE_LIB) $(TMPLIB)
 	$(LINK) $(LINKFLAGS) -o $@ $^ -T runtime.lds
 
 $(ASM_OBJS): $(ASM_SRCS)
@@ -36,3 +48,4 @@ $(ASM_OBJS): $(ASM_SRCS)
 
 clean:
 	rm -f $(RUNTIME) *.o
+	make -C tmplib clean
