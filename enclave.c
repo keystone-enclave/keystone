@@ -119,7 +119,7 @@ int copy_region_from_host(void* source, void* dest, size_t size){
 int init_enclave_memory(uintptr_t base, uintptr_t size, uintptr_t utbase, uintptr_t utsize)
 {
   int ret;
-  int ptlevel = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS;
+  int ptlevel = RISCV_PGLEVEL_TOP;
   
   // this function does the followings:
   // (1) Traverse the page table to see if any address points to the outside of EPM
@@ -178,6 +178,7 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   enclaves[eid].enclave_entry = create_args.enclave_entry;
   enclaves[eid].runtime_entry = create_args.runtime_entry;
 
+  /* prepare hash for attestation */
   hash_enclave(&enclaves[eid]);
 
   spinlock_lock(&encl_lock);
