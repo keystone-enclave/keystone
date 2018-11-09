@@ -16,10 +16,13 @@ int hash_epm(hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr, int co
       continue;
     }
     uintptr_t vpn;
-    if ( level == 3 && i&0x100 )
-      vpn = ((-1 << RISCV_PGLEVEL_BITS) | (i & 0x1ff));
+    
+    /* propagate the highest bit of the VA */
+    if ( level == RISCV_PGLEVEL_TOP && i & RISCV_PGTABLE_HIGHEST_BIT )
+      vpn = ((-1 << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
     else
-      vpn = ((vaddr << RISCV_PGLEVEL_BITS) | (i&0x1ff));
+      vpn = ((vaddr << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
+    
     /* include the first virtual address of a contiguous range */
     if (level == 1 && !contiguous)
     {
@@ -29,16 +32,16 @@ int hash_epm(hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr, int co
       contiguous = 1;
     }
 
-    /* if PTE is leaf, extend hash for the page */
     uintptr_t phys_addr = (*walk >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
     if (level == 1)
     {
+      /* if PTE is leaf, extend hash for the page */
       hash_extend_page(hash_ctx, (void*)phys_addr);
       printm("PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn << RISCV_PGSHIFT, phys_addr); 
     }
-    /* otherwise, recurse on a lower level */
     else
     {
+      /* otherwise, recurse on a lower level */
       contiguous = hash_epm(hash_ctx, 
           level - 1, 
           (pte_t*) phys_addr, 
@@ -54,7 +57,7 @@ enclave_ret_t hash_enclave(struct enclave_t* enclave)
 {
   enclave_ret_t ret;
   hash_ctx_t hash_ctx;
-  int ptlevel = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS;
+  int ptlevel = RISCV_PGLEVEL_TOP;
   int i;
   hash_init(&hash_ctx);
 
