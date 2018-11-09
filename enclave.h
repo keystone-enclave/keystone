@@ -5,7 +5,7 @@
 #include "thread.h"
 #include "keystone-sbi-arg.h"
 #include "sm.h"
-
+#include "crypto.h"
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 
@@ -28,6 +28,9 @@ struct enclave_t
   enclave_state_t state; // global state of the enclave
   unsigned int n_thread;
 
+  /* measurement */
+  unsigned char hash[MDSIZE];
+
   /* entry points */
   uintptr_t enclave_entry;
   uintptr_t runtime_entry;
@@ -46,5 +49,8 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid);
 enclave_ret_t exit_enclave(uintptr_t* regs, unsigned long retval);
 enclave_ret_t stop_enclave(uintptr_t* regs, uint64_t request);
 enclave_ret_t resume_enclave(uintptr_t* regs, unsigned int eid);
+
+/* attestation */
+enclave_ret_t hash_enclave(struct enclave_t* enclave);
 
 #endif

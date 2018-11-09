@@ -177,6 +177,8 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   enclaves[eid].enclave_entry = create_args.enclave_entry;
   enclaves[eid].runtime_entry = create_args.runtime_entry;
 
+  hash_enclave(&enclaves[eid]);
+
   spinlock_lock(&encl_lock);
   enclaves[eid].state = INITIALIZED;
   spinlock_unlock(&encl_lock);
