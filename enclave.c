@@ -178,11 +178,11 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   enclaves[eid].enclave_entry = create_args.enclave_entry;
   enclaves[eid].runtime_entry = create_args.runtime_entry;
 
-  /* prepare hash for attestation */
-  hash_enclave(&enclaves[eid]);
-
+  /* prepare hash and signature for attestation */
   spinlock_lock(&encl_lock);
-  enclaves[eid].state = INITIALIZED;
+  enclaves[eid].state = FRESH;
+  hash_enclave(&enclaves[eid]);
+  sign_enclave(&enclaves[eid]);
   spinlock_unlock(&encl_lock);
  
   copy_word_to_host((uintptr_t*)eidptr, (uintptr_t)eid);

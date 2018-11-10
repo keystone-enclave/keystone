@@ -17,7 +17,7 @@ typedef enum {
   RUNNING,
 } enclave_state_t;
 
-
+/* enclave metadata */
 struct enclave_t
 {
   unsigned int eid; //enclave id
@@ -26,17 +26,28 @@ struct enclave_t
   unsigned long host_satp; //supervisor satp
   unsigned long encl_satp; // enclave's page table base
   enclave_state_t state; // global state of the enclave
-  unsigned int n_thread;
 
   /* measurement */
-  unsigned char hash[MDSIZE];
+  byte hash[MDSIZE];
+  byte sign[SIGNATURE_SIZE];
 
   /* entry points */
   uintptr_t enclave_entry;
   uintptr_t runtime_entry;
 
   /* enclave execution context */
+  unsigned int n_thread;
   struct thread_state_t threads[MAX_ENCL_THREADS];
+};
+
+/* attestation report */
+struct report_t
+{
+  byte sm_hash[MDSIZE];
+  byte sm_public_key[PUBLIC_KEY_SIZE];
+  byte sm_signature[SIGNATURE_SIZE];
+  byte enclave_hash[MDSIZE];
+  byte enclave_signature[SIGNATURE_SIZE];
 };
 
 int copy_region_from_host(void* source, void* dest, size_t size);
@@ -52,5 +63,5 @@ enclave_ret_t resume_enclave(uintptr_t* regs, unsigned int eid);
 
 /* attestation */
 enclave_ret_t hash_enclave(struct enclave_t* enclave);
-
+enclave_ret_t sign_enclave(struct enclave_t* enclave);
 #endif
