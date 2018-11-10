@@ -20,3 +20,8 @@ void hash_finalize(void* md, hash_ctx_t* hash_ctx)
 {
   sha3_final(md, hash_ctx);
 }
+
+void sign(void* sign, const void* data, size_t len, const unsigned char* public_key, const unsigned char* private_key)
+{
+  ed25519_sign(sign, data, len, public_key, private_key);
+}

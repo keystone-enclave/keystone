@@ -55,22 +55,35 @@ int hash_epm(hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr, int co
 
 enclave_ret_t hash_enclave(struct enclave_t* enclave)
 {
-  enclave_ret_t ret;
   hash_ctx_t hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
   int i;
+  
   hash_init(&hash_ctx);
-
+  
+  // TODO: add configuration parameters
+ 
   hash_epm(&hash_ctx, 
       ptlevel, 
       (pte_t*) (enclave->encl_satp << RISCV_PGSHIFT),
       0, 0);
-  
+
   hash_finalize(enclave->hash, &hash_ctx);
   printm("Final hash:\n");
   for(i = 0; i<MDSIZE/sizeof(uint64_t); i++)
   {
     printm("%lx\n", *((uint64_t*) enclave->hash + i));
+  }
+  return ENCLAVE_SUCCESS;
+}
+
+enclave_ret_t sign_enclave(struct enclave_t* enclave)
+{
+  int i;
+  sm_sign(enclave->sign, enclave->hash, MDSIZE);
+  for(i = 0; i<SIGNATURE_SIZE/sizeof(uint64_t); i++)
+  {
+    printm("%lx\n", *((uint64_t*) enclave->sign + i));
   }
   return ENCLAVE_SUCCESS;
 }

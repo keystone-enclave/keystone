@@ -2,17 +2,20 @@
 #include "mtrap.h"
 #include "pmp.h"
 #include "atomic.h"
+#include "crypto.h"
 
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
 static spinlock_t sm_init_lock = SPINLOCK_INIT;
 
-typedef unsigned char byte;
+byte sm_signature[SIGNATURE_SIZE];
+byte sm_public_key[PUBLIC_KEY_SIZE];
+byte sm_private_key[PRIVATE_KEY_SIZE];
 
-extern byte sanctum_sm_signature[64];
+/*extern byte sanctum_sm_signature[64];
 extern byte sanctum_dev_public_key[32];
 extern unsigned int sanctum_sm_size[1];
-
+*/
 int osm_pmp_set(uint8_t perm)
 {
   /* in case of OSM, PMP cfg is exactly the opposite.*/
@@ -39,7 +42,20 @@ int osm_init()
   return region;
 }
 
+void sm_sign(void* signature, const void* data, size_t len)
+{
+  sign(signature, data, len, sm_public_key, sm_private_key); 
+}
 
+void sm_copy_key()
+{
+  // FIXME: copy key provisioned from the root of trust
+  // just generate random key for now
+  byte seed[SIGNATURE_SIZE] = { 0, };
+  ed25519_create_keypair(sm_public_key, sm_private_key, seed); 
+}
+
+/*
 void sm_print_cert()
 {
 	int i;
@@ -63,6 +79,7 @@ void sm_print_cert()
 	}
 	printm("=================================\n");
 }
+*/
 
 void sm_init(void)
 {
@@ -84,7 +101,9 @@ void sm_init(void)
   
   pmp_set(sm_region_id, PMP_NO_PERM);
   pmp_set(os_region_id, PMP_ALL_PERM);
-  
+
+  // Copy the keypair from the root of trust
+  sm_copy_key();
   spinlock_unlock(&sm_init_lock);
   
   return;
