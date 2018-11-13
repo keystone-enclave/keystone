@@ -19,8 +19,12 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
   uintptr_t ret;
   /* For now we assume by convention that the start of the buffer is
    * the right place to put calls */
-
   struct edge_call_t* edge_call = (struct edge_call_t*)shared_buffer;
+
+  /* We encode the call id, copy the argument data into the shared
+   * region, calculate the offsets to the argument data, and then
+   * dispatch the ocall to host */
+  
   edge_call->call_id = call_id;
   copy_from_user((void*)buffer_data_start, (void*)data, data_len);
 
@@ -62,6 +66,23 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
   return 1;
 }
 
+uintptr_t handle_copy_from_shared(void* dst, uintptr_t offset, size_t size){
+  
+  /* This is where we would handle cache side channels for a given
+     platform */
+
+  /* The only safety check we do is to confirm all data comes from the
+   * shared region. */
+  uintptr_t src_ptr;
+  if(edge_call_get_ptr_from_offset(shared_buffer, shared_buffer_size,
+				   offset, size,
+				   &src_ptr) != 0){
+    return 1;
+  }
+
+  return copy_to_user(dst, (void*)src_ptr, size);
+}
+
 void handle_syscall(struct encl_ctx_t* ctx)
 {
   uintptr_t n = ctx->regs.a7;
@@ -82,11 +103,9 @@ void handle_syscall(struct encl_ctx_t* ctx)
       break;
     case(RUNTIME_SYSCALL_OCALL):
       ret = dispatch_edgecall_ocall(arg0, (void*)arg1, arg2, (void*)arg3, arg4);
-      //      ret = SBI_CALL_1(SBI_SM_STOP_ENCLAVE, arg0);
       break;
-    /* FIXME: just fixed mapping now */
-    case(RUNTIME_SYSCALL_UNTRUSTED_MMAP):
-      ret = 0x0dead000;
+    case(RUNTIME_SYSCALL_SHAREDCOPY):
+      ret = handle_copy_from_shared((void*)arg0, arg1, arg2);
       break;
     case(RUNTIME_SYSCALL_ATTEST_ENCLAVE):
       ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, arg0, arg1, arg2);
