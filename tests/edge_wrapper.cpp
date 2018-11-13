@@ -107,41 +107,39 @@ void get_host_string_wrapper(void* shared_buffer, size_t shared_buffer_size)
   data_section = (uintptr_t)shared_buffer+sizeof(struct edge_call_t);
   unsigned long ret_val;
 
-  host_packaged_str_t hps;
-
-  get_host_string(&hps);
-
+  char* host_str = get_host_string();
+  size_t host_str_len = strlen(host_str)+1;
 
   /* Now we will repackage this into offsets for the app, and load all
      of it into the shared data region */
-  app_packaged_str_t aps;
+  packaged_str_t aps;
   
   /* Setup the offset for the app packaged string */
   if(edge_call_get_offset_from_ptr((uintptr_t) shared_buffer, shared_buffer_size,
-				   data_section, sizeof(app_packaged_str_t),
+				   data_section, sizeof(packaged_str_t),
 				   &edge_call->return_data.call_ret_offset) != 0) {
     edge_call->return_data.call_status = CALL_STATUS_BAD_PTR;
     return;
   }
 
   /* Setup the offset for the actual string data */
-  uintptr_t str_shared_ptr = data_section+sizeof(app_packaged_str_t);
+  uintptr_t str_shared_ptr = data_section+sizeof(packaged_str_t);
   
   /* TODO we want a better recovery mode here if the input string is
      too long */
   if(edge_call_get_offset_from_ptr((uintptr_t) shared_buffer, shared_buffer_size,
-				   str_shared_ptr, hps.len,
+				   str_shared_ptr, host_str_len,
 				   &aps.str_offset) != 0) {
     edge_call->return_data.call_status = CALL_STATUS_BAD_PTR;
     return;
   }
 
   /* Setup the rest of the aps, and copy it */
-  aps.len = hps.len;
-  memcpy((void*)data_section, (void*)&aps, sizeof(app_packaged_str_t));
+  aps.len = host_str_len;
+  memcpy((void*)data_section, (void*)&aps, sizeof(packaged_str_t));
 
   /* Copy the string */  
-  memcpy((void*)str_shared_ptr, (void*)hps.str, hps.len);
+  memcpy((void*)str_shared_ptr, (void*)host_str, host_str_len);
   
   edge_call->return_data.call_status = CALL_STATUS_OK;
 

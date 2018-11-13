@@ -27,10 +27,8 @@ void print_value(unsigned long val){
   return;
 }
 
-void get_host_string(host_packaged_str_t* str){
-  str->str = longstr;
-  str->len = strlen(longstr)+1;
-  return;
+char* get_host_string(){
+  return longstr;
 }
 
 static struct report_t report;
