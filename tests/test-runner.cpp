@@ -5,6 +5,8 @@
 
 typedef unsigned char byte;
 
+char* longstr = "hellohellohellohellohellohellohellohellohellohello";
+
 struct report_t {
   byte sm_hash[64];
   byte sm_pubkey[32];
@@ -22,6 +24,12 @@ unsigned long print_buffer(char* str){
 
 void print_value(unsigned long val){
   printf("Enclave said value: %u\n",val);
+  return;
+}
+
+void get_host_string(host_packaged_str_t* str){
+  str->str = longstr;
+  str->len = strlen(longstr)+1;
   return;
 }
 
