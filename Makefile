@@ -28,4 +28,4 @@ clean:
 	make -C lib clean
 	make -C runtime clean
 	make -C tests clean
-	make -C samples
+	make -C samples clean

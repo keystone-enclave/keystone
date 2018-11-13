@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+/* TODO We should be syncing these more explictly with the runtime
+   defs */
 #define SYSCALL_OCALL 1001
-#define SYSCALL_UNTRUSTED_MMAP  1002
+#define SYSCALL_SHAREDCOPY  1002
 #define SYSCALL_ATTEST_ENCLAVE  1003
 #define SYSCALL_EXIT  1101
 
@@ -27,6 +29,9 @@
 #define SYSCALL_2(which, arg0, arg1) SYSCALL(which, arg0, arg1, 0, 0, 0)
 #define SYSCALL_3(which, arg0, arg1, arg2) SYSCALL(which, arg0, arg1, arg2, 0, 0)
 #define SYSCALL_5(which, arg0, arg1, arg2, arg3, arg4) SYSCALL(which, arg0, arg1, arg2, arg3, arg4)
+
+int copy_from_shared(void* dst,
+		     uintptr_t offset, size_t data_len);
 
 int ocall(unsigned long call_id,
 	  void* data, size_t data_len,

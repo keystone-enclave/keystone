@@ -8,10 +8,9 @@ int ocall(unsigned long call_id,
   return SYSCALL_5(SYSCALL_OCALL, call_id, data, data_len, return_buffer, return_len);
 }
 
-/* FIXME: this should not be provided to the user */
-uintptr_t untrusted_mmap()
-{
-  return SYSCALL_0(SYSCALL_UNTRUSTED_MMAP);
+int copy_from_shared(void* dst,
+		     uintptr_t offset, size_t data_len){
+  return SYSCALL_3(SYSCALL_SHAREDCOPY, dst, offset, data_len);
 }
 
 int attest_enclave(void* report, void* data, size_t size)
