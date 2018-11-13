@@ -13,3 +13,8 @@ uintptr_t untrusted_mmap()
 {
   return SYSCALL_0(SYSCALL_UNTRUSTED_MMAP);
 }
+
+int attest_enclave(void* report, void* data, size_t size)
+{
+  return SYSCALL_3(SYSCALL_ATTEST_ENCLAVE, report, data, size);
+}

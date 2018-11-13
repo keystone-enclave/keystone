@@ -12,4 +12,6 @@ unsigned long print_buffer(char* str);
 void print_value_wrapper(void* shared_buffer, size_t shared_buffer_size);
 void print_value(unsigned long val);
 
+void copy_report_wrapper(void* shared_buffer, size_t shared_buffer_size);
+void copy_report(void* shared_buffer);
 #endif /* _EDGE_WRAPPER_H_ */
