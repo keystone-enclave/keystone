@@ -28,7 +28,7 @@ int hash_epm(hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr, int co
     {
       uintptr_t va_start = vpn << RISCV_PGSHIFT;
       hash_extend(hash_ctx, &va_start, sizeof(uintptr_t));
-      printm("VA hashed: 0x%lx\n", va_start);
+      //printm("VA hashed: 0x%lx\n", va_start);
       contiguous = 1;
     }
 
@@ -37,7 +37,7 @@ int hash_epm(hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr, int co
     {
       /* if PTE is leaf, extend hash for the page */
       hash_extend_page(hash_ctx, (void*)phys_addr);
-      printm("PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn << RISCV_PGSHIFT, phys_addr); 
+      //printm("PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn << RISCV_PGSHIFT, phys_addr); 
     }
     else
     {
@@ -69,21 +69,10 @@ enclave_ret_t hash_enclave(struct enclave_t* enclave)
       0, 0);
 
   hash_finalize(enclave->hash, &hash_ctx);
-  printm("Final hash:\n");
-  for(i = 0; i<MDSIZE/sizeof(uint64_t); i++)
-  {
-    printm("%lx\n", *((uint64_t*) enclave->hash + i));
-  }
-  return ENCLAVE_SUCCESS;
-}
-
-enclave_ret_t sign_enclave(struct enclave_t* enclave)
-{
-  int i;
-  sm_sign(enclave->sign, enclave->hash, MDSIZE);
-  for(i = 0; i<SIGNATURE_SIZE/sizeof(uint64_t); i++)
-  {
-    printm("%lx\n", *((uint64_t*) enclave->sign + i));
-  }
+  //printm("Final hash:\n");
+  //for(i = 0; i<MDSIZE/sizeof(uint64_t); i++)
+  //{
+  //  printm("%lx\n", *((uint64_t*) enclave->hash + i));
+  //}
   return ENCLAVE_SUCCESS;
 }

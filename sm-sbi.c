@@ -2,7 +2,7 @@
 #include "pmp.h"
 #include "enclave.h"
 #include <errno.h>
-
+#include "page.h"
 
 uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 {
@@ -53,6 +53,11 @@ uintptr_t mcall_sm_exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 uintptr_t mcall_sm_stop_enclave(uintptr_t* encl_regs, unsigned long request)
 {
   return stop_enclave(encl_regs, (uint64_t)request);
+}
+
+uintptr_t mcall_sm_attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size)
+{
+  return attest_enclave(report, data, size);
 }
 
 uintptr_t mcall_sm_not_implemented(uintptr_t* encl_regs, unsigned long cause)

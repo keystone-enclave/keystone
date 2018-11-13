@@ -8,9 +8,10 @@ static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
 static spinlock_t sm_init_lock = SPINLOCK_INIT;
 
-byte sm_signature[SIGNATURE_SIZE];
-byte sm_public_key[PUBLIC_KEY_SIZE];
-byte sm_private_key[PRIVATE_KEY_SIZE];
+byte sm_hash[MDSIZE] = { 0, };
+byte sm_signature[SIGNATURE_SIZE] = { 0, };
+byte sm_public_key[PUBLIC_KEY_SIZE] = { 0, };
+byte sm_private_key[PRIVATE_KEY_SIZE] = { 0, };
 
 /*extern byte sanctum_sm_signature[64];
 extern byte sanctum_dev_public_key[32];
