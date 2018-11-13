@@ -9,6 +9,7 @@
 
 #define SBI_SM_CREATE_ENCLAVE   101
 #define SBI_SM_DESTROY_ENCLAVE  102
+#define SBI_SM_ATTEST_ENCLAVE   103
 #define SBI_SM_RUN_ENCLAVE      105
 #define SBI_SM_STOP_ENCLAVE     106
 #define SBI_SM_RESUME_ENCLAVE   107
@@ -31,6 +32,7 @@
 #define SBI_CALL_0(which) SBI_CALL(which, 0, 0, 0)
 #define SBI_CALL_1(which, arg0) SBI_CALL(which, arg0, 0, 0)
 #define SBI_CALL_2(which, arg0, arg1) SBI_CALL(which, arg0, arg1, 0)
+#define SBI_CALL_3(which, arg0, arg1, arg2) SBI_CALL(which, arg0, arg1, arg2)
 
 static inline void sbi_set_timer(uint64_t stime_value){
 #if __riscv_xlen == 32

@@ -64,7 +64,6 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
 
 void handle_syscall(struct encl_ctx_t* ctx)
 {
-  
   uintptr_t n = ctx->regs.a7;
   uintptr_t arg0 = ctx->regs.a0;
   uintptr_t arg1 = ctx->regs.a1;
@@ -88,6 +87,9 @@ void handle_syscall(struct encl_ctx_t* ctx)
     /* FIXME: just fixed mapping now */
     case(RUNTIME_SYSCALL_UNTRUSTED_MMAP):
       ret = 0x0dead000;
+      break;
+    case(RUNTIME_SYSCALL_ATTEST_ENCLAVE):
+      ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, arg0, arg1, arg2);
       break;
     case(RUNTIME_SYSCALL_UNKNOWN):
     default:
