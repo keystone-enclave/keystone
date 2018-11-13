@@ -1,7 +1,6 @@
 #ifndef sm_h
 #define sm_h
 
-//FIXME: just arbitrary 128MB range
 #include <stdint.h>
 #include "pmp.h"
 #include "sm-sbi.h"
@@ -12,6 +11,7 @@
 
 #define SBI_SM_CREATE_ENCLAVE   101
 #define SBI_SM_DESTROY_ENCLAVE  102
+#define SBI_SM_ATTEST_ENCLAVE   103
 #define SBI_SM_RUN_ENCLAVE      105
 #define SBI_SM_STOP_ENCLAVE     106
 #define SBI_SM_RESUME_ENCLAVE   107
@@ -33,6 +33,7 @@
 #define ENCLAVE_NOT_RUNNING                 (enclave_ret_t)9
 #define ENCLAVE_NOT_RESUMABLE               (enclave_ret_t)10
 #define ENCLAVE_EDGE_CALL_HOST              (enclave_ret_t)11
+#define ENCLAVE_NOT_INITIALIZED             (enclave_ret_t)12
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0

@@ -85,7 +85,7 @@ unsigned long get_host_satp(unsigned int eid)
 
 int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
 {
-  int region_overlap = 0, i;
+  int region_overlap = 0;
   spinlock_lock(&encl_lock);
   region_overlap = detect_region_overlap_atomic((uintptr_t)ptr, sizeof(uintptr_t));
   if(!region_overlap)
@@ -102,9 +102,9 @@ int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
 // Does not do checking of dest!
 int copy_region_from_host(void* source, void* dest, size_t size){
 
-  int region_overlap = 0, i;
+  int region_overlap = 0;
   spinlock_lock(&encl_lock);
-  region_overlap = detect_region_overlap_atomic((uintptr_t) source, sizeof(uintptr_t));
+  region_overlap = detect_region_overlap_atomic((uintptr_t) source, size);
   if(!region_overlap)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
@@ -113,7 +113,40 @@ int copy_region_from_host(void* source, void* dest, size_t size){
     return ENCLAVE_REGION_OVERLAPS;
   else
     return ENCLAVE_SUCCESS;
-  
+}
+
+/* copies data from enclave, source must be inside EPM */
+int copy_from_enclave(struct enclave_t* enclave, void* dest, void* source, size_t size) {
+  int legal = 0;
+  spinlock_lock(&encl_lock);
+  legal = (source >= pmp_get_addr(enclave->rid)
+      && source + size <= pmp_get_addr(enclave->rid) +
+      pmp_get_size(enclave->rid));
+  if(legal)
+    memcpy(dest, source, size);
+  spinlock_unlock(&encl_lock);
+
+  if(!legal)
+    return ENCLAVE_ILLEGAL_ARGUMENT;
+  else
+    return ENCLAVE_SUCCESS;
+}
+
+/* copies data into enclave, destination must be inside EPM */
+int copy_to_enclave(struct enclave_t* enclave, void* dest, void* source, size_t size) {
+  int legal = 0;
+  spinlock_lock(&encl_lock);
+  legal = (dest >= pmp_get_addr(enclave->rid)
+      && dest + size <= pmp_get_addr(enclave->rid) +
+      pmp_get_size(enclave->rid));
+  if(legal)
+    memcpy(dest, source, size);
+  spinlock_unlock(&encl_lock);
+
+  if(!legal)
+    return ENCLAVE_ILLEGAL_ARGUMENT;
+  else
+    return ENCLAVE_SUCCESS;
 }
 
 int init_enclave_memory(uintptr_t base, uintptr_t size, uintptr_t utbase, uintptr_t utsize)
@@ -182,7 +215,6 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   spinlock_lock(&encl_lock);
   enclaves[eid].state = FRESH;
   hash_enclave(&enclaves[eid]);
-  sign_enclave(&enclaves[eid]);
   spinlock_unlock(&encl_lock);
  
   copy_word_to_host((uintptr_t*)eidptr, (uintptr_t)eid);
@@ -410,6 +442,59 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
   pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM); 
   pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
+
+  return ENCLAVE_SUCCESS;
+}
+
+enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size)
+{
+  int attestable;
+  struct report_t report;
+  int ret;
+  unsigned int eid;
+  if(encl_satp_to_eid(read_csr(satp),&eid) < 0)
+    return ENCLAVE_INVALID_ID;
+
+  if (size > ATTEST_DATA_MAXLEN)
+    return ENCLAVE_ILLEGAL_ARGUMENT;
+
+  spinlock_lock(&encl_lock);
+  attestable = TEST_BIT(encl_bitmap, eid)
+    && (enclaves[eid].state >= INITIALIZED);
+  spinlock_unlock(&encl_lock);
+
+  if(!attestable)
+    return ENCLAVE_NOT_INITIALIZED;
+
+  /* copy data to be signed */
+  ret = copy_from_enclave(&enclaves[eid], 
+      report.enclave.data,
+      (void*) get_phys_addr(data),
+      size);
+  report.enclave.data_len = size;
+  
+  if (ret) {
+    return ret;
+  }
+  
+  memset(report.sm.hash, '\0', MDSIZE); // FIXME
+  memcpy(report.sm.public_key, sm_public_key, PUBLIC_KEY_SIZE);
+  memcpy(report.sm.signature, sm_signature, SIGNATURE_SIZE);
+  memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
+  sm_sign(report.enclave.signature,
+      &report.enclave, 
+      sizeof(struct enclave_report_t)
+      - SIGNATURE_SIZE
+      - ATTEST_DATA_MAXLEN + size);
+
+  /* copy report to the enclave */
+  ret = copy_to_enclave(&enclaves[eid],
+      (void*) get_phys_addr(report_ptr),
+      &report,
+      sizeof(struct report_t));
+  if (ret) {
+    return ret;
+  }
 
   return ENCLAVE_SUCCESS;
 }

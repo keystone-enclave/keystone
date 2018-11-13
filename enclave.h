@@ -6,6 +6,8 @@
 #include "keystone-sbi-arg.h"
 #include "sm.h"
 #include "crypto.h"
+
+#define ATTEST_DATA_MAXLEN  1024
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 
@@ -20,6 +22,7 @@ typedef enum {
 /* enclave metadata */
 struct enclave_t
 {
+  //spinlock_t lock; //local enclave lock. we don't need this until we have multithreaded enclave
   unsigned int eid; //enclave id
   int rid; //region id
   int utrid; // untrusted shared region id
@@ -40,14 +43,24 @@ struct enclave_t
   struct thread_state_t threads[MAX_ENCL_THREADS];
 };
 
-/* attestation report */
+/* attestation reports */
+struct enclave_report_t
+{
+  byte hash[MDSIZE];
+  uint64_t data_len;
+  byte data[ATTEST_DATA_MAXLEN];
+  byte signature[SIGNATURE_SIZE];
+};
+struct sm_report_t
+{
+  byte hash[MDSIZE];
+  byte public_key[PUBLIC_KEY_SIZE];
+  byte signature[SIGNATURE_SIZE];
+};
 struct report_t
 {
-  byte sm_hash[MDSIZE];
-  byte sm_public_key[PUBLIC_KEY_SIZE];
-  byte sm_signature[SIGNATURE_SIZE];
-  byte enclave_hash[MDSIZE];
-  byte enclave_signature[SIGNATURE_SIZE];
+  struct sm_report_t sm;
+  struct enclave_report_t enclave;
 };
 
 int copy_region_from_host(void* source, void* dest, size_t size);
@@ -61,7 +74,7 @@ enclave_ret_t exit_enclave(uintptr_t* regs, unsigned long retval);
 enclave_ret_t stop_enclave(uintptr_t* regs, uint64_t request);
 enclave_ret_t resume_enclave(uintptr_t* regs, unsigned int eid);
 
+enclave_ret_t attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size);
 /* attestation */
 enclave_ret_t hash_enclave(struct enclave_t* enclave);
-enclave_ret_t sign_enclave(struct enclave_t* enclave);
 #endif

@@ -25,66 +25,43 @@ int init_encl_pgtable(int level, pte_t* tb, uintptr_t base, uintptr_t size, uint
   }
   return ret;
 }
-/* uncomment this function for debugging 
-void pte_to_str(pte_t pte, char* buf)
-{
-  int i;
-  for(i=0; i<8; i++)
-    buf[i] = '-';
-  buf[8] = '\0';
 
-  if( pte & PTE_D )
-    buf[0] = 'D';
-  if( pte & PTE_A )
-    buf[1] = 'A';
-  if( pte & PTE_G )
-    buf[2] = 'G';
-  if( pte & PTE_U )
-    buf[3] = 'U';
-  if( pte & PTE_X )
-    buf[4] = 'X';
-  if( pte & PTE_W )
-    buf[5] = 'W';
-  if( pte & PTE_R )
-    buf[6] = 'R';
-  if( pte & PTE_V )
-    buf[7] = 'V';
-  return;
+static uintptr_t pte_ppn(pte_t pte)
+{
+  return pte >> PTE_PPN_SHIFT;
 }
 
-int print_pgtable(int level, pte_t* tb, uintptr_t vaddr)
+static size_t pt_idx(uintptr_t addr, int level)
 {
-  pte_t* walk;
-  int ret = 0;
-  int i=0;
-  
-  for (walk=tb, i=0; walk < tb + (RISCV_PGSIZE/sizeof(pte_t)) ; walk += 1, i++)
-  {
-    if(*walk == 0)
-      continue;
+  size_t idx = addr >> (RISCV_PGLEVEL_BITS*level + RISCV_PGSHIFT);
+  return idx & ((1 << RISCV_PGLEVEL_BITS) - 1);
+}
 
-    pte_t pte = *walk;
-    uintptr_t phys_addr = (pte >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
-   
-    if(level == 1)
-    {
-      char buf[10];
-      pte_to_str(pte, buf);
-      printm("[pgtable] level:%d, base: 0x%lx, i:%d, pte: 0x%lx (vaddr: 0x%lx : %s)\r\n", level, tb, i, pte, ((vaddr << 9) | (i&0x1ff))<<12, buf);
-    }
-    else
-    {
-      char buf[10];
-      pte_to_str(pte, buf);
-      printm("[pgtable] level:%d, base: 0x%lx, i:%d, pte: 0x%lx (%s)\r\n", level, tb, i, pte, buf);
-    }
-
-    if(level > 1)
-    {
-      if(level == 3 && (i&0x100))
-        vaddr = 0xffffffffffffffffUL;
-      ret |= print_pgtable(level - 1, (pte_t*) phys_addr, (vaddr << 9) | (i&0x1ff));
-    }
+static uintptr_t __ept_walk_internal(pte_t* root_page_table, uintptr_t addr)
+{
+  pte_t* t = root_page_table;
+  int i;
+  for (i = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS - 1; i > 0; i--) {
+    size_t idx = pt_idx(addr, i);
+    if (!(t[idx] & PTE_V))
+      return 0;
+    t = (pte_t*) (pte_ppn(t[idx]) << RISCV_PGSHIFT);
   }
-  return ret;
-} */
+  return t[pt_idx(addr, 0)];
+}
+
+static uintptr_t __ept_walk(pte_t* root_page_table, uintptr_t addr)
+{
+  return __ept_walk_internal(root_page_table, addr);
+}
+
+uintptr_t get_phys_addr(uintptr_t addr)
+{
+  pte_t pte;
+  uintptr_t physaddr;
+  pte =  __ept_walk((pte_t*) (read_csr(satp) << RISCV_PGSHIFT), addr);
+  
+  physaddr = pte_ppn(pte) << RISCV_PGSHIFT;
+  physaddr |= addr & (RISCV_PGSIZE - 1);
+  return physaddr;
+}
