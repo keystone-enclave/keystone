@@ -142,4 +142,5 @@ size_t Keystone::getSharedBufferSize()
 keystone_status_t Keystone::registerOcallDispatch(OcallFunc func)
 {
   oFuncDispatch = func;
+  return KEYSTONE_SUCCESS;
 }

@@ -11,7 +11,7 @@ class ELFFile
   public:
     ELFFile(std::string filename);
     ~ELFFile();
-    unsigned long setEntry(unsigned long _entry) { entry = _entry; }
+    unsigned long setEntry(unsigned long _entry) { entry = _entry; return entry;}
     unsigned long getEntry() { return entry; }
     void* getPtr() { return ptr; }
     size_t getSize() { return size; }

@@ -57,6 +57,7 @@
 #endif
 
 #include <stddef.h>
+#include "string.h"
 
 void* malloc(size_t);
 void    free(void*);

@@ -107,7 +107,7 @@ void get_host_string_wrapper(void* shared_buffer, size_t shared_buffer_size)
   data_section = (uintptr_t)shared_buffer+sizeof(struct edge_call_t);
   unsigned long ret_val;
 
-  char* host_str = get_host_string();
+  const char* host_str = get_host_string();
   size_t host_str_len = strlen(host_str)+1;
 
   /* Now we will repackage this into offsets for the app, and load all

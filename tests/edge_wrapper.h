@@ -23,6 +23,6 @@ void copy_report_wrapper(void* shared_buffer, size_t shared_buffer_size);
 void copy_report(void* shared_buffer);
 
 void get_host_string_wrapper(void* shared_buffer, size_t shared_buffer_size);
-char* get_host_string();
+const char* get_host_string();
 
 #endif /* _EDGE_WRAPPER_H_ */

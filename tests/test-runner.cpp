@@ -5,7 +5,7 @@
 
 typedef unsigned char byte;
 
-char* longstr = "hellohellohellohellohellohellohellohellohellohello";
+const char* longstr = "hellohellohellohellohellohellohellohellohellohello";
 
 struct report_t {
   byte sm_hash[64];
@@ -27,7 +27,7 @@ void print_value(unsigned long val){
   return;
 }
 
-char* get_host_string(){
+const char* get_host_string(){
   return longstr;
 }
 
@@ -38,7 +38,7 @@ void print_hex(void* buffer, size_t len)
   int i;
   for(i = 0; i < len; i+=sizeof(uintptr_t))
   {
-    printf("%.16lx ", *((uintptr_t*) (buffer + i)));
+    printf("%.16lx ", *((uintptr_t*) ((uintptr_t)buffer + i)));
   }
   printf("\n");
 }

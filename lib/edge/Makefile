@@ -2,7 +2,7 @@ CC = riscv64-unknown-linux-gnu-gcc
 INCLUDE_DIR = include/
 SRC_DIR = src
 
-CCFLAGS = -I $(INCLUDE_DIR)
+CCFLAGS = -Wall -Werror -I $(INCLUDE_DIR)
 
 SRCS = src/edge_call.c src/edge_dispatch.c
 OBJS = $(patsubst %.c,%.o,$(SRCS))
