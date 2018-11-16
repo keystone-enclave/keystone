@@ -3,6 +3,6 @@
 Keystone Enclave is an open-source secure hardware enclave based on RISC-V.
 Visit [Project Website](https://keystone-enclave.org) for more information.
 
-Wiki Page: [Keystone Wiki](https://github.com/keystone-enclave/keystone/wiki)
+# Documentation
 
-How to try: [Getting Started](https://github.com/keystone-enclave/keystone/wiki/Getting-Started)
+See [docs](https://github.com/keystone-enclave/keystone/tree/master/docs) directory to locally hosting the documentation.
