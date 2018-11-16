@@ -16,9 +16,10 @@ We appreciate any contribution for making Keystone better.
 
 Since no hardware has been built for Keystone, we provide a few ways to deploy and test Keystone for building secure systems and developing enclave applications.
 
+Testing Keystone on Various Platforms
+----------------------------------------
 .. toctree::
    :maxdepth: 2
-   :caption: Testing Keystone on Various Platforms
 
    Running-Keystone-with-QEMU
    Running-Keystone-with-FireSim
