@@ -1,4 +1,4 @@
-#ifndef __EDGE_COMMON_H_
+#ifndef _EDGE_COMMON_H_
 #define _EDGE_COMMON_H_
 #include <stdint.h>
 #include <stddef.h>
@@ -24,6 +24,11 @@ extern edgecallwrapper edge_call_table[10];
 #define CALL_STATUS_BAD_PTR 3
 #define CALL_STATUS_ERROR 4
 
+/* Useful type for things like packaged strings, etc */
+typedef struct edge_data_t{
+  edge_data_offset offset;
+  size_t len;
+} edge_data_t;
 
 struct edge_return_t{
 
