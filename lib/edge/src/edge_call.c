@@ -1,4 +1,5 @@
 #include <edge_call.h>
+#include "string.h"
 
 uintptr_t _shared_start;
 size_t _shared_len;
@@ -71,13 +72,13 @@ int edge_call_ret_ptr(edge_call_t* edge_call, uintptr_t* ptr){
 
 int edge_call_setup_call(edge_call_t* edge_call, void* ptr, size_t size){
   edge_call->call_arg_size = size;
-  return edge_call_get_offset_from_ptr(ptr, size,
+  return edge_call_get_offset_from_ptr((uintptr_t)ptr, size,
 				       &edge_call->call_arg_offset);
 }
 
 int edge_call_setup_ret(edge_call_t* edge_call, void* ptr, size_t size){
   edge_call->return_data.call_ret_size = size;
-  return edge_call_get_offset_from_ptr(ptr, size,
+  return edge_call_get_offset_from_ptr((uintptr_t)ptr, size,
 				       &edge_call->return_data.call_ret_offset);
 }
 
