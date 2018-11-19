@@ -3,8 +3,8 @@
 edgecallwrapper edge_call_table[MAX_EDGE_CALL];
 
 /* Registered handler for incoming edge calls */
-void incoming_call_dispatch(void* shared_buffer, size_t buffer_size){
-  struct edge_call_t* edge_call = (struct edge_call_t*) shared_buffer;
+void incoming_call_dispatch(void* buffer){
+  struct edge_call_t* edge_call = (struct edge_call_t*) buffer;
 
   /* Lookup the call in the table */
   if( edge_call->call_id > MAX_EDGE_CALL ||
@@ -13,7 +13,7 @@ void incoming_call_dispatch(void* shared_buffer, size_t buffer_size){
     goto fatal_error;
   }
 
-  edge_call_table[edge_call->call_id](shared_buffer, buffer_size);
+  edge_call_table[edge_call->call_id](buffer);
   return;
 
 

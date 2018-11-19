@@ -2,6 +2,7 @@
 #include "string.h"
 #include "syscall.h"
 #include "edge_wrapper.h"
+#include "edge_call.h"
 
 void edge_init(){
   /* Nothing for now, will probably register buffers/callsites
@@ -28,10 +29,7 @@ unsigned long ocall_print_buffer(char* data, size_t data_len){
   return retval;
 }
 
-packaged_str_t ocall_get_string(){
-
-  struct packaged_str retstr;
-  ocall(OCALL_GET_STRING, NULL, 0, &retstr, sizeof(struct packaged_str));
-
-  return retstr;
+void ocall_get_string(edge_data_t* retdata){
+  ocall(OCALL_GET_STRING, NULL, 0, retdata, sizeof(edge_data_t));
+  return;
 }

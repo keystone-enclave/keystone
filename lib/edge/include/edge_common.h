@@ -9,7 +9,7 @@
 typedef size_t edge_data_offset;
 
 
-typedef void (*edgecallwrapper)(void*,size_t);
+typedef void (*edgecallwrapper)(void*);
 
 
 #define MAX_EDGE_CALL 10
@@ -24,13 +24,22 @@ extern edgecallwrapper edge_call_table[10];
 #define CALL_STATUS_BAD_PTR 3
 #define CALL_STATUS_ERROR 4
 
+/* Must init these */
+extern uintptr_t _shared_start;
+extern size_t _shared_len;
+
 /* Useful type for things like packaged strings, etc */
 typedef struct edge_data_t{
   edge_data_offset offset;
-  size_t len;
+  size_t size;
 } edge_data_t;
 
-struct edge_return_t{
+typedef struct edge_app_retdata_t {
+  void* app_ptr;
+  size_t len;
+} edge_app_retdata_t;
+
+typedef struct edge_return_t{
 
   /* Status variable indicating error/success conditions. Not for data
      values. */
@@ -40,9 +49,10 @@ struct edge_return_t{
    * validity, then turned into a pointer to a relevant return data
    * structure for the call. (User/call defined) */
   edge_data_offset call_ret_offset;
-};
+  size_t call_ret_size;
+} edge_return_t;
 
-struct edge_call_t{
+typedef struct edge_call_t{
   /* Similar to syscall number.  User-defined call id, handled at the
    * edges only */
   unsigned long call_id;
@@ -51,10 +61,11 @@ struct edge_call_t{
    * validity, then turned into a pointer to a relevant argument
    * structure for the call. (User/call defined)*/
   edge_data_offset call_arg_offset;
-
+  size_t call_arg_size;
+  
   /* Pre-set location to structure return data */
-  struct edge_return_t return_data;
-};
+  edge_return_t return_data;
+} edge_call_t;
 
 
 #endif /* __EDGE_COMMON_H_ */

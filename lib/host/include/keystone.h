@@ -22,7 +22,7 @@
 #define PERROR(str) perror(MSG(str))
 
 class Keystone;
-typedef void (*OcallFunc)(void*,size_t);
+typedef void (*OcallFunc)(void*);
 
 typedef enum {
   KEYSTONE_ERROR=-1,

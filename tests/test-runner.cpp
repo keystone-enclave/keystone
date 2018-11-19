@@ -3,19 +3,7 @@
 #include "keystone.h"
 #include "edge_wrapper.h"
 
-typedef unsigned char byte;
-
 const char* longstr = "hellohellohellohellohellohellohellohellohellohello";
-
-struct report_t {
-  byte sm_hash[64];
-  byte sm_pubkey[32];
-  byte sm_signature[64];
-  byte encl_hash[64];
-  uint64_t encl_data_len;
-  byte encl_data[1024];
-  byte encl_signature[64];
-};
 
 unsigned long print_buffer(char* str){
   printf("Enclave said: %s",str);

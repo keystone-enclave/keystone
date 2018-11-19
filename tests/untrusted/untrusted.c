@@ -16,15 +16,15 @@ void EAPP_ENTRY eapp_entry(){
 
   ocall_print_value(ret);
 
-  packaged_str_t pkgstr = ocall_get_string();
+  edge_data_t pkgstr;
+  ocall_get_string(&pkgstr);
 
-  
-  void* host_str = malloc(pkgstr.len);
-  copy_from_shared(host_str, pkgstr.str_offset, pkgstr.len);
+  void* host_str = malloc(pkgstr.size);
+  copy_from_shared(host_str, pkgstr.offset, pkgstr.size);
 
   int i;
   int ct;
-  for(i = 0; i < pkgstr.len; i++){
+  for(i = 0; i < pkgstr.size; i++){
     if( ((char*)host_str)[i] == 'l' ){
       ct++;
     }

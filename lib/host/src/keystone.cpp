@@ -116,7 +116,7 @@ keystone_status_t Keystone::run()
   {
     /* enclave is stopped in the middle. */
     if (oFuncDispatch != NULL) {
-      oFuncDispatch(getSharedBuffer(), getSharedBufferSize());
+      oFuncDispatch(getSharedBuffer());
     }
     ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
   }
