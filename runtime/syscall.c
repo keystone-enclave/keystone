@@ -10,12 +10,13 @@ extern void exit_enclave(uintptr_t arg0);
 /* TODO Get these from SM/host */
 #define shared_buffer (uintptr_t)0x0dead000
 #define shared_buffer_size (size_t)0x1000
-#define buffer_data_start (uintptr_t)(shared_buffer + sizeof(struct edge_call_t))
 
 uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
 				   void* data, size_t data_len,
 				   void* return_buffer, size_t return_len){
-
+  //TODO This init needs to happen elsewhere, repeated init is OK for now
+  edge_call_init_internals(shared_buffer, shared_buffer_size);
+  
   uintptr_t ret;
   /* For now we assume by convention that the start of the buffer is
    * the right place to put calls */
@@ -26,11 +27,12 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
    * dispatch the ocall to host */
   
   edge_call->call_id = call_id;
+  uintptr_t buffer_data_start = edge_call_data_ptr();
+
+  //TODO Safety check
   copy_from_user((void*)buffer_data_start, (void*)data, data_len);
 
-  if(edge_call_get_offset_from_ptr(shared_buffer, shared_buffer_size,
-				   buffer_data_start, data_len,
-				   &(edge_call->call_arg_offset)) != 0){
+  if(edge_call_setup_call(edge_call, (void*)buffer_data_start, data_len) != 0){
     goto ocall_error;
   }
 
@@ -50,13 +52,15 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
   }
 
   uintptr_t return_ptr;
-  if(edge_call_get_ptr_from_offset(shared_buffer, shared_buffer_size,
-				   edge_call->return_data.call_ret_offset, return_len,
-				   &return_ptr) != 0){
+  if(edge_call_ret_ptr(edge_call, &return_ptr) != 0){
     goto ocall_error;
   }
 
   /* Done, there was a return value to copy out of shared mem */
+  /* TODO This is currently assuming return_len is the length, not the
+     value passed in the edge_call return data. We need to somehow
+     validate these. The size in the edge_call return data is larger
+     almost certainly.*/
   copy_to_user(return_buffer, (void*)return_ptr, return_len);
   
   return 0;
@@ -71,11 +75,13 @@ uintptr_t handle_copy_from_shared(void* dst, uintptr_t offset, size_t size){
   /* This is where we would handle cache side channels for a given
      platform */
 
+  //TODO This init needs to happen elsewhere, repeated init is OK for now
+  edge_call_init_internals(shared_buffer, shared_buffer_size);
+  
   /* The only safety check we do is to confirm all data comes from the
    * shared region. */
   uintptr_t src_ptr;
-  if(edge_call_get_ptr_from_offset(shared_buffer, shared_buffer_size,
-				   offset, size,
+  if(edge_call_get_ptr_from_offset(offset, size,
 				   &src_ptr) != 0){
     return 1;
   }
