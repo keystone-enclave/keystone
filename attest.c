@@ -60,19 +60,17 @@ enclave_ret_t hash_enclave(struct enclave_t* enclave)
   int i;
   
   hash_init(&hash_ctx);
-  
-  // TODO: add configuration parameters
- 
+
+  // hash the runtime parameters
+  hash_extend(&hash_ctx, &enclave->params, sizeof(struct runtime_params_t));
+
+  // hash the epm contents including the virtual addresses
   hash_epm(&hash_ctx, 
       ptlevel, 
       (pte_t*) (enclave->encl_satp << RISCV_PGSHIFT),
       0, 0);
 
   hash_finalize(enclave->hash, &hash_ctx);
-  //printm("Final hash:\n");
-  //for(i = 0; i<MDSIZE/sizeof(uint64_t); i++)
-  //{
-  //  printm("%lx\n", *((uint64_t*) enclave->hash + i));
-  //}
+
   return ENCLAVE_SUCCESS;
 }

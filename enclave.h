@@ -3,7 +3,6 @@
 
 #include "pmp.h"
 #include "thread.h"
-#include "keystone-sbi-arg.h"
 #include "sm.h"
 #include "crypto.h"
 
@@ -34,9 +33,8 @@ struct enclave_t
   byte hash[MDSIZE];
   byte sign[SIGNATURE_SIZE];
 
-  /* entry points */
-  uintptr_t enclave_entry;
-  uintptr_t runtime_entry;
+  /* parameters */
+  struct runtime_params_t params;
 
   /* enclave execution context */
   unsigned int n_thread;

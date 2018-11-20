@@ -166,12 +166,16 @@ int init_enclave_memory(uintptr_t base, uintptr_t size, uintptr_t utbase, uintpt
 }
 enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
 {
+  /* EPM and UTM parameters */
   uintptr_t base = create_args.epm_region.paddr;
   size_t size = create_args.epm_region.size;
   uintptr_t utbase = create_args.utm_region.paddr;
   size_t utsize = create_args.utm_region.size;
   unsigned int* eidptr = create_args.eid_pptr;
-    
+ 
+  /* Runtime parameters */
+  struct runtime_params_t params = create_args.params;
+
   uint8_t perm = 0;
   unsigned int eid;
   enclave_ret_t ret;
@@ -207,8 +211,7 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   enclaves[eid].host_satp = read_csr(satp);
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
   enclaves[eid].n_thread = 0;
-  enclaves[eid].enclave_entry = create_args.enclave_entry;
-  enclaves[eid].runtime_entry = create_args.runtime_entry;
+  enclaves[eid].params = params;
 
   /* prepare hash and signature for attestation */
   spinlock_lock(&encl_lock);
@@ -264,8 +267,7 @@ enclave_ret_t destroy_enclave(unsigned int eid)
   enclaves[eid].host_satp = 0;
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
-  enclaves[eid].enclave_entry = 0;
-  enclaves[eid].runtime_entry = 0;
+  enclaves[eid].params = (struct runtime_params_t) {0};
 
   // 3. release eid
   encl_free_idx(eid);
@@ -300,10 +302,12 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
 
-  // entry points
-  write_csr(mepc, enclaves[eid].runtime_entry);
-  host_regs[11] = enclaves[eid].enclave_entry;
-  
+  // passing parameters
+  write_csr(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
+  host_regs[11] = (uintptr_t) enclaves[eid].params.user_entry;
+  host_regs[12] = (uintptr_t) enclaves[eid].params.untrusted_ptr;
+  host_regs[13] = (uintptr_t) enclaves[eid].params.untrusted_size;
+
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
  

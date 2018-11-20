@@ -54,5 +54,26 @@ void sm_init(void);
 void sm_retrieve_pubkey(void* dest);
 void sm_sign(void* sign, const void* data, size_t len);
 
+/* creation parameters */
+struct keystone_sbi_pregion_t
+{
+  uintptr_t paddr;
+  size_t size;
+};
+struct runtime_params_t 
+{
+  uint64_t runtime_entry;
+  uint64_t user_entry;
+  uint64_t untrusted_ptr;
+  uint64_t untrusted_size;
+};
+struct keystone_sbi_create_t
+{
+  struct keystone_sbi_pregion_t epm_region;
+  struct keystone_sbi_pregion_t utm_region;
+  struct runtime_params_t params;
+  unsigned int* eid_pptr;
+};
+
 int osm_pmp_set(uint8_t perm);
 #endif
