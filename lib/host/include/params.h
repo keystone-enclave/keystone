@@ -2,9 +2,9 @@
 #define __ENCLAVE_CREATION_PARAMS_H__
 
 #define DEFAULT_RUNTIME_ENTRY   0xffffffffc0000000
-#define DEFAULT_STACK_SIZE      8192 // 8 KB
+#define DEFAULT_STACK_SIZE      1024*1024 // 1 MB
 #define DEFAULT_UNTRUSTED_PTR   0xffffffffe0000000
-#define DEFAULT_UNTRUSTED_SIZE  4096 // 8 KB
+#define DEFAULT_UNTRUSTED_SIZE  8192 // 8 KB
 
 /* parameters for enclave creation */
 struct enclave_params_t {
