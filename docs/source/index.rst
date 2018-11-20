@@ -13,3 +13,9 @@ Welcome to Keystone Enclave's documentation!
 
    Getting-Started/index
 
+.. toctree::
+   :maxdepth: 3
+   :caption: Keystone Applications:
+   :numbered:
+
+   Keystone-Applications/index
