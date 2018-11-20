@@ -9,7 +9,7 @@
 
 #ifndef __ASSEMBLER__
 #include <stdint.h>
-#include "mm.h"
+
 struct regs_t {
 	uintptr_t sepc; // use this slot as sepc
 	uintptr_t ra;

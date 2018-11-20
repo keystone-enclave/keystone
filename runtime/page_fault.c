@@ -1,7 +1,5 @@
 #include "regs.h"
-#include "mm.h"
 #include "printf.h"
-extern struct enclave_mm mm;
 
 void rt_page_fault(struct encl_ctx_t* ctx)
 {

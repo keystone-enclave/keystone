@@ -8,8 +8,8 @@
 extern void exit_enclave(uintptr_t arg0);
 
 /* TODO Get these from SM/host */
-#define shared_buffer (uintptr_t)0x0dead000
-#define shared_buffer_size (size_t)0x1000
+uintptr_t shared_buffer;
+uintptr_t shared_buffer_size;
 
 uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
 				   void* data, size_t data_len,

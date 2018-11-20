@@ -109,12 +109,23 @@
 _start:
   /* runtime stack starts from 0x0 and grows downward! */
   li sp, 0
-
+  
   la t0, encl_trap_handler
   csrw stvec, t0
   
+  /* parameters */
+  
+  // a1: user_entry
   csrw sepc, a1
+  
+  // a2: untrusted_ptr
+  la t1, shared_buffer
+  STORE a2, (t1)
 
+  // a3: untrusted_size
+  la t0, shared_buffer_size
+  STORE a3, (t0)
+  
   call init_timer
 
   /* set user stack below the runtime */
