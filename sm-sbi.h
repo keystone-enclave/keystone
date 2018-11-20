@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "keystone-sbi-arg.h"
 
 typedef uintptr_t enclave_ret_t;
 
