@@ -11,6 +11,7 @@
 #include <cstring>
 #include <stdarg.h>
 #include "loader.h"
+#include "params.h"
 
 #define BOOST_STRINGIZE(X) BOOST_DO_STRINGIZE(X)
 #define BOOST_DO_STRINGIZE(X) #X
@@ -47,7 +48,7 @@ public:
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   keystone_status_t registerOcallDispatch(OcallFunc func);
-  keystone_status_t init(char* filepath, char* runtime, size_t mem_size, size_t untrusted_size, unsigned long usr_entry_ptrx);
+  keystone_status_t init(char* filepath, char* runtime, Params parameters);
   keystone_status_t destroy();
   keystone_status_t run();
   keystone_status_t initRuntime(const char* filename);

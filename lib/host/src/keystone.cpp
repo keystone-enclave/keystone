@@ -17,9 +17,7 @@ Keystone::~Keystone()
   destroy();
 }
 
-/* FIXME: someone should parse this */
-#define RUNTIME_ENTRY 0xffffffffc0000000
-keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack_size, size_t untrusted_size, unsigned long usr_entry_ptr)
+keystone_status_t Keystone::init(char* eapppath, char* runtimepath, Params params)
 {
   if(runtimeFile || enclaveFile)
   {
@@ -31,8 +29,6 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack
   enclaveFile = new ELFFile(eapppath);
   
   /* these should be parsed by ELF lib */
-  runtimeFile->setEntry(RUNTIME_ENTRY);
-  enclaveFile->setEntry(usr_entry_ptr); 
  
   /* open device driver */
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
@@ -40,7 +36,6 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack
     PERROR("cannot open device file");
     return KEYSTONE_ERROR;
   }
-  // Open up the target file and read it into memory
   
   if(!runtimeFile->isValid())
   {
@@ -52,20 +47,23 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack
     ERROR("enclave file is not valid");
     return KEYSTONE_ERROR;
   }
-  
+
+  /* Call Keystone Driver */
   struct keystone_ioctl_create_enclave enclp;
 
-  enclp.eapp_ptr = (unsigned long) enclaveFile->getPtr();
-  enclp.eapp_sz = (unsigned long) enclaveFile->getSize();
-  enclp.eapp_stack_sz = (unsigned long) stack_size;
-  enclp.eapp_entry = (unsigned long) usr_entry_ptr; 
-  enclp.runtime_ptr = (unsigned long) runtimeFile->getPtr();
-  enclp.runtime_sz = (unsigned long) runtimeFile->getSize();
-  enclp.runtime_stack_sz = (unsigned long) 4096*2;
-  enclp.runtime_entry = (unsigned long) RUNTIME_ENTRY;
-  enclp.untrusted_sz = untrusted_size;
+  enclp.user_elf_ptr = (unsigned long) enclaveFile->getPtr();
+  enclp.user_elf_size = (unsigned long) enclaveFile->getSize();
+  enclp.runtime_elf_ptr = (unsigned long) runtimeFile->getPtr();
+  enclp.runtime_elf_size = (unsigned long) runtimeFile->getSize();
 
-  //printf("Enclave info: ptr:%p code_sz:%ul mem_sz:%ul\n",app_code_buffer, code_size, stack_size);
+  enclp.user_stack_size = (unsigned long) params.getEnclaveStack();
+  enclp.runtime_stack_size = (unsigned long) params.getRuntimeStack();
+
+  enclp.params.runtime_entry = (unsigned long) params.getRuntimeEntry();
+  enclp.params.user_entry = (unsigned long) params.getEnclaveEntry(); 
+  enclp.params.untrusted_ptr = (unsigned long) params.getUntrustedMem();
+  enclp.params.untrusted_size = (unsigned long) params.getUntrustedSize();
+
   int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
   if(ret) {
     ERROR("failed to create enclave - ioctl() failed: %d", ret);
@@ -73,7 +71,7 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, size_t stack
   }
   eid = enclp.eid;
 
-  return mapUntrusted(untrusted_size);
+  return mapUntrusted(params.getUntrustedSize());
 }
 
 keystone_status_t Keystone::mapUntrusted(size_t size)

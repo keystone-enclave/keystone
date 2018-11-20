@@ -60,10 +60,11 @@ int main(int argc, char** argv)
     return 0;
   }
   Keystone enclave;
-  keystone_status_t err;
-  uintptr_t retval;
+  Params params;
 
-  enclave.init(argv[1], argv[2], 8192, 4096, 0x1000);
+  params.setEnclaveEntry(0x1000);
+
+  enclave.init(argv[1], argv[2], params);
 
   edge_init(&enclave);
 

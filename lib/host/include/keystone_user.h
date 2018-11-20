@@ -11,29 +11,33 @@
   _IOR(KEYSTONE_IOC_MAGIC, 0x00, struct keystone_ioctl_create_enclave)
 #define KEYSTONE_IOC_DESTROY_ENCLAVE \
   _IOW(KEYSTONE_IOC_MAGIC, 0x01, struct keystone_ioctl_create_enclave)
-#define KEYSTONE_IOC_COPY_TO_ENCLAVE \
-  _IOW(KEYSTONE_IOC_MAGIC, 0x02, struct keystone_ioctl_enclave_data)
-#define KEYSTONE_IOC_COPY_FROM_ENCLAVE \
-  _IOR(KEYSTONE_IOC_MAGIC, 0x03, struct keystone_ioctl_enclave_data)
 #define KEYSTONE_IOC_RUN_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x04, struct keystone_ioctl_run_enclave)
 #define KEYSTONE_IOC_RESUME_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x05, struct keystone_ioctl_run_enclave)
 
+struct runtime_params_t {
+  __u64 runtime_entry;
+  __u64 user_entry;
+  __u64 untrusted_ptr;
+  __u64 untrusted_size;
+};
+
 struct keystone_ioctl_create_enclave {
   __u64 eid;
-  // Enclave App
-  __u64 eapp_ptr;
-  __u64 eapp_sz;
-  __u64 eapp_stack_sz;
-  __u64 eapp_entry;
-  // Runtime
-  __u64 runtime_ptr;
-  __u64 runtime_sz;
-  __u64 runtime_stack_sz;
-  __u64 runtime_entry;
-  // Untrusted Memory
-  __u64 untrusted_sz;
+  
+  // User ELF
+  __u64 user_elf_ptr;
+  __u64 user_elf_size;
+  __u64 user_stack_size;
+
+  // Runtime ELF
+  __u64 runtime_elf_ptr;
+  __u64 runtime_elf_size;
+  __u64 runtime_stack_size;
+
+  // Runtime Parameters
+  struct runtime_params_t params;
 };
 
 struct keystone_ioctl_run_enclave {
