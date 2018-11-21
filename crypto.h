@@ -9,7 +9,7 @@ typedef sha3_ctx_t hash_ctx_t;
 #define MDSIZE  64
 
 #define SIGNATURE_SIZE  64
-#define PRIVATE_KEY_SIZE  32
+#define PRIVATE_KEY_SIZE  64 // includes public key
 #define PUBLIC_KEY_SIZE 32
 
 typedef unsigned char byte;

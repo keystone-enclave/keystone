@@ -1,3 +1,4 @@
+#include <string.h>
 #include "sm.h"
 #include "mtrap.h"
 #include "pmp.h"
@@ -8,15 +9,19 @@ static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
 static spinlock_t sm_init_lock = SPINLOCK_INIT;
 
+/* from Sanctum BootROM */
+extern byte sanctum_sm_hash[MDSIZE];
+extern byte sanctum_sm_signature[SIGNATURE_SIZE];
+extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
+extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
+extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
+
 byte sm_hash[MDSIZE] = { 0, };
 byte sm_signature[SIGNATURE_SIZE] = { 0, };
 byte sm_public_key[PUBLIC_KEY_SIZE] = { 0, };
 byte sm_private_key[PRIVATE_KEY_SIZE] = { 0, };
+byte dev_public_key[PUBLIC_KEY_SIZE] = { 0, };
 
-/*extern byte sanctum_sm_signature[64];
-extern byte sanctum_dev_public_key[32];
-extern unsigned int sanctum_sm_size[1];
-*/
 int osm_pmp_set(uint8_t perm)
 {
   /* in case of OSM, PMP cfg is exactly the opposite.*/
@@ -50,10 +55,11 @@ void sm_sign(void* signature, const void* data, size_t len)
 
 void sm_copy_key()
 {
-  // FIXME: copy key provisioned from the root of trust
-  // just generate random key for now
-  byte seed[SIGNATURE_SIZE] = { 0, };
-  ed25519_create_keypair(sm_public_key, sm_private_key, seed); 
+  memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
+  memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
+  memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
+  memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
+  memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
 }
 
 /*
