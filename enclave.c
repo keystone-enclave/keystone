@@ -450,6 +450,7 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
   return ENCLAVE_SUCCESS;
 }
 
+extern byte dev_public_key[PUBLIC_KEY_SIZE];
 enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size)
 {
   int attestable;
@@ -480,8 +481,9 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   if (ret) {
     return ret;
   }
-  
-  memcpy(report.sm.hash, sm_hash, MDSIZE); // FIXME
+ 
+  memcpy(report.dev_public_key, dev_public_key, PUBLIC_KEY_SIZE);
+  memcpy(report.sm.hash, sm_hash, MDSIZE);
   memcpy(report.sm.public_key, sm_public_key, PUBLIC_KEY_SIZE);
   memcpy(report.sm.signature, sm_signature, SIGNATURE_SIZE);
   memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);

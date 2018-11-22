@@ -57,8 +57,9 @@ struct sm_report_t
 };
 struct report_t
 {
-  struct sm_report_t sm;
   struct enclave_report_t enclave;
+  struct sm_report_t sm;
+  byte dev_public_key[PUBLIC_KEY_SIZE];
 };
 
 int copy_region_from_host(void* source, void* dest, size_t size);

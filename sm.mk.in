@@ -17,7 +17,7 @@ sm_c_srcs = \
   ed25519/sign.c \
   ed25519/fe.c \
   ed25519/ge.c \
-  ed25519/sc.c
+  ed25519/sc.c \
 
 sm_asm_srcs = \
   sanitizer.S \
