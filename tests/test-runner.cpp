@@ -2,6 +2,7 @@
 #include <cstdio>
 #include "keystone.h"
 #include "edge_wrapper.h"
+#include "report.h"
 
 const char* longstr = "hellohellohellohellohellohellohellohellohellohello";
 
@@ -33,23 +34,18 @@ void print_hex(void* buffer, size_t len)
 
 void copy_report(void* buffer)
 {
-  memcpy(&report, buffer, sizeof(struct report_t));
+  Report report;
 
-  printf("====== Attestation Report ======\n");
-  printf(" * sm hash:\n");
-  print_hex(report.sm_hash, 64);
-  printf(" * sm pubkey:\n");
-  print_hex(report.sm_pubkey, 32);
-  printf(" * sm signature:\n");
-  print_hex(report.sm_signature, 64);
-  printf(" * encl hash: \n");
-  print_hex(report.encl_hash, 64);
-  printf(" * encl data: \n");
-  print_hex(report.encl_data, report.encl_data_len);
-  printf(" * encl signature: \n");
-  print_hex(report.encl_signature, 64);
-  printf("=================================\n");
-
+  report.fromBytes((unsigned char*)buffer);
+  report.printJson();
+  if (report.verify((void*)"nonce", 5))
+  {
+    printf("Attestation report is valid\n");
+  }
+  else
+  {
+    printf("Attestation report is invalid\n");
+  }
 }
 
 int main(int argc, char** argv)

@@ -11,16 +11,6 @@ typedef struct packaged_str{
 
 typedef unsigned char byte;
 
-typedef struct report_t {
-  byte sm_hash[64];
-  byte sm_pubkey[32];
-  byte sm_signature[64];
-  byte encl_hash[64];
-  uint64_t encl_data_len;
-  byte encl_data[1024];
-  byte encl_signature[64];
-} report_t;
-
 int edge_init(Keystone* enclave);
 
 void print_buffer_wrapper(void* buffer);

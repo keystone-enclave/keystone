@@ -10,7 +10,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdarg.h>
-#include "loader.h"
+#include "elffile.h"
 #include "params.h"
 
 #define BOOST_STRINGIZE(X) BOOST_DO_STRINGIZE(X)
