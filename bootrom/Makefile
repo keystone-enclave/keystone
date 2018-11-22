@@ -22,7 +22,8 @@ clean:
 bootrom_sources = \
 	./bootloader.S \
 	./bootloader.c \
-	./ed25519/*.c 
+	./ed25519/*.c \
+	./sha3/*.c
 
 %.elf: $(bootrom_sources) bootloader.lds
 	$(CC) $(CFLAGS) -I./ -L . -T bootloader.lds -o $@ $(bootrom_sources)
