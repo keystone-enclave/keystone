@@ -38,7 +38,7 @@ void copy_report(void* buffer)
 
   report.fromBytes((unsigned char*)buffer);
   report.printJson();
-  if (report.verify((void*)"nonce", 5))
+  if (report.verify())
   {
     printf("Attestation report is valid\n");
   }
