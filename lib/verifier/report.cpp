@@ -97,22 +97,25 @@ void Report::printJson()
   std::cout << stringfy() << std::endl;
 }
 
-int Report::verify(void* data, size_t datalen)
+int Report::verify()
 {
   int sm_valid, enclave_valid = 1;
   /* verify SM report */
   sm_valid = ed25519_verify(report.sm.signature, (byte*) &report.sm, MDSIZE + PUBLIC_KEY_SIZE, report.dev_public_key);
 
   /* verify Enclave report */
-  enclave_valid &= (report.enclave.data_len == datalen);
-  enclave_valid &= (memcmp(report.enclave.data, data, datalen) == 0);
   enclave_valid &= ed25519_verify(report.enclave.signature, (byte*) &report.enclave,
-      MDSIZE + sizeof(uint64_t) + datalen, report.sm.public_key);
+      MDSIZE + sizeof(uint64_t) + report.enclave.data_len, report.sm.public_key);
 
   return sm_valid && enclave_valid;
 }
 
-int Report::verify(void)
+void* Report::getDataSection()
 {
-  return verify(nullptr, 0);
+  return report.enclave.data;
+}
+
+size_t Report::getDataSize()
+{
+  return report.enclave.data_len;
 }

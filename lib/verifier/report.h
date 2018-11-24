@@ -43,6 +43,8 @@ class Report
     void printJson();
     int verify(void* data, size_t datalen);
     int verify();
+    void* getDataSection();
+    size_t getDataSize();
 };
 
 #endif
