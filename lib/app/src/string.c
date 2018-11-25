@@ -21,6 +21,15 @@ void* memcpy(void* dest, const void* src, size_t len)
   return dest;
 }
 
+size_t strlen(char* str){
+  size_t len;
+  while(*str != '\0'){
+    str++;
+    len++;
+  }
+
+  return len;
+}
 
 void* memset(void* dest, int byte, size_t len)
 {
