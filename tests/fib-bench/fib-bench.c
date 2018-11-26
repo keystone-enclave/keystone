@@ -23,7 +23,6 @@ unsigned long fib_eapp(unsigned long in) {
 }
 
 void EAPP_ENTRY eapp_entry(){
-  EAPP_ARGUMENT(arg);
-  arg = 35;
+  int arg = 35;
   EAPP_RETURN(fib_eapp(arg));
 }

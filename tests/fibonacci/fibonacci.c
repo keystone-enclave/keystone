@@ -8,7 +8,6 @@ unsigned long fibonacci_rec(unsigned long in){
 }
 
 void EAPP_ENTRY eapp_entry(){
-  EAPP_ARGUMENT(arg);
-  arg = 35;
+  int arg = 35;
   EAPP_RETURN(fibonacci_rec(arg));
 }

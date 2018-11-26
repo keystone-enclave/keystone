@@ -15,7 +15,7 @@ RUNNER=test-runner.riscv
 CCFLAGS = -I$(SDK_INCLUDE_HOST_DIR) -I$(SDK_INCLUDE_EDGE_DIR) -I$(SDK_INCLUDE_VERIFIER_DIR) -std=c++11
 LDFLAGS = -L$(SDK_LIB_DIR)
 
-TESTS=c stack fibonacci long-nop loop malloc fib-bench untrusted attestation
+TESTS=stack fibonacci long-nop loop malloc fib-bench untrusted attestation
 
 SRCS = $(patsubst %.riscv, %.cpp, $(RUNNER))
 OBJS = $(patsubst %.riscv, %.o,$(RUNNER)) $(KEYSTONE_OBJ) edge_wrapper.o
