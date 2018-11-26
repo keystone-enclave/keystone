@@ -7,15 +7,13 @@
 
 extern void exit_enclave(uintptr_t arg0);
 
-/* TODO Get these from SM/host */
+/* These are set by entry.S during init */
 uintptr_t shared_buffer;
 uintptr_t shared_buffer_size;
 
 uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
 				   void* data, size_t data_len,
 				   void* return_buffer, size_t return_len){
-  //TODO This init needs to happen elsewhere, repeated init is OK for now
-  edge_call_init_internals(shared_buffer, shared_buffer_size);
   
   uintptr_t ret;
   /* For now we assume by convention that the start of the buffer is
@@ -75,9 +73,6 @@ uintptr_t handle_copy_from_shared(void* dst, uintptr_t offset, size_t size){
   /* This is where we would handle cache side channels for a given
      platform */
 
-  //TODO This init needs to happen elsewhere, repeated init is OK for now
-  edge_call_init_internals(shared_buffer, shared_buffer_size);
-  
   /* The only safety check we do is to confirm all data comes from the
    * shared region. */
   uintptr_t src_ptr;
@@ -87,6 +82,10 @@ uintptr_t handle_copy_from_shared(void* dst, uintptr_t offset, size_t size){
   }
 
   return copy_to_user(dst, (void*)src_ptr, size);
+}
+
+void init_edge_internals(){
+  edge_call_init_internals(shared_buffer, shared_buffer_size);
 }
 
 void handle_syscall(struct encl_ctx_t* ctx)
@@ -101,7 +100,7 @@ void handle_syscall(struct encl_ctx_t* ctx)
   uintptr_t ret = 0;
 
   ctx->regs.sepc += 4;
-
+  
   //printf("[runtime] syscall: %ld\n", n);
   switch (n) {
     case(RUNTIME_SYSCALL_EXIT):

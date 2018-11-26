@@ -128,6 +128,8 @@ _start:
   
   call init_timer
 
+  call init_edge_internals
+	
   /* set user stack below the runtime */
   la t0, rt_base
   csrw sscratch, t0
