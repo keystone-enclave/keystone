@@ -18,11 +18,14 @@ Welcome to Keystone Enclave's documentation!
    :caption: Keystone Applications:
    :numbered:
 
-   Keystone-Applications/index
+   Keystone-Applications/SDK-Basics
+   Keystone-Applications/Edge-Calls
 
 .. toctree::
    :maxdepth: 3
    :caption: Contributing to Keystone:
    :numbered:
 
-   Contributing-to-Keystone/index
+   Contributing-to-Keystone/How-to-Contribute
+   Contributing-to-Keystone/Known-Issues
+   Contributing-to-Keystone/Future-Objectives

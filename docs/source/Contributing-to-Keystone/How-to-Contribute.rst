@@ -1,8 +1,5 @@
-Contributing to Keystone
-========================
-
 How to Contribute
----------------------------
+=================
 
 Keystone is, and will be, fully open source. We hope to see many
 projects both under the Keystone name, and built on-top of it.
@@ -28,18 +25,9 @@ platform should be cross-platform themselves, to avoid fragmentation.
 
 See also the list of known areas to work on, we need better platform
 specific builds!
-   
+
 General Contributions
-----------------------------------------
+---------------------
 
 Submit pull-requests, with a good explanation, and following the
 coding guidelines.
-
-Contribution Areas
-------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   Known-Issues
-   Future-Objectives
