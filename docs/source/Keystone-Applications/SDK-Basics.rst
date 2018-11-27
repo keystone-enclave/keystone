@@ -1,5 +1,5 @@
 SDK Overview
-==========
+============
 
 The Keystone SDK provides the tools required to build basic enclave
 hosting applications (`hosts`) and enclave applications (`eapps`).
@@ -12,7 +12,7 @@ The SDK consists of 4 main components, and the tests and examples.
  - Runtime (`runtime/`)
 
 
-   
+
 Host Libraries
 --------------
 
@@ -81,11 +81,11 @@ the host library. To start an enclave application, first create one::
   enclave.init(PATH_TO_EAPP_ELF, PATH_TO_RUNTIME, params);
 
   edge_init(&enclave);
-  
+
 You can also set other enclave options via the params object,
 including stack size and shared memory size. `edge_init` is an edge
 wrapper function that registers edge call endpoints in the Keystone
-driver. 
+driver.
 
 Then you start the enclave and transfer control with::
 
