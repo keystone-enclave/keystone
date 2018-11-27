@@ -19,3 +19,10 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Keystone-Applications/index
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contributing to Keystone:
+   :numbered:
+
+   Contributing-to-Keystone/index

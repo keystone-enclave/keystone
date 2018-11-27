@@ -1,7 +1,7 @@
 Keystone Applications
-====================
+=====================
 
-What is Keystone SDK
+What is the Keystone SDK
 ---------------------------
 
 
