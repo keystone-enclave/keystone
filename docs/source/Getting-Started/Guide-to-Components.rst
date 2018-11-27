@@ -49,7 +49,12 @@ sdk
 ---
 
 Tools, libraries, and tests for building applications on Keystone.
-Includes the runtime submodule that runs in S-mode in enclaves.
+
+Runtime
+~~~~~~~
+
+A submodule that implements the default minimal Keystone runtime
+running in S-mode for enclaves.
 
 
 keystone-demo

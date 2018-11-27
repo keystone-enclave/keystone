@@ -1,5 +1,5 @@
-Building Applications
-=====================
+Compiling Applications
+======================
 
 Building a host and enclave application using the SDK is
 straight-forward. See Keystone-Demo as an example.
