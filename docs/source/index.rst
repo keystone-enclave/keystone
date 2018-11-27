@@ -12,6 +12,7 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Getting-Started/index
+   Getting-Started/Guide-to-Components
 
 .. toctree::
    :maxdepth: 3
@@ -20,6 +21,8 @@ Welcome to Keystone Enclave's documentation!
 
    Keystone-Applications/SDK-Basics
    Keystone-Applications/Edge-Calls
+   Keystone-Applications/Building-Applications
+
 
 .. toctree::
    :maxdepth: 3
