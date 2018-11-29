@@ -1,3 +1,7 @@
+//******************************************************************************
+// Copyright (c) 2018, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #ifndef __ENCLAVE_CREATION_PARAMS_H__
 #define __ENCLAVE_CREATION_PARAMS_H__
 

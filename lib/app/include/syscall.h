@@ -1,3 +1,7 @@
+//******************************************************************************
+// Copyright (c) 2018, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 

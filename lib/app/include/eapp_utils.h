@@ -1,3 +1,7 @@
+//******************************************************************************
+// Copyright (c) 2018, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #ifndef _EAPP_UTILS_
 #define _EAPP_UTILS_
 

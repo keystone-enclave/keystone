@@ -1,3 +1,7 @@
+//******************************************************************************
+// Copyright (c) 2018, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #ifndef _EDGE_WRAPPER_H_
 #define _EDGE_WRAPPER_H_
 

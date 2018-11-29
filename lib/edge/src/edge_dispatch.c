@@ -1,3 +1,7 @@
+//******************************************************************************
+// Copyright (c) 2018, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #include "edge_call.h"
 
 edgecallwrapper edge_call_table[MAX_EDGE_CALL];
