@@ -1,3 +1,7 @@
+//******************************************************************************
+// Copyright (c) 2018, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #include "page.h"
 
 int init_encl_pgtable(int level, pte_t* tb, uintptr_t base, uintptr_t size, uintptr_t utbase, uintptr_t utsize){
