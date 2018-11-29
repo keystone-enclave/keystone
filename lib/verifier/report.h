@@ -45,10 +45,11 @@ class Report
     void fromBytes(byte* bin);
     std::string stringfy();
     void printJson();
-    int verify(void* data, size_t datalen);
-    int verify();
+    int verify(byte* expected_enclave_hash);
+    int checkSignatureOnly();
     void* getDataSection();
     size_t getDataSize();
+    byte* getEnclaveHash();
 };
 
 #endif

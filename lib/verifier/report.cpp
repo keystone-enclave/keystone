@@ -20,6 +20,7 @@ std::string Report::BytesToHex(byte* bytes, size_t len)
   {
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(2) << std::hex << (uintptr_t)bytes[i];
+
     str += ss.str();
   }
   return str;
@@ -30,7 +31,7 @@ void Report::HexToBytes(byte* bytes, size_t len, std::string hexstr)
   unsigned int i;
   for(i=0; i<len; i++)
   {
-    int data = 0;
+    unsigned int data = 0;
     std::stringstream ss;
     ss << hexstr.substr(i*2, 2);
     ss >> std::hex >> data;
@@ -101,12 +102,31 @@ void Report::printJson()
   std::cout << stringfy() << std::endl;
 }
 
-int Report::verify()
+byte* Report::getEnclaveHash()
+{
+  return report.enclave.hash;  
+}
+
+int Report::verify(byte* expected_enclave_hash)
+{
+  /* verify that enclave hash matches */
+  int hash_valid = memcmp(expected_enclave_hash, report.enclave.hash, MDSIZE) == 0;
+  std::cout << BytesToHex(expected_enclave_hash,MDSIZE) << std::endl;
+  std::cout << BytesToHex(report.enclave.hash,MDSIZE) << std::endl;
+  std::cout << BytesToHex(report.enclave.hash,MDSIZE) << std::endl;
+  
+  int signature_valid = checkSignatureOnly();
+  
+  return hash_valid && signature_valid;
+}
+
+int Report::checkSignatureOnly()
 {
   int sm_valid, enclave_valid = 1;
+
   /* verify SM report */
   sm_valid = ed25519_verify(report.sm.signature, (byte*) &report.sm, MDSIZE + PUBLIC_KEY_SIZE, report.dev_public_key);
-
+  
   /* verify Enclave report */
   enclave_valid &= ed25519_verify(report.enclave.signature, (byte*) &report.enclave,
       MDSIZE + sizeof(uint64_t) + report.enclave.data_len, report.sm.public_key);

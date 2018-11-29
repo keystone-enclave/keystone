@@ -42,9 +42,9 @@ void copy_report(void* buffer)
 
   report.fromBytes((unsigned char*)buffer);
   report.printJson();
-  if (report.verify())
+  if (report.checkSignatureOnly())
   {
-    printf("Attestation report is valid\n");
+    printf("Attestation report SIGNATURE is valid\n");
   }
   else
   {
