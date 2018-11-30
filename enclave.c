@@ -166,6 +166,10 @@ int init_enclave_memory(uintptr_t base, uintptr_t size, uintptr_t utbase, uintpt
   // FIXME: probably we will also need to:
   // (3) Zero out every page that is not pointed by the page table
 
+  // Zero out the untrusted memory region, since it may be in
+  // indeterminate state.
+  memset((void*)utbase, 0, utsize);
+  
   return ret;
 }
 enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
@@ -207,7 +211,7 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   
   // 4. initialize and verify enclave memory layout. 
   init_enclave_memory(base, size, utbase, utsize);
-
+  
   // 5. initialize enclave metadata
   enclaves[eid].eid = eid;
   enclaves[eid].rid = region;
