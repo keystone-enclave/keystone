@@ -111,9 +111,6 @@ int Report::verify(byte* expected_enclave_hash)
 {
   /* verify that enclave hash matches */
   int hash_valid = memcmp(expected_enclave_hash, report.enclave.hash, MDSIZE) == 0;
-  std::cout << BytesToHex(expected_enclave_hash,MDSIZE) << std::endl;
-  std::cout << BytesToHex(report.enclave.hash,MDSIZE) << std::endl;
-  std::cout << BytesToHex(report.enclave.hash,MDSIZE) << std::endl;
   
   int signature_valid = checkSignatureOnly();
   

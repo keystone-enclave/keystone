@@ -21,7 +21,7 @@ Keystone::~Keystone()
   destroy();
 }
 
-keystone_status_t Keystone::init(char* eapppath, char* runtimepath, Params params)
+keystone_status_t Keystone::init(const char* eapppath, const char* runtimepath, Params params)
 {
   if(runtimeFile || enclaveFile)
   {
@@ -69,12 +69,18 @@ keystone_status_t Keystone::init(char* eapppath, char* runtimepath, Params param
   enclp.params.untrusted_size = (unsigned long) params.getUntrustedSize();
 
   int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &enclp);
+
+  /* Files were consumed by driver and copied into epm, no longer needed */
+  delete enclaveFile;
+  delete runtimeFile;
+
   if(ret) {
     ERROR("failed to create enclave - ioctl() failed: %d", ret);
     return KEYSTONE_ERROR;
   }
   eid = enclp.eid;
 
+  
   return mapUntrusted(params.getUntrustedSize());
 }
 

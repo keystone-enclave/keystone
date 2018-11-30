@@ -52,7 +52,7 @@ public:
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   keystone_status_t registerOcallDispatch(OcallFunc func);
-  keystone_status_t init(char* filepath, char* runtime, Params parameters);
+  keystone_status_t init(const char* filepath, const char* runtime, Params parameters);
   keystone_status_t destroy();
   keystone_status_t run();
   keystone_status_t initRuntime(const char* filename);
