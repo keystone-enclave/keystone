@@ -45,8 +45,8 @@ class Report
     void fromBytes(byte* bin);
     std::string stringfy();
     void printJson();
-    int verify(byte* expected_enclave_hash);
-    int checkSignatureOnly();
+    int verify(const byte* expected_enclave_hash, const byte* expected_sm_hash, const byte* dev_public_key);
+    int checkSignaturesOnly(const byte* dev_public_key);
     void* getDataSection();
     size_t getDataSize();
     byte* getEnclaveHash();

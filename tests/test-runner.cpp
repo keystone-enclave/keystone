@@ -7,6 +7,7 @@
 #include "keystone.h"
 #include "edge_wrapper.h"
 #include "report.h"
+#include "test_dev_key.h"
 
 const char* longstr = "hellohellohellohellohellohellohellohellohellohello";
 
@@ -42,7 +43,8 @@ void copy_report(void* buffer)
 
   report.fromBytes((unsigned char*)buffer);
   report.printJson();
-  if (report.checkSignatureOnly())
+
+  if (report.checkSignaturesOnly(_sanctum_dev_public_key))
   {
     printf("Attestation report SIGNATURE is valid\n");
   }

@@ -107,25 +107,27 @@ byte* Report::getEnclaveHash()
   return report.enclave.hash;  
 }
 
-int Report::verify(byte* expected_enclave_hash)
+int Report::verify(const byte* expected_enclave_hash, const byte* expected_sm_hash, const byte* dev_public_key)
 {
   /* verify that enclave hash matches */
-  int hash_valid = memcmp(expected_enclave_hash, report.enclave.hash, MDSIZE) == 0;
+  int encl_hash_valid = memcmp(expected_enclave_hash, report.enclave.hash, MDSIZE) == 0;
+  int sm_hash_valid = memcmp(expected_sm_hash, report.sm.hash, MDSIZE) == 0;
   
-  int signature_valid = checkSignatureOnly();
+  int signature_valid = checkSignaturesOnly(dev_public_key);
   
-  return hash_valid && signature_valid;
+  return encl_hash_valid && sm_hash_valid && signature_valid;
 }
 
-int Report::checkSignatureOnly()
+int Report::checkSignaturesOnly(const byte* dev_public_key)
 {
-  int sm_valid, enclave_valid = 1;
+  int sm_valid = 0;
+  int enclave_valid = 0;
 
   /* verify SM report */
-  sm_valid = ed25519_verify(report.sm.signature, (byte*) &report.sm, MDSIZE + PUBLIC_KEY_SIZE, report.dev_public_key);
+  sm_valid = ed25519_verify(report.sm.signature, (byte*) &report.sm, MDSIZE + PUBLIC_KEY_SIZE, dev_public_key);
   
   /* verify Enclave report */
-  enclave_valid &= ed25519_verify(report.enclave.signature, (byte*) &report.enclave,
+  enclave_valid = ed25519_verify(report.enclave.signature, (byte*) &report.enclave,
       MDSIZE + sizeof(uint64_t) + report.enclave.data_len, report.sm.public_key);
 
   return sm_valid && enclave_valid;
