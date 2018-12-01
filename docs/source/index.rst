@@ -23,6 +23,8 @@ Welcome to Keystone Enclave's documentation!
    Keystone-Applications/SDK-Basics
    Keystone-Applications/Compiling-Applications
    Keystone-Applications/Edge-Calls
+   Keystone-Applications/Attestation
+   Keystone-Applications/Keystone-Demo
 
 
 
