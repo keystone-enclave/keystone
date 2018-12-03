@@ -17,9 +17,9 @@ Note: The demo uses test keys and is not safe for production use.
 Server eapp
 -----------
 
-The demo server enclave application include ``libsodium`` for
-establishing a secure channel, basic enclave features (attestation
-report generation, etc), and a simple word-counting feature.
+The demo server enclave application, basic enclave features
+(attestation report generation, etc), a simple word-counting feature,
+and uses ``libsodium`` for establishing a secure channel.
 
 The enclave first sends a copy of its attestation report, along with
 its eccdh public key to the client. Upon receving the client public
@@ -45,7 +45,7 @@ network messages.
 
 It can also use the 'dummy client' in which case it sends messages to
 the dummy client object, and not over the network. This is useful for
-testing in a single process in qemu
+testing in a single process in qemu.
 
 Dummy Client
 ------------
@@ -56,4 +56,6 @@ host. Useful for test only.
 Trusted Client
 --------------
 
-TODO
+A simple remote client that connects to the host, validates the
+enclave report, constructs a secure channel, and then can send
+messages to the host for computation.

@@ -9,7 +9,8 @@ communicate the data to transmit to an untrusted host process via an
 edge call.
 
 The current version of Keystone supports calls from enclave->host,
-referred to internally as *ocalls* (outbound calls).
+referred to internally as *ocalls* (outbound calls, names under
+discussion).
 
 If your application requires behavior similar to calls from
 host->enclave we suggest emulating these with a polling

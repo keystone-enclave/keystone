@@ -26,7 +26,13 @@ Welcome to Keystone Enclave's documentation!
    Keystone-Applications/Attestation
    Keystone-Applications/Keystone-Demo
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Keystone Demo Application:
+   :numbered:
 
+   Keystone-Demo/Demo-Basics
+   Keystone-Demo/Building
 
 .. toctree::
    :maxdepth: 1
