@@ -14,9 +14,10 @@ We appreciate any contribution for making Keystone better.
 
 Since no hardware has been built for Keystone, we provide a few ways to deploy and test Keystone for building secure systems and developing enclave applications.
 
-Testing Keystone on Various Platforms
+Keystone Application Concepts
 ----------------------------------------
 .. toctree::
    :maxdepth: 2
 
    SDK-Basics
+   Edge-Calls
