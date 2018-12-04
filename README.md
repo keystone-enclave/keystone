@@ -5,4 +5,4 @@ Visit [Project Website](https://keystone-enclave.org) for more information.
 
 # Documentation
 
-See [docs](https://github.com/keystone-enclave/keystone/tree/master/docs) directory to locally hosting the documentation.
+See [docs](http://docs.keystone-enclave.org) for trying Keystone.
