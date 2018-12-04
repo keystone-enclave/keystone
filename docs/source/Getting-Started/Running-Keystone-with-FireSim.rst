@@ -180,11 +180,11 @@ Run ``./test-runner.riscv`` for testing each enclave.
 
 ::
 
-  # ./test-runner.riscv stack.eapp_riscv eyrie-rt
+  ./test-runner.riscv stack.eapp_riscv eyrie-rt
 
 Run ``./test`` to run all enclaves sequentially.
 
 ::
   
-  # ./test
+  ./test
 
