@@ -1,6 +1,7 @@
-# Keystone Enclave
+# Keystone Enclave: An Open-Source Secure Enclave for RISC-V Processors
 
-Keystone Enclave is an open-source secure hardware enclave based on RISC-V.
+![Keystone Documentation Status](https://readthedocs.org/projects/keystone-enclave/badge/)
+
 Visit [Project Website](https://keystone-enclave.org) for more information.
 
 # Documentation
