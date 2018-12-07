@@ -1,18 +1,18 @@
 [submodule "riscv-gnu-toolchain"]
 	path = riscv-gnu-toolchain
-	url = git@github.com:riscv/riscv-gnu-toolchain
+	url = https://github.com/riscv/riscv-gnu-toolchain
 [submodule "busybear-linux"]
 	path = busybear-linux
-	url = git@github.com:keystone-enclave/busybear-linux
+	url = https://github.com/keystone-enclave/busybear-linux
 [submodule "riscv-linux"]
 	path = riscv-linux
-	url = git@github.com:keystone-enclave/riscv-linux
+	url = https://github.com/keystone-enclave/riscv-linux
 [submodule "riscv-pk"]
 	path = riscv-pk
-	url = git@github.com:keystone-enclave/riscv-pk
+	url = https://github.com/keystone-enclave/riscv-pk
 [submodule "riscv-qemu"]
 	path = riscv-qemu
-	url = git@github.com:riscv/riscv-qemu
+	url = https://github.com/riscv/riscv-qemu
 [submodule "sdk"]
 	path = sdk
-	url = git@github.com:keystone-enclave/keystone-sdk
+	url = https://github.com/keystone-enclave/keystone-sdk
