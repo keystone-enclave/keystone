@@ -1,5 +1,11 @@
 language: c
 dist: xenial
+cache:
+  apt: true
+  directories:
+    - riscv
+    - riscv-gnu-toolchain
+
 addons:
   apt:
     packages:
@@ -38,4 +44,4 @@ branches:
   only:
     - travis
 
-script: ./scripts/travis.sh
+script: travis_wait 120 ./scripts/travis.sh
