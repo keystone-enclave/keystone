@@ -4,14 +4,14 @@ addons:
   apt:
     packages:
     - autoconf 
-		- automake 
-		- autotools-dev 
-  	- bc 
-		- bison 
-		- build-essential 
-		- curl 
-		- expat 
-		- libexpat-dev1 
+    - automake 
+    - autotools-dev 
+    - bc 
+    - bison 
+    - build-essential 
+    - curl 
+    - expat 
+    - libexpat-dev1 
     - flex 
     - gawk
     - gcc
