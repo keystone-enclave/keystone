@@ -2,9 +2,6 @@ language: c
 dist: xenial
 cache:
   apt: true
-  directories:
-    - riscv
-    - riscv-gnu-toolchain
 git:
   submodules: false
 
@@ -48,7 +45,7 @@ branches:
 
 before_install:
   - git config --global submodule.riscv-gnu-toolchain.update none
-  - travis_wait 120 git config update --init --recursive
+  - travis_wait 120 git submodule update --init --recursive
 
 script: 
   - travis_wait 120 ./script/travis.sh
