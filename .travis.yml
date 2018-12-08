@@ -48,4 +48,4 @@ before_install:
   - travis_wait 120 git submodule update --init --recursive
 
 script: 
-  - travis_wait 120 ./script/travis.sh
+  - travis_wait 120 ./scripts/travis.sh
