@@ -5,6 +5,8 @@ cache:
   directories:
     - riscv
     - riscv-gnu-toolchain
+git:
+  submodules: false
 
 addons:
   apt:
@@ -44,4 +46,6 @@ branches:
   only:
     - travis
 
+before_install:
+  - travis_wait 120 git submodule update --init --recursive
 script: travis_wait 120 ./scripts/travis.sh
