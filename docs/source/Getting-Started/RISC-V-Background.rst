@@ -54,6 +54,13 @@ There are several benefits for using an M-mode software as the TCB:
 Physical Memory Protection (PMP)
 -----------------------------------
 
-Physical memory protection (PMP) which was introduced in RISC-V Priv. 1.10, is a strong ISA primitive that allows M-mode to control physical memory access from lower privileges (U-/S-modes).
-Keystone utilizes PMP to implement the enclave memory isolation.
+Physical memory protection (PMP) which was introduced in RISC-V Priv. 1.10, 
+is a strong standard primitive that allows M-mode to control physical memory access from lower privileges (U-/S-modes).
+Keystone utilizes PMP to implement the memory isolation of enclaves.
+
+PMP is a feature that allows M-mode to use a set of control and status registers (CSR) to restrict physical memory access to the U-mode and S-mode.
+Desirably it is implemented by rejecting entry of the translation look-aside buffer (TLB) because
+U-mode and S-mode may access memory based on virtual address.
+An actual hardware implementation of PMP may vary among processors.
+
 
