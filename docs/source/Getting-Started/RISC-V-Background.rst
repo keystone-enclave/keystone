@@ -2,15 +2,16 @@ RISC-V Background
 ===================================
 
 Keystone Enclave is an enclave for RISC-V processors.
-RISC-V is an open, free instruction set architecture (ISA), which allows anyone to use, modify, and extend.
+`RISC-V <https://riscv.org>`_ is an open, free instruction set architecture (ISA), which allows anyone to use, modify, and extend.
 We choose RISC-V because of several reasons.
-First, RISC-V is the best ISA you can do a lot of experiments.
-Since it's completely free to modify the ISA itself, you can define your own instructions, add non-standard extension, and so on.
+First, RISC-V ISA is completely free to modify or extend, so you can add existing extensions or define your own extension.
 Yet, Keystone itself does not require any ISA modification since it relies on only standard primitives.
-Second, RISC-V has a lot of open-source processors (or SoCs) that you can integrate Keystone.
-RocketChip, Berkeley Out-of-Order Machine (BOOM), or MIT RISCY are the examples, and more will soon be available as the community grows.
-Third, RISC-V software privilege specification fits well for Keystone, which requires transparent & agile patch on the trusted computing base (TCB).
-To understand why this is true, see the next section.
+Second, RISC-V has a lot of open-source processors (or SoCs) that you can experiment on.
+`RocketChip <https://github.com/freechipsproject/rocket-chip>`_, 
+`Berkeley Out-of-Order Machine (BOOM) <https://github.com/riscv-boom/riscv-boom>`_, 
+or `MIT RISCY <https://github.com/csail-csg/riscy>`_ are some of the examples, and we expect more will be available as the community grows.
+Third, RISC-V software privilege specification fits well for Keystone, which requires transparent and agile patch on the trusted computing base (TCB).
+To understand why this is true, see the next section explaining why using M-mode as a TCB is a great idea.
 
 .. note::
 
@@ -22,17 +23,17 @@ RISC-V Privilieged ISA
 -----------------------------------
 
 RISC-V has three software privilege levels: user-mode (U-mode), supervisor mode (S-mode), and machine mode (M-mode). 
-At a point of time, the processor can run in only one of the privilege modes.
+The processor can run in only one of the privilege modes at a time.
 
 .. note::
 
   RISC-V also has hypervisor priviliege mode (H-mode), but the spec of H-mode is not included in the stable revision (RISC-V Priv. v1.10). 
 
-Privilege level defines what instructions can do during its execution. 
+Privilege level defines what the running software can do during its execution. 
 Common usage of each privilege level is as follows:
 
 * U-mode: user processes
-* S-mode: kernel, kernel modules, device drivers, hypervisor
+* S-mode: kernel (including kernel modules and device drivers), hypervisor
 * M-mode: bootloader, firmware
 
 Some embedded devices may not have all of three privilege levels. 
@@ -42,13 +43,18 @@ M-mode is the highest privilege mode which can control all the physical resource
 M-mode is somewhat similar to microcode in complex instruction set computer (CISC) ISAs such as x86,
 in that it is not interruptible and free from interference of lower modes.
 However, M-mode still shares the same set of instructions specified in the ISA.
-Because of these property, we can use M-mode for running the *security monitor (SM)*, the trusted computing base (TCB) of the system.
+Because of these properties, we can use M-mode for running the *security monitor (SM)*, the trusted computing base (TCB) of the system.
 
 There are several benefits for using an M-mode software as the TCB:
 
-* Programmability: Unlike microcode, we can build M-mode software with the existing programming language (i.e., C) and toolchain (i.e., gcc).
-* Agile Patch: Since the SM is entirely software, it is much more easier to patch bugs or vulnerabilities without involving hardware-specific updates.
-* Verifiability: In general, software is easier to formally verify then hardware.
+**Programmability**:
+Unlike microcode, we can build M-mode software with the existing programming language (i.e., C) and toolchain (i.e., gcc).
+
+**Agile Patch**:
+Since the SM is entirely software, it is much more easier to patch bugs or vulnerabilities without involving hardware-specific updates.
+
+**Verifiability**:
+In general, software is easier to formally verify then hardware.
 
 Physical Memory Protection (PMP)
 -----------------------------------
@@ -69,21 +75,23 @@ PMP entries are defined by a set of PMP CSRs.
 Only M-mode has write permission to these CSRs, thus M-mode can effectively control the physical access of other privilege
 modes.
 
+:doc:`Keystone-Security-Monitor` relies on PMP for implementing memory isolation.
+
 Interrupts and Exceptions
 ----------------------------------
 
-By default, M-mode is the only receiver of any interrupts or exceptions (i.e., traps).
-This essentially gives M-mode the full control over hardware.
+By default, M-mode is the first receiver of any interrupts or exceptions (i.e., traps) in the system.
+This essentially allows M-mode to fully control the hardware.
 In other words, S-mode or U-mode cannot interfere CPU when they're not allowed to.
-This is a very important ISA property that any hardware running Keystone security monitor should correclty support.
+This is a very important property that any hardware running Keystone security monitor should correclty support.
 
-M-mode can disable or enable each of the interrupt by using ``mie`` CSR.
+Optionally, M-mode can disable or enable each of the interrupt by using ``mie`` CSR.
 M-mode can also delegeate some of the traps by setting bits of the trap delegation registers (i.e., ``mideleg``
 and ``medeleg``).
 Trap delegation enables skipping M-mode handler so that S-mode can quickly handle frequent traps
 such as page faults, system calls (environment call), and so on.
 
-Addressing Modes and Translation
+Virtual Address Translation
 ----------------------------------
 
 U- and S-modes accesses memory via virtual addresses. 

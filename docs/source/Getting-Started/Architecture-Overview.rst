@@ -1,5 +1,0 @@
-Keystone Architecture Overview
-====================================
-
-
-

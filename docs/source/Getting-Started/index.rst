@@ -28,15 +28,13 @@ Quick Start
    Running-Keystone-with-QEMU
    Running-Keystone-with-FireSim
 
-How it Works?
------------------------------------
+How Keystone Works?
+=========================================
 
 .. toctree::
    :maxdepth: 2
 
    RISC-V-Background
-   Architecture-Overview
-   Memory-Isolation
+   Keystone-Security-Monitor
    Platform-Integration
-   What-Is-Runtime
-   Remote-Attestation
+   Runtime-And-SDK
