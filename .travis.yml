@@ -1,0 +1,51 @@
+language: c
+dist: xenial
+cache:
+  apt: true
+git:
+  submodules: false
+
+addons:
+  apt:
+    packages:
+    - autoconf 
+    - automake 
+    - autotools-dev 
+    - bc 
+    - bison 
+    - build-essential 
+    - curl 
+    - expat 
+    - libexpat-dev 
+    - flex 
+    - gawk
+    - gcc
+    - git
+    - gperf
+    - libgmp-dev
+    - libmpc-dev
+    - libmpfr-dev 
+    - libtool
+    - texinfo
+    - tmux
+    - patchutils
+    - zlib1g-dev
+    - wget
+    - bzip2
+    - patch
+    - vim-common
+    - lbzip2
+    - python
+    - pkg-config
+    - libglib2.0-dev
+    - libpixman-1-dev
+branches:
+  only:
+    - travis
+
+before_install:
+  - git config --global submodule.riscv-gnu-toolchain.update none
+  - travis_wait 120 git submodule update --init --recursive
+
+script: 
+  - travis_wait 120 ./scripts/travis.sh
