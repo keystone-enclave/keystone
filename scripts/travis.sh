@@ -34,6 +34,7 @@ cd build
     --with-payload=../../riscv-linux/vmlinux \
     --enable-sm
 make
+cd ../..
 
 cd bootrom
 make
