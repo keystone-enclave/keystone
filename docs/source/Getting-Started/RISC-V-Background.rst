@@ -15,7 +15,8 @@ To understand why this is true, see the next section.
 .. note::
 
   Keystone is based on the lastest stable ISA specification at the time of writing (User 2.2 and Priv. 1.10).
-  For more information, please refer to `RISC-V Spec Documentations <https://riscv.org/specifications/>`_.
+  This document only contains high-level ideas of several components in the privileged ISA.
+  For more details, please refer to `RISC-V Spec Documentations <https://riscv.org/specifications/>`_.
 
 RISC-V Privilieged ISA
 -----------------------------------
@@ -49,8 +50,6 @@ There are several benefits for using an M-mode software as the TCB:
 * Agile Patch: Since the SM is entirely software, it is much more easier to patch bugs or vulnerabilities without involving hardware-specific updates.
 * Verifiability: In general, software is easier to formally verify then hardware.
 
-
-
 Physical Memory Protection (PMP)
 -----------------------------------
 
@@ -62,5 +61,53 @@ PMP is a feature that allows M-mode to use a set of control and status registers
 Desirably it is implemented by rejecting entry of the translation look-aside buffer (TLB) because
 U-mode and S-mode may access memory based on virtual address.
 An actual hardware implementation of PMP may vary among processors.
+
+PMP is configured by several PMP entries. 
+The number of PMP entires vary depending on the platform. For example, RocketChip has 8 PMP entries
+per core by default, where QEMU virt machine has 16 entries.
+PMP entries are defined by a set of PMP CSRs.
+Only M-mode has write permission to these CSRs, thus M-mode can effectively control the physical access of other privilege
+modes.
+
+Interrupts and Exceptions
+----------------------------------
+
+By default, M-mode is the only receiver of any interrupts or exceptions (i.e., traps).
+This essentially gives M-mode the full control over hardware.
+In other words, S-mode or U-mode cannot interfere CPU when they're not allowed to.
+This is a very important ISA property that any hardware running Keystone security monitor should correclty support.
+
+M-mode can disable or enable each of the interrupt by using ``mie`` CSR.
+M-mode can also delegeate some of the traps by setting bits of the trap delegation registers (i.e., ``mideleg``
+and ``medeleg``).
+Trap delegation enables skipping M-mode handler so that S-mode can quickly handle frequent traps
+such as page faults, system calls (environment call), and so on.
+
+Addressing Modes and Translation
+----------------------------------
+
+U- and S-modes accesses memory via virtual addresses. 
+A virtual address is translated into a physical address by memory management unit (MMU) in the
+processor.
+MMU consists of two key hardware components: a page table walker (PTW) and a translation
+look-aside buffer (TLB).
+MMU translates a virtual address based on the *page table*.
+
+RISC-V uses multi-level page table, where number of pages and the size of a page depends on the
+addressing mode.
+``satp`` CSR determines which addressing mode MMU should use and which physical page contains the
+root page table.
+
+.. attention::
+
+  Keystone now only supports RV64 with Sv39 addressing mode, which translates 39-bit virtual addresses into
+  50-bit physical addresses based on a 3-level page table.
+
+Although the OS has an authority to change ``satp`` and to construct a page table, Keystone enclaves are not
+susceptible to any attacks based on altering the page table.
+First, PMP asserts access permissions based on the **physical address**, which prevents the OS from
+accessing the protected address range, even if the translation succeeded.
+Second, in Keystone, each enclave has its own page table within its memory, which makes the enclave page
+table completely oblivious from the OS.
 
 
