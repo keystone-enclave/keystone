@@ -38,7 +38,7 @@ Common usage of each privilege level is as follows:
 * M-mode: bootloader, firmware
 
 
-Only M-mode is required, and some embedded devices may have only M-mode or only M/S modes.
+Only M-mode is required, and some embedded devices may have only M-mode or only M/U modes.
 
 M-mode is the highest privilege mode and controls all physical resources and events.
 M-mode is somewhat similar to microcode in complex instruction set computer (CISC) ISAs such as x86,
