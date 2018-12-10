@@ -4,7 +4,7 @@ Getting Started
 What is Keystone Enclave
 -----------------------------------
 
-Keystone Enclave is an open source secure enclave for RISC-V processors. 
+Keystone Enclave is an open source secure enclave for RISC-V processors.
 You can migrate the Keystone enclave into arbitrary RISC-V processor, with a very small modification on hardware to plant the silicon root of trust.
 
 .. attention::
@@ -16,7 +16,7 @@ You can migrate the Keystone enclave into arbitrary RISC-V processor, with a ver
   The current version (0.X) of Keystone is not formally verified, nor matured, which means that it might have bugs or unknown security holes.
   We recommend you to use Keystone only for research purposes until it gets stablized.
   We appreciate any contribution for making Keystone better.
-  
+
 Since no hardware has been built for Keystone, we provide a few ways to deploy and test Keystone for building secure systems and developing enclave applications.
 
 
@@ -28,7 +28,7 @@ Quick Start
    Running-Keystone-with-QEMU
    Running-Keystone-with-FireSim
 
-How Keystone Works?
+How Keystone Works
 =========================================
 
 .. toctree::
