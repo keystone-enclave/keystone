@@ -131,7 +131,7 @@ Remote Attestation
 The goal of remote attestation is to prove to a remote client that the enclave contains the program expected, and is running on hardware that is trusted.
 In Keystone this involves a few cryptographic operations including ECDSA signature and SHA-3 hash.
 
-For more detail about the remote attestation process, see :doc:`Remote Attestation <../Keystone-Applications/Attestation>`.
+For more detail about the remote attestation process, see :doc:`Remote Attestation </Keystone-Applications/Attestation>`.
 
 Enclave Context Management
 -------------------------------------

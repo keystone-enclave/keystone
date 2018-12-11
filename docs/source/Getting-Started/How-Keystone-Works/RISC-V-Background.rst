@@ -6,12 +6,13 @@ Keystone Enclave is an enclave for RISC-V processors.
 
 RISC-V presents us with a number of benefits besides just being open-source:
 
-* RISC-V has added security-oriented primitives (notably Physical Memory Protection) that enable
-efficient isolation.
-* RISC-V is an evolving and community driven ISA. Keystone can explore the design space of useful
-security features, and feed good ideas back into the standards themselves.
+* RISC-V has added security-oriented primitives (notably Physical Memory Protection) that enable efficient isolation.
+
+* RISC-V is an evolving and community driven ISA. Keystone can explore the design space of useful 
+  security features, and feed good ideas back into the standards themselves.
+
 * RISC-V has a constantly expanding world of open-source cores and products. This gives Keystone a
-wide variety of potential platforms and uses it can adapt to.
+  wide variety of potential platforms and uses it can adapt to.
 
 In addition, RISC-V software privilege specification fits well for Keystone, which requires transparent and agile patch on the trusted computing base (TCB).
 To understand why this is true, see the next section explaining why using M-mode as a TCB is a great idea.
