@@ -30,7 +30,7 @@ PMP Internals
 PMP allows for N (platform defined) entries, which are configured
 using a config (cfg) and address (addr) register each. There are
 further details available in the RISC-V `specification
-<https://content.riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf>`
+<https://content.riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf>`_
 section 3.6.
 
 In Keystone we refer to the section of memory that an enclave uses as
