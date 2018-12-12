@@ -13,6 +13,7 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Getting-Started/index
+   Getting-Started/How-Keystone-Works/index
    Getting-Started/Guide-to-Components
    Getting-Started/FAQ
 
