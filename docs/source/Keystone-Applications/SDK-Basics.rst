@@ -1,6 +1,11 @@
 SDK Overview
 ============
 
+.. attention::
+  
+  Keystone SDK is work in progress, so programming enclaves requires a lot of manual efforts.
+  However, it still provides enough libraries to run simple enclaves such as :doc:`Keystone Demo <../Keystone-Demo/Demo-Basics>`.
+
 The Keystone SDK provides the tools required to build basic enclave
 hosting applications (`hosts`) and enclave applications (`eapps`).
 

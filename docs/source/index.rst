@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+
 Welcome to Keystone Enclave's documentation!
 ==============================================
 
@@ -12,6 +13,7 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Getting-Started/index
+   Getting-Started/How-Keystone-Works/index
    Getting-Started/Guide-to-Components
    Getting-Started/FAQ
 
@@ -24,7 +26,6 @@ Welcome to Keystone Enclave's documentation!
    Keystone-Applications/Compiling-Applications
    Keystone-Applications/Edge-Calls
    Keystone-Applications/Attestation
-   Keystone-Applications/Keystone-Demo
 
 .. toctree::
    :maxdepth: 1
@@ -40,5 +41,4 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Contributing-to-Keystone/How-to-Contribute
-   Contributing-to-Keystone/Known-Issues
    Contributing-to-Keystone/Future-Objectives
