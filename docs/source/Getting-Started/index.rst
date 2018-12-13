@@ -5,6 +5,9 @@ What is Keystone Enclave
 -----------------------------------
 
 Keystone Enclave is an open source secure enclave for RISC-V processors.
+
+You can currently run Keystone on qemu, `FireSim <https://fires.im/>`_ (FPGA), or the SiFive `HiFive Unleashed <https://www.sifive.com/boards/hifive-unleashed>`_ board.
+
 You can migrate the Keystone enclave into arbitrary RISC-V processor, with a very small modification on hardware to plant the silicon root of trust.
 
 .. attention::
@@ -13,12 +16,11 @@ You can migrate the Keystone enclave into arbitrary RISC-V processor, with a ver
 
 .. attention::
 
-  The current version (0.X) of Keystone is not formally verified, nor matured, which means that it might have bugs or unknown security holes.
+  The current version (0.X) of Keystone is not formally verified, nor matured.
   We recommend you to use Keystone only for research purposes until it gets stablized.
   We appreciate any contribution for making Keystone better.
 
-Since no hardware has been built for Keystone, we provide a few ways to deploy and test Keystone for building secure systems and developing enclave applications.
-
+See the Keystone-Demo section for temporary documentation for running on the HiFive board. Detailed instructions will be forthcoming.
 
 Quick Start
 ----------------------------------------
