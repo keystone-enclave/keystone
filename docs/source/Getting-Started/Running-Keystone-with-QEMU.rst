@@ -117,6 +117,7 @@ Make sure to add ``--enable-sm`` when you run ``configure`` so that the security
       --with-payload=../../riscv-linux/vmlinux \
       --enable-sm
   make
+  cd ../..
 
 Build Root-of-Trust Boot ROM 
 ###############################
@@ -149,6 +150,7 @@ The root of trust then jumps to the SM, and the SM boots Linux!
 
 ::
 
+   sudo chmod og+w busybear-linux/busybear.bin
   ./scripts/run-qemu.sh
 
 Login as ``root`` with the password ``busybear``.
