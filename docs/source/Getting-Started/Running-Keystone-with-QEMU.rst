@@ -117,6 +117,7 @@ Make sure to add ``--enable-sm`` when you run ``configure`` so that the security
       --with-payload=../../riscv-linux/vmlinux \
       --enable-sm
   make
+  cd ../..
 
 Build Root-of-Trust Boot ROM 
 ###############################
