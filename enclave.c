@@ -319,18 +319,30 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
 
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
- 
+
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  clear_csr(mie, MIP_SEIP);
+  clear_csr(mie, MIP_MEIP);
+
+  // Software too
+  clear_csr(mie, MIP_SSIP);
+  clear_csr(mie, MIP_MSIP);
+
+  
   // disable timer set by the OS, clear pending interrupts
   clear_csr(mie, MIP_MTIP);
   clear_csr(mip, MIP_MSIP);
   clear_csr(mip, MIP_STIP);
   clear_csr(mip, MIP_SSIP);
 
+
   clear_csr(mip, MIP_MTIP);
   clear_csr(mip, MIP_STIP);
   clear_csr(mip, MIP_SSIP);
   clear_csr(mip, MIP_SEIP);
-
+  
   // set PMP
   pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM);
@@ -372,6 +384,16 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   // enable timer interrupt
   set_csr(mie, MIP_MTIP);
 
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  set_csr(mie, MIP_SEIP);
+  set_csr(mie, MIP_MEIP);
+
+  // Software too
+  set_csr(mie, MIP_SSIP);
+  set_csr(mie, MIP_MSIP);
+
+  
   // update enclave state
   spinlock_lock(&encl_lock);
   enclaves[eid].n_thread--;
@@ -409,7 +431,17 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
 
   write_csr(satp, encl.host_satp);
   set_csr(mie, MIP_MTIP);
- 
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  set_csr(mie, MIP_SEIP);
+  set_csr(mie, MIP_MEIP);
+
+  // Software too
+  set_csr(mie, MIP_SSIP);
+  set_csr(mie, MIP_MSIP);
+
+  
   switch(request) {
     case(STOP_TIMER_INTERRUPT):
       return ENCLAVE_INTERRUPTED;
@@ -442,6 +474,17 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
  
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  clear_csr(mie, MIP_SEIP);
+  clear_csr(mie, MIP_MEIP);
+
+  // Software too
+  clear_csr(mie, MIP_SSIP);
+  clear_csr(mie, MIP_MSIP);
+
+  
   // disable timer set by the OS 
   clear_csr(mie, MIP_MTIP);
 
@@ -450,6 +493,8 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
   clear_csr(mip, MIP_SSIP);
   clear_csr(mip, MIP_SEIP);
 
+
+  
   // set PMP
   pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM); 
