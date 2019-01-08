@@ -150,6 +150,7 @@ The root of trust then jumps to the SM, and the SM boots Linux!
 
 ::
 
+   sudo chmod og+w busybear-linux/busybear.bin
   ./scripts/run-qemu.sh
 
 Login as ``root`` with the password ``busybear``.
