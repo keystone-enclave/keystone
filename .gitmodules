@@ -6,7 +6,7 @@
 	url = https://github.com/keystone-enclave/busybear-linux
 [submodule "riscv-linux"]
 	path = riscv-linux
-	url = https://github.com/keystone-enclave/riscv-linux
+	url = https://github.com/riscv/riscv-linux
 [submodule "riscv-pk"]
 	path = riscv-pk
 	url = https://github.com/keystone-enclave/riscv-pk
@@ -16,3 +16,6 @@
 [submodule "sdk"]
 	path = sdk
 	url = https://github.com/keystone-enclave/keystone-sdk
+[submodule "linux-keystone-driver"]
+	path = linux-keystone-driver
+	url = https://github.com/keystone-enclave/linux-keystone-driver
