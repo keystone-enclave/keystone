@@ -1,5 +1,5 @@
 CC = riscv64-unknown-linux-gnu-gcc
-CFLAGS = -Wall -Werror -fPIC
+CFLAGS = -Wall -Werror
 LINK = riscv64-unknown-linux-gnu-ld
 LINKFLAGS = -static
 INCLUDE_DIR = include
@@ -17,9 +17,9 @@ TARGET = ../libkeystone-eapp.a
 all: $(TARGET)
 
 $(A_OBJS): %.o : %.s
-	$(CC) -I$(INCLUDE_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 $(C_OBJS): %.o: %.c
-	$(CC) -I$(INCLUDE_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 $(TARGET): $(A_OBJS) $(C_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
