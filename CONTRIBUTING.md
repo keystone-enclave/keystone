@@ -10,10 +10,12 @@ and send Pull Request (PR) into `master` branch. The admin will review the code 
 For the `keystone` main repo, you should PR for all of the changes of submodules first, and request PR into `keystone:dev`.
 The admin will review the code and merge all of the submodules and then merge `keystone`.
 
-### Commit Messages and PR
+### General Guideline
 
 Please try to write a full description of your modification when you PR or commit.
 Cite related issues if possible.
+
+Please update the documentation if needed.
 
 # Terminology
 
