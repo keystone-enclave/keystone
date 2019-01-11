@@ -34,7 +34,7 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Keystone-Demo/Demo-Basics
-   Keystone-Demo/Building
+
 
 .. toctree::
    :maxdepth: 1
