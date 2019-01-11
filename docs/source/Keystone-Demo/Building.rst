@@ -28,27 +28,25 @@ Set the required environement variables:
  - ``LIBSODIUM_DIR`` : Should point to ``libsodium/src/libsodium/`` for the eapp targeted verion
  - ``LIBSODIUM_CLIENT_DIR`` : Should  point to ``libsodium/src/libsodium/`` for the client version
 
-You can either build the regular version and remote trusted client
-with ``make && make trusted_client.riscv`` or modify the Makefile
-lines that are commented out containing refernces to the dummy client
-to build a single-file test.
+You can build the regular version and remote trusted client with
+``make && make trusted_client.riscv``
 
-Copy relevant binaries (enclave-host.riscv,
-enclave-host-dummy-client.riscv, server-eapp.eapp_riscv) to the
-sdk/bins/ dir, then run ``make copy-tests`` in the sdk
-directory. Running the qemu as normal should now have the enclave-host
-binaries available.
 
 Running on qemu
 ---------------
 
-The easiest way to run the demo on qemu is to run both the enclave
-host and the trusted client on qemu, and communicate over loopback.
+You'll first need to copy the relevant files into the qemu image. The
+easiest way to do this is to use the sdk's copy-tests functionality.
+
+``cp *.riscv server_eapp/server_eapp.eapp_riscv ../sdk/bin/ && cd ../sdk/ && make copy-tests && cd ../keystone-demo``
+
+To run the demo on qemu is to run both the enclave host and the
+trusted client on qemu, and communicate over loopback.
 
 Our standard testing after starting qemu is:
 
 ::
-
+   insmod keystone-driver.ko         # load the keystone kernel module (only for newest version)
    ifdown lo && ifup lo              # Setup the loopback device
    ./enclave-host.riscv &            # Background the server host
    ./trusted_client.riscv 127.0.0.1  # Start the client interactively connecting to localhost
