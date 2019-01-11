@@ -39,6 +39,28 @@ sdk/bins/ dir, then run ``make copy-tests`` in the sdk
 directory. Running the qemu as normal should now have the enclave-host
 binaries available.
 
+Running on qemu
+---------------
+
+The easiest way to run the demo on qemu is to run both the enclave
+host and the trusted client on qemu, and communicate over loopback.
+
+Our standard testing after starting qemu is:
+
+::
+
+   ifdown lo && ifup lo              # Setup the loopback device
+   ./enclave-host.riscv &            # Background the server host
+   ./trusted_client.riscv 127.0.0.1  # Start the client interactively connecting to localhost
+
+This will mix the output of the host and the client. ``[TC]``
+indicates messages from the trusted client, ``[EH]`` is the enclave
+host, and ``[SE]`` is the enclave application.
+
+If you've modified the enclave server app, and haven't regenerated the
+expected hash values, you can test with ``./trusted_client.riscv
+127.0.0.1 --ignore-valid`` which will ignore the validation of the
+attestation report.
 
 Building for HiFive Unleashed
 -----------------------------
@@ -60,3 +82,32 @@ same way as for qemu and run them on the board.
 
 This process can be quite long and tricky, if you run into problems
 please contact us.
+
+Running on the HiFive Unleashed
+-------------------------------
+
+First, connect the HiFive board and the client machine (laptop, etc)
+to a shared network.
+
+On the HiFive board, start the enclave host as usual: ``./enclave-host.riscv``
+
+On the client machine, start a compatible client binary
+``./trusted_client.riscv $HIFIVE_IP`` with the IP of the HiFive board.
+
+Building a client for non-RISC-V targets
+----------------------------------------
+
+Our demo setup uses a standard Linux x86_64 laptop as the trusted client.
+
+To build ``trusted_client`` for a non-RISC-V target, you'll need to
+compile new versions of the sdk libs (libs only, not the rest) for
+your target architecture.
+
+Currently this is done by creating an additonal clone of the sdk,
+modifying the Makefiles to use standard gcc/g++, and building x86_64
+libs.
+
+From there, apply the same modifications to the trusted_client
+Makefile, and build the x86_64 client.
+
+This process will be significantly streamlined in the future.
