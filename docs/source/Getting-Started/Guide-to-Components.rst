@@ -29,13 +29,22 @@ riscv-gnu-toolchain
 Unmodified toolchain for building riscv targets. Required to build all
 other components.
 
+linux-keystone-driver
+---------------------
+
+Link: `<https://github.com/keystone-enclave/linux-keystone-driver>`_
+
+A loadable module for Keystone Enclave.
+Works in kernels >= 4.17
+
+
 riscv-linux
 -----------
 
-Link: `<https://github.com/keystone-enclave/riscv-linux>`_
+Link: `<https://github.com/riscv/riscv-linux>`_
 
-Linux kernel with riscv patches, updated to mainline semi-regularly.
-Only Keystone modification is the Keystone driver, in arch/riscv/drivers/.
+Linux kernel with riscv patches.
+We use 4.15 with patches for the loadable module support.
 
 riscv-pk
 --------

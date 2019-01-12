@@ -15,6 +15,7 @@ Welcome to Keystone Enclave's documentation!
    Getting-Started/index
    Getting-Started/How-Keystone-Works/index
    Getting-Started/Guide-to-Components
+   Getting-Started/How-to-Debug
    Getting-Started/FAQ
 
 .. toctree::
@@ -33,7 +34,7 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Keystone-Demo/Demo-Basics
-   Keystone-Demo/Building
+
 
 .. toctree::
    :maxdepth: 1

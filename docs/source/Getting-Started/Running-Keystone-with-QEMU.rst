@@ -90,7 +90,7 @@ You should apply patches before building the QEMU.
   make
   cd ..
 
-Build Linux Kernel with Built-in Keystone Driver
+Build Linux Kernel
 ################################################
 
 ::
@@ -128,8 +128,19 @@ Build Root-of-Trust Boot ROM
   make
   cd ..
 
+Build Keystone Driver
+##############################
+
+::
+
+  cd linux-keystone-driver
+  make
+  make copy
+  cd ..
+
 Build Keystone SDK
 #############################
+
 Keystone SDK includes sample enclave programs and some useful libraries. To run sample programs, you should compile SDK library and apps, and copy all of them into the disk image. Following commands will compile the sdk, and copy sample binaries into the ``busybear.bin`` disk image.
 
 ::
@@ -156,6 +167,15 @@ The root of trust then jumps to the SM, and the SM boots Linux!
 Login as ``root`` with the password ``busybear``.
 
 You can exit QEMU by ``ctrl-a``+``x``
+
+Insert Keystone Driver
+-------------------------------------
+
+Insert the keystone driver.
+
+::
+
+    insmod keystone-driver.ko
 
 Run Tests
 ---------------------------------------
