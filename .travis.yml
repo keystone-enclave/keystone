@@ -41,7 +41,8 @@ addons:
     - libpixman-1-dev
 branches:
   only:
-    - travis
+    - dev
+    - master
 
 before_install:
   - git config --global submodule.riscv-gnu-toolchain.update none

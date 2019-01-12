@@ -40,6 +40,11 @@ cd bootrom
 make
 cd ..
 
+cd linux-keystone-driver
+make
+make copy
+cd ..
+
 cd sdk
 make
 make copy-tests
