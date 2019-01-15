@@ -31,7 +31,10 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
   edge_call->call_id = call_id;
   uintptr_t buffer_data_start = edge_call_data_ptr();
 
-  //TODO Safety check
+  if(data_len > (shared_buffer_size - (buffer_data_start - shared_buffer))){
+    goto ocall_error;
+  }
+  //TODO safety check on source
   copy_from_user((void*)buffer_data_start, (void*)data, data_len);
 
   if(edge_call_setup_call(edge_call, (void*)buffer_data_start, data_len) != 0){
