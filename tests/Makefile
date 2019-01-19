@@ -26,6 +26,7 @@ all:  $(OBJS) $(SDK_HOST_LIB) $(SDK_EDGE_LIB) $(SDK_VERIFIER_LIB)
 		$(MAKE) -C $(test);\
 	)
 	rm -f test
+	echo "insmod keystone-driver.ko" >> test
 	$(foreach test, $(TESTS), \
 		echo "echo 'testing $(test)'" >> test;\
 		echo "./$(RUNNER) $(test).eapp_riscv $(RUNTIME)" >> test; \
