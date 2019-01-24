@@ -1,52 +1,18 @@
-git clone https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt.git --depth=1
+# Build everything
+./fast-build.sh
 
-export RISCV=$(pwd)/riscv
-export PATH=$PATH:$RISCV/bin
 
-cd firesim-riscv-tools-prebuilt
-./installrelease.sh
-mv distrib ../riscv
-cd ..
-rm -rf firesim-riscv-tools-prebuilt
+# Launch QEMU test
+screen -dmS qemu ./scripts/run-qemu.sh
+sleep 10
+./scripts/test-qemu.sh
 
-cd busybear-linux
-make
-cd ..
-
-./scripts/apply-patch.sh
-cd riscv-qemu
-./configure --target-list=riscv64-softmmu,riscv32-softmmu
-make
-cd ..
-
-cd riscv-linux
-cp ../busybear-linux/conf/linux.config .config
-make ARCH=riscv olddefconfig
-make ARCH=riscv vmlinux
-cd ..
-
-cd riscv-pk
-mkdir build
-cd build
-../configure \
-    --enable-logo \
-    --host=riscv64-unknown-elf \
-    --with-payload=../../riscv-linux/vmlinux \
-    --enable-sm
-make
-cd ../..
-
-cd bootrom
-make
-cd ..
-
-cd linux-keystone-driver
-make
-make copy
-cd ..
-
-cd sdk
-make
-make copy-tests
-cd ..
-
+diff output.log tests/test-qemu.expected.log
+if [ $? -eq 1 ]
+then
+  echo "[FAIL] output.log does not match with the expected output"
+  exit 1
+else
+  echo "[PASS] output.log matches with the expected output"
+  exit 0
+fi
