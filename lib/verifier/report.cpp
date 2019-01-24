@@ -102,6 +102,21 @@ void Report::printJson()
   std::cout << stringfy() << std::endl;
 }
 
+void Report::printPretty()
+{
+  std::cout << "\t\t=== Security Monitor ===" << std::endl;
+  std::cout << "Hash: " << BytesToHex(report.sm.hash, MDSIZE) <<std::endl;
+  std::cout << "Pubkey: " << BytesToHex(report.sm.public_key, PUBLIC_KEY_SIZE) << std::endl;
+  std::cout << "Signature: " << BytesToHex(report.sm.signature, SIGNATURE_SIZE) << std::endl;
+  std::cout << std::endl << "\t\t=== Enclave Application ===" <<std::endl;
+  std::cout << "Hash: " << BytesToHex(report.enclave.hash, MDSIZE) <<std::endl;
+  std::cout << "Signature: " << BytesToHex(report.enclave.signature, SIGNATURE_SIZE) << std::endl;
+  std::cout << "Enclave Data: " << BytesToHex(report.enclave.data, report.enclave.data_len) << std::endl;
+  std::cout << "\t\t-- Device pubkey --" <<std::endl;
+  std::cout << BytesToHex(report.dev_public_key, PUBLIC_KEY_SIZE) << std::endl;
+
+}
+
 byte* Report::getEnclaveHash()
 {
   return report.enclave.hash;  
