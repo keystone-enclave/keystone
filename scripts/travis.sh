@@ -11,8 +11,8 @@ diff output.log tests/test-qemu.expected.log
 if [ $? -eq 1 ]
 then
   echo "[FAIL] output.log does not match with the expected output"
-  return 1
+  exit 1
 else
   echo "[PASS] output.log matches with the expected output"
-  return 0
+  exit 0
 fi
