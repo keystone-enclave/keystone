@@ -1,5 +1,3 @@
-git clone https://github.com/keystone-enclave/keystone
-cd keystone
 git submodule update --init --recursive
 
 mkdir riscv
