@@ -2,6 +2,9 @@ language: c
 dist: xenial
 cache:
   apt: true
+  directories:
+    - firesim-riscv-tools-prebuilt
+
 git:
   submodules: false
 
@@ -51,6 +54,7 @@ jobs:
   include:
     - stage: build everything
       script:
+        - source ./source.sh
         - travis_wait 120 make
     - stage: run travis script
       script: 

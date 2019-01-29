@@ -11,4 +11,3 @@ cd firesim-riscv-tools-prebuilt
 ./installrelease.sh
 mv distrib ../riscv
 cd ..
-rm -rf firesim-riscv-tools-prebuilt
