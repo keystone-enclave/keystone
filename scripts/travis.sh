@@ -1,6 +1,4 @@
-# Build everything
-./fast-build.sh
-
+#!/bin/bash
 
 # Launch QEMU test
 screen -dmS qemu ./scripts/run-qemu.sh

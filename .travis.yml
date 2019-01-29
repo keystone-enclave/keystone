@@ -45,8 +45,14 @@ branches:
     - master
 
 before_install:
-  - git config --global submodule.riscv-gnu-toolchain.update none
-  - travis_wait 120 git submodule update --init --recursive
+  - ./fast-setup.sh
 
-script: 
-  - travis_wait 120 ./scripts/travis.sh
+jobs:
+  include:
+    - stage: build everything
+      script:
+        - travis_wait 120 make
+    - stage: run travis script
+      script: 
+        - travis_wait 120 ./scripts/travis.sh
+
