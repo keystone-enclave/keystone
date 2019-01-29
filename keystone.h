@@ -24,6 +24,7 @@
 typedef uintptr_t vaddr_t;
 typedef uintptr_t paddr_t;
 
+extern struct miscdevice keystone_dev;
 #define SBI_SM_CREATE_ENCLAVE   101
 #define SBI_SM_DESTROY_ENCLAVE  102
 #define SBI_SM_RUN_ENCLAVE      105

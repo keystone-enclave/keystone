@@ -5,6 +5,7 @@
 #include "riscv64.h"
 #include <linux/kernel.h>
 #include "keystone.h"
+#include <linux/dma-mapping.h>
 
 void init_free_pages(struct list_head* pg_list, vaddr_t base, unsigned int count)
 {
@@ -48,9 +49,18 @@ int epm_destroy(epm_t* epm){
   /* Clean anything in the free list */
   epm_clean_free_list(epm);
 
+#ifdef CONFIG_CMA
+  if(epm->base != 0){
+    dma_free_coherent(keystone_dev.this_device, 
+        (0x1 << epm->order) << PAGE_SHIFT,
+        epm->base,
+        epm->pa);
+  }
+#else
   if(epm->base != 0){
     free_pages(epm->base, epm->order);
   }
+#endif
   
   return 0;
 }

@@ -27,7 +27,7 @@ static const struct file_operations keystone_fops = {
     .unlocked_ioctl = keystone_ioctl
 };
 
-static struct miscdevice keystone_dev = {
+struct miscdevice keystone_dev = {
   .minor = MISC_DYNAMIC_MINOR,
   .name = "keystone_enclave",
   .fops = &keystone_fops,

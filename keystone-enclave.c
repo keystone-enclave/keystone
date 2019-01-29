@@ -2,6 +2,7 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
+#include <linux/dma-mapping.h>
 #include "keystone.h" 
 /* idr for enclave UID to enclave_t */
 DEFINE_IDR(idr_enclave);
@@ -61,6 +62,7 @@ enclave_t* create_enclave(unsigned long min_pages)
   unsigned long count = 0x1 << order;
   epm_t* epm;
   enclave_t* enclave;
+  phys_addr_t device_phys_addr;
 
   enclave = kmalloc(sizeof(enclave_t), GFP_KERNEL);
   if (!enclave){
@@ -73,7 +75,14 @@ enclave_t* create_enclave(unsigned long min_pages)
 
   /* allocate contiguous memory */
 
+#ifdef CONFIG_CMA
+  epm_vaddr = dma_alloc_coherent(keystone_dev.this_device, 
+      count << PAGE_SHIFT,
+      &device_phys_addr,
+      GFP_KERNEL);
+#else
   epm_vaddr = __get_free_pages(GFP_HIGHUSER, order);
+#endif
   if(!epm_vaddr) {
     keystone_err("keystone_create_epm(): failed to allocate %lu page(s)\n", count);
     goto error_destroy_enclave;
