@@ -127,6 +127,11 @@ int keystone_destroy_enclave(struct file* filp, unsigned long arg)
   enclave_t* enclave;
   enclave = get_enclave_by_id(ueid);
 
+  if(!enclave)
+  {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
   ret = SBI_CALL_1(SBI_SM_DESTROY_ENCLAVE, enclave->eid);
   if(ret) {
     keystone_err("fatal: cannot destroy enclave: SBI failed\n");
@@ -146,6 +151,12 @@ int keystone_run_enclave(struct file* filp, unsigned long arg)
   unsigned long ueid = run->eid;
   enclave_t* enclave;
   enclave = get_enclave_by_id(ueid);
+
+  if(!enclave)
+  {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
   
   ret = SBI_CALL_1(SBI_SM_RUN_ENCLAVE, enclave->eid);
   /* if the enclave is timer-interrupted, just resume the enclave */
@@ -165,6 +176,12 @@ int keystone_resume_enclave(struct file* filp, unsigned long arg)
   enclave_t* enclave;
   enclave = get_enclave_by_id(ueid);
   
+  if(!enclave)
+  {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
   ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
   while(ret == ENCLAVE_INTERRUPTED)
   {
