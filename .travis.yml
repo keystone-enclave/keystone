@@ -48,6 +48,7 @@ branches:
     - master
 
 before_install:
+  - travis_wait 120 git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux
   - ./fast-setup.sh
 
 jobs:
