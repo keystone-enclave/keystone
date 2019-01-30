@@ -4,6 +4,8 @@ cache:
   apt: true
   directories:
     - firesim-riscv-tools-prebuilt
+    - riscv-linux
+    - riscv-qemu
 
 git:
   submodules: false
@@ -51,8 +53,6 @@ branches:
     - master
 
 before_install:
-  - travis_wait 120 git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu
-  - travis_wait 120 git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux
   - ./fast-setup.sh
 
 jobs:
