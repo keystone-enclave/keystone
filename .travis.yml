@@ -8,6 +8,10 @@ cache:
 git:
   submodules: false
 
+env:
+  - RISCV=$TRAVIS_BUILD_DIR/riscv
+  - PATH=$PATH:$RISCV/bin
+
 addons:
   apt:
     packages:
@@ -48,6 +52,7 @@ branches:
     - master
 
 before_install:
+  - travis_wait 120 git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu
   - travis_wait 120 git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux
   - ./fast-setup.sh
 

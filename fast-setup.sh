@@ -8,6 +8,6 @@ export RISCV=$(pwd)/riscv
 export PATH=$PATH:$RISCV/bin
 
 cd firesim-riscv-tools-prebuilt
-./installrelease.sh
+./installrelease.sh > riscv-tools-install.log 
 mv distrib ../riscv
 cd ..
