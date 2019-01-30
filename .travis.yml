@@ -52,11 +52,11 @@ branches:
     - dev
     - master
 
-before_install:
-  - ./fast-setup.sh
-
 jobs:
   include:
+    - stage: setting up
+      script:
+        - travis_wait 120 ./fast-setup.sh
     - stage: build everything
       script:
         - source ./source.sh
