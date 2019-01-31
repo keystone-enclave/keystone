@@ -2,8 +2,6 @@ language: minimal
 dist: xenial
 cache:
   apt: true
-  directories:
-    - riscv
 
 git:
   submodules: false
@@ -15,7 +13,6 @@ addons:
   apt:
     packages:
     - expect
-    - diff
     - autoconf 
     - automake 
     - autotools-dev 
