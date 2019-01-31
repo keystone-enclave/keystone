@@ -13,7 +13,8 @@ else
   
   cd firesim-riscv-tools-prebuilt
   ./installrelease.sh > riscv-tools-install.log 
-  mv distrib ../riscv
+  mv distrib riscv  
+  cp -R riscv ../
   cd ..
   echo "Toolchain has been installed in $RISCV"
 fi
