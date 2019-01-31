@@ -14,6 +14,8 @@ env:
 addons:
   apt:
     packages:
+    - expect
+    - diff
     - autoconf 
     - automake 
     - autotools-dev 
