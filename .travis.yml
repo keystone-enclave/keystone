@@ -10,7 +10,8 @@ git:
 
 env:
   global:
-    - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
+    - RISCV=$TRAVIS_BUILD_DIR/riscv
+    - PATH=$PATH:$RISCV/bin
 
 addons:
   apt:
