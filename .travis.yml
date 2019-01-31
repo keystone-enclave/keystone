@@ -57,7 +57,7 @@ before_install:
   - git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu
   - git submodule update --depth=1 -- riscv-linux
   - git submodule update --depth=1 -- riscv-qemu
-  - travis_wait 120 ./fast-setup.sh
+  - ./fast-setup.sh
 
 jobs:
   include:

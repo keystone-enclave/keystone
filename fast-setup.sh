@@ -10,10 +10,12 @@ else
   export RISCV=$(pwd)/riscv
   export PATH=$PATH:$RISCV/bin
   git clone https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt.git --depth 1
+  
   cd firesim-riscv-tools-prebuilt
   ./installrelease.sh > riscv-tools-install.log 
   mv distrib ../riscv
   cd ..
+  echo "Toolchain has been installed in $RISCV"
 fi
 
 git config --global submodule.riscv-gnu-toolchain.update none
