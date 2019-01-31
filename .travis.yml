@@ -3,15 +3,14 @@ dist: xenial
 cache:
   apt: true
   directories:
-    - firesim-riscv-tools-prebuilt
-    - riscv-linux
-    - riscv-qemu
+    - riscv
 
 git:
   submodules: false
 
 env:
-  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
+  global:
+    - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
 
 addons:
   apt:
@@ -52,16 +51,19 @@ branches:
     - dev
     - master
 
+before_install:
+  - git submodule init -- riscv-linux
+  - git submodule init -- riscv-qemu
+  - git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux
+  - git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu
+  - git submodule update --depth=1 -- riscv-linux
+  - git submodule update --depth=1 -- riscv-qemu
+  - travis_wait 120 ./fast-setup.sh
+
 jobs:
   include:
-    - stage: setting up
-      script:
-        - travis_wait 120 ./fast-setup.sh
-    - stage: build everything
+    - stage: build everything & test
       script:
         - source ./source.sh
         - travis_wait 120 make
-    - stage: run travis script
-      script: 
-        - travis_wait 120 ./scripts/travis.sh
-
+        - travis_wait 10 ./scripts/travis.sh
