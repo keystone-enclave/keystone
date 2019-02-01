@@ -16,9 +16,13 @@ SECTIONS
   .data : { *(.data) }
   .bss : { *(.bss) }
   .debug : { *(.debug) }
-  
-  __malloc_start = .;
-  . = . + 1024; 
 
+  . = ALIGN(0x1000);
+  .malloc_zone :
+  {
+    __malloc_start = .;
+    . = . + 4096;
+    __malloc_zone_stop = .;
+  }
   _end = .;
 }

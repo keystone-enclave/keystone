@@ -90,6 +90,7 @@ extern fle __malloc_freelist;
 #define M_ALIGN_SUB(x, align) ((size_t)(x) & ((align) - 1))
 
 extern char *__malloc_start;
+extern char *__malloc_zone_stop; /* dkohlbre: added since our malloc region is static */
 
 /* This is the minimum gap allowed between __malloc_end and the top of
    the stack.  This is only checked for when __malloc_end is
@@ -101,7 +102,7 @@ extern char *__malloc_start;
 register void * stack_pointer asm ("r15");
 #define MALLOC_LIMIT stack_pointer
 #else
-#define MALLOC_LIMIT __builtin_frame_address (0)
+#define MALLOC_LIMIT (&__malloc_zone_stop) /* dkohlbre: modification for our malloc region */
 #endif
 
 #if MALLOC_DIRECTION < 0
@@ -130,6 +131,11 @@ malloc (size_t sz)
   fle *nextfree;
   fle block;
 
+  /* dkohlbre: Force init of malloc_end, it wasn't always gettng set */
+  if(__malloc_end == NULL){
+    __malloc_end = &__malloc_start;
+  }
+  
   /* real_size is the size we actually have to allocate, allowing for
      overhead and alignment.  */
   size_t real_size = REAL_SIZE (sz);
