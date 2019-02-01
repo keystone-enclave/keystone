@@ -1,4 +1,4 @@
-. = 0x802ff000; /* the last page before the payload */
+. = 0x801ff000; /* the last page before the payload */
 
 /* ## manufacturer_keys : */
 
