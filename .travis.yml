@@ -1,13 +1,18 @@
-language: c
+language: minimal
 dist: xenial
 cache:
   apt: true
+
 git:
   submodules: false
+
+env:
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
 
 addons:
   apt:
     packages:
+    - expect
     - autoconf 
     - automake 
     - autotools-dev 
@@ -45,8 +50,18 @@ branches:
     - master
 
 before_install:
-  - git config --global submodule.riscv-gnu-toolchain.update none
-  - travis_wait 120 git submodule update --init --recursive
+  - git submodule init -- riscv-linux
+  - git submodule init -- riscv-qemu
+  - git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux
+  - git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu
+  - git submodule update --depth=1 -- riscv-linux
+  - git submodule update --depth=1 -- riscv-qemu
+  - ./fast-setup.sh
 
-script: 
-  - travis_wait 120 ./scripts/travis.sh
+jobs:
+  include:
+    - stage: build everything & test
+      script:
+        - source ./source.sh
+        - travis_wait 120 make
+        - travis_wait 10 ./scripts/travis.sh
