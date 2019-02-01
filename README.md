@@ -12,6 +12,16 @@ git clone https://github.com/keystone-enclave/keystone
 cd keystone
 ```
 
+Install Dependencies (Ubuntu)
+
+```
+sudo apt update
+sudo apt install autoconf automake autotools-dev bc bison build-essential curl \
+expat libexpat1-dev flex gawk gcc git gperf libgmp-dev libmpc-dev libmpfr-dev \
+libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \
+python pkg-config libglib2.0-dev libpixman-1-dev
+```
+
 Setup Tools and Submodules
 ```
 ./fast-setup.sh
