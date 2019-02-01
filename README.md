@@ -5,9 +5,46 @@
 
 Visit [Project Website](https://keystone-enclave.org) for more information.
 
+# Quick Start
+
+```bash
+git clone https://github.com/keystone-enclave/keystone
+cd keystone
+```
+
+Setup Tools and Submodules
+```
+./fast-setup.sh
+```
+
+Build All
+```
+make
+```
+
+Run QEMU
+```
+./scripts/run-qemu.sh
+```
+
+Test 
+
+login with `root`/`busybear`.
+
+```
+[in QEMU machine]
+insmod keystone-driver.ko
+./test
+```
+
+Terminate QEMU
+```
+poweroff
+```
+
 # Documentation
 
-See [docs](http://docs.keystone-enclave.org) for trying Keystone.
+See [docs](http://docs.keystone-enclave.org) for detailed documentation.
 
 # Contributing
 
