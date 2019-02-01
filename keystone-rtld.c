@@ -97,6 +97,24 @@ void rtld_vm_mmap(epm_t* epm, vaddr_t encl_addr, unsigned long size,
   }
 } 
 
+int keystone_app_load_elf_section_NOBITS(epm_t* epm,
+					 void* target_vaddr, size_t len){
+  vaddr_t va;
+  vaddr_t encl_page;
+  size_t _size;
+  int k, ret = 0;
+  for(va=(uintptr_t)target_vaddr, k=0; va < (uintptr_t)target_vaddr+len; va += PAGE_SIZE, k++){
+    encl_page = epm_alloc_user_page(epm, va);
+
+    _size = (k+1)*PAGE_SIZE > len ? len%PAGE_SIZE : PAGE_SIZE;
+    memset((void*)encl_page, 0, _size);
+  }
+ 
+  return ret;
+  
+  
+}
+
 int keystone_app_load_elf_region(epm_t* epm, void* __user elf_usr_region,
 				 void* target_vaddr, size_t len){ 
   vaddr_t va;
@@ -124,9 +142,11 @@ int keystone_app_load_elf_region(epm_t* epm, void* __user elf_usr_region,
 
 int keystone_app_load_elf(epm_t* epm, void* __user elf_usr_ptr, size_t len){
   int retval, error, i;
-  struct elf_phdr eppnt;
+  struct elf_phdr elf_phdr_tmp;
+  struct elf_shdr elf_shdr_tmp;
   struct elfhdr elf_ex;
   struct elf_phdr* __user next_usr_phoff;
+  struct elf_shdr* __user next_usr_shoff;
   unsigned long vaddr;
   unsigned long size = 0;
   
@@ -145,36 +165,77 @@ int keystone_app_load_elf(epm_t* epm, void* __user elf_usr_ptr, size_t len){
   if(elf_ex.e_type != ET_EXEC || !elf_check_arch(&elf_ex))
     goto out;
 
+  // Get each elf_shdr in order and deal with it
+  next_usr_shoff = (struct elf_shdr* __user)((uintptr_t)elf_usr_ptr + elf_ex.e_shoff);
+  for(i=0; i<elf_ex.e_shnum; i++, next_usr_shoff++) {
+
+    // Copy next shdr
+    if(copy_from_user(&elf_shdr_tmp, (void*)next_usr_shoff, sizeof(struct elf_shdr)) != 0){
+      //bad
+      continue;
+    }
+
+    vaddr = elf_shdr_tmp.sh_addr;
+
+    // Sections with a load address of 0 aren't supposed to be created at runtime
+    if(vaddr == 0){
+      continue;
+    }
+
+    // We are only handling SHT_NOBITS right now, deal with other types later
+    if(elf_shdr_tmp.sh_type != SHT_NOBITS) {
+      if(elf_shdr_tmp.sh_type != SHT_PROGBITS) { // Should get handled by phdr loading below
+	pr_warn("Keystone unable to load sections that are not SHT_NOBITS, ignoring (@ 0x%llx)\n", elf_shdr_tmp.sh_addr);
+      }
+      continue;
+    }
+
+    size = elf_shdr_tmp.sh_size;
+
+    pr_warn("Keystone loading section @ 0x%lx, size: 0x%lx\n",vaddr, size);
+    // Create section and set to 0
+    retval = keystone_app_load_elf_section_NOBITS(epm,
+						  (void*)vaddr,
+						  size);
+    if(retval != 0){
+      error = retval;
+      goto out;
+    }
+  }
+
   // Get each elf_phdr in order and deal with it
   next_usr_phoff = (struct elf_phdr* __user)((uintptr_t)elf_usr_ptr + elf_ex.e_phoff);
   for(i=0; i<elf_ex.e_phnum; i++, next_usr_phoff++) {
 
     // Copy next phdr
-    if(copy_from_user(&eppnt, (void*)next_usr_phoff, sizeof(struct elf_phdr)) != 0){
+    if(copy_from_user(&elf_phdr_tmp, (void*)next_usr_phoff, sizeof(struct elf_phdr)) != 0){
       //bad
       continue;
     }
 
     // Create and copy
-    if(eppnt.p_type != PT_LOAD) {
+    if(elf_phdr_tmp.p_type != PT_LOAD) {
       pr_warn("keystone runtime includes an inconsistent program header\n");
       continue;
     }
-    vaddr = eppnt.p_vaddr;
+    vaddr = elf_phdr_tmp.p_vaddr;
     //vaddr sanity check?
-    size = eppnt.p_filesz;
+    size = elf_phdr_tmp.p_filesz;
     //pr_info("loading vaddr: %x, sz:%i\n",vaddr,size);
 
     retval = keystone_app_load_elf_region(epm,
-					  elf_usr_ptr + eppnt.p_offset,
+					  elf_usr_ptr + elf_phdr_tmp.p_offset,
 					  (void*)vaddr,
 					  size);
     if(retval != 0){
       error = retval;
-      break;
+      goto out;
     }
   }
+  
 
+
+  
   error = 0;
 
   out:
