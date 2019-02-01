@@ -192,7 +192,7 @@ int keystone_app_load_elf(epm_t* epm, void* __user elf_usr_ptr, size_t len){
 
     size = elf_shdr_tmp.sh_size;
 
-    pr_warn("Keystone loading section @ 0x%lx, size: 0x%lx\n",vaddr, size);
+    //pr_warn("Keystone loading section @ 0x%lx, size: 0x%lx\n",vaddr, size);
     // Create section and set to 0
     retval = keystone_app_load_elf_section_NOBITS(epm,
 						  (void*)vaddr,
