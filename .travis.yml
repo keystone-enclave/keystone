@@ -65,3 +65,6 @@ jobs:
         - source ./source.sh
         - travis_wait 120 make
         - travis_wait 10 ./scripts/travis.sh
+      after_failure:
+        - cat screenlog.0
+        - cat output.log
