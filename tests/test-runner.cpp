@@ -42,7 +42,6 @@ void copy_report(void* buffer)
   Report report;
 
   report.fromBytes((unsigned char*)buffer);
-  report.printJson();
 
   if (report.checkSignaturesOnly(_sanctum_dev_public_key))
   {
