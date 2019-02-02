@@ -34,39 +34,46 @@ Ubuntu
   libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \ 
   python pkg-config libglib2.0-dev libpixman-1-dev
 
+Quick Setup
+----------------------------
+
+In this stage, you will (1) install RISC-V toolchain, and (2) checkout git submodules.
+
+You can quickly setup everything by running ``./fast-setup.sh``
+
+::
+
+  ./fast-setup.sh
+
+This will download pre-compiled RISC-V tools and extract it to ``riscv`` directory.
+If you want to compile RISC-V tools from source code, run ``./setup.sh`` instead.
+
+To keep environment variables, add export PATH=$PATH:<path/to/keystone>/riscv/bin to your .bashrc. You can also manually run ``source source.sh`` to set the environment variables.
+
 
 Compile Sources
 -----------------------------
 
-Clone the repository
+Build All
 ########################
 
-::
-  
-  git clone https://github.com/keystone-enclave/keystone
-  cd keystone
-  git submodule update --init --recursive
+If you want to build all, simply run ``make``. 
 
-
-Install RISC-V GNU Toolchain
-############################
+``PATH`` must include the RISC-V tool path.
 
 ::
-  
-  mkdir riscv
-  export RISCV=$(pwd)/riscv
-  export PATH=$PATH:$RISCV/bin
-  cd riscv-gnu-toolchain
-  ./configure --prefix=$RISCV
-  make && make linux
-  cd ..
 
-This step installs RISC-V GNU toolchain in the ``keystone/riscv`` directory.
+  make
 
-To keep environment variables, add ``export PATH=$PATH:<path/to/keystone>/riscv/bin`` to your ``.bashrc``.
-You can also manually run ``source source.sh`` to set the environment variables.
+If you want to manually build each individual component, please follow the instructions below.
+Otherwise, skip to :ref:`LaunchQEMU`. 
 
-Create Disk Image using Busybear 
+.. attention::
+
+  Currently, ``make`` requires sudo previlege to build Busybear image.
+  We are going to get rid of this requirement in the future.
+
+Build Busybear 
 ################################
 
 See `Busybear repo <https://github.com/michaeljclark/busybear-linux>`_ for more information.
@@ -151,6 +158,8 @@ Keystone SDK includes sample enclave programs and some useful libraries. To run 
   cd ..
 
 
+.. _LaunchQEMU:
+
 Launch QEMU
 --------------------------------------
 
@@ -166,10 +175,10 @@ The root of trust then jumps to the SM, and the SM boots Linux!
 
 Login as ``root`` with the password ``busybear``.
 
-You can exit QEMU by ``ctrl-a``+``x``
+You can exit QEMU by ``ctrl-a``+``x`` or using ``poweroff`` command
 
 Insert Keystone Driver
--------------------------------------
+##################################
 
 Insert the keystone driver.
 
@@ -178,10 +187,14 @@ Insert the keystone driver.
     insmod keystone-driver.ko
 
 Run Tests
----------------------------------------
+##################################
 
 You can run Keystone enclaves by using an untrusted host application. We already implemented a simple host ``test-runner.riscv`` for running tests.
 Following command will create and execute the enclave.
+
+You can find each of the test enclave in ``sdk/tests/<name>``
+
+Currently, Keystone is only compatible with a prototype runtime, ``eyrie-rt``, which you can find in ``sdk/runtime``.
 
 ::
 
@@ -192,5 +205,4 @@ To run all tests, you could simply run
 ::
 
   ./test
-
 

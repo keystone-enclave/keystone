@@ -7,3 +7,4 @@ cd ..
 cd riscv-linux
 patch -p0 --forward <  ../patches/linux-cma.patch || true
 cd ..
+
