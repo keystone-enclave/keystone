@@ -36,7 +36,8 @@ void handle_interrupts(struct encl_ctx_t* regs)
     case INTERRUPT_CAUSE_EXTERNAL:
     default:
       printf("[FATAL] Eyrie runtime could not handle the interrupt: 0x%lx\n", cause);
-      SBI_CALL_1(SBI_SM_EXIT_ENCLAVE,-1);
+      sbi_stop_enclave(0);
+      //SBI_CALL_1(SBI_SM_EXIT_ENCLAVE,-1);
       return;
   }
 }
