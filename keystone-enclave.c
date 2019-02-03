@@ -57,12 +57,12 @@ int destroy_enclave(enclave_t* enclave)
 
 enclave_t* create_enclave(unsigned long min_pages)
 {
-  vaddr_t epm_vaddr;
+  vaddr_t epm_vaddr = 0;
   unsigned long order = ilog2(min_pages - 1) + 1;
   unsigned long count = 0x1 << order;
   epm_t* epm;
   enclave_t* enclave;
-  phys_addr_t device_phys_addr;
+  phys_addr_t device_phys_addr = 0;
 
   enclave = kmalloc(sizeof(enclave_t), GFP_KERNEL);
   if (!enclave){
@@ -80,9 +80,12 @@ enclave_t* create_enclave(unsigned long min_pages)
       count << PAGE_SHIFT,
       &device_phys_addr,
       GFP_KERNEL);
-#else
-  epm_vaddr = __get_free_pages(GFP_HIGHUSER, order);
 #endif
+  if(!epm_vaddr || !device_phys_addr)
+  {
+    epm_vaddr = __get_free_pages(GFP_HIGHUSER, order);
+  }
+    
   if(!epm_vaddr) {
     keystone_err("keystone_create_epm(): failed to allocate %lu page(s)\n", count);
     goto error_destroy_enclave;
