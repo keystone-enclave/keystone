@@ -162,6 +162,7 @@ int keystone_run_enclave(struct file* filp, unsigned long arg)
   /* if the enclave is timer-interrupted, just resume the enclave */
   while(ret == ENCLAVE_INTERRUPTED)
   {
+    keystone_handle_interrupts();
     ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
   }
 
@@ -185,6 +186,7 @@ int keystone_resume_enclave(struct file* filp, unsigned long arg)
   ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
   while(ret == ENCLAVE_INTERRUPTED)
   {
+    keystone_handle_interrupts();
     ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
   }
 
