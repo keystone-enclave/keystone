@@ -20,7 +20,6 @@ Enclave said: 2nd hello world!
 Enclave said value: 13
 Enclave said value: 20
 testing attestation
-{"device_pubkey": "0faad4ff01178583baa588966f7c1ff32564dd17d7dc2b46cb50a84a69270b4c", "enclave": {"data": "6e6f6e6365", "datalen": 5, "hash": "d57055329653d90d51d1cccb27aebdddbb7fb57ec233bb0e6fa252442c890578dc870b470ff2ef8b566bb2d8e426686635c5e887962e90b07e5ecfd1ce544a96", "signature": "715eb432d5a135ff99db5ebf36c879a2256ac30c748da53f4686582be8bc7350734ecfd0d546052e954b6982033412bcc5ad1ac31c6b0880072c2cb34725bd0f"}, "security_monitor": {"hash": "eae0226b42eaf3614ecf3fb1e6d3ce8854788457cacd018d9ef04de7c8d0d62504c040dc6a86b02380e459936e0ea96a4c721a0bec60351977b697ca46e7b05e", "pubkey": "40efc082defde02e3559d79b4536b602c3def2bf20515c59f189551a5c3481be", "signature": "f2acf168316d121005fc8dd3278b9740a17426a39ce6a95272ec9797a8710aa14f2cf700443b7aeddfd17f441f74f20a2d33827a4b4a04f3b6fde9ad6aa38c05"}}
 Attestation report SIGNATURE is valid
 [01;32mroot@ucbvax[00m:[01;34m~[00m# poweroff
 [01;32mroot@ucbvax[00m:[01;34m~[00m# Connection to localhost closed by remote host.
