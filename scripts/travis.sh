@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Launch QEMU test
-screen -dmS qemu ./scripts/run-qemu.sh
+screen -L -dmS qemu ./scripts/run-qemu.sh
 sleep 10
 ./scripts/test-qemu.sh
 
