@@ -48,15 +48,14 @@ $(SM_BUILD_DIR): $(VMLINUX)
 		--enable-sm
 
 $(DRIVER): $(VMLINUX) $(LINUX_CONFIG)
-	$(MAKE) -C $(LINUX_QEMU_OUT) ARCH=riscv SUBDIRS=$(DRIVER_DIR) modules
-#	$(MAKE) -C $(DRIVER_DIR)
-
+	$(MAKE) -C $(LINUX_SRC_DIR) O=$(LINUX_QEMU_OUT) ARCH=riscv SUBDIRS=$(DRIVER_DIR) modules
 
 $(DISK):
 	$(MAKE) -C $(BUSYBEAR_DIR)
 	sudo chmod og+w $(DISK)
 
 $(LINUX_CONFIG):
+	mkdir -p $(LINUX_QEMU_OUT)
 	cp $(BUSYBEAR_DIR)/conf/linux.config $(LINUX_CONFIG)
 	$(MAKE) -C $(LINUX_SRC_DIR) O=$(LINUX_QEMU_OUT) ARCH=riscv olddefconfig
 
@@ -69,8 +68,6 @@ $(BOOTROM):
 
 clean:
 	rm -f $(LINUX_CONFIG)
-	$(MAKE) -C $(LINUX_SRC_DIR) O=$(LINUX_QEMU_OUT) ARCH=riscv clean
-	$(MAKE) -C $(LINUX_SRC_DIR) O=$(LINUX_QEMU_OUT) ARCH=riscv mrproper
 	$(MAKE) -C $(LINUX_SRC_DIR) O=$(LINUX_QEMU_OUT) ARCH=riscv clean
 	$(MAKE) -C $(BUSYBEAR_DIR) clean
 	$(MAKE) -C $(BOOTROM_DIR) clean
