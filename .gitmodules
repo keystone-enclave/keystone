@@ -19,3 +19,6 @@
 [submodule "linux-keystone-driver"]
 	path = linux-keystone-driver
 	url = https://github.com/keystone-enclave/linux-keystone-driver
+[submodule "buildroot"]
+	path = buildroot
+	url = https://github.com/keystone-enclave/buildroot.git

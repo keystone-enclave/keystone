@@ -13,23 +13,23 @@ addons:
   apt:
     packages:
     - expect
-    - autoconf 
-    - automake 
-    - autotools-dev 
-    - bc 
-    - bison 
-    - build-essential 
-    - curl 
-    - expat 
-    - libexpat-dev 
-    - flex 
+    - autoconf
+    - automake
+    - autotools-dev
+    - bc
+    - bison
+    - build-essential
+    - curl
+    - expat
+    - libexpat-dev
+    - flex
     - gawk
     - gcc
     - git
     - gperf
     - libgmp-dev
     - libmpc-dev
-    - libmpfr-dev 
+    - libmpfr-dev
     - libtool
     - texinfo
     - tmux
@@ -44,10 +44,13 @@ addons:
     - pkg-config
     - libglib2.0-dev
     - libpixman-1-dev
+    - libssl-dev
+
 branches:
   only:
     - dev
     - master
+
 
 before_install:
   - git submodule init -- riscv-linux
@@ -63,8 +66,15 @@ jobs:
     - stage: build everything & test
       script:
         - source ./source.sh
-        - travis_wait 120 make
+        - travis_wait 120 make -j2
         - travis_wait 10 ./scripts/travis.sh
+      after_failure:
+        - cat screenlog.0
+        - cat output.log
+    - stage: build hifive & test
+      script:
+        - source ./source.sh
+        - travis_wait 120 make -j2 hifive
       after_failure:
         - cat screenlog.0
         - cat output.log

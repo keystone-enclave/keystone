@@ -27,7 +27,7 @@ Setup Tools and Submodules
 ./fast-setup.sh
 ```
 
-Build All
+Build All for QEMU
 ```
 make
 ```
@@ -37,7 +37,7 @@ Run QEMU
 ./scripts/run-qemu.sh
 ```
 
-Test 
+Test
 
 login with `root`/`busybear`.
 
