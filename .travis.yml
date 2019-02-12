@@ -44,6 +44,7 @@ addons:
     - pkg-config
     - libglib2.0-dev
     - libpixman-1-dev
+    - libssl-dev
 
 branches:
   only:
@@ -67,6 +68,12 @@ jobs:
         - source ./source.sh
         - travis_wait 120 make
         - travis_wait 10 ./scripts/travis.sh
+      after_failure:
+        - cat screenlog.0
+        - cat output.log
+    - stage: build hifive & test
+      script:
+        - source ./source.sh
         - travis_wait 120 make hifive
       after_failure:
         - cat screenlog.0
