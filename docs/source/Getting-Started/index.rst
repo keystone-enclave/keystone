@@ -20,8 +20,6 @@ You can migrate the Keystone enclave into arbitrary RISC-V processor, with a ver
   We recommend you to use Keystone only for research purposes until it gets stablized.
   We appreciate any contribution for making Keystone better.
 
-See the Keystone-Demo section for temporary documentation for running on the HiFive board. Detailed instructions will be forthcoming.
-
 Quick Start
 ----------------------------------------
 .. toctree::
@@ -29,3 +27,4 @@ Quick Start
 
    Running-Keystone-with-QEMU
    Running-Keystone-with-FireSim
+   Running-Keystone-on-Hardware
