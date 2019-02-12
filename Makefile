@@ -6,7 +6,8 @@ SM_BUILD_DIR=$(SM_DIR)/build
 DRIVER_DIR=$(shell pwd)/linux-keystone-driver
 SDK_DIR=sdk
 QEMU_DIR=riscv-qemu
-LINUX_QEMU_OUT=$(shell pwd)/linux-qemu
+QEMU_WORK=$(shell pwd)/qemu-work
+LINUX_QEMU_OUT=$(QEMU_WORK)/linux
 
 BOOTROM=$(BOOTROM_DIR)/bootrom.elf
 VMLINUX=$(LINUX_QEMU_OUT)/vmlinux

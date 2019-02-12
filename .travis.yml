@@ -66,7 +66,7 @@ jobs:
     - stage: build everything & test
       script:
         - source ./source.sh
-        - travis_wait 120 make
+        - travis_wait 120 make -j2
         - travis_wait 10 ./scripts/travis.sh
       after_failure:
         - cat screenlog.0
@@ -74,7 +74,7 @@ jobs:
     - stage: build hifive & test
       script:
         - source ./source.sh
-        - travis_wait 120 make hifive
+        - travis_wait 120 make -j2 hifive
       after_failure:
         - cat screenlog.0
         - cat output.log
