@@ -52,9 +52,9 @@ int host_satp_to_eid(uintptr_t satp, unsigned int* eid)
 int encl_alloc_idx()
 {
   int i;
-  
+
   spinlock_lock(&encl_lock);
-  
+
   for(i=0; i<ENCL_MAX; i++)
   {
     if(!(encl_bitmap & (0x1 << i)))
@@ -68,7 +68,7 @@ int encl_alloc_idx()
   if(i != ENCL_MAX)
     return i;
   else
-    return -1;  
+    return -1;
 }
 
 int encl_free_idx(int idx)
@@ -157,19 +157,19 @@ int init_enclave_memory(uintptr_t base, uintptr_t size, uintptr_t utbase, uintpt
 {
   int ret;
   int ptlevel = RISCV_PGLEVEL_TOP;
-  
+
   // this function does the followings:
   // (1) Traverse the page table to see if any address points to the outside of EPM
   // (2) Zero out every page table entry that is not valid
   ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size, utbase, utsize);
-  
+
   // FIXME: probably we will also need to:
   // (3) Zero out every page that is not pointed by the page table
 
   // Zero out the untrusted memory region, since it may be in
   // indeterminate state.
   memset((void*)utbase, 0, utsize);
-  
+
   return ret;
 }
 enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
@@ -180,7 +180,7 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   uintptr_t utbase = create_args.utm_region.paddr;
   size_t utsize = create_args.utm_region.size;
   unsigned int* eidptr = create_args.eid_pptr;
- 
+
   /* Runtime parameters */
   struct runtime_params_t params = create_args.params;
 
@@ -190,7 +190,7 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   int region, shared_region;
   int i;
   int region_overlap = 0;
-  
+
   // 1. create a PMP region binded to the enclave
   ret = ENCLAVE_PMP_FAILURE;
 
@@ -208,15 +208,16 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   // 3. set pmp
   if(pmp_set_global(region, PMP_NO_PERM))
     goto free_encl_idx;
-  
-  // 4. initialize and verify enclave memory layout. 
+
+  // 4. initialize and verify enclave memory layout.
   init_enclave_memory(base, size, utbase, utsize);
-  
+
   // 5. initialize enclave metadata
   enclaves[eid].eid = eid;
   enclaves[eid].rid = region;
   enclaves[eid].utrid = shared_region;
   enclaves[eid].host_satp = read_csr(satp);
+  //print_pgtable(3, (pte_t*) (read_csr(satp) << RISCV_PGSHIFT), 0);
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = params;
@@ -226,11 +227,11 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   enclaves[eid].state = FRESH;
   hash_enclave(&enclaves[eid]);
   spinlock_unlock(&encl_lock);
- 
+
   copy_word_to_host((uintptr_t*)eidptr, (uintptr_t)eid);
 
   return ENCLAVE_SUCCESS;
- 
+
 free_encl_idx:
   encl_free_idx(eid);
 free_shared_region:
@@ -246,8 +247,8 @@ enclave_ret_t destroy_enclave(unsigned int eid)
   int destroyable;
 
   spinlock_lock(&encl_lock);
-  destroyable = TEST_BIT(encl_bitmap, eid) && 
-                (enclaves[eid].state >= 0) && 
+  destroyable = TEST_BIT(encl_bitmap, eid) &&
+                (enclaves[eid].state >= 0) &&
                 enclaves[eid].state != RUNNING;
   /* update the enclave state first so that
    * no SM can run the enclave any longer */
@@ -257,7 +258,7 @@ enclave_ret_t destroy_enclave(unsigned int eid)
 
   if(!destroyable)
     return ENCLAVE_NOT_DESTROYABLE;
-  
+
   // 1. clear all the data in the enclave page
   // requires no lock (single runner)
   void* base = pmp_get_addr(enclaves[eid].rid);
@@ -279,7 +280,7 @@ enclave_ret_t destroy_enclave(unsigned int eid)
 
   // 3. release eid
   encl_free_idx(eid);
-  
+
   return ENCLAVE_SUCCESS;
 }
 
@@ -288,8 +289,8 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
   int runable;
 
   spinlock_lock(&encl_lock);
-  runable = TEST_BIT(encl_bitmap, eid) 
-    && (enclaves[eid].state >= 0) 
+  runable = TEST_BIT(encl_bitmap, eid)
+    && (enclaves[eid].state >= 0)
     && enclaves[eid].n_thread < MAX_ENCL_THREADS;
   if(runable) {
     enclaves[eid].state = RUNNING;
@@ -306,7 +307,7 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
 
   /* Swapping the mepc sets up the mret in mtrap.c to transfer control
      to the enclave */
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
 
@@ -318,9 +319,22 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
 
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
- 
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  clear_csr(mie, MIP_SEIP);
+  clear_csr(mie, MIP_MEIP);
+
+  // Software too
+  clear_csr(mie, MIP_SSIP);
+  clear_csr(mie, MIP_MSIP);
+
+
   // disable timer set by the OS, clear pending interrupts
   clear_csr(mie, MIP_MTIP);
+  clear_csr(mip, MIP_MSIP);
+  clear_csr(mip, MIP_STIP);
+  clear_csr(mip, MIP_SSIP);
 
   clear_csr(mip, MIP_MTIP);
   clear_csr(mip, MIP_STIP);
@@ -342,15 +356,15 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 
   if(encl_satp_to_eid(read_csr(satp),&eid) < 0)
     return ENCLAVE_INVALID_ID;
- 
+
   spinlock_lock(&encl_lock);
   exitable = enclaves[eid].state == RUNNING;
   spinlock_unlock(&encl_lock);
 
   if(!exitable)
     return ENCLAVE_NOT_RUNNING;
-  
-  // get the running enclave on this SM 
+
+  // get the running enclave on this SM
   struct enclave_t encl = enclaves[eid];
 
   // set PMP
@@ -360,13 +374,22 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   swap_prev_stvec(&enclaves[eid].threads[0], 0);
-  swap_prev_mepc(&enclaves[eid].threads[0], 0); 
+  swap_prev_mepc(&enclaves[eid].threads[0], 0);
 
   // switch to host page table
   write_csr(satp, encl.host_satp);
 
   // enable timer interrupt
   set_csr(mie, MIP_MTIP);
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  set_csr(mie, MIP_SEIP);
+  set_csr(mie, MIP_MEIP);
+
+  // Software too
+  set_csr(mie, MIP_SSIP);
+  set_csr(mie, MIP_MSIP);
 
   // update enclave state
   spinlock_lock(&encl_lock);
@@ -399,13 +422,22 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
   struct enclave_t encl = enclaves[eid];
-  
+
   pmp_set(encl.rid, PMP_NO_PERM);
   osm_pmp_set(PMP_ALL_PERM);
 
   write_csr(satp, encl.host_satp);
   set_csr(mie, MIP_MTIP);
- 
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  set_csr(mie, MIP_SEIP);
+  set_csr(mie, MIP_MEIP);
+
+  // Software too
+  set_csr(mie, MIP_SSIP);
+  set_csr(mie, MIP_MSIP);
+
   switch(request) {
     case(STOP_TIMER_INTERRUPT):
       return ENCLAVE_INTERRUPTED;
@@ -421,8 +453,8 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
   int resumable;
 
   spinlock_lock(&encl_lock);
-  resumable = TEST_BIT(encl_bitmap, eid) 
-    && (enclaves[eid].state == RUNNING) // not necessary 
+  resumable = TEST_BIT(encl_bitmap, eid)
+    && (enclaves[eid].state == RUNNING) // not necessary
     && enclaves[eid].n_thread > 0; // not necessary
   spinlock_unlock(&encl_lock);
 
@@ -432,13 +464,22 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
 
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], host_regs);
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc)); 
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
 
   // switch to enclave page table
   write_csr(satp, enclaves[eid].encl_satp);
- 
-  // disable timer set by the OS 
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  clear_csr(mie, MIP_SEIP);
+  clear_csr(mie, MIP_MEIP);
+
+  // Software too
+  clear_csr(mie, MIP_SSIP);
+  clear_csr(mie, MIP_MSIP);
+
+  // disable timer set by the OS
   clear_csr(mie, MIP_MTIP);
 
   clear_csr(mip, MIP_MTIP);
@@ -448,7 +489,7 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
 
   // set PMP
   pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
-  osm_pmp_set(PMP_NO_PERM); 
+  osm_pmp_set(PMP_NO_PERM);
   pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
 
   return ENCLAVE_SUCCESS;
@@ -476,23 +517,23 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
     return ENCLAVE_NOT_INITIALIZED;
 
   /* copy data to be signed */
-  ret = copy_from_enclave(&enclaves[eid], 
+  ret = copy_from_enclave(&enclaves[eid],
       report.enclave.data,
       (void*) get_phys_addr(data),
       size);
   report.enclave.data_len = size;
-  
+
   if (ret) {
     return ret;
   }
- 
+
   memcpy(report.dev_public_key, dev_public_key, PUBLIC_KEY_SIZE);
   memcpy(report.sm.hash, sm_hash, MDSIZE);
   memcpy(report.sm.public_key, sm_public_key, PUBLIC_KEY_SIZE);
   memcpy(report.sm.signature, sm_signature, SIGNATURE_SIZE);
   memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
   sm_sign(report.enclave.signature,
-      &report.enclave, 
+      &report.enclave,
       sizeof(struct enclave_report_t)
       - SIGNATURE_SIZE
       - ATTEST_DATA_MAXLEN + size);
