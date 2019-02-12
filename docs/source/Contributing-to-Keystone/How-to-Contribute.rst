@@ -9,8 +9,8 @@ bootloader modifications, to make compilers and toolchains for programming encla
 support for novel use-cases for end users.
 
 
-Knwon Issues and Ongoing Projects
---------------------------------
+Known Issues and Ongoing Projects
+---------------------------------
 
 Known issues are updated in `github issues <https://github.com/keystone-enclave/keystone/issues>`_.
 We also post ongoing projects on `github projects <https://github.com/keystone-enclave/keystone/projects>`_.

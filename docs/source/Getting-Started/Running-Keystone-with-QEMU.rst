@@ -15,6 +15,7 @@ We tested Keystone with QEMU on CentOS and Ubuntu 16.04/18.04
 
 Cent OS
 ###########
+NOTE: This package list is known to be incorrect. It will be updated.
 
 ::
 
@@ -31,8 +32,8 @@ Ubuntu
   sudo apt update
   sudo apt install autoconf automake autotools-dev bc bison build-essential curl \
   expat libexpat1-dev flex gawk gcc git gperf libgmp-dev libmpc-dev libmpfr-dev \
-  libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \ 
-  python pkg-config libglib2.0-dev libpixman-1-dev
+  libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \
+  python pkg-config libglib2.0-dev libpixman-1-dev libssl-dev
 
 Quick Setup
 ----------------------------
@@ -57,7 +58,7 @@ Compile Sources
 Build All
 ########################
 
-If you want to build all, simply run ``make``. 
+If you want to build all, simply run ``make``.
 
 ``PATH`` must include the RISC-V tool path.
 
@@ -66,14 +67,14 @@ If you want to build all, simply run ``make``.
   make
 
 If you want to manually build each individual component, please follow the instructions below.
-Otherwise, skip to :ref:`LaunchQEMU`. 
+Otherwise, skip to :ref:`LaunchQEMU`.
 
 .. attention::
 
   Currently, ``make`` requires sudo previlege to build Busybear image.
   We are going to get rid of this requirement in the future.
 
-Build Busybear 
+Build Busybear
 ################################
 
 See `Busybear repo <https://github.com/michaeljclark/busybear-linux>`_ for more information.
@@ -126,7 +127,7 @@ Make sure to add ``--enable-sm`` when you run ``configure`` so that the security
   make
   cd ../..
 
-Build Root-of-Trust Boot ROM 
+Build Root-of-Trust Boot ROM
 ###############################
 
 ::
@@ -205,4 +206,3 @@ To run all tests, you could simply run
 ::
 
   ./test
-
