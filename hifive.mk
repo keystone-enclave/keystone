@@ -54,7 +54,7 @@ rootfs := $(wrkdir)/rootfs.bin
 target := riscv64-unknown-linux-gnu
 
 .PHONY: all
-all: $(hex) $(linux_module)
+all: $(hex) $(linux_module) $(rootfs)
 	@echo
 	@echo "This image has been generated for an ISA of $(ISA) and an ABI of $(ABI)"
 	@echo "Find the image in hifive-work/bbl.bin, which should be written to a boot partition"
