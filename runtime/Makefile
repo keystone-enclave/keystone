@@ -21,10 +21,10 @@ ASM_OBJS = $(patsubst %.S,%.o,$(ASM_SRCS))
 
 TMPLIB = uaccess.o
 
-all: $(TMPLIB) $(RUNTIME)
+all: $(RUNTIME) $(OBJS)
 
-$(TMPLIB): 
-	make -C tmplib
+$(TMPLIB):
+	$(MAKE) -C tmplib
 
 $(DISK_IMAGE):
 	echo "missing $(DISK_IMAGE)."
@@ -43,9 +43,9 @@ $(RUNTIME): $(ASM_OBJS) $(OBJS) $(SDK_EDGE_LIB) $(TMPLIB)
 $(ASM_OBJS): $(ASM_SRCS)
 	$(CC) $(CFLAGS) -c $<
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< 
+%.o: %.c  $(TMPLIB)
+	$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm -f $(RUNTIME) *.o
-	make -C tmplib clean
+	$(MAKE) -C tmplib clean

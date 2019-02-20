@@ -15,7 +15,6 @@ all: $(ASM_OBJS)
 
 $(ASM_OBJS): $(ASM_SRCS)
 	$(CC) $(CFLAGS) $(BUILD_DEFS) -c $<
-	cp $@ ../
 
 clean:
 	rm $(ASM_OBJS) $(patsubst %,../%,$(COPY_HEADERS))
