@@ -20,7 +20,7 @@ TESTS=stack fibonacci long-nop loop malloc fib-bench untrusted attestation
 SRCS = $(patsubst %.riscv, %.cpp, $(RUNNER))
 OBJS = $(patsubst %.riscv, %.o,$(RUNNER)) $(KEYSTONE_OBJ) edge_wrapper.o
 
-all:  $(OBJS) $(SDK_HOST_LIB) $(SDK_EDGE_LIB) $(SDK_VERIFIER_LIB) 
+all:  $(OBJS) $(SDK_HOST_LIB) $(SDK_EDGE_LIB) $(SDK_VERIFIER_LIB)
 	$(CC) $(CCFLAGS) $(LDFLAGS) -o $(RUNNER) $^
 	$(foreach test, $(TESTS),\
 		$(MAKE) -C $(test);\
@@ -33,7 +33,7 @@ all:  $(OBJS) $(SDK_HOST_LIB) $(SDK_EDGE_LIB) $(SDK_VERIFIER_LIB)
 	chmod +x test
 
 $(SDK_HOST_LIB):
-	make -C $(SDK_HOST_DIR)
+	$(MAKE) -C $(SDK_HOST_DIR)
 
 $(OBJS): %.o: %.cpp
 	$(CC) $(CCFLAGS) -c $<

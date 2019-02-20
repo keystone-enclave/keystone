@@ -4,19 +4,22 @@ MOUNT_DIR = ./tmp_busybear
 RUNTIME = eyrie-rt
 
 all:
-	make -C lib
-	make -C runtime
-	make -C tests
-	make -C samples
+	$(MAKE) -C lib
+	$(MAKE) -C runtime
+	$(MAKE) -C tests
+	$(MAKE) -C samples
+# Ensure bins are also in the bins dir
+	mkdir -p $(BINS_DIR)
+
+	cp tests/*/*.eapp_riscv tests/test tests/test-runner.riscv $(BINS_DIR)
+	cp samples/tiny-AES-c/aes.riscv $(BINS_DIR)
+
+	cp runtime/$(RUNTIME) $(BINS_DIR)
+
 
 copy-tests:
-	mkdir -p $(BINS_DIR)
-	make -C tests
-	# copy test binaries
-	cp tests/*/*.eapp_riscv tests/test tests/test-runner.riscv $(BINS_DIR)
-	# copy runtime
-	cp runtime/$(RUNTIME) $(BINS_DIR)
-	cp samples/tiny-AES-c/aes.riscv $(BINS_DIR)
+	$(MAKE) -C tests
+# Copy into the mount
 	mkdir -p $(MOUNT_DIR)
 	sudo mount $(DISK_IMAGE) $(MOUNT_DIR)
 	sudo rsync -a $(BINS_DIR)/ $(MOUNT_DIR)/root/
@@ -25,7 +28,7 @@ copy-tests:
 
 clean:
 	rm -rf bin
-	make -C lib clean
-	make -C runtime clean
-	make -C tests clean
-	make -C samples clean
+	$(MAKE) -C lib clean
+	$(MAKE) -C runtime clean
+	$(MAKE) -C tests clean
+	$(MAKE) -C samples clean

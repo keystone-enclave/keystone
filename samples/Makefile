@@ -1,5 +1,5 @@
 all:
-	make -C tiny-AES-c
+	$(MAKE) -C tiny-AES-c
 
 clean:
-	make -C tiny-AES-c clean
+	$(MAKE) -C tiny-AES-c clean

@@ -1,11 +1,11 @@
 all:
-	make -C app
-	make -C host
-	make -C edge
-	make -C verifier
+	$(MAKE) -C app
+	$(MAKE) -C host
+	$(MAKE) -C edge
+	$(MAKE) -C verifier
 
 clean:
-	make -C app clean
-	make -C host clean
-	make -C edge clean
-	make -C verifier clean
+	$(MAKE) -C app clean
+	$(MAKE) -C host clean
+	$(MAKE) -C edge clean
+	$(MAKE) -C verifier clean
