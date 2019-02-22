@@ -37,8 +37,6 @@ bbl := $(pk_wrkdir)/bbl
 bin := $(wrkdir)/bbl.bin
 hex := $(wrkdir)/bbl.hex
 
-sdk_bins_dir := $(CURDIR)/sdk/bin
-
 fesvr_srcdir := $(srcdir)/riscv-fesvr
 fesvr_wrkdir := $(wrkdir)/riscv-fesvr
 libfesvr := $(fesvr_wrkdir)/prefix/lib/libfesvr.so
@@ -56,7 +54,7 @@ rootfs := $(wrkdir)/rootfs.bin
 target := riscv64-unknown-linux-gnu
 
 .PHONY: all
-all: $(hex) $(rootfs)
+all: $(hex) $(vmlinux) $(linux_module) $(rootfs)
 	@echo
 	@echo "This image has been generated for an ISA of $(ISA) and an ABI of $(ABI)"
 	@echo "Find the image in hifive-work/bbl.bin, which should be written to a boot partition"
@@ -72,10 +70,8 @@ $(buildroot_initramfs_wrkdir)/.config: $(buildroot_srcdir)
 	cp $(buildroot_initramfs_config) $@
 	$(MAKE) -s -C $< RISCV=$(RISCV) PATH=$(PATH) O=$(buildroot_initramfs_wrkdir) olddefconfig CROSS_COMPILE=riscv64-unknown-linux-gnu-
 
-$(buildroot_initramfs_tar): $(buildroot_srcdir) $(buildroot_initramfs_wrkdir)/.config $(RISCV)/bin/$(target)-gcc $(buildroot_initramfs_config) $(linux_module)
+$(buildroot_initramfs_tar): $(buildroot_srcdir) $(buildroot_initramfs_wrkdir)/.config $(RISCV)/bin/$(target)-gcc $(buildroot_initramfs_config)
 	$(MAKE) -s -C $< RISCV=$(RISCV) PATH=$(PATH) O=$(buildroot_initramfs_wrkdir)
-	cp $(sdk_bins_dir)/* $(linux_module)  $(buildroot_initramfs_wrkdir)/target/root/
-	$(MAKE) -s -C $(buildroot_initramfs_wrkdir)
 
 .PHONY: buildroot_initramfs-menuconfig
 buildroot_initramfs-menuconfig: $(buildroot_initramfs_wrkdir)/.config $(buildroot_srcdir)
@@ -129,21 +125,19 @@ $(vmlinux): $(linux_srcdir) $(linux_wrkdir)/.config $(buildroot_initramfs_sysroo
 		ARCH=riscv \
 		vmlinux
 
-$(vmlinux_stripped): $(vmlinux)
-	$(target)-strip -o $@ $<
-
 $(linux_module): $(vmlinux)
 	rm -rf $(linux_module_wrkdir)
 	mkdir -p $(linux_module_wrkdir)
 	cp -r $(linux_module_srcdir)/* $(linux_module_wrkdir)
 	$(MAKE) -C $(linux_srcdir) O=$(linux_wrkdir)\
-		CONFIG_INITRAMFS_SOURCE="$(confdir)/initramfs.txt $(buildroot_initramfs_sysroot)" \
-		CONFIG_INITRAMFS_ROOT_UID=$(shell id -u) \
-		CONFIG_INITRAMFS_ROOT_GID=$(shell id -g) \
 		CROSS_COMPILE=riscv64-unknown-linux-gnu- \
 		ARCH=riscv \
 		M=$(linux_module_wrkdir) \
 		modules
+	cp $(linux_module) $(buildroot_initramfs_wrkdir)/target/root/
+
+$(vmlinux_stripped): $(vmlinux)
+	$(target)-strip -o $@ $<
 
 .PHONY: linux-menuconfig
 linux-menuconfig: $(linux_wrkdir)/.config
