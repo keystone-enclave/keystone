@@ -28,6 +28,7 @@ all: $(BOOTROM) $(VMLINUX) $(SM) $(DISK) $(DRIVER) $(QEMU) sdk
 qemu: all
 	./scripts/run-qemu.sh
 
+.PHONY: hifive
 hifive: sdk $(QEMU) $(BOOTROM)
 	$(MAKE) -f hifive.mk
 	$(MAKE) -C hifive-work/buildroot_initramfs
