@@ -79,12 +79,14 @@ int encl_free_idx(int idx)
   return 0;
 }
 
-unsigned long get_host_satp(unsigned int eid)
+enclave_ret_t get_host_satp(unsigned int eid, unsigned long* satp)
 {
   if(!TEST_BIT(encl_bitmap, eid))
-    return -1;
+    return ENCLAVE_NOT_ACCESSIBLE;
 
-  return enclaves[eid].host_satp;
+  *satp = enclaves[eid].host_satp;
+
+  return ENCLAVE_SUCCESS;
 }
 
 int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
@@ -104,7 +106,7 @@ int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
 
 
 // Does not do checking of dest!
-int copy_region_from_host(void* source, void* dest, size_t size){
+enclave_ret_t copy_region_from_host(void* source, void* dest, size_t size){
 
   int region_overlap = 0;
   spinlock_lock(&encl_lock);

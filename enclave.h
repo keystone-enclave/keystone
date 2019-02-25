@@ -66,9 +66,9 @@ struct report_t
   byte dev_public_key[PUBLIC_KEY_SIZE];
 };
 
-int copy_region_from_host(void* source, void* dest, size_t size);
+enclave_ret_t copy_region_from_host(void* source, void* dest, size_t size);
 
-unsigned long get_host_satp(unsigned int eid);
+enclave_ret_t get_host_satp(unsigned int eid, unsigned long* satp);
 enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args);
 enclave_ret_t destroy_enclave(unsigned int eid);
 

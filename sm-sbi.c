@@ -26,7 +26,9 @@ uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
 {
   enclave_ret_t ret;
-  if(get_host_satp(eid) != read_csr(satp))
+  unsigned long host_satp;
+  if(get_host_satp(eid, &host_satp) != ENCLAVE_SUCCESS ||
+     host_satp != read_csr(satp))
     return ENCLAVE_NOT_ACCESSIBLE;
   ret = destroy_enclave((unsigned int)eid);
   return ret;
@@ -34,18 +36,23 @@ uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
 uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
 {
   enclave_ret_t ret;
-  if(get_host_satp(eid) != read_csr(satp))
+  unsigned long host_satp;
+  if(get_host_satp(eid, &host_satp) != ENCLAVE_SUCCESS ||
+     host_satp != read_csr(satp))
     return ENCLAVE_NOT_ACCESSIBLE;
 
   ret = run_enclave(regs, (unsigned int) eid);
-  
+
   return ret;
 }
 
 uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
 {
-  if(get_host_satp(eid) != read_csr(satp))
+  unsigned long host_satp;
+  if(get_host_satp(eid, &host_satp) != ENCLAVE_SUCCESS ||
+     host_satp != read_csr(satp))
     return ENCLAVE_NOT_ACCESSIBLE;
+
   return resume_enclave(host_regs, (unsigned int) eid);
 }
 
