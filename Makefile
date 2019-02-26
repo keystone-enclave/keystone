@@ -20,17 +20,23 @@ QEMU=$(QEMU_DIR)/riscv64-softmmu/qemu-system-riscv64
 
 NPROC=$(shell nproc)
 
-all: $(BOOTROM) $(VMLINUX) $(SM) $(DISK) $(DRIVER) $(QEMU)
+all: $(BOOTROM) $(VMLINUX) $(SM) $(DISK) $(DRIVER) $(QEMU) sdk
 	$(MAKE) -C $(SM_BUILD_DIR)
-	$(MAKE) -C $(SDK_DIR)
 	$(MAKE) -C $(SDK_DIR) copy-tests
 	$(MAKE) -C $(DRIVER_DIR) copy
 
 qemu: all
 	./scripts/run-qemu.sh
 
-hifive: hifive.mk
+.PHONY: hifive
+hifive: sdk $(QEMU) $(BOOTROM)
 	$(MAKE) -f hifive.mk
+	$(MAKE) -C hifive-work/buildroot_initramfs
+	$(MAKE) -f hifive.mk
+
+.PHONY: sdk
+sdk:
+	$(MAKE) -C $(SDK_DIR)
 
 $(QEMU):
 	./scripts/apply-patch.sh
