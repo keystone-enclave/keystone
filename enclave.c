@@ -89,13 +89,16 @@ enclave_ret_t get_host_satp(unsigned int eid, unsigned long* satp)
   return ENCLAVE_SUCCESS;
 }
 
-int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
+/* Ensures that dest ptr is in host, not in enclave regions
+ */
+int copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
 {
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
-  region_overlap = detect_region_overlap_atomic((uintptr_t)ptr, sizeof(uintptr_t));
+  region_overlap = detect_region_overlap_atomic((uintptr_t)dest_ptr,
+                                                sizeof(uintptr_t));
   if(!region_overlap)
-    *ptr = value;
+    *dest_ptr = value;
   spinlock_unlock(&encl_lock);
 
   if(region_overlap)
@@ -104,13 +107,16 @@ int copy_word_to_host(uintptr_t* ptr, uintptr_t value)
     return ENCLAVE_SUCCESS;
 }
 
-
-// Does not do checking of dest!
-enclave_ret_t copy_region_from_host(void* source, void* dest, size_t size){
+/* Internal function enforcing a copy source is from the untrusted world.
+ * Does NOT do verification of dest, assumes caller knows what that is.
+ * Dest should be inside the SM memory.
+ */
+enclave_ret_t copy_from_host(void* source, void* dest, size_t size){
 
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
   region_overlap = detect_region_overlap_atomic((uintptr_t) source, size);
+  // TODO: Validate that dest is inside the SM.
   if(!region_overlap)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
@@ -122,7 +128,8 @@ enclave_ret_t copy_region_from_host(void* source, void* dest, size_t size){
 }
 
 /* copies data from enclave, source must be inside EPM */
-int copy_from_enclave(struct enclave_t* enclave, void* dest, void* source, size_t size) {
+int copy_from_enclave(struct enclave_t* enclave,
+                      void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
   legal = (source >= pmp_get_addr(enclave->rid)
@@ -139,7 +146,8 @@ int copy_from_enclave(struct enclave_t* enclave, void* dest, void* source, size_
 }
 
 /* copies data into enclave, destination must be inside EPM */
-int copy_to_enclave(struct enclave_t* enclave, void* dest, void* source, size_t size) {
+int copy_to_enclave(struct enclave_t* enclave,
+                    void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
   legal = (dest >= pmp_get_addr(enclave->rid)
@@ -155,7 +163,8 @@ int copy_to_enclave(struct enclave_t* enclave, void* dest, void* source, size_t 
     return ENCLAVE_SUCCESS;
 }
 
-int init_enclave_memory(uintptr_t base, uintptr_t size, uintptr_t utbase, uintptr_t utsize)
+int init_enclave_memory(uintptr_t base, uintptr_t size,
+                        uintptr_t utbase, uintptr_t utsize)
 {
   int ret;
   int ptlevel = RISCV_PGLEVEL_TOP;
@@ -286,6 +295,58 @@ enclave_ret_t destroy_enclave(unsigned int eid)
   return ENCLAVE_SUCCESS;
 }
 
+/* Internal function containing the core of the context switching
+ * code to the enclave.
+ *
+ * Used by resume_enclave and run_enclave.
+ *
+ * Expects that eid has already been valided, and it is OK to run this enclave
+*/
+inline enclave_ret_t _context_switch_to_enclave(uintptr_t* regs,
+                                                unsigned int eid,
+                                                int load_parameters){
+
+  /* save host context */
+  swap_prev_state(&enclaves[eid].threads[0], regs);
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
+
+  if(load_parameters){
+    // passing parameters for a first run
+    write_csr(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
+    regs[11] = (uintptr_t) enclaves[eid].params.user_entry;
+    regs[12] = (uintptr_t) enclaves[eid].params.untrusted_ptr;
+    regs[13] = (uintptr_t) enclaves[eid].params.untrusted_size;
+  }
+
+  // switch to enclave page table
+  write_csr(satp, enclaves[eid].encl_satp);
+
+  // We aren't sure what is generating some interrupts, disable for
+  // now. External interrupts
+  clear_csr(mie, MIP_SEIP);
+  clear_csr(mie, MIP_MEIP);
+
+  // Software too
+  clear_csr(mie, MIP_SSIP);
+  clear_csr(mie, MIP_MSIP);
+
+  // disable timer set by the OS
+  clear_csr(mie, MIP_MTIP);
+
+  clear_csr(mip, MIP_MTIP);
+  clear_csr(mip, MIP_STIP);
+  clear_csr(mip, MIP_SSIP);
+  clear_csr(mip, MIP_SEIP);
+
+  // set PMP
+  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
+  osm_pmp_set(PMP_NO_PERM);
+  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
+
+  return ENCLAVE_SUCCESS;
+}
+
 enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
 {
   int runable;
@@ -304,51 +365,8 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, unsigned int eid)
     return ENCLAVE_NOT_RUNNABLE;
   }
 
-  /* save host context */
-  swap_prev_state(&enclaves[eid].threads[0], host_regs);
-
-  /* Swapping the mepc sets up the mret in mtrap.c to transfer control
-     to the enclave */
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
-
-
-  // passing parameters
-  write_csr(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
-  host_regs[11] = (uintptr_t) enclaves[eid].params.user_entry;
-  host_regs[12] = (uintptr_t) enclaves[eid].params.untrusted_ptr;
-  host_regs[13] = (uintptr_t) enclaves[eid].params.untrusted_size;
-
-  // switch to enclave page table
-  write_csr(satp, enclaves[eid].encl_satp);
-
-  // We aren't sure what is generating some interrupts, disable for
-  // now. External interrupts
-  clear_csr(mie, MIP_SEIP);
-  clear_csr(mie, MIP_MEIP);
-
-  // Software too
-  clear_csr(mie, MIP_SSIP);
-  clear_csr(mie, MIP_MSIP);
-
-
-  // disable timer set by the OS, clear pending interrupts
-  clear_csr(mie, MIP_MTIP);
-  clear_csr(mip, MIP_MSIP);
-  clear_csr(mip, MIP_STIP);
-  clear_csr(mip, MIP_SSIP);
-
-  clear_csr(mip, MIP_MTIP);
-  clear_csr(mip, MIP_STIP);
-  clear_csr(mip, MIP_SSIP);
-  clear_csr(mip, MIP_SEIP);
-
-  // set PMP
-  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
-  osm_pmp_set(PMP_NO_PERM);
-  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
-
-  return ENCLAVE_SUCCESS;
+  // Enclave is OK to run, context switch to it
+  return _context_switch_to_enclave(host_regs, eid, 1);
 }
 
 enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
@@ -450,6 +468,7 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   }
 }
 
+
 enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
 {
   int resumable;
@@ -464,37 +483,8 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, unsigned int eid)
     return ENCLAVE_NOT_RESUMABLE;
   }
 
-  /* save host context */
-  swap_prev_state(&enclaves[eid].threads[0], host_regs);
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
-
-  // switch to enclave page table
-  write_csr(satp, enclaves[eid].encl_satp);
-
-  // We aren't sure what is generating some interrupts, disable for
-  // now. External interrupts
-  clear_csr(mie, MIP_SEIP);
-  clear_csr(mie, MIP_MEIP);
-
-  // Software too
-  clear_csr(mie, MIP_SSIP);
-  clear_csr(mie, MIP_MSIP);
-
-  // disable timer set by the OS
-  clear_csr(mie, MIP_MTIP);
-
-  clear_csr(mip, MIP_MTIP);
-  clear_csr(mip, MIP_STIP);
-  clear_csr(mip, MIP_SSIP);
-  clear_csr(mip, MIP_SEIP);
-
-  // set PMP
-  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
-  osm_pmp_set(PMP_NO_PERM);
-  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
-
-  return ENCLAVE_SUCCESS;
+  // Enclave is OK to resume, context switch to it
+  return _context_switch_to_enclave(host_regs, eid, 0);
 }
 
 extern byte dev_public_key[PUBLIC_KEY_SIZE];

@@ -12,9 +12,10 @@ uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 {
   struct keystone_sbi_create_t create_args_local;
   enclave_ret_t ret;
-  ret = copy_region_from_host((struct keystone_sbi_create_t*)create_args,
-			      &create_args_local,
-			      sizeof(struct keystone_sbi_create_t));
+
+  ret = copy_from_host((struct keystone_sbi_create_t*)create_args,
+                       &create_args_local,
+                       sizeof(struct keystone_sbi_create_t));
 
   if( ret != ENCLAVE_SUCCESS )
     return ret;
