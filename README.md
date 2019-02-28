@@ -22,6 +22,11 @@ libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \
 python pkg-config libglib2.0-dev libpixman-1-dev
 ```
 
+Some of the utilities also use ``expect`` so we recommend that you install that as well though it is not strictly necessary.
+```
+sudo apt install expect
+```
+
 Setup Tools and Submodules
 ```
 ./fast-setup.sh
