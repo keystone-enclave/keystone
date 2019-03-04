@@ -16,8 +16,11 @@ Keystone::Keystone()
 
 Keystone::~Keystone()
 {
-  delete runtimeFile;
-  delete enclaveFile;
+  if(runtimeFile)
+    delete runtimeFile;
+  if(enclaveFile)
+    delete enclaveFile;
+
   destroy();
 }
 
@@ -31,16 +34,16 @@ keystone_status_t Keystone::init(const char* eapppath, const char* runtimepath, 
 
   runtimeFile = new ELFFile(runtimepath);
   enclaveFile = new ELFFile(eapppath);
-  
+
   /* these should be parsed by ELF lib */
- 
+
   /* open device driver */
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if(fd < 0){
     PERROR("cannot open device file");
     return KEYSTONE_ERROR;
   }
-  
+
   if(!runtimeFile->isValid())
   {
     ERROR("runtime file is not valid");
@@ -64,7 +67,7 @@ keystone_status_t Keystone::init(const char* eapppath, const char* runtimepath, 
   enclp.runtime_stack_size = (unsigned long) params.getRuntimeStack();
 
   enclp.params.runtime_entry = (unsigned long) params.getRuntimeEntry();
-  enclp.params.user_entry = (unsigned long) params.getEnclaveEntry(); 
+  enclp.params.user_entry = (unsigned long) params.getEnclaveEntry();
   enclp.params.untrusted_ptr = (unsigned long) params.getUntrustedMem();
   enclp.params.untrusted_size = (unsigned long) params.getUntrustedSize();
 
@@ -73,6 +76,8 @@ keystone_status_t Keystone::init(const char* eapppath, const char* runtimepath, 
   /* Files were consumed by driver and copied into epm, no longer needed */
   delete enclaveFile;
   delete runtimeFile;
+  runtimeFile = NULL;
+  enclaveFile = NULL;
 
   if(ret) {
     ERROR("failed to create enclave - ioctl() failed: %d", ret);
@@ -80,7 +85,7 @@ keystone_status_t Keystone::init(const char* eapppath, const char* runtimepath, 
   }
   eid = enclp.eid;
 
-  
+
   return mapUntrusted(params.getUntrustedSize());
 }
 
