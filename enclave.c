@@ -15,6 +15,11 @@
 
 static uint64_t encl_bitmap = 0;
 
+#define ENCLAVE_EXISTS(eid) ((eid >= 0 && eid < sizeof(encl_bitmap)) && \
+                                 (TEST_BIT(encl_bitmap, eid)))
+#define MARK_ENCLAVE_EXISTS(eid) ((SET_BIT(encl_bitmap, eid)))
+#define MARK_ENCLAVE_DESTROYED(eid) ((UNSET_BIT(encl_bitmap, eid)))
+
 struct enclave_t enclaves[ENCL_MAX];
 
 static spinlock_t encl_lock = SPINLOCK_INIT;
@@ -117,7 +122,7 @@ enclave_ret_t destroy_enclave(eid_t eid)
   int destroyable;
 
   spinlock_lock(&encl_lock);
-  destroyable = TEST_BIT(encl_bitmap, eid) &&
+  destroyable = ENCLAVE_EXISTS(eid) &&
                 (enclaves[eid].state >= 0) &&
                 enclaves[eid].state != RUNNING;
   /* update the enclave state first so that
@@ -159,7 +164,7 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, eid_t eid)
   int runable;
 
   spinlock_lock(&encl_lock);
-  runable = TEST_BIT(encl_bitmap, eid)
+  runable = ENCLAVE_EXISTS(eid)
     && (enclaves[eid].state >= 0)
     && enclaves[eid].n_thread < MAX_ENCL_THREADS;
   if(runable) {
@@ -263,7 +268,7 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, eid_t eid)
   int resumable;
 
   spinlock_lock(&encl_lock);
-  resumable = TEST_BIT(encl_bitmap, eid)
+  resumable = ENCLAVE_EXISTS(eid)
     && (enclaves[eid].state == RUNNING) // not necessary
     && enclaves[eid].n_thread > 0; // not necessary
   spinlock_unlock(&encl_lock);
@@ -289,7 +294,7 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
     return ENCLAVE_ILLEGAL_ARGUMENT;
 
   spinlock_lock(&encl_lock);
-  attestable = TEST_BIT(encl_bitmap, eid)
+  attestable = ENCLAVE_EXISTS(eid)
     && (enclaves[eid].state >= INITIALIZED);
   spinlock_unlock(&encl_lock);
 
@@ -440,7 +445,7 @@ enclave_ret_t encl_alloc_eid(eid_t* eid)
       break;
   }
   if(i != ENCL_MAX)
-    SET_BIT(encl_bitmap, i);
+    MARK_ENCLAVE_EXISTS(i);
 
   spinlock_unlock(&encl_lock);
 
@@ -456,14 +461,14 @@ enclave_ret_t encl_alloc_eid(eid_t* eid)
 enclave_ret_t encl_free_eid(eid_t eid)
 {
   spinlock_lock(&encl_lock);
-  UNSET_BIT(encl_bitmap, eid);
+  MARK_ENCLAVE_DESTROYED(eid);
   spinlock_unlock(&encl_lock);
   return ENCLAVE_SUCCESS;
 }
 
 enclave_ret_t get_host_satp(eid_t eid, unsigned long* satp)
 {
-  if(!TEST_BIT(encl_bitmap, eid))
+  if(!ENCLAVE_EXISTS(eid))
     return ENCLAVE_NOT_ACCESSIBLE;
 
   *satp = enclaves[eid].host_satp;
