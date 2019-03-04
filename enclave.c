@@ -15,7 +15,7 @@
 
 static uint64_t encl_bitmap = 0;
 
-#define ENCLAVE_EXISTS(eid) ((eid >= 0 && eid < sizeof(encl_bitmap)) && \
+#define ENCLAVE_EXISTS(eid) ((eid >= 0 && eid < ENCL_MAX) && \
                                  (TEST_BIT(encl_bitmap, eid)))
 #define MARK_ENCLAVE_EXISTS(eid) ((SET_BIT(encl_bitmap, eid)))
 #define MARK_ENCLAVE_DESTROYED(eid) ((UNSET_BIT(encl_bitmap, eid)))
