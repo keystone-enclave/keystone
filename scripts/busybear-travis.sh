@@ -1,11 +1,13 @@
 #!/bin/bash
 
-# Launch QEMU test
-screen -L -dmS qemu ./scripts/run-hifive-qemu.sh
-sleep 10
-./scripts/test-hifive-qemu.sh
+export HOST_PORT=${HOST_PORT:="$((2000 + RANDOM % 3000))"}
 
-diff output.log tests/test-hifive-qemu.expected.log
+# Launch QEMU test
+screen -L -dmS qemu ./scripts/run-busybear-qemu.sh
+sleep 10
+./scripts/test-busybear-qemu.sh
+
+diff output.log tests/test-busybear-qemu.expected.log
 if [ $? -eq 0 ]
 then
   echo "[PASS] output.log matches with the expected output"
