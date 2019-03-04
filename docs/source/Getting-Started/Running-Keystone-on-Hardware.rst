@@ -105,13 +105,11 @@ You only need to reprogram the FSBL when modifying
 Running on the HiFive
 ---------------------
 
-Our default build process does not copy any of the binaries or driver
-onto the Linux image.
+The needed driver, bins, etc are included in the base image.
 
-You will need to ``scp`` these files over to the board.
+If you need to add files or change them we suggest ``scp``ing them to
+the board after boot.
 
-You can also copy these into the HiFive initramfs work directory and
-rebuild the image to avoid setting up the network/etc.
 
 Setup network
 #############
