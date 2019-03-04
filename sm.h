@@ -23,6 +23,7 @@
 #define SBI_SM_NOT_IMPLEMENTED  1111
 
 /* error codes */
+#define ENCLAVE_NO_FREE_RESOURCE            (enclave_ret_t)-3U
 #define ENCLAVE_NOT_IMPLEMENTED             (enclave_ret_t)-2U
 #define ENCLAVE_UNKNOWN_ERROR               (enclave_ret_t)-1U
 #define ENCLAVE_SUCCESS                     (enclave_ret_t)0
@@ -64,7 +65,7 @@ struct keystone_sbi_pregion_t
   uintptr_t paddr;
   size_t size;
 };
-struct runtime_params_t 
+struct runtime_params_t
 {
   uint64_t runtime_entry;
   uint64_t user_entry;

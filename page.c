@@ -8,7 +8,7 @@ int init_encl_pgtable(int level, pte_t* tb, uintptr_t base, uintptr_t size, uint
   pte_t* walk;
   int ret = 0;
   int i=0;
-  
+
   for (walk=tb; walk < tb + (RISCV_PGSIZE/sizeof(pte_t)) ; walk += 1)
   {
     if(*walk == 0)
@@ -64,7 +64,7 @@ uintptr_t get_phys_addr(uintptr_t addr)
   pte_t pte;
   uintptr_t physaddr;
   pte =  __ept_walk((pte_t*) (read_csr(satp) << RISCV_PGSHIFT), addr);
-  
+
   physaddr = pte_ppn(pte) << RISCV_PGSHIFT;
   physaddr |= addr & (RISCV_PGSIZE - 1);
   return physaddr;
