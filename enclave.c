@@ -13,14 +13,10 @@
 
 #define ENCL_MAX  16
 
-static uint64_t encl_bitmap = 0;
 
-#define ENCLAVE_EXISTS(eid) ((eid >= 0 && eid < ENCL_MAX) && \
-                                 (TEST_BIT(encl_bitmap, eid)))
-#define MARK_ENCLAVE_EXISTS(eid) ((SET_BIT(encl_bitmap, eid)))
-#define MARK_ENCLAVE_DESTROYED(eid) ((UNSET_BIT(encl_bitmap, eid)))
 
 struct enclave_t enclaves[ENCL_MAX];
+#define ENCLAVE_EXISTS(eid) (enclaves[eid].state >= 0)
 
 static spinlock_t encl_lock = SPINLOCK_INIT;
 
@@ -122,9 +118,9 @@ enclave_ret_t destroy_enclave(eid_t eid)
   int destroyable;
 
   spinlock_lock(&encl_lock);
-  destroyable = ENCLAVE_EXISTS(eid) &&
-                (enclaves[eid].state >= 0) &&
-                enclaves[eid].state != RUNNING;
+  destroyable = (ENCLAVE_EXISTS(eid)
+                 && enclaves[eid].state != RUNNING
+                 && enclaves[eid].state != ALLOCATED);
   /* update the enclave state first so that
    * no SM can run the enclave any longer */
   if(destroyable)
@@ -164,9 +160,8 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, eid_t eid)
   int runable;
 
   spinlock_lock(&encl_lock);
-  runable = ENCLAVE_EXISTS(eid)
-    && (enclaves[eid].state >= 0)
-    && enclaves[eid].n_thread < MAX_ENCL_THREADS;
+  runable = (ENCLAVE_EXISTS(eid)
+             && enclaves[eid].n_thread < MAX_ENCL_THREADS);
   if(runable) {
     enclaves[eid].state = RUNNING;
     enclaves[eid].n_thread++;
@@ -268,9 +263,9 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, eid_t eid)
   int resumable;
 
   spinlock_lock(&encl_lock);
-  resumable = ENCLAVE_EXISTS(eid)
-    && (enclaves[eid].state == RUNNING) // not necessary
-    && enclaves[eid].n_thread > 0; // not necessary
+  resumable = (ENCLAVE_EXISTS(eid)
+               && (enclaves[eid].state == RUNNING) // not necessary
+               && enclaves[eid].n_thread > 0); // not necessary
   spinlock_unlock(&encl_lock);
 
   if(!resumable) {
@@ -294,8 +289,8 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
     return ENCLAVE_ILLEGAL_ARGUMENT;
 
   spinlock_lock(&encl_lock);
-  attestable = ENCLAVE_EXISTS(eid)
-    && (enclaves[eid].state >= INITIALIZED);
+  attestable = (ENCLAVE_EXISTS(eid)
+                && (enclaves[eid].state >= INITIALIZED));
   spinlock_unlock(&encl_lock);
 
   if(!attestable)
@@ -385,6 +380,20 @@ inline enclave_ret_t _context_switch_to_enclave(uintptr_t* regs,
   return ENCLAVE_SUCCESS;
 }
 
+/*
+ * Init all metadata as needed for keeping track of enclaves
+ * Called once by the SM on startup
+ */
+void enclave_init_metadata(){
+  eid_t eid;
+
+  /* Assumes eids are incrementing values, which they are for now */
+  for(eid=0; eid < ENCL_MAX; eid++){
+    enclaves[eid].state = INVALID;
+  }
+}
+
+
 enclave_ret_t init_enclave_memory(uintptr_t base, uintptr_t size,
                                   uintptr_t utbase, uintptr_t utsize)
 {
@@ -433,24 +442,25 @@ enclave_ret_t host_satp_to_eid(uintptr_t satp, eid_t* eid)
   return ENCLAVE_INVALID_ID;
 }
 
-enclave_ret_t encl_alloc_eid(eid_t* eid)
+enclave_ret_t encl_alloc_eid(eid_t* _eid)
 {
-  int i;
+  eid_t eid;
 
   spinlock_lock(&encl_lock);
 
-  for(i=0; i<ENCL_MAX; i++)
+  for(eid=0; eid<ENCL_MAX; eid++)
   {
-    if(!(encl_bitmap & (0x1 << i)))
+    if(enclaves[eid].state < 0){
       break;
+    }
   }
-  if(i != ENCL_MAX)
-    MARK_ENCLAVE_EXISTS(i);
+  if(eid != ENCL_MAX)
+    enclaves[eid].state = ALLOCATED;
 
   spinlock_unlock(&encl_lock);
 
-  if(i != ENCL_MAX){
-    *eid = i;
+  if(eid != ENCL_MAX){
+    *_eid = eid;
     return ENCLAVE_SUCCESS;
   }
   else{
@@ -461,7 +471,7 @@ enclave_ret_t encl_alloc_eid(eid_t* eid)
 enclave_ret_t encl_free_eid(eid_t eid)
 {
   spinlock_lock(&encl_lock);
-  MARK_ENCLAVE_DESTROYED(eid);
+  enclaves[eid].state = DESTROYED;
   spinlock_unlock(&encl_lock);
   return ENCLAVE_SUCCESS;
 }

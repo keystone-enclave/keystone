@@ -20,6 +20,7 @@ typedef enum {
   FRESH = 0,
   INITIALIZED,
   RUNNING,
+  ALLOCATED,
 } enclave_state_t;
 
 /* For now, eid's are a simple unsigned int */
@@ -70,6 +71,7 @@ struct report_t
 };
 
 /*** Internal utils ***/
+void enclave_init_metadata();
 enclave_ret_t _context_switch_to_enclave(uintptr_t* regs,
                                          eid_t eid,
                                          int load_parameters);

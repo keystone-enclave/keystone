@@ -8,6 +8,7 @@
 #include "pmp.h"
 #include "atomic.h"
 #include "crypto.h"
+#include "enclave.h"
 
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
@@ -45,7 +46,7 @@ int smm_init()
 int osm_init()
 {
   int region = -1;
-  int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1); 
+  int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
   if(ret)
     return -1;
 
@@ -54,7 +55,7 @@ int osm_init()
 
 void sm_sign(void* signature, const void* data, size_t len)
 {
-  sign(signature, data, len, sm_public_key, sm_private_key); 
+  sign(signature, data, len, sm_public_key, sm_private_key);
 }
 
 void sm_copy_key()
@@ -79,9 +80,9 @@ void sm_print_cert()
 	{
 		printm("%x",*((int*)sanctum_dev_public_key+i));
 		if(i%4==3) printm("\n");
-	}	
+	}
 	printm("=================================\n");
-	
+
 	printm("=========== SIGNATURE ===========\n");
 	for(i=0; i<16; i+=1)
 	{
@@ -97,7 +98,7 @@ void sm_init(void)
 	// initialize SMM
 
   spinlock_lock(&sm_init_lock);
- 
+
   if(!sm_init_done) {
     sm_region_id = smm_init();
     if(sm_region_id < 0)
@@ -109,14 +110,18 @@ void sm_init(void)
 
     sm_init_done = 1;
   }
-  
+
   pmp_set(sm_region_id, PMP_NO_PERM);
   pmp_set(os_region_id, PMP_ALL_PERM);
 
   // Copy the keypair from the root of trust
   sm_copy_key();
+
+  // Init the enclave metadata
+  enclave_init_metadata();
+
   spinlock_unlock(&sm_init_lock);
-  
+
   return;
   // for debug
   // sm_print_cert();
