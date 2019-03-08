@@ -132,6 +132,8 @@ int utm_init(utm_t* utm, size_t untrusted_size)
   
   utm->ptr = (void*) __get_free_pages(GFP_HIGHUSER, order);
   if (!utm->ptr) {
+    pr_info("%lu\n", order);
+    keystone_warn("Fail, get free-page\n");
     return -ENOMEM;
   }
 
@@ -217,12 +219,14 @@ vaddr_t epm_alloc_page(epm_t* epm, vaddr_t addr, unsigned long flags)
 {
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
   vaddr_t page_addr = get_free_page(&epm->epm_free_list);
+//  pr_info("pte: %px, addr: %px\n", pte, addr);
   *pte = pte_create(ppn(page_addr), flags | PTE_V);
   return page_addr;
 }
 
 vaddr_t epm_alloc_rt_page_noexec(epm_t* epm, vaddr_t addr)
 {
+//  pr_info("va: %px", addr);
   return epm_alloc_page(epm, addr, PTE_D | PTE_A | PTE_R | PTE_W);
 }
 

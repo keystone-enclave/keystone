@@ -93,6 +93,7 @@ typedef struct keystone_enclave_t
 } enclave_t;
 
 
+
 // global debug functions
 void debug_dump(char* ptr, unsigned long size);
 
@@ -135,10 +136,10 @@ void epm_free_page(epm_t* epm, vaddr_t addr);
 
 
 unsigned long calculate_required_pages(
-    unsigned long eapp_sz,
-    unsigned long eapp_stack_sz,
-    unsigned long rt_sz,
-    unsigned long rt_stack_sz);
+		unsigned long eapp_sz,
+		unsigned long eapp_stack_sz,
+		unsigned long rt_sz,
+		unsigned long rt_stack_sz);
 
 #define keystone_info(fmt, ...) \
   pr_info("keystone_enclave: " fmt, ##__VA_ARGS__)
