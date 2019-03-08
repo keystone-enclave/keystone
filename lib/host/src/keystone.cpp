@@ -4,13 +4,14 @@
 //------------------------------------------------------------------------------
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <linux/elf.h>
+#include "elf.h"
+//#include <linux/elf.h>
 #include <keystone_user.h>
 #include "keystone.h"
 #include "keystone_user.h"
 #include <math.h>
 
-#define PAGE_SIZE 4096
+static char nullpage[PAGE_SIZE] = {0,};
 
 Keystone::Keystone() {
     runtimeFile = NULL;
@@ -42,7 +43,7 @@ unsigned long calculate_required_pages(
     req_pages += 15;
     return req_pages;
 }
-
+/*
 struct mapped_meta *Keystone::keystone_rtld_init_rt_stk(vaddr_t stack_addr, unsigned long size, int *error) {
 
     int i, old_error = *error;
@@ -85,9 +86,9 @@ struct mapped_meta *Keystone::keystone_rtld_init_app_stk(size_t app_stack_sz, un
     unsigned long vaddr;
     int i, old_error = *error;
 
-    /* We pass in -1UL for the stack address, since stack occupies the highest address
-     *
-     * */
+    //We pass in -1UL for the stack address, since stack occupies the highest address
+     
+      
 
 //    int num_pages = stack_offset - app_stack_sz / (PAGE_SIZE) + (PAGE_SIZE);
     int num_pages = ceil(app_stack_sz / (PAGE_SIZE));
@@ -102,7 +103,7 @@ struct mapped_meta *Keystone::keystone_rtld_init_app_stk(size_t app_stack_sz, un
 //    printf("stackoffset: %lu\n", stack_offset);
 //    printf("num_pages: %d\n", num_pages);
 
-    /* setup enclave stack */
+    // setup enclave stack 
     for (vaddr = stack_offset - app_stack_sz , i = 0;
          vaddr < stack_offset;
          vaddr += PAGE_SIZE, i++) {
@@ -212,16 +213,14 @@ struct mapped_meta *Keystone::keystone_app_load_elf_region(vaddr_t elf_usr_regio
 
 struct mapped_meta *Keystone::rtld_vm_mmap(vaddr_t encl_addr, unsigned long size,
                                            vaddr_t rt_ptr, struct elf64_phdr *phdr, int *error) {
-    /* Copies program header to address.
-     * Return a list of va and copy address pair
-     * VA is the point where we want to point to the copy data memory
-     * Copy pointer contains pointer to "copy" pages
-     *  - Copy pages = temporary memory to hold data
-     * We eventually want to copy all the "copy" pages to enclave pages,
-     * then have the virtual pointer binded to the enclave pages
-     *
-     *
-     * */
+    // Copies program header to address.
+    // Return a list of va and copy address pair
+    // VA is the point where we want to point to the copy data memory
+    // Copy pointer contains pointer to "copy" pages
+    //  - Copy pages = temporary memory to hold data
+    // We eventually want to copy all the "copy" pages to enclave pages,
+    // then have the virtual pointer binded to the enclave pages
+    // 
     unsigned int k;
     int old_error = *error;
     vaddr_t va_start = ((int) encl_addr) / (PAGE_SIZE);
@@ -245,7 +244,6 @@ struct mapped_meta *Keystone::rtld_vm_mmap(vaddr_t encl_addr, unsigned long size
             *error = -ENOMEM;
             goto out;
         }
-
         memcpy((void *) status, (void *) (rt_ptr + pos), PAGE_SIZE);
 
         va_pages[k].copied = status;
@@ -302,14 +300,12 @@ struct mapped_meta **Keystone::keystone_rtld_init_app(vaddr_t elf_usr_ptr, int *
 
     *error = -EFAULT;
 
-//    printf("elf_ex.e_shoff: %d\n", elf_ex.e_shoff);
+    //printf("elf_ex.e_shoff: %d\n", elf_ex.e_shoff);
 
     //Iterator for section headers
     next_usr_shoff = (struct elf64_shdr *) ((uintptr_t) elf_usr_ptr + elf_ex.e_shoff);
 
-    /* Allocate pages for each section header
-     *
-     * */
+    // Allocate pages for each section header
 
     printf("elf_ex.e_shnum: %d\n", elf_ex.e_shnum);
     for (i = 0; i < elf_ex.e_shnum; i++, next_usr_shoff++) {
@@ -319,7 +315,7 @@ struct mapped_meta **Keystone::keystone_rtld_init_app(vaddr_t elf_usr_ptr, int *
         vaddr = elf_shdr_tmp.sh_addr;
 
         printf("vaddr: %lu\n", vaddr);
-//        printf("next_usr_shoff->sh_add: %u\n", next_usr_shoff->sh_addr);
+        //printf("next_usr_shoff->sh_add: %u\n", next_usr_shoff->sh_addr);
         printf("elf_shdr_tmp.sh_type: %u\n", elf_shdr_tmp.sh_type);
 
         // Sections with a load address of 0 aren't supposed to be created at runtime
@@ -353,11 +349,11 @@ struct mapped_meta **Keystone::keystone_rtld_init_app(vaddr_t elf_usr_ptr, int *
 
     }
 //
-//    /* Allocate pages for each program header
-//     * phoff = offset to program header, relative to  elf_usr_ptr
-//     * p_vaddr = first byte in virtual address space for program header
-//     * p_filesizes = bytes of program segment
-//     */
+//     Allocate pages for each program header
+//      phoff = offset to program header, relative to  elf_usr_ptr
+//      p_vaddr = first byte in virtual address space for program header
+//      p_filesizes = bytes of program segment
+//    
 //    // Get each elf_phdr in order and deal with it
     printf("elf_ex.e_phnum: %d\n", elf_ex.e_phnum);
     next_usr_phoff = (struct elf64_phdr *) ((vaddr_t) elf_usr_ptr + elf_ex.e_phoff);
@@ -397,7 +393,6 @@ struct mapped_meta **Keystone::keystone_rtld_init_app(vaddr_t elf_usr_ptr, int *
 struct mapped_meta **
 Keystone::keystone_rtld_init_runtime(vaddr_t rt_ptr, size_t rt_sz, unsigned long *rt_offset, int *num_rt_pages,
                                      int *error) {
-
     int i;
     struct elf64_phdr *elf_phdata;
     struct elf64_phdr *eppnt;
@@ -424,9 +419,9 @@ Keystone::keystone_rtld_init_runtime(vaddr_t rt_ptr, size_t rt_sz, unsigned long
     }
 
     *error = -ENOMEM;
-//    struct mapped_meta **meta_master = (struct mapped_meta **) malloc(sizeof(mapped_meta *));
+    //struct mapped_meta **meta_master = (struct mapped_meta **) malloc(sizeof(mapped_meta *));
     meta_master = (struct mapped_meta **) calloc(elf_ex.e_phnum,
-                                                 sizeof(struct mapped_meta *));
+                                                sizeof(struct mapped_meta *));
     elf_phdata = (struct elf64_phdr *) malloc(sizeof(struct elf64_phdr) * elf_ex.e_phnum);
     //We want to save the original pointer to free later
     eppnt = elf_phdata;
@@ -443,14 +438,13 @@ Keystone::keystone_rtld_init_runtime(vaddr_t rt_ptr, size_t rt_sz, unsigned long
 
 
     for (eppnt = elf_phdata, i = 0; i < elf_ex.e_phnum; eppnt++, i++) {
-        /*
-         * Looping through segments
-         * eppnt = current segment
-         * eppnt -> p_type = type of segment
-         * eppnt -> p_vaddr = VA of first byte of first segment
-         * elf_ex.e_phnum = number of segments
-         *
-         * */
+        
+        // * Looping through segments
+        // * eppnt = current segment
+        // * eppnt -> p_type = type of segment
+        // * eppnt -> p_vaddr = VA of first byte of first segment
+        // * elf_ex.e_phnum = number of segments
+        // *
         unsigned long vaddr;
         unsigned long size = 0;
 
@@ -467,7 +461,8 @@ Keystone::keystone_rtld_init_runtime(vaddr_t rt_ptr, size_t rt_sz, unsigned long
 //      pr_info("unexpected mismatch in elf program header: filesz %ld, memsz %llu\n", size, eppnt->p_memsz);
         }
 
-        meta_master[i] = rtld_vm_mmap(vaddr, size, rt_ptr, eppnt, error);
+        //meta_master[i] = rtld_vm_mmap(vaddr, size, rt_ptr, eppnt, error);
+        rtld_vm_mmap(vaddr, size, rt_ptr, eppnt, error);
 
         if (*error) {
             goto out;
@@ -476,11 +471,82 @@ Keystone::keystone_rtld_init_runtime(vaddr_t rt_ptr, size_t rt_sz, unsigned long
 
     *error = 0;
     free(elf_phdata);
-    *num_rt_pages = i;
+    //num_rt_pages = i;
     out:
-    return meta_master;
-
+   // return meta_master;
+  return 0;
 }
+*/
+
+keystone_status_t Keystone::loadRuntime(void)
+{
+  vaddr_t min_vaddr, max_vaddr;
+  elf_t elf;
+
+  if(elf_newFile(runtimeFile->getPtr(), runtimeFile->getSize(), &elf)) {
+    ERROR("Invalid Runtime ELF\n");
+    return KEYSTONE_ERROR;
+  }
+
+  elf_getMemoryBounds(&elf, VIRTUAL, &min_vaddr, &max_vaddr);
+  max_vaddr = ROUND_UP(max_vaddr, PAGE_BITS);
+
+  //printf("image size: %ld [0x%lx-0x%lx]\n",image_size, min_vaddr, max_vaddr);
+  printf("phdr #:%d\n", (int) elf_getNumProgramHeaders(&elf));
+
+  for(unsigned int i=0; i<elf_getNumProgramHeaders(&elf); i++) {
+    printf("type: %d\n", (int) elf_getProgramHeaderType(&elf, i));
+
+    if(elf_getProgramHeaderType(&elf, i) != PT_LOAD)
+    {
+      printf("inconsistent header\n");
+      printf("segment: 0x%lx, size: 0x%lx\n", elf_getProgramHeaderVaddr(&elf, i), elf_getProgramHeaderFileSize(&elf, i));
+      continue; 
+    }
+
+    vaddr_t start = elf_getProgramHeaderVaddr(&elf, i);
+    vaddr_t end = start + elf_getProgramHeaderFileSize(&elf, i);
+    vaddr_t src = (vaddr_t) elf_getProgramSegment(&elf, i);
+    vaddr_t va;
+
+    for(va = start; va < end; va += PAGE_SIZE)
+    {
+      struct addr_packed encl_page;
+      encl_page.copied = src;
+      encl_page.va = va;
+      encl_page.eid = eid;
+      encl_page.mode = RT_FULL;
+      
+      if(ioctl(fd, KEYSTONE_IOC_ADD_PAGE, &encl_page)) {
+        PERROR("failed to add page - ioctl() failed");
+      }
+
+      src += PAGE_SIZE;
+    }
+
+    if(elf_getProgramHeaderFileSize(&elf, i) == elf_getProgramHeaderMemorySize(&elf, i))
+      return KEYSTONE_SUCCESS;
+
+    /* pad .bss segment */
+    while(va < max_vaddr)
+    {
+      struct addr_packed encl_page;
+      encl_page.copied = (vaddr_t) nullpage;
+      encl_page.va = va;
+      encl_page.eid = eid;
+      encl_page.mode = RT_FULL;
+
+      if(ioctl(fd, KEYSTONE_IOC_ADD_PAGE, &encl_page)) {
+        PERROR("failed to add page - ioctl() failed");
+      }
+
+      va += PAGE_SIZE;
+    }
+  }
+
+  return KEYSTONE_SUCCESS;
+}
+
 
 keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, Params params) {
     if (runtimeFile || enclaveFile) {
@@ -536,12 +602,12 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
         return KEYSTONE_ERROR;
     }
 
-    unsigned long rt_offset;
-    int runtime_num_headers;
-    int app_num_headers;
-    int error;
-    int i, j;
-    int status;
+    //unsigned long rt_offset;
+    //int runtime_num_headers;
+    //int app_num_headers;
+    //int error;
+    //int i, j;
+    //int status;
 
     /* Pass in pages to map to enclave here. */
 
@@ -551,7 +617,15 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
         ERROR("failed to create enclave - ioctl() failed: %d", ret);
         return KEYSTONE_ERROR;
     }
+    
+    eid = enclp.eid;
+
+    // init runtime 
+    loadRuntime();
+        
+    /*dd
     printf("Loading rt stk..\n");
+
 
     struct mapped_meta *rt_stk = keystone_rtld_init_rt_stk(-1UL, params.getRuntimeStack() / (PAGE_SIZE) + (PAGE_SIZE),
                                                            &error);
@@ -569,7 +643,6 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
         }
         munmap((void *) rt_stk->meta[i].copied, PAGE_SIZE);
     }
-
 
     printf("Loading rt app..\n");
 
@@ -592,7 +665,6 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
             munmap((void *) rt_prog[i]->meta[j].copied, PAGE_SIZE);
         }
     }
-
     printf("Loading user stk..\n");
 
     struct mapped_meta *app_stk = keystone_rtld_init_app_stk(params.getEnclaveStack(), rt_offset, &error);
@@ -630,7 +702,7 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
     }
 
     printf("DONE w/ ELF loading\n");
-
+*/
     eid = enclp.eid;
 
     printf("untrusted_size BEFORE FINALIZE: %llu\n", enclp.params.untrusted_size);

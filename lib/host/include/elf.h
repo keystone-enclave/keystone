@@ -1,117 +1,519 @@
-/*
- * 32-bit compatibility support for ELF format executables and core dumps.
- *
- * Copyright (C) 2007 Red Hat, Inc.  All rights reserved.
- *
- * This copyrighted material is made available to anyone wishing to use,
- * modify, copy, or redistribute it subject to the terms and conditions
- * of the GNU General Public License v.2.
- *
- * Red Hat Author: Roland McGrath.
- *
- * This file is used in a 64-bit kernel that wants to support 32-bit ELF.
- * asm/elf.h is responsible for defining the compat_* and COMPAT_* macros
- * used below, with definitions appropriate for 32-bit ABI compatibility.
- *
- * We use macros to rename the ABI types and machine-dependent
- * functions used in binfmt_elf.c to compat versions.
- */
-
-//#include <linux/elfcore-compat.h>
+/* @LICENSE(UNSW_OZPLB) */
 
 /*
- * Rename the basic ELF layout types to refer to the 32-bit class of files.
+ * Australian Public Licence B (OZPLB)
+ *
+ * Version 1-0
+ *
+ * Copyright (c) 1999-2004 University of New South Wales
+ *
+ * All rights reserved.
+ *
+ * Developed by: Operating Systems and Distributed Systems Group (DiSy)
+ *               University of New South Wales
+ *               http://www.disy.cse.unsw.edu.au
+ *
+ * Permission is granted by University of New South Wales, free of charge, to
+ * any person obtaining a copy of this software and any associated
+ * documentation files (the "Software") to deal with the Software without
+ * restriction, including (without limitation) the rights to use, copy,
+ * modify, adapt, merge, publish, distribute, communicate to the public,
+ * sublicense, and/or sell, lend or rent out copies of the Software, and
+ * to permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimers.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimers in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of University of New South Wales, nor the names of its
+ *       contributors, may be used to endorse or promote products derived
+ *       from this Software without specific prior written permission.
+ *
+ * EXCEPT AS EXPRESSLY STATED IN THIS LICENCE AND TO THE FULL EXTENT
+ * PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED "AS-IS", AND
+ * NATIONAL ICT AUSTRALIA AND ITS CONTRIBUTORS MAKE NO REPRESENTATIONS,
+ * WARRANTIES OR CONDITIONS OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO ANY REPRESENTATIONS, WARRANTIES OR CONDITIONS
+ * REGARDING THE CONTENTS OR ACCURACY OF THE SOFTWARE, OR OF TITLE,
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NONINFRINGEMENT,
+ * THE ABSENCE OF LATENT OR OTHER DEFECTS, OR THE PRESENCE OR ABSENCE OF
+ * ERRORS, WHETHER OR NOT DISCOVERABLE.
+ *
+ * TO THE FULL EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL
+ * NATIONAL ICT AUSTRALIA OR ITS CONTRIBUTORS BE LIABLE ON ANY LEGAL
+ * THEORY (INCLUDING, WITHOUT LIMITATION, IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHERWISE) FOR ANY CLAIM, LOSS, DAMAGES OR OTHER
+ * LIABILITY, INCLUDING (WITHOUT LIMITATION) LOSS OF PRODUCTION OR
+ * OPERATION TIME, LOSS, DAMAGE OR CORRUPTION OF DATA OR RECORDS; OR LOSS
+ * OF ANTICIPATED SAVINGS, OPPORTUNITY, REVENUE, PROFIT OR GOODWILL, OR
+ * OTHER ECONOMIC LOSS; OR ANY SPECIAL, INCIDENTAL, INDIRECT,
+ * CONSEQUENTIAL, PUNITIVE OR EXEMPLARY DAMAGES, ARISING OUT OF OR IN
+ * CONNECTION WITH THIS LICENCE, THE SOFTWARE OR THE USE OF OR OTHER
+ * DEALINGS WITH THE SOFTWARE, EVEN IF NATIONAL ICT AUSTRALIA OR ITS
+ * CONTRIBUTORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH CLAIM, LOSS,
+ * DAMAGES OR OTHER LIABILITY.
+ *
+ * If applicable legislation implies representations, warranties, or
+ * conditions, or imposes obligations or liability on University of New South
+ * Wales or one of its contributors in respect of the Software that
+ * cannot be wholly or partly excluded, restricted or modified, the
+ * liability of University of New South Wales or the contributor is limited, to
+ * the full extent permitted by the applicable legislation, at its
+ * option, to:
+ * a.  in the case of goods, any one or more of the following:
+ * i.  the replacement of the goods or the supply of equivalent goods;
+ * ii.  the repair of the goods;
+ * iii. the payment of the cost of replacing the goods or of acquiring
+ *  equivalent goods;
+ * iv.  the payment of the cost of having the goods repaired; or
+ * b.  in the case of services:
+ * i.  the supplying of the services again; or
+ * ii.  the payment of the cost of having the services supplied again.
+ *
+ * The construction, validity and performance of this licence is governed
+ * by the laws in force in New South Wales, Australia.
  */
-#undef	ELF_CLASS
-#define ELF_CLASS	ELFCLASS32
-
-#undef	elfhdr
-#undef	elf_phdr
-#undef	elf_shdr
-#undef	elf_note
-#undef	elf_addr_t
-#define elfhdr		elf32_hdr
-#define elf_phdr	elf32_phdr
-#define elf_shdr	elf32_shdr
-#define elf_note	elf32_note
-#define elf_addr_t	Elf32_Addr
 
 /*
- * Some data types as stored in coredump.
+  Authors: Luke Deller, Ben Leslie
+  Created: 24/Sep/1999
+*/
+
+/**
+\file
+\brief Generic ELF library
+The ELF library is designed to make the task of parsing and getting information
+out of an ELF file easier.
+It provides function to obtain the various different fields in the ELF header, and
+the program and segment information.
+Also importantly, it provides a function elf_loadFile which will load a given
+ELF file into memory.
+*/
+
+#pragma once
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <linux/elf.h>
+
+struct elf {
+    void *elfFile;
+    size_t elfSize;
+    unsigned char elfClass; /* 32-bit or 64-bit */
+};
+typedef struct elf elf_t;
+
+enum elf_addr_type {
+    VIRTUAL,
+    PHYSICAL
+};
+typedef enum elf_addr_type elf_addr_type_t;
+
+/* ELF header functions */
+/**
+ * Initialises an elf_t structure and checks that the ELF file is valid.
+ * This function must be called to validate the ELF before any other function.
+ * Otherwise, attempting to call other functions with an invalid ELF file may
+ * result in undefined behaviour.
+ *
+ * @param file ELF file to use
+ * @param size Size of the ELF file
+ * @param res elf_t to initialise
+ *
+ * \return 0 on success, otherwise < 0
  */
-#define user_long_t		compat_long_t
-#define user_siginfo_t		compat_siginfo_t
-#define copy_siginfo_to_user	copy_siginfo_to_user32
+int elf_newFile(void *file, size_t size, elf_t *res);
 
-/*
- * The machine-dependent core note format types are defined in elfcore-compat.h,
- * which requires asm/elf.h to define compat_elf_gregset_t et al.
+/**
+ * Initialises and elf_t structure and checks that the ELF file is valid.
+ * The validity of a potential ELF file can be determined by the arguments
+ * check_pht and check_st.
+ * If both check_pht and check_st are true, this function is equivalent to
+ * elf_newFile.
+ * Calling other functions with an invalid ELF file may result in undefined
+ * behaviour.
+ *
+ * @param file ELF file to use
+ * @param size Size of the ELF file
+ * @param check_pht Whether to check the ELF program header table is valid
+ * @param check_st Whether to check the ELF section table is valid
+ * @param res elf_t to initialise
+ *
+ * \return 0 on success, otherwise < 0
  */
-#define elf_prstatus	compat_elf_prstatus
-#define elf_prpsinfo	compat_elf_prpsinfo
+int elf_newFile_maybe_unsafe(void *file, size_t size, bool check_pht, bool check_st, elf_t *res);
 
-#undef ns_to_timeval
-#define ns_to_timeval ns_to_old_timeval32
-
-/*
- * To use this file, asm/elf.h must define compat_elf_check_arch.
- * The other following macros can be defined if the compat versions
- * differ from the native ones, or omitted when they match.
+/**
+ * Checks that file starts with the ELF magic number.
+ * File must be at least 4 bytes (SELFMAG).
+ *
+ * @param file to check
+ *
+ * \return 0 on success, otherwise < 0
  */
+int elf_check_magic(char *file);
 
-#undef	ELF_ARCH
-#undef	elf_check_arch
-#define	elf_check_arch	compat_elf_check_arch
+/**
+ * Checks that elfFile points to an ELF file with a valid ELF header.
+ *
+ * @param elfFile Potential ELF file to check
+ *
+ * \return 0 on success, otherwise < 0
+ */
+int elf_checkFile(elf_t *elfFile);
 
-#ifdef	COMPAT_ELF_PLATFORM
-#undef	ELF_PLATFORM
-#define	ELF_PLATFORM		COMPAT_ELF_PLATFORM
-#endif
+/**
+ * Checks that elfFile points to an ELF file with a valid program header table.
+ *
+ * @param elfFile Potential ELF file to check
+ *
+ * \return 0 on success, otherwise < 0
+ */
+int elf_checkProgramHeaderTable(elf_t *elfFile);
 
-#ifdef	COMPAT_ELF_HWCAP
-#undef	ELF_HWCAP
-#define	ELF_HWCAP		COMPAT_ELF_HWCAP
-#endif
+/**
+ * Checks that elfFile points to an ELF file with a valid section table.
+ *
+ * @param elfFile Potential ELF file to check
+ *
+ * \return 0 on success, otherwise < 0
+ */
+int elf_checkSectionTable(elf_t *elfFile);
 
-#ifdef	COMPAT_ELF_HWCAP2
-#undef	ELF_HWCAP2
-#define	ELF_HWCAP2		COMPAT_ELF_HWCAP2
-#endif
+/**
+ * Find the entry point of an ELF file.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ *
+ * \return The entry point address.
+ */
+uintptr_t elf_getEntryPoint(elf_t *elfFile);
 
-#ifdef	COMPAT_ARCH_DLINFO
-#undef	ARCH_DLINFO
-#define	ARCH_DLINFO		COMPAT_ARCH_DLINFO
-#endif
+/**
+ * Determine number of program headers in an ELF file.
+ *
+ * @param elfFile Pointer to a valid ELF structure.
+ *
+ * \return Number of program headers in the ELF file.
+ */
+size_t elf_getNumProgramHeaders(elf_t *elfFile);
 
-#ifdef	COMPAT_ELF_ET_DYN_BASE
-#undef	ELF_ET_DYN_BASE
-#define	ELF_ET_DYN_BASE		COMPAT_ELF_ET_DYN_BASE
-#endif
+/**
+ * Determine number of sections in an ELF file.
+ *
+ * @param elfFile Pointer to a valid ELF structure.
+ *
+ * \return Number of sections in the ELF file.
+ */
+size_t elf_getNumSections(elf_t *elfFile);
 
-#ifdef COMPAT_ELF_EXEC_PAGESIZE
-#undef	ELF_EXEC_PAGESIZE
-#define	ELF_EXEC_PAGESIZE	COMPAT_ELF_EXEC_PAGESIZE
-#endif
+/**
+ * Get the index of the section header string table of an ELF file.
+ *
+ * @param elf Pointer to a valid ELF structure.
+ *
+ * \return The index of the section header string table.
+ */
+size_t elf_getSectionStringTableIndex(elf_t *elf);
 
-#ifdef	COMPAT_ELF_PLAT_INIT
-#undef	ELF_PLAT_INIT
-#define	ELF_PLAT_INIT		COMPAT_ELF_PLAT_INIT
-#endif
+/**
+ * Get a string table section of an ELF file.
+ *
+ * @param elfFile Pointer to a valid ELF structure.
+ * @param string_section The section number of the string table.
+ *
+ * \return The string table, or NULL if the section is not a string table.
+ */
+const char *elf_getStringTable(elf_t *elfFile, size_t string_segment);
 
-#ifdef	COMPAT_SET_PERSONALITY
-#undef	SET_PERSONALITY
-#define	SET_PERSONALITY		COMPAT_SET_PERSONALITY
-#endif
+/**
+ * Get the string table for section header names.
+ *
+ * @param elfFile Pointer to a valid ELF structure.
+ *
+ * \return The string table, or NULL if there is no table.
+ */
+const char *elf_getSectionStringTable(elf_t *elfFile);
 
-#ifdef	compat_start_thread
-#undef	start_thread
-#define	start_thread		compat_start_thread
-#endif
 
-#ifdef	compat_arch_setup_additional_pages
-#undef	ARCH_HAS_SETUP_ADDITIONAL_PAGES
-#define ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
-#undef	arch_setup_additional_pages
-#define	arch_setup_additional_pages compat_arch_setup_additional_pages
-#endif
+/* Section header functions */
+/**
+ * Get a section of an ELF file.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i The section number
+ *
+ * \return The section, or NULL if there is no section.
+ */
+void *elf_getSection(elf_t *elfFile, size_t i);
 
+/**
+ * Get the section of an ELF file with a given name.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param str Name of the section
+ * @param i Pointer to store the section number
+ *
+ * \return The section, or NULL if there is no section.
+ */
+void *elf_getSectionNamed(elf_t *elfFile, const char *str, size_t *i);
+
+/**
+ * Return the name of a given section.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The name of a given section.
+ */
+const char *elf_getSectionName(elf_t *elfFile, size_t i);
+
+/**
+ * Return the offset to the name of a given section in the section header
+ * string table.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The offset to the name of a given section in the section header
+ * string table.
+ */
+size_t elf_getSectionNameOffset(elf_t *elfFile, size_t i);
+
+/**
+ * Return the type of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The type of a given section.
+ */
+uint32_t elf_getSectionType(elf_t *elfFile, size_t i);
+
+/**
+ * Return the flags of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The flags of a given section.
+ */
+size_t elf_getSectionFlags(elf_t *elfFile, size_t i);
+
+/**
+ * Return the address of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The address of a given section.
+ */
+uintptr_t elf_getSectionAddr(elf_t *elfFile, size_t i);
+
+/**
+ * Return the offset of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The offset of a given section.
+ */
+size_t elf_getSectionOffset(elf_t *elfFile, size_t i);
+
+/**
+ * Return the size of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The size of a given section.
+ */
+size_t elf_getSectionSize(elf_t *elfFile, size_t i);
+
+/**
+ * Return the related section index of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The related section index of a given section.
+ */
+uint32_t elf_getSectionLink(elf_t *elfFile, size_t i);
+
+/**
+ * Return extra information of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return Extra information of a given section.
+ */
+uint32_t elf_getSectionInfo(elf_t *elfFile, size_t i);
+
+/**
+ * Return the alignment of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The alignment of a given section.
+ */
+size_t elf_getSectionAddrAlign(elf_t *elfFile, size_t i);
+
+/**
+ * Return the entry size of a given section
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param i Index of the section
+ *
+ * \return The entry size of a given section.
+ */
+size_t elf_getSectionEntrySize(elf_t *elfFile, size_t i);
+
+
+/* Program header functions */
+
+/**
+ * Return the segment data for a given program header.
+ *
+ * @param elf Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return Pointer to the segment data
+ */
+void *elf_getProgramSegment(elf_t *elf, size_t ph);
+
+/**
+ * Return the type for a given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The type of a given program header.
+ */
+uint32_t elf_getProgramHeaderType(elf_t *elfFile, size_t ph);
+
+/**
+ * Return the segment offset for a given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The offset of this program header from the start of the file.
+ */
+size_t elf_getProgramHeaderOffset(elf_t *elfFile, size_t ph);
+
+/**
+ * Return the base virtual address of given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The memory size of the specified program header.
+ */
+uintptr_t elf_getProgramHeaderVaddr(elf_t *elfFile, size_t ph);
+
+/**
+ * Return the base physical address of given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The memory size of the specified program header.
+ */
+uintptr_t elf_getProgramHeaderPaddr(elf_t *elfFile, size_t ph);
+
+/**
+ * Return the file size of a given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The file size of the specified program header.
+ */
+size_t elf_getProgramHeaderFileSize(elf_t *elfFile, size_t ph);
+
+/**
+ * Return the memory size of a given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The memory size of the specified program header.
+ */
+size_t elf_getProgramHeaderMemorySize(elf_t *elfFile, size_t ph);
+
+/**
+ * Return the flags for a given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The flags of a given program header.
+ */
+uint32_t elf_getProgramHeaderFlags(elf_t *elfFile, size_t ph);
+
+/**
+ * Return the alignment for a given program header.
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param ph Index of the program header
+ *
+ * \return The alignment of the given program header.
+ */
+size_t elf_getProgramHeaderAlign(elf_t *elfFile, size_t ph);
+
+
+/* Utility functions */
+
+/**
+ * Determine the memory bounds of an ELF file
+ *
+ * @param elfFile Pointer to a valid ELF structure
+ * @param addr_type If PHYSICAL return bounds of physical memory, otherwise
+ *                  return bounds of virtual memory
+ * @param min Pointer to return value of the minimum
+ * @param max Pointer to return value of the maximum
+ *
+ * \return true on success. false on failure, if for example, it is an invalid ELF file
+ */
+int elf_getMemoryBounds(elf_t *elfFile, elf_addr_type_t addr_type, uintptr_t *min, uintptr_t *max);
+
+/**
+ *
+ * \return true if the address in in this program header
+ */
+int elf_vaddrInProgramHeader(elf_t *elfFile, size_t ph, uintptr_t vaddr);
+
+/**
+ * Return the physical translation of a physical address, with respect
+ * to a given program header
+ *
+ */
+uintptr_t elf_vtopProgramHeader(elf_t *elfFile, size_t ph, uintptr_t vaddr);
+
+/**
+ * Load an ELF file into memory
+ *
+ * @param elfFile Pointer to a valid ELF file
+ * @param addr_type If PHYSICAL load using the physical address, otherwise using the
+ *                  virtual addresses
+ *
+ * \return true on success, false on failure.
+ *
+ * The function assumes that the ELF file is loaded in memory at some
+ * address different to the target address at which it will be loaded.
+ * It also assumes direct access to the source and destination address, i.e:
+ * Memory must be able to be loaded with a simple memcpy.
+ *
+ * Obviously this also means that if we are loading a 64bit ELF on a 32bit
+ * platform, we assume that any memory addresses are within the first 4GB.
+ *
+ */
+int elf_loadFile(elf_t *elfFile, elf_addr_type_t addr_type);

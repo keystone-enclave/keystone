@@ -65,6 +65,7 @@ private:
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   keystone_status_t mapUntrusted(size_t size);
+  keystone_status_t loadRuntime(void);
 public:
   Keystone();
   ~Keystone();
