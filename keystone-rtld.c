@@ -86,13 +86,13 @@ void rtld_vm_mmap(epm_t* epm, vaddr_t encl_addr, unsigned long size,
   for(va=va_start, k=0; va < va_end; va += PAGE_SIZE, k++)
   {
     vaddr_t epm_page;
+    //Returns address of va back, maps va to a new page in enclave private memory
     epm_page = epm_alloc_rt_page(epm, va);
     //pr_info("encl_mmap va: 0x%lx, target: 0x%lx\n", va, epm_page);
     if(copy_from_user((void*)epm_page, rt_ptr + pos, PAGE_SIZE)){
       keystone_err("failed to copy runtime\n");
     }
     pos += PAGE_SIZE;
-   
     //debug_dump(epm_page, PAGE_SIZE);
   }
 } 
@@ -111,8 +111,7 @@ int keystone_app_load_elf_section_NOBITS(epm_t* epm,
   }
  
   return ret;
-  
-  
+
 }
 
 int keystone_app_load_elf_region(epm_t* epm, void* __user elf_usr_region,
@@ -252,8 +251,8 @@ int keystone_rtld_init_app(enclave_t* enclave, void* __user app_ptr, size_t app_
   epm = enclave->epm;
 
   /* setup enclave stack */
-  for (vaddr = stack_offset - PAGE_UP(app_stack_sz); 
-      vaddr < stack_offset; 
+  for (vaddr = stack_offset - PAGE_UP(app_stack_sz);
+      vaddr < stack_offset;
       vaddr += PAGE_SIZE) {
     epm_alloc_user_page_noexec(epm, vaddr);
   }
@@ -274,6 +273,11 @@ int keystone_rtld_init_runtime(enclave_t* enclave, void* __user rt_ptr, size_t r
 
   epm = enclave->epm;
 
+
+  /* rt_ptr = ELF runtime pointer
+   *
+   *
+   * */
   error = -ENOEXEC;
   if(copy_from_user(&elf_ex, rt_ptr, sizeof(struct elfhdr)) != 0){
     keystone_err("failed to read runtime header\n");
@@ -316,6 +320,12 @@ int keystone_rtld_init_runtime(enclave_t* enclave, void* __user rt_ptr, size_t r
       keystone_warn("keystone runtime includes an inconsistent program header\n");
       continue;
     }
+    /*
+     * p_filesz = Number of bytes of segment
+     * p_memsz = Number of bytes in the memory segment of ELF
+     * p_memsz >= p_filesz, since this segment may have a bss
+     *
+     * */
     vaddr = eppnt->p_vaddr;
     if(vaddr < *rt_offset) {
       *rt_offset = vaddr;
@@ -324,9 +334,11 @@ int keystone_rtld_init_runtime(enclave_t* enclave, void* __user rt_ptr, size_t r
     if(size > eppnt->p_memsz) {
       pr_info("unexpected mismatch in elf program header: filesz %ld, memsz %llu\n", size, eppnt->p_memsz);
     }
+
+    //Requires kernel privileges to do
     rtld_vm_mmap(epm, vaddr, size, rt_ptr, eppnt);
   }
-
+  //Requires kernel privileges to do
   rtld_setup_stack(epm, -1UL, PAGE_UP(rt_stack_sz));
 
   error = 0;
@@ -338,6 +350,10 @@ out:
 
 int keystone_rtld_init_untrusted(enclave_t* enclave, void* untrusted_va, size_t untrusted_size) 
 {
+
+  /* Enclave has access to a shared memory buffer w/ host
+   *
+   * */
   vaddr_t va;
   vaddr_t va_start = PAGE_DOWN((vaddr_t) untrusted_va);
   vaddr_t va_end = PAGE_UP((vaddr_t)untrusted_va + untrusted_size);
