@@ -34,12 +34,12 @@ Setup Tools and Submodules
 
 Build All for QEMU
 ```
-make hifive
+make
 ```
 
 Run QEMU
 ```
-./scripts/run-hifive-qemu.sh
+./scripts/run-qemu.sh
 ```
 
 Test
