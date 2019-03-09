@@ -48,6 +48,7 @@
 #define PMP_REGION_MAX_REACHED              23
 #define PMP_REGION_INVALID                  24
 #define PMP_REGION_OVERLAP                  25
+#define PMP_REGION_IMPOSSIBLE_TOR           26
 
 void sm_init(void);
 

@@ -13,8 +13,6 @@
 
 #define ENCL_MAX  16
 
-
-
 struct enclave_t enclaves[ENCL_MAX];
 #define ENCLAVE_EXISTS(eid) (enclaves[eid].state >= 0)
 
@@ -56,28 +54,28 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   int i;
   int region_overlap = 0;
 
-  // 1. allocate eid
+  // allocate eid
   ret = ENCLAVE_NO_FREE_RESOURCE;
   if(encl_alloc_eid(&eid) != ENCLAVE_SUCCESS)
     goto error;
 
-  // 2. create a PMP region bound to the enclave
+  // create a PMP region bound to the enclave
   ret = ENCLAVE_PMP_FAILURE;
   if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region, 0))
     goto free_encl_idx;
 
-  // 2b. create PMP region for shared memory
+  // create PMP region for shared memory
   if(pmp_region_init_atomic(utbase, utsize, PMP_PRI_BOTTOM, &shared_region, 0))
     goto free_region;
 
-  // 3. set pmp registers for private region (not shared)
+  // set pmp registers for private region (not shared)
   if(pmp_set_global(region, PMP_NO_PERM))
     goto free_shared_region;
 
-  // 4. initialize and verify enclave memory layout.
+  // initialize and verify enclave memory layout.
   init_enclave_memory(base, size, utbase, utsize);
 
-  // 5. initialize enclave metadata
+  // initialize enclave metadata
   enclaves[eid].eid = eid;
   enclaves[eid].rid = region;
   enclaves[eid].utrid = shared_region;
