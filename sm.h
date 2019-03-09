@@ -23,7 +23,6 @@
 #define SBI_SM_NOT_IMPLEMENTED  1111
 
 /* error codes */
-#define ENCLAVE_NO_FREE_RESOURCE            (enclave_ret_t)-3U
 #define ENCLAVE_NOT_IMPLEMENTED             (enclave_ret_t)-2U
 #define ENCLAVE_UNKNOWN_ERROR               (enclave_ret_t)-1U
 #define ENCLAVE_SUCCESS                     (enclave_ret_t)0
@@ -39,6 +38,7 @@
 #define ENCLAVE_NOT_RESUMABLE               (enclave_ret_t)10
 #define ENCLAVE_EDGE_CALL_HOST              (enclave_ret_t)11
 #define ENCLAVE_NOT_INITIALIZED             (enclave_ret_t)12
+#define ENCLAVE_NO_FREE_RESOURCE            (enclave_ret_t)13
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0
