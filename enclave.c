@@ -191,23 +191,7 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   if(!exitable)
     return ENCLAVE_NOT_RUNNING;
 
-  // get the running enclave on this SM
-  struct enclave_t encl = enclaves[eid];
-
-  // set PMP
-  pmp_set(encl.rid, PMP_NO_PERM);
-  osm_pmp_set(PMP_ALL_PERM);
-
-  /* restore host context */
-  swap_prev_state(&enclaves[eid].threads[0], encl_regs);
-  swap_prev_stvec(&enclaves[eid].threads[0], 0);
-  swap_prev_mepc(&enclaves[eid].threads[0], 0);
-
-  // switch to host page table
-  write_csr(satp, encl.host_satp);
-
-  // enable timer interrupt
-  set_csr(mie, MIP_MTIP);
+  _context_switch_to_host(encl_regs, eid);
 
   // update enclave state
   spinlock_lock(&encl_lock);
@@ -228,33 +212,23 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
 
   spinlock_lock(&encl_lock);
   stoppable = enclaves[eid].state == RUNNING;
-
   spinlock_unlock(&encl_lock);
 
   if(!stoppable)
     return ENCLAVE_NOT_RUNNING;
 
-  /* TODO: currently enclave cannot have multiple threads */
-  swap_prev_state(&enclaves[eid].threads[0], encl_regs);
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
-
-  struct enclave_t encl = enclaves[eid];
-
-  pmp_set(encl.rid, PMP_NO_PERM);
-  osm_pmp_set(PMP_ALL_PERM);
-
-  write_csr(satp, encl.host_satp);
-  set_csr(mie, MIP_MTIP);
+  _context_switch_to_host(encl_regs, eid);
 
   switch(request) {
-    case(STOP_TIMER_INTERRUPT):
-      return ENCLAVE_INTERRUPTED;
-    case(STOP_EDGE_CALL_HOST):
-      return ENCLAVE_EDGE_CALL_HOST;
-    default:
-      return ENCLAVE_UNKNOWN_ERROR;
+  case(STOP_TIMER_INTERRUPT):
+    return ENCLAVE_INTERRUPTED;
+  case(STOP_EDGE_CALL_HOST):
+    return ENCLAVE_EDGE_CALL_HOST;
+  default:
+    return ENCLAVE_UNKNOWN_ERROR;
   }
+
+
 }
 
 
@@ -379,6 +353,30 @@ inline enclave_ret_t _context_switch_to_enclave(uintptr_t* regs,
 
   return ENCLAVE_SUCCESS;
 }
+
+inline void _context_switch_to_host(uintptr_t* encl_regs,
+                                    eid_t eid){
+  // get the running enclave on this SM
+  struct enclave_t encl = enclaves[eid];
+
+  // set PMP
+  pmp_set(encl.rid, PMP_NO_PERM);
+  osm_pmp_set(PMP_ALL_PERM);
+
+  /* restore host context */
+  swap_prev_state(&enclaves[eid].threads[0], encl_regs);
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+
+  // switch to host page table
+  write_csr(satp, encl.host_satp);
+
+  // enable timer interrupt
+  set_csr(mie, MIP_MTIP);
+
+  return;
+}
+
 
 /*
  * Init all metadata as needed for keeping track of enclaves

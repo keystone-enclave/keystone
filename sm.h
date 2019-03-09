@@ -49,9 +49,6 @@
 #define PMP_REGION_INVALID                  24
 #define PMP_REGION_OVERLAP                  25
 
-#define STOP_TIMER_INTERRUPT  0
-#define STOP_EDGE_CALL_HOST   1
-
 void sm_init(void);
 
 /* platform specific functions */

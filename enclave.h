@@ -23,6 +23,13 @@ typedef enum {
   ALLOCATED,
 } enclave_state_t;
 
+/* Enclave stop reasons requested */
+#define STOP_TIMER_INTERRUPT  0
+#define STOP_EDGE_CALL_HOST   1
+#define STOP_EXIT_ENCLAVE     2
+
+
+
 /* For now, eid's are a simple unsigned int */
 typedef unsigned int eid_t;
 
@@ -75,6 +82,8 @@ void enclave_init_metadata();
 enclave_ret_t _context_switch_to_enclave(uintptr_t* regs,
                                          eid_t eid,
                                          int load_parameters);
+void _context_switch_to_host(uintptr_t* encl_regs,
+                             eid_t eid);
 enclave_ret_t init_enclave_memory(uintptr_t base, uintptr_t size,
                         uintptr_t utbase, uintptr_t utsize);
 enclave_ret_t encl_satp_to_eid(uintptr_t satp, eid_t* eid);
