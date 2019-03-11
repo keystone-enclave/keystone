@@ -59,7 +59,7 @@ Build All
 If you want to build all, simply run ``make``.
 
 (You may run ``make busybear`` which will build a Busybear based
-qemu-only image, this is in the process of being depricated and
+qemu-only image, this is in the process of being deprecated and
 eventually will be removed)
 
 ``PATH`` must include the RISC-V tool path.
