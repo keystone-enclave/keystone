@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-HOST_PORT=${HOST_PORT:="$((2000 + RANDOM % 3000))"}
+HOST_PORT=${HOST_PORT:="$((3000 + RANDOM % 3000))"}
 
 echo "**** Running QEMU SSH on port ${HOST_PORT} ****\n"
 
