@@ -72,6 +72,8 @@ before_install:
 
 jobs:
   include:
+    - stage: cache warmup
+      script: true
     - stage: build everything & test
       script:
         - source ./source.sh
