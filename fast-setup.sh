@@ -9,9 +9,9 @@ else
   echo "Downloading Prebuilt RISC-V Toolchain... "
   export RISCV=$(pwd)/riscv
   export PATH=$PATH:$RISCV/bin
-  wget https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/archive/1.0.tar.gz
-  tar -xzvf 1.0.tar.gz
-  cd firesim-riscv-tools-prebuilt-1.0
+  wget https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/archive/2.0.tar.gz
+  tar -xzvf 2.0.tar.gz
+  cd firesim-riscv-tools-prebuilt-2.0
   ./installrelease.sh > riscv-tools-install.log
   mv distrib riscv
   cp -R riscv ../
