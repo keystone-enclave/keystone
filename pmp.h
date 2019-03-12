@@ -70,26 +70,99 @@ enum pmp_priority {
   return error; \
 }
 
-int pmp_region_debug_print(int region);
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid, int allow_overlap);
-int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, int* rid, int allow_overlap);
-int pmp_region_free_atomic(int region);
-int pmp_set(int n, uint8_t perm);
-int pmp_set_global(int n, uint8_t perm);
-int pmp_unset(int n);
-int pmp_unset_global(int n);
-void* pmp_get_addr(int region);
-uint64_t pmp_get_size(int region);
 
-int detect_region_overlap_atomic(uintptr_t base, uintptr_t size);
-
-struct pmp_region
+typedef struct
 {
-  uintptr_t start;
   uint64_t size;
   uint8_t addrmode;
   uintptr_t addr;
   int allow_overlap;
   int reg_idx;
-};
+} region_t;
+
+typedef int region_id_t;
+static region_t regions[PMP_MAX_N_REGION];
+
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id_t* rid, int allow_overlap);
+int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id_t* rid, int allow_overlap);
+int pmp_region_free_atomic(region_id_t region);
+int pmp_set(region_id_t n, uint8_t perm);
+int pmp_set_global(region_id_t n, uint8_t perm);
+int pmp_unset(region_id_t n);
+int pmp_unset_global(region_id_t n);
+
+int detect_region_overlap_atomic(uintptr_t base, uintptr_t size);
+
+////////////////////////////////
+/* PMP region_t interfaces */
+////////////////////////////////
+static inline int region_register_idx(region_id_t i)
+{
+  return regions[i].reg_idx;
+}
+static inline int region_allows_overlap(region_id_t i)
+{
+  return regions[i].allow_overlap;
+}
+static inline uintptr_t region_get_addr(region_id_t i)
+{
+  return regions[i].addr;
+}
+static inline uint64_t region_get_size(region_id_t i)
+{
+  return regions[i].size;
+}
+static inline int region_is_napot(region_id_t i)
+{
+  return regions[i].addrmode == PMP_NAPOT;
+}
+static inline int region_is_tor(region_id_t i)
+{
+  return regions[i].addrmode == PMP_TOR;
+}
+static inline int region_needs_two_entries(region_id_t i)
+{
+  return region_is_tor(i) && regions[i].reg_idx > 0;
+}
+static inline int region_is_napot_all(region_id_t i)
+{
+  return regions[i].addr == 0 && regions[i].size == -1UL;
+}
+static inline uintptr_t region_pmpaddr_val(region_id_t i)
+{
+  if(region_is_napot_all(i))
+    return (-1UL);
+  else if(region_is_napot(i))
+    return (regions[i].addr | (regions[i].size/2-1)) >> 2;
+  else if(region_is_tor(i))
+    return (regions[i].addr + regions[i].size) >> 2;
+  else
+    return 0;
+}
+static inline uintptr_t region_pmpcfg_val(region_id_t i, int reg_idx, uint8_t perm_bits)
+{
+  return (uintptr_t) (regions[i].addrmode | perm_bits) << (8*(reg_idx%PMP_PER_GROUP));
+}
+static void region_clear_all(region_id_t i)
+{
+  regions[i].addr = 0;
+  regions[i].size = 0;
+  regions[i].addrmode = 0;
+  regions[i].allow_overlap = 0;
+  regions[i].reg_idx = 0;
+}
+static void region_init(region_id_t i,
+                        uintptr_t addr,
+                        uint64_t size,
+                        uint8_t addrmode,
+                        int allow_overlap,
+                        int reg_idx)
+{
+  regions[i].addr = addr;
+  regions[i].size = size;
+  regions[i].addrmode = addrmode;
+  regions[i].allow_overlap = allow_overlap;
+  regions[i].reg_idx = (addrmode == PMP_TOR && reg_idx > 0 ? reg_idx + 1 : reg_idx);
+}
+
 #endif

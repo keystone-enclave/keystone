@@ -130,8 +130,8 @@ enclave_ret_t destroy_enclave(eid_t eid)
 
   // 1. clear all the data in the enclave page
   // requires no lock (single runner)
-  void* base = pmp_get_addr(enclaves[eid].rid);
-  size_t size = pmp_get_size(enclaves[eid].rid);
+  void* base = (void*) region_get_addr(enclaves[eid].rid);
+  size_t size = (size_t) region_get_size(enclaves[eid].rid);
   memset((void*) base, 0, size);
 
   // 2. free pmp region
@@ -525,9 +525,9 @@ enclave_ret_t copy_from_enclave(struct enclave_t* enclave,
                                 void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
-  legal = (source >= pmp_get_addr(enclave->rid)
-      && source + size <= pmp_get_addr(enclave->rid) +
-      pmp_get_size(enclave->rid));
+  legal = (source >= (void*) region_get_addr(enclave->rid)
+      && source + size <= (void*) region_get_addr(enclave->rid) +
+      region_get_size(enclave->rid));
   if(legal)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
@@ -543,9 +543,9 @@ enclave_ret_t copy_to_enclave(struct enclave_t* enclave,
                               void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
-  legal = (dest >= pmp_get_addr(enclave->rid)
-      && dest + size <= pmp_get_addr(enclave->rid) +
-      pmp_get_size(enclave->rid));
+  legal = (dest >= (void*) region_get_addr(enclave->rid)
+      && dest + size <= (void*) region_get_addr(enclave->rid) +
+      region_get_size(enclave->rid));
   if(legal)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
