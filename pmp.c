@@ -290,13 +290,13 @@ int pmp_set(int region_idx, uint8_t perm)
 
   pmpaddr = region_pmpaddr_val(region_idx);
 
-  /*spinlock_lock(&pmp_lock);
-  printm("pmp_set() [hart %d]: reg[%d], mode[%s], range[0x%lx-0x%lx], perm[0x%x]\n",
-      read_csr(mhartid), reg_idx, (region_is_tor(region_idx) ? "TOR":"NAPOT"),
-      region_get_addr(region_idx), region_get_addr(region_idx) + region_get_size(region_idx), perm);
-  printm("  pmp[%d] = pmpaddr: 0x%lx, pmpcfg: 0x%lx\n", reg_idx, pmpaddr, pmpcfg);
-  spinlock_unlock(&pmp_lock);
-  */
+  /*  spinlock_lock(&pmp_lock);
+  printm("pmp_set() [hart %d]: reg[%d], mode[%s], range[0x%lx-0x%lx], perm[0x%x]\r\n",
+         read_csr(mhartid), reg_idx, (region_is_tor(region_idx) ? "TOR":"NAPOT"),
+         region_get_addr(region_idx), region_get_addr(region_idx) + region_get_size(region_idx), perm);
+  printm("  pmp[%d] = pmpaddr: 0x%lx, pmpcfg: 0x%lx\r\n", reg_idx, pmpaddr, pmpcfg);
+  spinlock_unlock(&pmp_lock);*/
+
   int n=reg_idx;
 
   switch(n) {
