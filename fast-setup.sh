@@ -7,11 +7,19 @@ then
   echo "RISCV tools are already installed"
 else
   echo "Downloading Prebuilt RISC-V Toolchain... "
+
+  # The 1.0 version expected libmpfr.so.4, modern Ubuntu has .6
+  TOOL_VER=1.0
+  if [[ $(ldconfig -p | grep "libmpfr.so.6") ]]; then
+      echo "Downloading tools v2.0 (support for libmpfr.so.6)"
+      TOOL_VER=2.0
+  fi
+
   export RISCV=$(pwd)/riscv
   export PATH=$PATH:$RISCV/bin
-  wget https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/archive/2.0.tar.gz
-  tar -xzvf 2.0.tar.gz
-  cd firesim-riscv-tools-prebuilt-2.0
+  wget https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/archive/${TOOL_VER}.tar.gz
+  tar -xzvf ${TOOL_VER}.tar.gz
+  cd firesim-riscv-tools-prebuilt-${TOOL_VER}
   ./installrelease.sh > riscv-tools-install.log
   mv distrib riscv
   cp -R riscv ../
