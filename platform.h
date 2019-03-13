@@ -2,7 +2,7 @@
 #define _PLATFORM_H_
 
 /* These functions are defined by platform/soc specific objects,
-   defined in soc/$PLATFORM/$PLATFORM.c */
+   defined in platform/$PLATFORM/$PLATFORM.c */
 
 /* This fires once FOR EACH enclave during init of enclave
    metadata. It may not fail currently. */
