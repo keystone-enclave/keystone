@@ -130,8 +130,8 @@ enclave_ret_t destroy_enclave(eid_t eid)
 
   // 1. clear all the data in the enclave page
   // requires no lock (single runner)
-  void* base = (void*) region_get_addr(enclaves[eid].rid);
-  size_t size = (size_t) region_get_size(enclaves[eid].rid);
+  void* base = (void*) pmp_region_get_addr(enclaves[eid].rid);
+  size_t size = (size_t) pmp_region_get_size(enclaves[eid].rid);
   memset((void*) base, 0, size);
 
   // 2. free pmp region
@@ -488,7 +488,7 @@ enclave_ret_t copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
 {
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
-  region_overlap = detect_region_overlap_atomic((uintptr_t)dest_ptr,
+  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t)dest_ptr,
                                                 sizeof(uintptr_t));
   if(!region_overlap)
     *dest_ptr = value;
@@ -508,7 +508,7 @@ enclave_ret_t copy_from_host(void* source, void* dest, size_t size){
 
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
-  region_overlap = detect_region_overlap_atomic((uintptr_t) source, size);
+  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t) source, size);
   // TODO: Validate that dest is inside the SM.
   if(!region_overlap)
     memcpy(dest, source, size);
@@ -525,9 +525,9 @@ enclave_ret_t copy_from_enclave(struct enclave_t* enclave,
                                 void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
-  legal = (source >= (void*) region_get_addr(enclave->rid)
-      && source + size <= (void*) region_get_addr(enclave->rid) +
-      region_get_size(enclave->rid));
+  legal = (source >= (void*) pmp_region_get_addr(enclave->rid)
+      && source + size <= (void*) pmp_region_get_addr(enclave->rid) +
+      pmp_region_get_size(enclave->rid));
   if(legal)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
@@ -543,9 +543,9 @@ enclave_ret_t copy_to_enclave(struct enclave_t* enclave,
                               void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
-  legal = (dest >= (void*) region_get_addr(enclave->rid)
-      && dest + size <= (void*) region_get_addr(enclave->rid) +
-      region_get_size(enclave->rid));
+  legal = (dest >= (void*) pmp_region_get_addr(enclave->rid)
+      && dest + size <= (void*) pmp_region_get_addr(enclave->rid) +
+      pmp_region_get_size(enclave->rid));
   if(legal)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);

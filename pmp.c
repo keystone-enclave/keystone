@@ -9,37 +9,107 @@
 #include "disabled_hart_mask.h"
 #include "safe_math_util.h"
 
+/* PMP global spin locks */
+static spinlock_t pmp_ipi_global_lock = SPINLOCK_INIT;
+static spinlock_t pmp_lock = SPINLOCK_INIT;
+
+/* PMP region getter/setters */
+static region_t regions[PMP_MAX_N_REGION];
 static uint32_t reg_bitmap = 0;
 static uint32_t region_def_bitmap = 0;
 
-/* PMP IPI mailbox */
-typedef struct {
-  uint8_t pending;
-  uint8_t perm;
-} ipi_msg_t;
+static inline int region_register_idx(region_id_t i)
+{
+  return regions[i].reg_idx;
+}
 
-static ipi_msg_t ipi_mailbox[MAX_HARTS] = {0,};
-static int ipi_region_idx = -1;
-static enum ipi_type {IPI_PMP_INVALID=-1,
-                      IPI_PMP_SET,
-                      IPI_PMP_UNSET} ipi_type = IPI_PMP_INVALID;
+static inline int region_allows_overlap(region_id_t i)
+{
+  return regions[i].allow_overlap;
+}
 
-/* PMP IPI global lock */
-static spinlock_t pmp_ipi_global_lock = SPINLOCK_INIT;
+static inline uintptr_t region_get_addr(region_id_t i)
+{
+  return regions[i].addr;
+}
 
-static spinlock_t pmp_lock = SPINLOCK_INIT;
+static inline uint64_t region_get_size(region_id_t i)
+{
+  return regions[i].size;
+}
 
-static int is_pmp_region_valid(int region_idx) {
+static inline int region_is_napot(region_id_t i)
+{
+  return regions[i].addrmode == PMP_NAPOT;
+}
+
+static inline int region_is_tor(region_id_t i)
+{
+  return regions[i].addrmode == PMP_TOR;
+}
+
+static inline int region_needs_two_entries(region_id_t i)
+{
+  return region_is_tor(i) && regions[i].reg_idx > 0;
+}
+
+static inline int region_is_napot_all(region_id_t i)
+{
+  return regions[i].addr == 0 && regions[i].size == -1UL;
+}
+
+static inline uintptr_t region_pmpaddr_val(region_id_t i)
+{
+  if(region_is_napot_all(i))
+    return (-1UL);
+  else if(region_is_napot(i))
+    return (regions[i].addr | (regions[i].size/2-1)) >> 2;
+  else if(region_is_tor(i))
+    return (regions[i].addr + regions[i].size) >> 2;
+  else
+    return 0;
+}
+
+static inline uintptr_t region_pmpcfg_val(region_id_t i, pmpreg_id_t reg_idx, uint8_t perm_bits)
+{
+  return (uintptr_t) (regions[i].addrmode | perm_bits) << (8*(reg_idx%PMP_PER_GROUP));
+}
+
+static void region_clear_all(region_id_t i)
+{
+  regions[i].addr = 0;
+  regions[i].size = 0;
+  regions[i].addrmode = 0;
+  regions[i].allow_overlap = 0;
+  regions[i].reg_idx = 0;
+}
+
+static void region_init(region_id_t i,
+                        uintptr_t addr,
+                        uint64_t size,
+                        uint8_t addrmode,
+                        int allow_overlap,
+                        pmpreg_id_t reg_idx)
+{
+  regions[i].addr = addr;
+  regions[i].size = size;
+  regions[i].addrmode = addrmode;
+  regions[i].allow_overlap = allow_overlap;
+  regions[i].reg_idx = (addrmode == PMP_TOR && reg_idx > 0 ? reg_idx + 1 : reg_idx);
+}
+
+static int is_pmp_region_valid(region_id_t region_idx)
+{
   return TEST_BIT(region_def_bitmap, region_idx);
 }
 
-int search_rightmost_unset(uint32_t bitmap, int max, uint32_t mask) {
+static int search_rightmost_unset(uint32_t bitmap, int max, uint32_t mask)
+{
   int i = 0;
 
   assert(max < 32);
   assert(!((mask + 1) & mask));
-  while(mask < (1 << (max-1) ))
-  {
+  while(mask < (1 << (max-1) )) {
     if((~bitmap & mask) == mask)
       return i;
     mask = mask << 1;
@@ -49,28 +119,34 @@ int search_rightmost_unset(uint32_t bitmap, int max, uint32_t mask) {
   return -1;
 }
 
-int get_free_region_idx() {
+static region_id_t get_free_region_idx()
+{
   return search_rightmost_unset(region_def_bitmap, PMP_MAX_N_REGION, 0x1);
 }
 
-int get_free_reg_idx() {
+static pmpreg_id_t get_free_reg_idx()
+{
   return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x1);
 }
 
-// get consecutive two free reg index for TOR
-int get_conseq_free_reg_idx() {
+static pmpreg_id_t get_conseq_free_reg_idx()
+{
   return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x3);
 }
 
+/* IPI-related functions */
+static ipi_msg_t ipi_mailbox[MAX_HARTS] = {0,};
+static region_id_t ipi_region_idx = -1;
+static enum ipi_type {IPI_PMP_INVALID=-1,
+                      IPI_PMP_SET,
+                      IPI_PMP_UNSET} ipi_type = IPI_PMP_INVALID;
+
 void handle_pmp_ipi(uintptr_t* regs, uintptr_t dummy, uintptr_t mepc)
 {
-  if(ipi_type == IPI_PMP_SET)
-  {
+  if(ipi_type == IPI_PMP_SET) {
     uint8_t perm = ipi_mailbox[read_csr(mhartid)].perm;
     pmp_set(ipi_region_idx, perm);
-  }
-  else
-  {
+  } else {
     pmp_unset(ipi_region_idx);
   }
 
@@ -90,8 +166,6 @@ static int detect_region_overlap(uintptr_t addr, uintptr_t size)
   void* epm_base;
   size_t epm_size;
   int region_overlap = 0, i;
-
-  /* CAUTION: the caller should use pmp_lock to synchronize */
 
   // Safety check the addr+size
   uintptr_t input_end;
@@ -119,7 +193,7 @@ static int detect_region_overlap(uintptr_t addr, uintptr_t size)
   return region_overlap;
 }
 
-int detect_region_overlap_atomic(uintptr_t addr, uintptr_t size)
+int pmp_detect_region_overlap_atomic(uintptr_t addr, uintptr_t size)
 {
   int region_overlap = 0;
   spinlock_lock(&pmp_lock);
@@ -146,8 +220,7 @@ static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type, uint8_t pe
   ipi_region_idx = region_idx;
   ipi_type = type;
 
-  for(uintptr_t i=0, m=mask; m; i++, m>>=1)
-  {
+  for(uintptr_t i=0, m=mask; m; i++, m>>=1) {
     if(m & 1) {
       send_pmp_ipi(i, perm);
     }
@@ -162,6 +235,12 @@ static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type, uint8_t pe
     }
   }
 }
+
+/*********************************
+ *
+ * External Functions
+ *
+ **********************************/
 
 int pmp_unset_global(int region_idx)
 {
@@ -205,7 +284,7 @@ int pmp_set(int region_idx, uint8_t perm)
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
 
   uint8_t perm_bits = perm & PMP_ALL_PERM;
-  int reg_idx = region_register_idx(region_idx);
+  pmpreg_id_t reg_idx = region_register_idx(region_idx);
   uintptr_t pmpcfg = region_pmpcfg_val(region_idx, reg_idx, perm_bits);
   uintptr_t pmpaddr;
 
@@ -250,7 +329,7 @@ int pmp_unset(int region_idx)
   if(!is_pmp_region_valid(region_idx))
     PMP_ERROR(PMP_REGION_INVALID,"Invalid PMP region index");
 
-  int reg_idx = region_register_idx(region_idx);
+  pmpreg_id_t reg_idx = region_register_idx(region_idx);
   int n=reg_idx;
   switch(n) {
 #define X(n,g) case n: { PMP_UNSET(n, g); break;}
@@ -284,9 +363,9 @@ int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri
   return ret;
 }
 
-int pmp_tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_t* rid, int allow_overlap)
+static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_t* rid, int allow_overlap)
 {
-  int reg_idx = -1;
+  pmpreg_id_t reg_idx = -1;
   region_id_t region_idx = -1;
   int region_overlap = 0, i=0;
 
@@ -335,9 +414,9 @@ int pmp_tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority priori
   return PMP_SUCCESS;
 }
 
-int pmp_napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_t* rid, int allow_overlap)
+static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_t* rid, int allow_overlap)
 {
-  int reg_idx = -1;
+  pmpreg_id_t reg_idx = -1;
   region_id_t region_idx = -1;
   int region_overlap = 0, i = 0;
 
@@ -405,7 +484,7 @@ int pmp_region_free_atomic(int region_idx)
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
   }
 
-  int reg_idx = region_register_idx(region_idx);
+  pmpreg_id_t reg_idx = region_register_idx(region_idx);
   UNSET_BIT(region_def_bitmap, region_idx);
   UNSET_BIT(reg_bitmap, reg_idx);
   if(region_needs_two_entries(region_idx))
@@ -439,18 +518,29 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
   /* if the address covers the entire RAM or it's NAPOT */
   if ((size == -1UL && start == 0) ||
       (!(size & (size - 1)) && !(start & (size - 1)))) {
-    return pmp_napot_region_init(start, size, priority, rid, allow_overlap);
+    return napot_region_init(start, size, priority, rid, allow_overlap);
   }
   else
   {
-    /* TOR region is very restricted, since it consumes an adjacent pmp entry */
     if(priority != PMP_PRI_ANY &&
-        (priority != PMP_PRI_TOP || start != 0))
-    {
-      // We could've gave away the two PMP entries, but we just don't.
+      (priority != PMP_PRI_TOP || start != 0)) {
       PMP_ERROR(PMP_REGION_IMPOSSIBLE_TOR, "The top-priority TOR PMP entry must start from address 0");
     }
 
-    return pmp_tor_region_init(start, size, priority, rid, allow_overlap);
+    return tor_region_init(start, size, priority, rid, allow_overlap);
   }
+}
+
+uintptr_t pmp_region_get_addr(region_id_t i)
+{
+  if(is_pmp_region_valid(i))
+    return region_get_addr(i);
+  return 0;
+}
+
+uint64_t pmp_region_get_size(region_id_t i)
+{
+  if(is_pmp_region_valid(i))
+    return region_get_size(i);
+  return 0;
 }
