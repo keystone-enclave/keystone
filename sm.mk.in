@@ -18,10 +18,11 @@ sm_c_srcs = \
   ed25519/fe.c \
   ed25519/ge.c \
   ed25519/sc.c \
+  soc/@TARGET_PLATFORM@/@TARGET_PLATFORM@.c \
 
 sm_asm_srcs = \
   sanitizer.S \
 
 sm_test_srcs =
 
-sm_install_prog_srcs = 
+sm_install_prog_srcs =

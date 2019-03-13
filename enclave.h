@@ -5,10 +5,17 @@
 #ifndef _ENCLAVE_H_
 #define _ENCLAVE_H_
 
+#ifndef TARGET_PLATFORM_HEADER
+#error "SM requires a defined platform to build"
+#endif
+
 #include "pmp.h"
 #include "thread.h"
 #include "sm.h"
 #include "crypto.h"
+
+// Special target platform header, set by configure script
+#include TARGET_PLATFORM_HEADER
 
 #define ATTEST_DATA_MAXLEN  1024
 /* TODO: does not support multithreaded enclave yet */
@@ -54,6 +61,8 @@ struct enclave_t
   /* enclave execution context */
   unsigned int n_thread;
   struct thread_state_t threads[MAX_ENCL_THREADS];
+
+  struct platform_enclave_data_t ped;
 };
 
 /* attestation reports */

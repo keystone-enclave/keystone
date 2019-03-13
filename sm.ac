@@ -1,0 +1,3 @@
+AC_ARG_WITH([target_platform], AS_HELP_STRING([--with-target-platform], [Set a specific platform for the sm to build with]),
+  [AC_SUBST([TARGET_PLATFORM], $with_target_platform, [Set a specific platform for the sm to build with])],
+  [AC_SUBST([TARGET_PLATFORM], default, [Set a specific platform for the sm to build with])])
