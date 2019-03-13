@@ -2,9 +2,16 @@ language: minimal
 dist: xenial
 cache:
   apt: true
+  timeout: 1000 #In seconds
+  directories:
+  # - $TRAVIS_BUILD_DIR/firesim-riscv-tools-prebuilt
+  - $TRAVIS_BUILD_DIR/riscv
+  - $TRAVIS_BUILD_DIR/riscv-linux
+  - $TRAVIS_BUILD_DIR/riscv-qemu
 
 git:
   submodules: false
+  depth: 1
 
 env:
   - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
@@ -13,23 +20,23 @@ addons:
   apt:
     packages:
     - expect
-    - autoconf 
-    - automake 
-    - autotools-dev 
-    - bc 
-    - bison 
-    - build-essential 
-    - curl 
-    - expat 
-    - libexpat-dev 
-    - flex 
+    - autoconf
+    - automake
+    - autotools-dev
+    - bc
+    - bison
+    - build-essential
+    - curl
+    - expat
+    - libexpat-dev
+    - flex
     - gawk
     - gcc
     - git
     - gperf
     - libgmp-dev
     - libmpc-dev
-    - libmpfr-dev 
+    - libmpfr-dev
     - libtool
     - texinfo
     - tmux
@@ -44,27 +51,36 @@ addons:
     - pkg-config
     - libglib2.0-dev
     - libpixman-1-dev
+    - libssl-dev
+
 branches:
   only:
     - dev
     - master
 
+
 before_install:
   - git submodule init -- riscv-linux
   - git submodule init -- riscv-qemu
-  - git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux
-  - git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu
+  - if [ -d "riscv-linux/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux; fi
+  - if [ -d "riscv-qemu/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu; fi
   - git submodule update --depth=1 -- riscv-linux
   - git submodule update --depth=1 -- riscv-qemu
   - ./fast-setup.sh
+  - cp -r riscv-linux/.git riscv-linux-git
+  - cp -r riscv-qemu/.git riscv-qemu-git
 
 jobs:
   include:
+    - stage: cache warmup
+      script: true
     - stage: build everything & test
       script:
         - source ./source.sh
-        - travis_wait 120 make
+        - travis_wait 120 make -j2
         - travis_wait 10 ./scripts/travis.sh
+        - cd riscv-qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-qemu-git  .git;cd ..
+        - cd riscv-linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-linux-git .git;cd ..
       after_failure:
         - cat screenlog.0
         - cat output.log

@@ -1,0 +1,26 @@
+
+    ____                   ____                     __    _                 
+   / __ )__  _________  __/ __ )___  ____ ______   / /   (_)___  __  ___  __
+  / __  / / / / ___/ / / / __  / _ \/ __ `/ ___/  / /   / / __ \/ / / / |/_/
+ / /_/ / /_/ (__  ) /_/ / /_/ /  __/ /_/ / /     / /___/ / / / / /_/ />  <  
+/_____/\__,_/____/\__, /_____/\___/\__,_/_/     /_____/_/_/ /_/\__,_/_/|_|  
+                 /____/                                                     
+[01;32mroot@ucbvax[00m:[01;34m~[00m# busybox --install -s /bin
+[01;32mroot@ucbvax[00m:[01;34m~[00m# insmod keystone-driver.ko
+[01;32mroot@ucbvax[00m:[01;34m~[00m# ./test
+testing stack
+testing fibonacci
+testing long-nop
+testing loop
+testing malloc
+testing fib-bench
+testing untrusted
+Enclave said: hello world!
+Enclave said: 2nd hello world!
+Enclave said value: 13
+Enclave said value: 20
+testing attestation
+Attestation report SIGNATURE is valid
+[01;32mroot@ucbvax[00m:[01;34m~[00m# poweroff
+[01;32mroot@ucbvax[00m:[01;34m~[00m# Connection to localhost closed by remote host.
+Connection to localhost closed.
