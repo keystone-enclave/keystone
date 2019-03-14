@@ -47,25 +47,25 @@ struct addr_packed {
     unsigned int mode;
 };
 
-struct mapped_meta {
-    struct addr_packed *meta;
-    int num_pages;
-    unsigned int eid;
-    unsigned int mode;
-};
-
 class Keystone
 {
 private:
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
+  vaddr_t enclave_stk_start;
+  vaddr_t enclave_stk_sz;
+  vaddr_t runtime_stk_sz;
+  vaddr_t untrusted_size;
+  vaddr_t untrusted_start;
   int eid;
   int fd;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   keystone_status_t mapUntrusted(size_t size);
+  keystone_status_t loadUntrusted(void);
   keystone_status_t loadRuntime(void);
+  keystone_status_t loadApp(void);
 public:
   Keystone();
   ~Keystone();
@@ -75,15 +75,6 @@ public:
   keystone_status_t init(const char* filepath, const char* runtime, Params parameters);
   keystone_status_t destroy();
   keystone_status_t run();
-  keystone_status_t initRuntime(const char* filename);
-  struct mapped_meta *keystone_rtld_init_rt_stk(vaddr_t stack_addr, unsigned long size, int *error);
-  struct mapped_meta *keystone_rtld_init_app_stk(size_t app_stack_sz, unsigned long stack_offset, int *error);
-  struct mapped_meta *keystone_app_load_elf_section_NOBITS(void *target_vaddr, size_t len, int *error);
-  struct mapped_meta *keystone_app_load_elf_region(vaddr_t elf_usr_region, void *target_vaddr, size_t len, int *error);
-  struct mapped_meta *rtld_vm_mmap(vaddr_t encl_addr, unsigned long size, vaddr_t rt_ptr, struct elf64_phdr *phdr, int *error);
-  struct mapped_meta **keystone_rtld_init_app(vaddr_t elf_usr_ptr, int *num_pages, int *error);
-//    struct mapped_meta **keystone_rtld_init_app();
-  struct mapped_meta **keystone_rtld_init_runtime(vaddr_t rt_ptr, size_t rt_sz, unsigned long *rt_offset, int *num_rt_pages, int *error);
 
 };
 

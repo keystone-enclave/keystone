@@ -23,11 +23,16 @@
   _IOR(KEYSTONE_IOC_MAGIC, 0x06, struct addr_packed)
 #define KEYSTONE_IOC_FINALIZE_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x07, struct keystone_ioctl_create_enclave)
+#define KEYSTONE_IOC_UTM_ALLOC \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x08, struct addr_packed)
+#define KEYSTONE_IOC_UTM_INIT \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x09, struct keystone_ioctl_create_enclave)
 
 #define RT_NOEXEC 0
 #define USER_NOEXEC 1
 #define RT_FULL 2
 #define USER_FULL 3
+#define UTM_FULL 4
 
 
 struct runtime_params_t {

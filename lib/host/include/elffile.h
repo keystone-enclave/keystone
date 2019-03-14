@@ -13,6 +13,7 @@
 #define PAGE_BITS 12
 #define PAGE_SIZE (1UL<<PAGE_BITS)
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
+#define ROUND_DOWN(n, b) (n & ~((2 << (b-1)) - 1))
 
 class ELFFile 
 {
