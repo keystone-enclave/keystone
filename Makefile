@@ -13,7 +13,7 @@ ifneq ($(KERNELRELEASE),)
 else
 
 PWD := $(shell pwd)
-KDIR := $(PWD)/../qemu-work/linux/
+KDIR := $(PWD)/../riscv-linux
 
 default:
 	$(MAKE) -C $(KDIR) ARCH=riscv SUBDIRS=$(PWD) modules
