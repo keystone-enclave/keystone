@@ -7,11 +7,11 @@
 #include "keystone.h"
 #include <linux/dma-mapping.h>
 
-void init_free_pages(struct list_head* pg_list, vaddr_t base, unsigned int count)
+void init_free_pages(struct list_head* pg_list, vaddr_t ptr, unsigned int count)
 {
   unsigned int i;
   vaddr_t cur;
-  cur = base;
+  cur = ptr;
   for(i=0; i<count; i++)
   {
     put_free_page(pg_list, cur);
@@ -32,7 +32,7 @@ vaddr_t get_free_page(struct list_head* pg_list)
   addr = page->vaddr;
   list_del(&page->freelist);
   kfree(page);
-  
+
   return addr;
 }
 
@@ -44,39 +44,76 @@ void put_free_page(struct list_head* pg_list, vaddr_t page_addr)
   return;
 }
 
-int epm_destroy(epm_t* epm){
+/* Destroy all memory associated with an EPM */
+int epm_destroy(epm_t* epm) {
 
   /* Clean anything in the free list */
   epm_clean_free_list(epm);
 
-#ifdef CONFIG_CMA
-  if(epm->base != 0){
-    dma_free_coherent(keystone_dev.this_device, 
-        (0x1 << epm->order) << PAGE_SHIFT,
-        epm->base,
+  if(!epm->ptr || !epm->size)
+    return 0;
+
+  /* free the EPM hold by the enclave */
+  if (epm->is_cma) {
+    dma_free_coherent(keystone_dev.this_device,
+        epm->size,
+        (void*) epm->ptr,
         epm->pa);
+  } else {
+    free_pages(epm->ptr, epm->order);
   }
-#else
-  if(epm->base != 0){
-    free_pages(epm->base, epm->order);
-  }
-#endif
-  
+
   return 0;
 }
 
-void epm_init(epm_t* epm, vaddr_t base, unsigned int count)
+/* Create an EPM and initialize the free list */
+int epm_init(epm_t* epm, unsigned int min_pages)
 {
   pte_t* t;
-  
-  init_free_pages(&epm->epm_free_list, base, count); 
-  epm->base = base;
-  epm->total = count * PAGE_SIZE; 
+  vaddr_t epm_vaddr = 0;
+  unsigned long order = 0;
+  unsigned long count = min_pages;
+  phys_addr_t device_phys_addr = 0;
 
+  /* allocate contiguous memory */
+#ifdef CONFIG_CMA
+  epm_vaddr = (vaddr_t) dma_alloc_coherent(keystone_dev.this_device,
+      count << PAGE_SHIFT,
+      &device_phys_addr,
+      GFP_KERNEL);
+#endif
+  /* If CMA fails, we fall back to the buddy allocator */
+  epm->is_cma = !epm_vaddr || !device_phys_addr;
+  if(epm->is_cma) {
+    order = ilog2(min_pages - 1) + 1;
+    count = 0x1 << order;
+    epm_vaddr = (vaddr_t) __get_free_pages(GFP_HIGHUSER, order);
+  }
+
+  if(!epm_vaddr) {
+    keystone_err("failed to allocate %lu page(s)\n", count);
+    return -ENOMEM;
+  }
+
+  /* zero out */
+  memset((void*)epm_vaddr, 0, PAGE_SIZE*count);
+
+  INIT_LIST_HEAD(&epm->epm_free_list);
+  init_free_pages(&epm->epm_free_list, epm_vaddr, count);
+
+  /* The first free page will be the enclave's top-level page table */
   t = (pte_t*) get_free_page(&epm->epm_free_list);
+  if (!t) {
+    return -ENOMEM;
+  }
+
   epm->root_page_table = t;
-  
-  return;
+  epm->pa = __pa(epm_vaddr);
+  epm->order = order;
+  epm->size = count << PAGE_SHIFT;
+  epm->ptr = epm_vaddr;
+
+  return 0;
 }
 
 int epm_clean_free_list(epm_t* epm)
@@ -101,7 +138,7 @@ int utm_destroy(utm_t* utm){
   if(utm->ptr != NULL){
     free_pages((vaddr_t)utm->ptr, utm->order);
   }
-  
+
   return 0;
 }
 
@@ -129,7 +166,7 @@ int utm_init(utm_t* utm, size_t untrusted_size)
   count = 0x1 << order;
 
   utm->order = order;
-  
+
   utm->ptr = (void*) __get_free_pages(GFP_HIGHUSER, order);
   if (!utm->ptr) {
     return -ENOMEM;

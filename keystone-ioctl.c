@@ -11,10 +11,10 @@
 int keystone_create_enclave(struct file* filp, unsigned long arg)
 {
   int ret;
-  
+
   /* create parameters */
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave*) arg;
-  
+
   // User ELF
   void* __user user_elf_ptr = (void*) enclp->user_elf_ptr;
   size_t user_elf_size = enclp->user_elf_size;
@@ -28,7 +28,7 @@ int keystone_create_enclave(struct file* filp, unsigned long arg)
   // Untrusted mmap size
   void* untrusted_ptr = (void*) enclp->params.untrusted_ptr;
   size_t untrusted_size = enclp->params.untrusted_size;
- 
+
   // runtime parameters
   struct keystone_sbi_create_t create_args;
 
@@ -38,7 +38,7 @@ int keystone_create_enclave(struct file* filp, unsigned long arg)
   unsigned long rt_offset;
   unsigned long min_pages = calculate_required_pages(user_elf_size, user_stack_size, runtime_elf_size, runtime_stack_size);
   struct utm_t* utm;
-  
+
   /* argument validity */
   if (!user_elf_ptr || !runtime_elf_ptr || !user_elf_size || !runtime_elf_size){
     ret = -EINVAL;
@@ -51,7 +51,7 @@ int keystone_create_enclave(struct file* filp, unsigned long arg)
     ret = -ENOMEM;
     goto error_no_free;
   }
-  
+
   /* initialize runtime */
   ret = -EFAULT;
   if (keystone_rtld_init_runtime(enclave, runtime_elf_ptr, runtime_elf_size, runtime_stack_size, &rt_offset)) {
@@ -77,7 +77,7 @@ int keystone_create_enclave(struct file* filp, unsigned long arg)
     goto error_destroy_enclave;
 
   filp->private_data = utm;
-  enclave->utm = utm; 
+  enclave->utm = utm;
 
   if (keystone_rtld_init_untrusted(enclave, untrusted_ptr, untrusted_size)) {
     keystone_err("failed to initialize untrusted memory\n");
@@ -86,7 +86,7 @@ int keystone_create_enclave(struct file* filp, unsigned long arg)
 
   /* SBI Call */
   create_args.epm_region.paddr = enclave->epm->pa;
-  create_args.epm_region.size = enclave->epm->total;
+  create_args.epm_region.size = enclave->epm->size;
   create_args.utm_region.paddr = __pa(utm->ptr);
   create_args.utm_region.size = utm->size;
 
@@ -108,13 +108,13 @@ int keystone_create_enclave(struct file* filp, unsigned long arg)
      managing them, they are part of the enclave now. */
   utm_clean_free_list(utm);
   epm_clean_free_list(enclave->epm);
-  
+
   return 0;
 
  error_destroy_enclave:
   /* This can handle partial initialization failure */
   destroy_enclave(enclave);
-  
+
  error_no_free:
   return ret;
 }
@@ -157,7 +157,7 @@ int keystone_run_enclave(struct file* filp, unsigned long arg)
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
-  
+
   ret = SBI_CALL_1(SBI_SM_RUN_ENCLAVE, enclave->eid);
   /* if the enclave is timer-interrupted, just resume the enclave */
   while(ret == ENCLAVE_INTERRUPTED)
@@ -176,7 +176,7 @@ int keystone_resume_enclave(struct file* filp, unsigned long arg)
   unsigned long ueid = resume->eid;
   enclave_t* enclave;
   enclave = get_enclave_by_id(ueid);
-  
+
   if(!enclave)
   {
     keystone_err("invalid enclave id\n");
@@ -203,7 +203,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 
   if(!arg)
     return -EINVAL;
- 
+
   ioc_size = _IOC_SIZE(cmd);
   ioc_size = ioc_size > sizeof(data) ? sizeof(data) : ioc_size;
 
@@ -230,7 +230,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 
   if(copy_to_user((void __user*) arg, data, ioc_size))
     return -EFAULT;
-  
+
   return ret;
 }
 
