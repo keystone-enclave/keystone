@@ -211,6 +211,8 @@ vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags
 {
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
   vaddr_t page_addr = get_free_page(&utm->utm_free_list);
+
+
   *pte = pte_create(ppn(page_addr), flags | PTE_V);
   return page_addr;
 }
