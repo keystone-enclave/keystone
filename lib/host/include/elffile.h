@@ -9,22 +9,48 @@
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
+#include "common.h"
+#include "elf.h"
+#include "keystone_user.h"
 
-class ELFFile 
+class ELFFile
 {
   public:
     ELFFile(std::string filename);
     ~ELFFile();
-    unsigned long setEntry(unsigned long _entry) { entry = _entry; return entry;}
-    unsigned long getEntry() { return entry; }
-    void* getPtr() { return ptr; }
-    size_t getSize() { return size; }
+    size_t getFileSize() { return fileSize; }
     bool isValid();
+
+    vaddr_t getMinVaddr() { return minVaddr; }
+    size_t getTotalMemorySize() { return maxVaddr - minVaddr; }
+    bool initialize(bool isRuntime);
+
+    unsigned int getPageMode() { return (isRuntime ? RT_FULL : USER_FULL); }
+
+    /* libelf wrapper function */
+    size_t getNumProgramHeaders(void);
+    size_t getProgramHeaderType(size_t ph);
+    size_t getProgramHeaderFileSize(size_t ph);
+    size_t getProgramHeaderMemorySize(size_t ph);
+    vaddr_t getProgramHeaderVaddr(size_t ph);
+    vaddr_t getEntryPoint();
+    void* getProgramSegment(size_t ph);
+
   private:
     int filep;
-    unsigned long entry;
+
+    /* virtual addresses */
+    vaddr_t minVaddr;
+    vaddr_t maxVaddr;
+
     void* ptr;
-    size_t size;
+    size_t fileSize;
+
+    /* is this runtime binary */
+    bool isRuntime;
+
+    /* libelf structure */
+    elf_t elf;
 };
 
 #endif /* loader */

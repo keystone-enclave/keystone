@@ -14,38 +14,41 @@
 #include <iostream>
 #include <cstring>
 #include <stdarg.h>
+#include <assert.h>
+#include "common.h"
 #include "elffile.h"
 #include "params.h"
-
-#define BOOST_STRINGIZE(X) BOOST_DO_STRINGIZE(X)
-#define BOOST_DO_STRINGIZE(X) #X
-
-#define KEYSTONE_DEV_PATH "/dev/keystone_enclave"
-
-#define MSG(str) "[Keystone SDK] " __FILE__ ":" BOOST_STRINGIZE(__LINE__) " : " str
-#define ERROR(str, ...) fprintf(stderr, MSG(str) "\n", ##__VA_ARGS__)
-#define PERROR(str) perror(MSG(str))
 
 class Keystone;
 typedef void (*OcallFunc)(void*);
 
-typedef enum {
-  KEYSTONE_ERROR=-1,
-  KEYSTONE_SUCCESS,
-  KEYSTONE_NOT_IMPLEMENTED,
-} keystone_status_t;
+struct addr_packed {
+    vaddr_t va;
+    vaddr_t copied;
+    unsigned int eid;
+    unsigned int mode;
+};
 
 class Keystone
 {
 private:
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
+  vaddr_t enclave_stk_start;
+  vaddr_t enclave_stk_sz;
+  vaddr_t runtime_stk_sz;
+  vaddr_t untrusted_size;
+  vaddr_t untrusted_start;
   int eid;
   int fd;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   keystone_status_t mapUntrusted(size_t size);
+  keystone_status_t loadUntrusted(void);
+  keystone_status_t loadELF(ELFFile* file);
+  keystone_status_t initStack(vaddr_t start, size_t size, bool is_rt);
+  keystone_status_t allocPage(vaddr_t va, void* src, unsigned int mode);
 public:
   Keystone();
   ~Keystone();
@@ -55,7 +58,13 @@ public:
   keystone_status_t init(const char* filepath, const char* runtime, Params parameters);
   keystone_status_t destroy();
   keystone_status_t run();
-  keystone_status_t initRuntime(const char* filename);
+
 };
+
+unsigned long calculate_required_pages(
+        unsigned long eapp_sz,
+        unsigned long eapp_stack_sz,
+        unsigned long rt_sz,
+        unsigned long rt_stack_sz);
 
 #endif

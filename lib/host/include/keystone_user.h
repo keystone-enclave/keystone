@@ -19,6 +19,21 @@
   _IOR(KEYSTONE_IOC_MAGIC, 0x04, struct keystone_ioctl_run_enclave)
 #define KEYSTONE_IOC_RESUME_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x05, struct keystone_ioctl_run_enclave)
+#define KEYSTONE_IOC_ADD_PAGE \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x06, struct addr_packed)
+#define KEYSTONE_IOC_FINALIZE_ENCLAVE \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x07, struct keystone_ioctl_create_enclave)
+#define KEYSTONE_IOC_UTM_ALLOC \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x08, struct addr_packed)
+#define KEYSTONE_IOC_UTM_INIT \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x09, struct keystone_ioctl_create_enclave)
+
+#define RT_NOEXEC 0
+#define USER_NOEXEC 1
+#define RT_FULL 2
+#define USER_FULL 3
+#define UTM_FULL 4
+
 
 struct runtime_params_t {
   __u64 runtime_entry;
@@ -28,20 +43,13 @@ struct runtime_params_t {
 };
 
 struct keystone_ioctl_create_enclave {
-  __u64 eid;
-  
-  // User ELF
-  __u64 user_elf_ptr;
-  __u64 user_elf_size;
-  __u64 user_stack_size;
+    __u64 eid;
 
-  // Runtime ELF
-  __u64 runtime_elf_ptr;
-  __u64 runtime_elf_size;
-  __u64 runtime_stack_size;
+    //Min pages required
+    __u64 min_pages;
 
-  // Runtime Parameters
-  struct runtime_params_t params;
+    // Runtime Parameters
+    struct runtime_params_t params;
 };
 
 struct keystone_ioctl_run_enclave {
@@ -51,5 +59,6 @@ struct keystone_ioctl_run_enclave {
   __u64 args_size;
   __u64 ret;
 };
+
 
 #endif
