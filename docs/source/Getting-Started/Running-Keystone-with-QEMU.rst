@@ -56,24 +56,24 @@ Compile Sources
 Build All
 ########################
 
-If you want to build all, simply run ``make hifive``.
+If you want to build all, simply run ``make``.
 
-(You may run ``make`` which will build a Busybear based qemu-only
-image, this is in the process of being depricated and eventually
-``make hifive`` will become the default)
+(You may run ``make busybear`` which will build a Busybear based
+qemu-only image, this is in the process of being deprecated and
+eventually will be removed)
 
 ``PATH`` must include the RISC-V tool path.
 
 ::
 
-  make hifive
+  make
 
 If you want to manually build each individual component, please follow the instructions below.
 Otherwise, skip to :ref:`LaunchQEMU`.
 
 .. attention::
 
-  Currently, ``make`` requires sudo previlege to build Busybear image.
+  Currently, ``make busybear`` requires sudo previlege to build Busybear image.
 
 Build Busybear
 ################################
@@ -174,7 +174,7 @@ The root of trust then jumps to the SM, and the SM boots Linux!
 
 ::
 
-   ./scripts/run-hifive-qemu.sh
+   ./scripts/run-qemu.sh
 
 Login as ``root`` with the password ``sifive``.
 
@@ -184,11 +184,16 @@ Or if you want to run the busy-bear based image
 ::
 
    sudo chmod og+w busybear-linux/busybear.bin
-  ./scripts/run-qemu.sh
+   /scripts/run-busybear-qemu.sh
 
 Login as ``root`` with the password ``busybear``.
 
 You can exit QEMU by ``ctrl-a``+``x`` or using ``poweroff`` command
+
+Note that the launch scripts for QEMU will start ssh on a random
+forwarded localhost port (this is to allow multiple qemu test runs on
+the same development machine). The script will print what port it has
+forwarded ssh to on start.
 
 Insert Keystone Driver
 ##################################

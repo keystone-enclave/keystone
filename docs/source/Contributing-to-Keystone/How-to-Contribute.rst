@@ -36,5 +36,17 @@ specific builds!
 General Contributions
 --------------------------------
 
-Fork ``keystone`` repo to your own account, mess around, and submit a pull request (PR) to the remote ``develop`` branch.
-A PR must be separated if it contains multiple patches for different parts.
+General workflow is as follows:
+
+ - Fork ``keystone`` repo
+ - Create a branch (ex: ``dev-cool-feature``)
+ - PR your branch to ``keystone`` on the ``dev`` branch
+ - Make sure all CI tests pass
+ - Wait for reviews
+
+If you are modifying a submodule:
+
+ - Fork ``$submodule`` repo
+ - Create a branch (ex: ``keystone-another-fix``)
+ - PR your branch to ``$submodule`` on ``keystone`` branch
+ - Wait for reviews

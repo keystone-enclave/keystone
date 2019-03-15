@@ -5,6 +5,9 @@
 
 Visit [Project Website](https://keystone-enclave.org) for more information.
 
+The ``dev`` branch is more up-to-date than ``master`` always. Until
+there are stable releases we suggest only using ``dev``.
+
 # Quick Start
 
 ```bash
@@ -34,12 +37,12 @@ Setup Tools and Submodules
 
 Build All for QEMU
 ```
-make hifive
+make
 ```
 
 Run QEMU
 ```
-./scripts/run-hifive-qemu.sh
+./scripts/run-qemu.sh
 ```
 
 Test
@@ -59,7 +62,9 @@ poweroff
 
 # Documentation
 
-See [docs](http://docs.keystone-enclave.org) for detailed documentation.
+See [docs](http://docs.keystone-enclave.org) for detailed
+documentation. You may wish to switch to the dev version of the docs,
+rather than 'latest'.
 
 # Contributing
 

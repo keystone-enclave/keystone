@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export HOST_PORT=${HOST_PORT:="$((3000 + RANDOM % 3000))"}
+
 # Launch QEMU test
 screen -L -dmS qemu ./scripts/run-qemu.sh
 sleep 10
