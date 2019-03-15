@@ -23,11 +23,12 @@ Keystone::Keystone() {
 }
 
 Keystone::~Keystone() {
+  if(runtimeFile)
     delete runtimeFile;
+  if(enclaveFile)
     delete enclaveFile;
-    destroy();
+  destroy();
 }
-
 
 unsigned long calculate_required_pages(
         unsigned long eapp_sz,
@@ -249,6 +250,8 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   /* ELF files are no longer needed */
   delete enclaveFile;
   delete runtimeFile;
+  enclaveFile = NULL;
+  runtimeFile = NULL;
 
   return mapUntrusted(params.getUntrustedSize());
 }
