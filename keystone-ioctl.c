@@ -283,6 +283,10 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
     case KEYSTONE_IOC_RESUME_ENCLAVE:
       ret = keystone_resume_enclave((unsigned long) data);
       break;
+    /* Note that following commands could have been implemented as a part of ADD_PAGE ioctl.
+     * However, there was a weird bug in compiler that generates a wrong control flow
+     * that ends up with an illegal instruction if we combine switch-case and if statements.
+     * We didn't identified the exact problem, so we'll have these until we figure out */
     case KEYSTONE_IOC_UTM_ALLOC:
       ret = utm_alloc((unsigned long) data);
       break;
