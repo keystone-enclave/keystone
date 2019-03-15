@@ -14,31 +14,13 @@
 #include <iostream>
 #include <cstring>
 #include <stdarg.h>
+#include <assert.h>
+#include "common.h"
 #include "elffile.h"
 #include "params.h"
 
-
-#define BOOST_STRINGIZE(X) BOOST_DO_STRINGIZE(X)
-#define BOOST_DO_STRINGIZE(X) #X
-
-#define KEYSTONE_DEV_PATH "/dev/keystone_enclave"
-
-#define MSG(str) "[Keystone SDK] " __FILE__ ":" BOOST_STRINGIZE(__LINE__) " : " str
-#define ERROR(str, ...) fprintf(stderr, MSG(str) "\n", ##__VA_ARGS__)
-#define PERROR(str) perror(MSG(str))
-
-typedef uintptr_t vaddr_t;
-typedef uintptr_t paddr_t;
-
 class Keystone;
 typedef void (*OcallFunc)(void*);
-
-typedef enum {
-  KEYSTONE_ERROR=-1,
-  KEYSTONE_SUCCESS,
-  KEYSTONE_NOT_IMPLEMENTED,
-} keystone_status_t;
-
 
 struct addr_packed {
     vaddr_t va;
@@ -64,8 +46,9 @@ private:
   OcallFunc oFuncDispatch;
   keystone_status_t mapUntrusted(size_t size);
   keystone_status_t loadUntrusted(void);
-  keystone_status_t loadRuntime(void);
-  keystone_status_t loadApp(void);
+  keystone_status_t loadELF(ELFFile* file);
+  keystone_status_t initStack(vaddr_t start, size_t size, bool is_rt);
+  keystone_status_t allocPage(vaddr_t va, void* src, unsigned int mode);
 public:
   Keystone();
   ~Keystone();

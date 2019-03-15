@@ -36,7 +36,7 @@
   cfree(void* p);
      Equivalent to free(p).
   malloc_trim(size_t pad);
-     Release all but pad bytes of freed top-most memory back 
+     Release all but pad bytes of freed top-most memory back
      to the system. Return 1 if successful, else 0.
   malloc_usable_size(void* p);
      Report the number usable allocated bytes associated with allocated
@@ -78,8 +78,9 @@ typedef struct freelist_entry {
   struct freelist_entry *next;
 } *fle;
 
-extern void * __malloc_end;
-extern fle __malloc_freelist;
+static fle __malloc_freelist = 0;
+static void * __malloc_end = 0;
+//fle __malloc_freelist;
 
 /* Return the number of bytes that need to be added to X to make it
    aligned to an ALIGN boundary.  ALIGN must be a power of 2.  */
@@ -90,7 +91,7 @@ extern fle __malloc_freelist;
 #define M_ALIGN_SUB(x, align) ((size_t)(x) & ((align) - 1))
 
 extern char *__malloc_start;
-extern char *__malloc_zone_stop; /* dkohlbre: added since our malloc region is static */
+//extern char *__malloc_zone_stop; /* dkohlbre: added since our malloc region is static */
 
 /* This is the minimum gap allowed between __malloc_end and the top of
    the stack.  This is only checked for when __malloc_end is
@@ -102,7 +103,7 @@ extern char *__malloc_zone_stop; /* dkohlbre: added since our malloc region is s
 register void * stack_pointer asm ("r15");
 #define MALLOC_LIMIT stack_pointer
 #else
-#define MALLOC_LIMIT (&__malloc_zone_stop) /* dkohlbre: modification for our malloc region */
+#define MALLOC_LIMIT __builtin_frame_address(0)/* dkohlbre: modification for our malloc region */
 #endif
 
 #if MALLOC_DIRECTION < 0
@@ -122,8 +123,6 @@ register void * stack_pointer asm ("r15");
    ? sizeof (struct freelist_entry)				\
    : sz + sizeof (size_t) + M_ALIGN(sz, sizeof (size_t)))
 
-void * __malloc_end = &__malloc_start;
-fle __malloc_freelist;
 
 void *
 malloc (size_t sz)
@@ -135,18 +134,18 @@ malloc (size_t sz)
   if(__malloc_end == NULL){
     __malloc_end = &__malloc_start;
   }
-  
+
   /* real_size is the size we actually have to allocate, allowing for
      overhead and alignment.  */
   size_t real_size = REAL_SIZE (sz);
 
   /* Look for the first block on the freelist that is large enough.  */
-  for (nextfree = &__malloc_freelist; 
-       *nextfree; 
-       nextfree = &(*nextfree)->next)  
+  for (nextfree = &__malloc_freelist;
+       *nextfree;
+       nextfree = &(*nextfree)->next)
     {
       block = *nextfree;
-      
+
       if (block->size >= real_size)
 	{
 	  /* If the block found is just the right size, remove it from
@@ -175,7 +174,7 @@ malloc (size_t sz)
 	  size_t moresize = real_size - block->size;
 	  if (! CAN_ALLOC_P (moresize))
 	    return NULL;
-	  
+
 	  *nextfree = NULL;
 	  if (MALLOC_DIRECTION < 0)
 	    {
@@ -219,11 +218,11 @@ free (void *block_p)
 
   if (block_p == NULL)
     return;
-  
+
   /* Look on the freelist to see if there's a free block just before
      or just after this block.  */
-  for (nextfree = &__malloc_freelist; 
-       *nextfree; 
+  for (nextfree = &__malloc_freelist;
+       *nextfree;
        nextfree = &(*nextfree)->next)
     {
       fle thisblock = *nextfree;
@@ -243,7 +242,7 @@ free (void *block_p)
 	{
 	  if (MALLOC_DIRECTION < 0
 	      && thisblock->next
-	      && (size_t) block == ((size_t) thisblock->next 
+	      && (size_t) block == ((size_t) thisblock->next
 				    + thisblock->next->size))
 	    {
 	      *nextfree = thisblock->next;
@@ -286,7 +285,7 @@ realloc (void *block_p, size_t sz)
     {
       void *result;
       size_t old_size = old_real_size - sizeof (size_t);
-      
+
       /* Need to allocate, copy, and free.  */
       result = malloc (sz);
       if (result == NULL)
@@ -345,9 +344,9 @@ memalign (size_t align, size_t sz)
      it should go on the freelist, or it'll be lost---we could add it
      to the size of the block before it in memory, but finding the
      previous block is expensive.  */
-  for (nextfree = &__malloc_freelist; 
-       ; 
-       nextfree = &(*nextfree)->next)  
+  for (nextfree = &__malloc_freelist;
+       ;
+       nextfree = &(*nextfree)->next)
     {
       size_t before_size;
       size_t old_size;
@@ -358,7 +357,7 @@ memalign (size_t align, size_t sz)
 	  old_size = real_size;
 	  if (MALLOC_DIRECTION < 0)
 	    {
-	      old_size += M_ALIGN_SUB (((size_t)__malloc_end 
+	      old_size += M_ALIGN_SUB (((size_t)__malloc_end
 					- old_size + sizeof (size_t)),
 				       align);
 	      if (! CAN_ALLOC_P (old_size))
@@ -383,7 +382,7 @@ memalign (size_t align, size_t sz)
 	  block = *nextfree;
 	  old_size = block->size;
 	}
-      
+
 
       before_size = M_ALIGN (&block->next, align);
       if (before_size != 0)
@@ -420,7 +419,7 @@ memalign (size_t align, size_t sz)
 
       if (old_size >= real_size + before_size)
 	{
-	  /* This block will do.  If there needs to be space before it, 
+	  /* This block will do.  If there needs to be space before it,
 	     split the block.  */
 	  if (before_size != 0)
 	    {
@@ -428,17 +427,17 @@ memalign (size_t align, size_t sz)
 
 	      old_block->size = before_size;
 	      block = (fle)((size_t)block + before_size);
-	      
+
 	      /* If there's no space after the block, we're now nearly
-                 done; just make a note of the size required.  
+                 done; just make a note of the size required.
 	         Otherwise, we need to create a new free space block.  */
-	      if (old_size - before_size 
+	      if (old_size - before_size
 		  <= real_size + sizeof (struct freelist_entry))
 		{
 		  block->size = old_size - before_size;
 		  return (void *)&block->next;
 		}
-	      else 
+	      else
 		{
 		  fle new_block;
 		  new_block = (fle)((size_t)block + real_size);
@@ -497,7 +496,7 @@ pvalloc (size_t sz)
 #ifdef DEFINE_MALLINFO
 #include "malloc.h"
 
-struct mallinfo 
+struct mallinfo
 mallinfo (void)
 {
   struct mallinfo r;
@@ -530,7 +529,7 @@ mallinfo (void)
     total_size = (char *)__malloc_end - (char *)&__malloc_start;
   else
     total_size = (char *)&__malloc_start - (char *)__malloc_end;
-  
+
 #ifdef DEBUG
   /* Fixme: should walk through all the in-use blocks and see if
      they're valid.  */
@@ -548,12 +547,12 @@ mallinfo (void)
 #include "malloc.h"
 #include <stdio.h>
 
-void 
+void
 malloc_stats(void)
 {
   struct mallinfo i;
   FILE *fp;
-  
+
   fp = stderr;
   i = mallinfo();
   fprintf (fp, "malloc has reserved %u bytes between %p and %p\n",
@@ -567,7 +566,7 @@ malloc_stats(void)
 #endif
 
 #ifdef DEFINE_MALLOC_USABLE_SIZE
-size_t 
+size_t
 malloc_usable_size (void *block_p)
 {
   fle block = (fle)((size_t) block_p - offsetof (struct freelist_entry, next));

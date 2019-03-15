@@ -415,10 +415,8 @@ uint32_t
 elf_getProgramHeaderType(elf_t *elfFile, size_t ph)
 {
     if (elf_isElf32(elfFile)) {
-      printf("32\n");
         return elf32_getProgramHeaderType(elfFile, ph);
     } else {
-      printf("64\n");
         return elf64_getProgramHeaderType(elfFile, ph);
     }
 }
