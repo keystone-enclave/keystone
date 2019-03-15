@@ -16,6 +16,10 @@
 #define PERROR(str) perror(MSG(str))
 #define IS_ALIGNED(x, align) (!((x)&(align-1)))
 
+/* Currently we have only one command avaiable from the enclave.
+ * We need to move it out to other header file (e.g., keystone-sm.h) */
+#define KEYSTONE_ENCLAVE_EDGE_CALL_HOST  11
+
 /* Types */
 typedef uintptr_t vaddr_t;
 typedef uintptr_t paddr_t;

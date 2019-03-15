@@ -42,8 +42,12 @@ unsigned long calculate_required_pages(
     req_pages += ceil(rt_sz / PAGE_SIZE);
     req_pages += ceil(rt_stack_sz / PAGE_SIZE);
 
-    // FIXME: calculate the required number of pages for the page table.
-    // For now, we must allocate at least 1 (top) + 2 (enclave) + 2 (runtime) pages for pg tables
+    /* FIXME: calculate the required number of pages for the page table.
+     * We actually don't know how many page tables the enclave might need,
+     * because the SDK never knows how its memory will be aligned.
+     * Ideally, this should be managed by the driver.
+     * For now, we naively allocate enough pages so that we can temporarily get away from this problem.
+     * 15 pages will be more than sufficient to cover several hundreds of megabytes of enclave/runtime. */
     req_pages += 15;
     return req_pages;
 }
@@ -96,6 +100,7 @@ keystone_status_t Keystone::allocPage(vaddr_t va, void* src, unsigned int mode)
 
   if (ioctl(fd, KEYSTONE_IOC_ADD_PAGE, &encl_page)) {
     PERROR("failed to add page - ioctl() failed");
+    destroy();
     return KEYSTONE_ERROR;
   }
   return KEYSTONE_SUCCESS;
@@ -161,11 +166,13 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 
   if(!runtimeFile->initialize(true)) {
     ERROR("Invalid runtime ELF\n");
+    destroy();
     return KEYSTONE_ERROR;
   }
 
   if(!enclaveFile->initialize(false)) {
     ERROR("Invalid enclave ELF\n");
+    destroy();
     return KEYSTONE_ERROR;
   }
 
@@ -177,15 +184,18 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if (fd < 0) {
     PERROR("cannot open device file");
+    destroy();
     return KEYSTONE_ERROR;
   }
 
   if (!runtimeFile->isValid()) {
     ERROR("runtime file is not valid");
+    destroy();
     return KEYSTONE_ERROR;
   }
   if (!enclaveFile->isValid()) {
     ERROR("enclave file is not valid");
+    destroy();
     return KEYSTONE_ERROR;
   }
 
@@ -211,6 +221,7 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 
   if (ret) {
     ERROR("failed to create enclave - ioctl() failed: %d", ret);
+    destroy();
     return KEYSTONE_ERROR;
   }
 
@@ -218,11 +229,13 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 
   if(loadELF(runtimeFile) != KEYSTONE_SUCCESS) {
     ERROR("failed to load runtime ELF");
+    destroy();
     return KEYSTONE_ERROR;
   }
 
   if(loadELF(enclaveFile) != KEYSTONE_SUCCESS) {
     ERROR("failed to load enclave ELF");
+    destroy();
     return KEYSTONE_ERROR;
   }
 
@@ -235,6 +248,7 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 
   if (ret) {
     ERROR("failed to init untrusted memory - ioctl() failed: %d", ret);
+    destroy();
     return KEYSTONE_ERROR;
   }
 
@@ -244,6 +258,14 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 
   if (ret) {
     ERROR("failed to finalize enclave - ioctl() failed: %d", ret);
+    destroy();
+    return KEYSTONE_ERROR;
+  }
+
+  if (mapUntrusted(params.getUntrustedSize()))
+  {
+    ERROR("failed to finalize enclave - cannot obtain the untrusted buffer pointer \n");
+    destroy();
     return KEYSTONE_ERROR;
   }
 
@@ -253,36 +275,56 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   enclaveFile = NULL;
   runtimeFile = NULL;
 
-  return mapUntrusted(params.getUntrustedSize());
+  return KEYSTONE_SUCCESS;
 }
 
-keystone_status_t Keystone::mapUntrusted(size_t size) {
+keystone_status_t Keystone::mapUntrusted(size_t size)
+{
+  if (size == 0) {
+    return KEYSTONE_SUCCESS;
+  }
+
   shared_buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
   if (shared_buffer == NULL) {
     return KEYSTONE_ERROR;
   }
+
   shared_buffer_size = size;
 
   return KEYSTONE_SUCCESS;
 }
 
-keystone_status_t Keystone::destroy() {
-  struct keystone_ioctl_create_enclave enclp;
-  enclp.eid = eid;
-  int ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &enclp);
+keystone_status_t Keystone::destroy()
+{
+  /* if the enclave has ever created, we destroy it. */
+  if(eid >= 0)
+  {
+    struct keystone_ioctl_create_enclave enclp;
+    enclp.eid = eid;
+    int ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &enclp);
 
-  if (ret) {
-    ERROR("failed to destroy enclave - ioctl() failed: %d", ret);
-    return KEYSTONE_ERROR;
+    if (ret) {
+      ERROR("failed to destroy enclave - ioctl() failed: %d", ret);
+      return KEYSTONE_ERROR;
+    }
+  }
+
+  if(enclaveFile) {
+    delete enclaveFile;
+    enclaveFile = NULL;
+  }
+
+  if(runtimeFile) {
+    delete runtimeFile;
+    runtimeFile = NULL;
   }
 
   return KEYSTONE_SUCCESS;
 }
 
-#define KEYSTONE_ENCLAVE_EDGE_CALL_HOST  11
-
-keystone_status_t Keystone::run() {
+keystone_status_t Keystone::run()
+{
   int ret;
   struct keystone_ioctl_run_enclave run;
   run.eid = eid;
@@ -295,8 +337,10 @@ keystone_status_t Keystone::run() {
     }
     ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
   }
+
   if (ret) {
     ERROR("failed to run enclave - ioctl() failed: %d", ret);
+    destroy();
     return KEYSTONE_ERROR;
   }
 
