@@ -63,8 +63,6 @@ int main(int argc, char** argv)
   Keystone enclave;
   Params params;
 
-  params.setEnclaveEntry(0x1000);
-
   enclave.init(argv[1], argv[2], params);
 
   edge_init(&enclave);

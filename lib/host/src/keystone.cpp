@@ -191,8 +191,8 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   /* Call Keystone Driver */
   struct keystone_ioctl_create_enclave enclp;
 
-  enclp.params.runtime_entry = (unsigned long) params.getRuntimeEntry();
-  enclp.params.user_entry = (unsigned long) params.getEnclaveEntry();
+  enclp.params.runtime_entry = (unsigned long) runtimeFile->getEntryPoint();
+  enclp.params.user_entry = (unsigned long) enclaveFile->getEntryPoint();
   enclp.params.untrusted_ptr = (unsigned long) params.getUntrustedMem();
   enclp.params.untrusted_size = (unsigned long) params.getUntrustedSize();
 

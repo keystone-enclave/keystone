@@ -18,9 +18,6 @@ class ELFFile
   public:
     ELFFile(std::string filename);
     ~ELFFile();
-    unsigned long setEntry(unsigned long _entry) { entryPoint = _entry; return _entry; }
-    unsigned long getEntry() { return entryPoint; }
-    void* getPtr() { return ptr; }
     size_t getFileSize() { return fileSize; }
     bool isValid();
 
@@ -36,12 +33,13 @@ class ELFFile
     size_t getProgramHeaderFileSize(size_t ph);
     size_t getProgramHeaderMemorySize(size_t ph);
     vaddr_t getProgramHeaderVaddr(size_t ph);
+    vaddr_t getEntryPoint();
     void* getProgramSegment(size_t ph);
 
   private:
     int filep;
+
     /* virtual addresses */
-    vaddr_t entryPoint;
     vaddr_t minVaddr;
     vaddr_t maxVaddr;
 

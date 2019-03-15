@@ -99,7 +99,12 @@ size_t ELFFile::getProgramHeaderMemorySize(size_t ph)
 
 vaddr_t ELFFile::getProgramHeaderVaddr(size_t ph)
 {
-  return (vaddr_t) elf_getProgramHeaderVaddr(&elf, ph);
+  return elf_getProgramHeaderVaddr(&elf, ph);
+}
+
+vaddr_t ELFFile::getEntryPoint()
+{
+  return elf_getEntryPoint(&elf);
 }
 
 void* ELFFile::getProgramSegment(size_t ph)
