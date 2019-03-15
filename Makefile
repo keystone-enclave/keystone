@@ -5,7 +5,6 @@ DRIVER = keystone-driver.ko
 ifneq ($(KERNELRELEASE),)
 	keystone-driver-y := \
 		keystone.o \
-		keystone-rtld.o \
 		keystone-page.o \
 		keystone-ioctl.o \
 		keystone-enclave.o
