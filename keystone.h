@@ -70,10 +70,11 @@ struct free_page_t {
 typedef struct epm_t {
   struct list_head epm_free_list;
   pte_t* root_page_table;
-  vaddr_t base;
-  paddr_t pa;
+  vaddr_t ptr;
+  size_t size;
   unsigned long order;
-  unsigned int total;
+  paddr_t pa;
+  bool is_cma;
 } epm_t;
 
 typedef struct utm_t {
@@ -120,7 +121,7 @@ void put_free_page(struct list_head* pg_list, vaddr_t page_addr);
 vaddr_t get_free_page(struct list_head* pg_list);
 
 int epm_destroy(epm_t* epm);
-void epm_init(epm_t* epm, vaddr_t base, unsigned int count);
+int epm_init(epm_t* epm, unsigned int count);
 int utm_destroy(utm_t* utm);
 int utm_init(utm_t* utm, size_t untrusted_size);
 int epm_clean_free_list(epm_t* epm);
