@@ -56,7 +56,7 @@ extern struct miscdevice keystone_dev;
 #define SBI_CALL_5(which, arg0, arg1, arg2, arg3, arg4) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, 0)
 #define SBI_CALL_6(which, arg0, arg1, arg2, arg3, arg4, arg5) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5)
 
-void keystone_handle_interrupts(void); 
+void keystone_handle_interrupts(void);
 
 long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
 int keystone_mmap(struct file *filp, struct vm_area_struct *vma);
@@ -85,13 +85,12 @@ typedef struct utm_t {
 } utm_t;
 
 
-typedef struct keystone_enclave_t 
+typedef struct keystone_enclave_t
 {
   unsigned int eid;
   struct utm_t* utm;
   struct epm_t* epm;
 } enclave_t;
-
 
 
 // global debug functions

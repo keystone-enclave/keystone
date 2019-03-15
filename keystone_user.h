@@ -73,14 +73,4 @@ struct addr_packed {
     unsigned int mode;
 };
 
-struct mapped_meta {
-    struct addr_packed *meta;
-    int num_pages;
-    unsigned int eid;
-    unsigned int mode;
-};
-
-
-
-
 #endif
