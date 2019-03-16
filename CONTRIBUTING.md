@@ -2,7 +2,7 @@
 
 ### Submodules
 
-You are recommended to *fork* the submodules to your own GitHub account, modify the code, 
+You are recommended to *fork* the submodules to your own GitHub account, modify the code,
 and send Pull Request (PR) into `master` branch. The admin will review the code before merging.
 
 ### `keystone` repo
@@ -51,13 +51,13 @@ Ideally `dev` should not stay unhealthy more than a few days.
 ### Rules for Submodules (`sdk` and `runtime`)
 
 For `sdk` and `runtime`, `<submodule>:master` means the `master` branch of each submodule.
-For `riscv-pk` and `busybear-linux`, use `keystone` instead of `master` as the master branch.
+For `riscv-pk` use `keystone` instead of `master` as the master branch.
 This is because those repositories are the mirrors of some upstream repos.
 We want to keep `master` clean so that we can pull the upstream changes into `master`.
 
 1. The submodules in `keystone:master` and `keystone:dev` should always point to the commits on `<submodule>:master`.
 2. `master` of submodules should be always healthy (it compiles well and passes some basic tests).
-3. The submodules can also have `dev-<name of task>` branch for each open task. 
+3. The submodules can also have `dev-<name of task>` branch for each open task.
 These kind of branches should be deleted right after merge
 
 # How to Release
@@ -65,7 +65,7 @@ These kind of branches should be deleted right after merge
 ### Version Number
 
 A version number consists of two positive integers: `major` and `minor`. For example, `1.14` means that the major is 1 and the minor is 14.
-The numbers increase on each *major release* or *minor release* respectively. 
+The numbers increase on each *major release* or *minor release* respectively.
 
 ### Releasing
 
@@ -99,4 +99,3 @@ Any other contributions are very welcomed.
 4. More use-case applications
 
 For potential collaboration or large suggestions, please feel free to create an issue or contact us (keystone-leads@googlegroups.com).
-
