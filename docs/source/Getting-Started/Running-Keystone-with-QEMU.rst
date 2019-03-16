@@ -29,7 +29,7 @@ Ubuntu
     Some of the utilities also use ``expect`` so we recommend that you install that as well though it is not strictly necessary.
     ::
       sudo apt install expect
-  
+
 Quick Setup
 ----------------------------
 
@@ -58,10 +58,6 @@ Build All
 
 If you want to build all, simply run ``make``.
 
-(You may run ``make busybear`` which will build a Busybear based
-qemu-only image, this is in the process of being deprecated and
-eventually will be removed)
-
 ``PATH`` must include the RISC-V tool path.
 
 ::
@@ -71,22 +67,6 @@ eventually will be removed)
 If you want to manually build each individual component, please follow the instructions below.
 Otherwise, skip to :ref:`LaunchQEMU`.
 
-.. attention::
-
-  Currently, ``make busybear`` requires sudo previlege to build Busybear image.
-
-Build Busybear
-################################
-
-See `Busybear repo <https://github.com/michaeljclark/busybear-linux>`_ for more information.
-
-We are in the process of deprecating all busybear based builds.
-
-::
-
-  cd busybear-linux
-  make
-  cd ..
 
 Build RISC-V QEMU
 ##################
@@ -104,31 +84,17 @@ You should apply patches before building the QEMU.
 Build Linux Kernel
 ################################################
 
-::
-
-  cd riscv-linux
-  cp ../busybear-linux/conf/linux.config .config
-  make ARCH=riscv olddefconfig
-  make ARCH=riscv vmlinux
-  cd ..
+This is handled as part of the top-level make, see ``hifive.mk`` for
+details.
 
 Build Berkeley Bootloader (BBL) with Keystone Security Monitor
 ##############################################################
 
-Make sure to add ``--enable-sm`` when you run ``configure`` so that the security monitor is included in the bbl.
+This is handled as part of the top-level make, see ``hifive.mk`` for
+details.
 
-::
-
-  cd riscv-pk
-  mkdir build
-  cd build
-  ../configure \
-      --enable-logo \
-      --host=riscv64-unknown-elf \
-      --with-payload=../../riscv-linux/vmlinux \
-      --enable-sm
-  make
-  cd ../..
+Optionally, add ``--with-target-platform=PLATFORM`` if you have a
+platform specific set of files for the security monitor (defined in ``riscv-pk/
 
 Build Root-of-Trust Boot ROM
 ###############################
@@ -146,19 +112,17 @@ Build Keystone Driver
 
   cd linux-keystone-driver
   make
-  make copy
   cd ..
 
 Build Keystone SDK
 #############################
 
-Keystone SDK includes sample enclave programs and some useful libraries. To run sample programs, you should compile SDK library and apps, and copy all of them into the disk image. Following commands will compile the sdk, and copy sample binaries into the ``busybear.bin`` disk image.
+Keystone SDK includes sample enclave programs and some useful libraries. To run sample programs, you should compile SDK library and apps, and copy all of them into the disk image. This is done automatically during the top-level build. If you have modified the applications, simply re-run the top-level ``make``.
 
 ::
 
   cd sdk
   make
-  make copy-tests
   cd ..
 
 
@@ -178,15 +142,6 @@ The root of trust then jumps to the SM, and the SM boots Linux!
 
 Login as ``root`` with the password ``sifive``.
 
-
-Or if you want to run the busy-bear based image
-
-::
-
-   sudo chmod og+w busybear-linux/busybear.bin
-   /scripts/run-busybear-qemu.sh
-
-Login as ``root`` with the password ``busybear``.
 
 You can exit QEMU by ``ctrl-a``+``x`` or using ``poweroff`` command
 

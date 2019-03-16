@@ -16,14 +16,6 @@ Link: `<https://github.com/keystone-enclave/buildroot>`_
 
 Linux buildroot. Builds a minimal working Linux image for our test platforms.
 
-busybear-linux
---------------
-
-Link: `<https://github.com/keystone-enclave/busybear-linux>`_
-
-Unmodified busybear Linux, supporting riscv. Deprecated. Soon to be
-removed.
-
 docs
 ----
 
