@@ -104,6 +104,8 @@ int keystone_run_enclave(unsigned long arg)
     keystone_handle_interrupts();
     ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
   }
+
+  return ret;
 }
 
 int keystone_add_page(unsigned long arg)
@@ -135,7 +137,7 @@ int keystone_add_page(unsigned long arg)
       epm_page = epm_alloc_rt_page(enclave->epm, addr->va);
       if (copy_from_user((void *) epm_page, (void *) addr->copied, PAGE_SIZE) != 0)
         ret = -ENOEXEC;
-        break;
+      break;
     }
     case USER_FULL: {
       epm_page = epm_alloc_user_page(enclave->epm, addr->va);
