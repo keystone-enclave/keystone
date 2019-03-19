@@ -36,7 +36,7 @@
   STORE t4, 29*REGBYTES(sp)
   STORE t5, 30*REGBYTES(sp)
   STORE t6, 31*REGBYTES(sp)
-.endm 
+.endm
 
 .macro CLEAR_ALL_BUT_SP
   mv ra, x0
@@ -73,7 +73,7 @@
 
 .macro RESTORE_ALL_BUT_SP
 
-  // restore context 
+  // restore context
   LOAD ra, 1*REGBYTES(sp)
   LOAD gp, 3*REGBYTES(sp)
   LOAD tp, 4*REGBYTES(sp)
@@ -104,32 +104,35 @@
   LOAD t4, 29*REGBYTES(sp)
   LOAD t5, 30*REGBYTES(sp)
   LOAD t6, 31*REGBYTES(sp)
-.endm 
+.endm
 
 _start:
   /* runtime stack starts from 0x0 and grows downward! */
   li sp, 0
-  
+
   la t0, encl_trap_handler
   csrw stvec, t0
-  
-  /* parameters */
-  
-  // a1: user_entry
-  csrw sepc, a1
-  
-  // a2: untrusted_ptr
-  la t1, shared_buffer
-  STORE a2, (t1)
 
-  // a3: untrusted_size
+  /* parameters */
+  //$sepc: already contains user_entry
+  //$a1: (PA) DRAM base,
+  //$a2: (PA) DRAM size,
+  //$a3: (PA) kernel location,
+  //$a4: (PA) user location,
+  //$a5: (PA) freemem location,
+  //$a6: (VA) utm base,
+  //$a7: (size_t) utm size)
+
+  la t1, shared_buffer
+  STORE a6, (t1)
+
   la t0, shared_buffer_size
-  STORE a3, (t0)
-  
+  STORE a7, (t0)
+
   call init_timer
 
   call init_edge_internals
-	
+
   /* set user stack below the runtime */
   la t0, rt_base
   csrw sscratch, t0
@@ -148,50 +151,50 @@ encl_trap_handler:
   SAVE_ALL_BUT_SP
 
   csrrw t0, sscratch, x0           # t0 <- user sp
-  STORE t0, 2*REGBYTES(sp)         # user sp 
- 
+  STORE t0, 2*REGBYTES(sp)         # user sp
+
   csrr t0, sepc
   STORE t0, (sp)
 
   csrr t0, sstatus
   STORE t0, 32*REGBYTES(sp)
-  
+
   csrr t0, sbadaddr
   STORE t0, 33*REGBYTES(sp)
 
   csrr s2, scause
-  
-  bge s2, zero, 1f 
- 
+
+  bge s2, zero, 1f
+
   /* handle interrupts */
-  
+
   /* clear the MSB */
   slli s2, s2, 1
   srli s2, s2, 1
-  STORE s2, 34*REGBYTES(sp)  
-  
+  STORE s2, 34*REGBYTES(sp)
+
   /* clear enclave context */
   CLEAR_ALL_BUT_SP
-  
+
   mv a0, sp
 
   la t0, handle_interrupts
   jalr t0
-  
+
   j return_to_encl
 1:
   /* handle exceptions */
-  STORE s2, 34*REGBYTES(sp)  
+  STORE s2, 34*REGBYTES(sp)
 
   la t0, rt_trap_table
   sll t1, s2, LOG_REGBYTES
   add t1, t0, t1
   LOAD t1, 0(t1)
-  
+
   mv a0, sp
-  
+
   jalr t1
- 
+
 return_to_encl:
   LOAD t0, (sp)
   csrw sepc, t0
@@ -199,9 +202,9 @@ return_to_encl:
   // restore user stack
   LOAD t0, 2*REGBYTES(sp)
   csrw sscratch, t0
-  
+
   RESTORE_ALL_BUT_SP
-  
+
   addi sp, sp, ENCL_CONTEXT_SIZE
 
   csrrw sp, sscratch, sp
@@ -214,7 +217,7 @@ not_implemented:
 
   .section ".rodata"
 rt_trap_table:
-  .align 6 
+  .align 6
   .dword not_implemented //0
   .dword not_implemented //1
   .dword not_implemented //2
@@ -222,7 +225,7 @@ rt_trap_table:
   .dword not_implemented //4
   .dword not_implemented //5
   .dword not_implemented //6
-  .dword not_implemented //7 
+  .dword not_implemented //7
   .dword handle_syscall //8
   .dword not_implemented //9
   .dword not_implemented //10
