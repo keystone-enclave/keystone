@@ -218,8 +218,13 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   enclp.params.untrusted_ptr = (unsigned long) params.getUntrustedMem();
   enclp.params.untrusted_size = (unsigned long) params.getUntrustedSize();
 
-  enclp.min_pages = calculate_required_pages(enclaveFile->getTotalMemorySize(), params.getEnclaveStack(),
+  // FIXME: this will be deprecated with complete freemem support.
+  // We just add freemem size for now.
+  enclp.min_pages = ROUND_UP(params.getFreeMemSize(), PAGE_BITS)/PAGE_SIZE;
+  enclp.min_pages += calculate_required_pages(enclaveFile->getTotalMemorySize(), params.getEnclaveStack(),
       runtimeFile->getTotalMemorySize(), params.getRuntimeStack());
+  enclp.runtime_vaddr = (unsigned long) runtimeFile->getMinVaddr();
+  enclp.user_vaddr = (unsigned long) enclaveFile->getMinVaddr();
 
   runtime_stk_sz = params.getRuntimeStack();
   enclave_stk_sz = params.getEnclaveStack();
