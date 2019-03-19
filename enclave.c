@@ -23,19 +23,294 @@ extern void save_host_regs(void);
 extern void restore_host_regs(void);
 extern byte dev_public_key[PUBLIC_KEY_SIZE];
 
-*********************************
+/****************************
  *
- * Enclave SBI functions
- * These are exposed to S-mode via the sm-sbi interface
+ * Enclave utility functions
+ * Internal use by SBI calls
  *
- *********************************/
+ ****************************/
+
+/* Internal function containing the core of the context switching
+ * code to the enclave.
+ *
+ * Used by resume_enclave and run_enclave.
+ *
+ * Expects that eid has already been valided, and it is OK to run this enclave
+*/
+static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
+                                                eid_t eid,
+                                                int load_parameters){
+
+  /* save host context */
+  swap_prev_state(&enclaves[eid].threads[0], regs);
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
+
+  if(load_parameters){
+    // passing parameters for a first run
+    // $mepc: (VA) kernel entry
+    write_csr(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
+    // $sepc: (VA) user entry
+    write_csr(sepc, (uintptr_t) enclaves[eid].params.user_entry);
+    // $a1: (PA) DRAM base,
+    regs[11] = (uintptr_t) enclaves[eid].pa_params.dram_base;
+    // $a2: (PA) DRAM size,
+    regs[12] = (uintptr_t) enclaves[eid].pa_params.dram_size;
+    // $a3: (PA) kernel location,
+    regs[13] = (uintptr_t) enclaves[eid].pa_params.runtime_base;
+    // $a4: (PA) user location,
+    regs[14] = (uintptr_t) enclaves[eid].pa_params.user_base;
+    // $a5: (PA) freemem location,
+    regs[15] = (uintptr_t) enclaves[eid].pa_params.free_base;
+    // $a6: (VA) utm base,
+    regs[16] = (uintptr_t) enclaves[eid].params.untrusted_ptr;
+    // $a7: (size_t) utm size
+    regs[17] = (uintptr_t) enclaves[eid].params.untrusted_size;
+
+  }
+
+  // switch to enclave page table
+  write_csr(satp, enclaves[eid].encl_satp);
+
+  // disable timer set by the OS
+  clear_csr(mie, MIP_MTIP);
+
+  clear_csr(mip, MIP_MTIP);
+  clear_csr(mip, MIP_STIP);
+  clear_csr(mip, MIP_SSIP);
+  clear_csr(mip, MIP_SEIP);
+
+  // set PMP
+  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
+  osm_pmp_set(PMP_NO_PERM);
+  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
+
+  // Setup any platform specific defenses
+  platform_switch_to_enclave(&(enclaves[eid].ped));
+  return ENCLAVE_SUCCESS;
+}
+
+inline void context_switch_to_host(uintptr_t* encl_regs,
+    eid_t eid){
+  // get the running enclave on this SM
+  struct enclave_t encl = enclaves[eid];
+
+  // set PMP
+  pmp_set(encl.rid, PMP_NO_PERM);
+  osm_pmp_set(PMP_ALL_PERM);
+
+  /* restore host context */
+  swap_prev_state(&enclaves[eid].threads[0], encl_regs);
+  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
+  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+
+  // switch to host page table
+  write_csr(satp, encl.host_satp);
+
+  // enable timer interrupt
+  set_csr(mie, MIP_MTIP);
+
+  // Reconfigure platform specific defenses
+  platform_switch_from_enclave(&(enclaves[eid].ped));
+  return;
+}
+
+
+// TODO: This function is externally used.
+// refactoring needed
+/*
+ * Init all metadata as needed for keeping track of enclaves
+ * Called once by the SM on startup
+ */
+void enclave_init_metadata(){
+  eid_t eid;
+
+  /* Assumes eids are incrementing values, which they are for now */
+  for(eid=0; eid < ENCL_MAX; eid++){
+    enclaves[eid].state = INVALID;
+
+    /* Fire all platform specific init */
+    platform_init(&(enclaves[eid].ped));
+  }
+}
+
+
+static enclave_ret_t init_enclave_memory(uintptr_t base, uintptr_t size,
+    uintptr_t utbase, uintptr_t utsize)
+{
+  int ret;
+  int ptlevel = RISCV_PGLEVEL_TOP;
+
+  // this function does the followings:
+  // (1) Traverse the page table to see if any address points to the outside of EPM
+  // (2) Zero out every page table entry that is not valid
+  ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size, utbase, utsize);
+
+  // FIXME: probably we will also need to:
+  // (3) Zero out every page that is not pointed by the page table
+
+  // Zero out the untrusted memory region, since it may be in
+  // indeterminate state.
+  memset((void*)utbase, 0, utsize);
+
+  return ret;
+}
+
+/* FIXME: this takes O(n), change it to use a hash table */
+static enclave_ret_t encl_satp_to_eid(uintptr_t satp, eid_t* eid)
+{
+  unsigned int i;
+  for(i=0; i<ENCL_MAX; i++)
+  {
+    if(enclaves[i].encl_satp == satp){
+      *eid = i;
+      return ENCLAVE_SUCCESS;
+    }
+  }
+  return ENCLAVE_INVALID_ID;
+}
+/* FIXME: this takes O(n), change it to use a hash table */
+static enclave_ret_t host_satp_to_eid(uintptr_t satp, eid_t* eid)
+{
+  unsigned int i;
+  for(i=0; i<ENCL_MAX; i++)
+  {
+    if(enclaves[i].host_satp == satp){
+      *eid = i;
+      return ENCLAVE_SUCCESS;
+    }
+  }
+  return ENCLAVE_INVALID_ID;
+}
+
+static enclave_ret_t encl_alloc_eid(eid_t* _eid)
+{
+  eid_t eid;
+
+  spinlock_lock(&encl_lock);
+
+  for(eid=0; eid<ENCL_MAX; eid++)
+  {
+    if(enclaves[eid].state < 0){
+      break;
+    }
+  }
+  if(eid != ENCL_MAX)
+    enclaves[eid].state = ALLOCATED;
+
+  spinlock_unlock(&encl_lock);
+
+  if(eid != ENCL_MAX){
+    *_eid = eid;
+    return ENCLAVE_SUCCESS;
+  }
+  else{
+    return ENCLAVE_NO_FREE_RESOURCE;
+  }
+}
+
+static enclave_ret_t encl_free_eid(eid_t eid)
+{
+  spinlock_lock(&encl_lock);
+  enclaves[eid].state = DESTROYED;
+  spinlock_unlock(&encl_lock);
+  return ENCLAVE_SUCCESS;
+}
+
+// TODO: This function is externally used by sm-sbi.c.
+// refactoring needed
+enclave_ret_t get_host_satp(eid_t eid, unsigned long* satp)
+{
+  if(!ENCLAVE_EXISTS(eid))
+    return ENCLAVE_NOT_ACCESSIBLE;
+
+  *satp = enclaves[eid].host_satp;
+
+  return ENCLAVE_SUCCESS;
+}
+
+/* Ensures that dest ptr is in host, not in enclave regions
+ */
+static enclave_ret_t copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
+{
+  int region_overlap = 0;
+  spinlock_lock(&encl_lock);
+  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t)dest_ptr,
+                                                sizeof(uintptr_t));
+  if(!region_overlap)
+    *dest_ptr = value;
+  spinlock_unlock(&encl_lock);
+
+  if(region_overlap)
+    return ENCLAVE_REGION_OVERLAPS;
+  else
+    return ENCLAVE_SUCCESS;
+}
+
+// TODO: This function is externally used by sm-sbi.c.
+// Change it to be internal (remove from the enclave.h and make static)
+/* Internal function enforcing a copy source is from the untrusted world.
+ * Does NOT do verification of dest, assumes caller knows what that is.
+ * Dest should be inside the SM memory.
+ */
+enclave_ret_t copy_from_host(void* source, void* dest, size_t size){
+
+  int region_overlap = 0;
+  spinlock_lock(&encl_lock);
+  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t) source, size);
+  // TODO: Validate that dest is inside the SM.
+  if(!region_overlap)
+    memcpy(dest, source, size);
+  spinlock_unlock(&encl_lock);
+
+  if(region_overlap)
+    return ENCLAVE_REGION_OVERLAPS;
+  else
+    return ENCLAVE_SUCCESS;
+}
+
+/* copies data from enclave, source must be inside EPM */
+static enclave_ret_t copy_from_enclave(struct enclave_t* enclave,
+                                void* dest, void* source, size_t size) {
+  int legal = 0;
+  spinlock_lock(&encl_lock);
+  legal = (source >= (void*) pmp_region_get_addr(enclave->rid)
+      && source + size <= (void*) pmp_region_get_addr(enclave->rid) +
+      pmp_region_get_size(enclave->rid));
+  if(legal)
+    memcpy(dest, source, size);
+  spinlock_unlock(&encl_lock);
+
+  if(!legal)
+    return ENCLAVE_ILLEGAL_ARGUMENT;
+  else
+    return ENCLAVE_SUCCESS;
+}
+
+/* copies data into enclave, destination must be inside EPM */
+static enclave_ret_t copy_to_enclave(struct enclave_t* enclave,
+                              void* dest, void* source, size_t size) {
+  int legal = 0;
+  spinlock_lock(&encl_lock);
+  legal = (dest >= (void*) pmp_region_get_addr(enclave->rid)
+      && dest + size <= (void*) pmp_region_get_addr(enclave->rid) +
+      pmp_region_get_size(enclave->rid));
+  if(legal)
+    memcpy(dest, source, size);
+  spinlock_unlock(&encl_lock);
+
+  if(!legal)
+    return ENCLAVE_ILLEGAL_ARGUMENT;
+  else
+    return ENCLAVE_SUCCESS;
+}
 
 static int is_create_args_valid(struct keystone_sbi_create_t* args)
 {
   uintptr_t epm_start, epm_end;
 
   // check if physical addresses are valid
-  if (args->epm_region.size > 0)
+  if (args->epm_region.size <= 0)
     return 0;
 
   // check if overflow
@@ -68,6 +343,14 @@ static int is_create_args_valid(struct keystone_sbi_create_t* args)
 
   return 1;
 }
+
+/*********************************
+ *
+ * Enclave SBI functions
+ * These are exposed to S-mode via the sm-sbi interface
+ *
+ *********************************/
+
 
 /* This handles creation of a new enclave, based on arguments provided
  * by the untrusted host.
@@ -354,285 +637,4 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   return ENCLAVE_SUCCESS;
 }
 
-/****************************
- *
- * Enclave utility functions
- * Internal use by above SBI calls
- *
- ****************************/
-
-/* Internal function containing the core of the context switching
- * code to the enclave.
- *
- * Used by resume_enclave and run_enclave.
- *
- * Expects that eid has already been valided, and it is OK to run this enclave
-*/
-static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
-                                                eid_t eid,
-                                                int load_parameters){
-
-  /* save host context */
-  swap_prev_state(&enclaves[eid].threads[0], regs);
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
-
-  if(load_parameters){
-    // passing parameters for a first run
-    // $mepc: (VA) kernel entry
-    write_csr(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
-    // $sepc: (VA) user entry
-    write_csr(sepc, (uintptr_t) enclaves[eid].params.user_entry);
-    // $a1: (PA) DRAM base,
-    regs[11] = (uintptr_t) enclaves[eid].pa_params.dram_base;
-    // $a2: (PA) DRAM size,
-    regs[12] = (uintptr_t) enclaves[eid].pa_params.dram_size;
-    // $a3: (PA) kernel location,
-    regs[13] = (uintptr_t) enclaves[eid].pa_params.runtime_base;
-    // $a4: (PA) user location,
-    regs[14] = (uintptr_t) enclaves[eid].pa_params.user_base;
-    // $a5: (PA) freemem location,
-    regs[15] = (uintptr_t) enclaves[eid].pa_params.free_base;
-    // $a6: (VA) utm base,
-    regs[16] = (uintptr_t) enclaves[eid].params.untrusted_ptr;
-    // $a7: (size_t) utm size
-    regs[17] = (uintptr_t) enclaves[eid].params.untrusted_size;
-
-  }
-
-  // switch to enclave page table
-  write_csr(satp, enclaves[eid].encl_satp);
-
-  // disable timer set by the OS
-  clear_csr(mie, MIP_MTIP);
-
-  clear_csr(mip, MIP_MTIP);
-  clear_csr(mip, MIP_STIP);
-  clear_csr(mip, MIP_SSIP);
-  clear_csr(mip, MIP_SEIP);
-
-  // set PMP
-  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
-  osm_pmp_set(PMP_NO_PERM);
-  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
-
-  // Setup any platform specific defenses
-  platform_switch_to_enclave(&(enclaves[eid].ped));
-  return ENCLAVE_SUCCESS;
-}
-
-inline void context_switch_to_host(uintptr_t* encl_regs,
-    eid_t eid){
-  // get the running enclave on this SM
-  struct enclave_t encl = enclaves[eid];
-
-  // set PMP
-  pmp_set(encl.rid, PMP_NO_PERM);
-  osm_pmp_set(PMP_ALL_PERM);
-
-  /* restore host context */
-  swap_prev_state(&enclaves[eid].threads[0], encl_regs);
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-
-  // switch to host page table
-  write_csr(satp, encl.host_satp);
-
-  // enable timer interrupt
-  set_csr(mie, MIP_MTIP);
-
-  // Reconfigure platform specific defenses
-  platform_switch_from_enclave(&(enclaves[eid].ped));
-  return;
-}
-
-
-// TODO: This function is externally used.
-// refactoring needed
-/*
- * Init all metadata as needed for keeping track of enclaves
- * Called once by the SM on startup
- */
-void enclave_init_metadata(){
-  eid_t eid;
-
-  /* Assumes eids are incrementing values, which they are for now */
-  for(eid=0; eid < ENCL_MAX; eid++){
-    enclaves[eid].state = INVALID;
-
-    /* Fire all platform specific init */
-    platform_init(&(enclaves[eid].ped));
-  }
-}
-
-
-static enclave_ret_t init_enclave_memory(uintptr_t base, uintptr_t size,
-    uintptr_t utbase, uintptr_t utsize)
-{
-  int ret;
-  int ptlevel = RISCV_PGLEVEL_TOP;
-
-  // this function does the followings:
-  // (1) Traverse the page table to see if any address points to the outside of EPM
-  // (2) Zero out every page table entry that is not valid
-  ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size, utbase, utsize);
-
-  // FIXME: probably we will also need to:
-  // (3) Zero out every page that is not pointed by the page table
-
-  // Zero out the untrusted memory region, since it may be in
-  // indeterminate state.
-  memset((void*)utbase, 0, utsize);
-
-  return ret;
-}
-
-/* FIXME: this takes O(n), change it to use a hash table */
-static enclave_ret_t encl_satp_to_eid(uintptr_t satp, eid_t* eid)
-{
-  unsigned int i;
-  for(i=0; i<ENCL_MAX; i++)
-  {
-    if(enclaves[i].encl_satp == satp){
-      *eid = i;
-      return ENCLAVE_SUCCESS;
-    }
-  }
-  return ENCLAVE_INVALID_ID;
-}
-/* FIXME: this takes O(n), change it to use a hash table */
-static enclave_ret_t host_satp_to_eid(uintptr_t satp, eid_t* eid)
-{
-  unsigned int i;
-  for(i=0; i<ENCL_MAX; i++)
-  {
-    if(enclaves[i].host_satp == satp){
-      *eid = i;
-      return ENCLAVE_SUCCESS;
-    }
-  }
-  return ENCLAVE_INVALID_ID;
-}
-
-static enclave_ret_t encl_alloc_eid(eid_t* _eid)
-{
-  eid_t eid;
-
-  spinlock_lock(&encl_lock);
-
-  for(eid=0; eid<ENCL_MAX; eid++)
-  {
-    if(enclaves[eid].state < 0){
-      break;
-    }
-  }
-  if(eid != ENCL_MAX)
-    enclaves[eid].state = ALLOCATED;
-
-  spinlock_unlock(&encl_lock);
-
-  if(eid != ENCL_MAX){
-    *_eid = eid;
-    return ENCLAVE_SUCCESS;
-  }
-  else{
-    return ENCLAVE_NO_FREE_RESOURCE;
-  }
-}
-
-static enclave_ret_t encl_free_eid(eid_t eid)
-{
-  spinlock_lock(&encl_lock);
-  enclaves[eid].state = DESTROYED;
-  spinlock_unlock(&encl_lock);
-  return ENCLAVE_SUCCESS;
-}
-
-// TODO: This function is externally used by sm-sbi.c.
-// refactoring needed
-enclave_ret_t get_host_satp(eid_t eid, unsigned long* satp)
-{
-  if(!ENCLAVE_EXISTS(eid))
-    return ENCLAVE_NOT_ACCESSIBLE;
-
-  *satp = enclaves[eid].host_satp;
-
-  return ENCLAVE_SUCCESS;
-}
-
-/* Ensures that dest ptr is in host, not in enclave regions
- */
-static enclave_ret_t copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
-{
-  int region_overlap = 0;
-  spinlock_lock(&encl_lock);
-  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t)dest_ptr,
-                                                sizeof(uintptr_t));
-  if(!region_overlap)
-    *dest_ptr = value;
-  spinlock_unlock(&encl_lock);
-
-  if(region_overlap)
-    return ENCLAVE_REGION_OVERLAPS;
-  else
-    return ENCLAVE_SUCCESS;
-}
-
-// TODO: This function is externally used by sm-sbi.c.
-// Change it to be internal (remove from the enclave.h and make static)
-/* Internal function enforcing a copy source is from the untrusted world.
- * Does NOT do verification of dest, assumes caller knows what that is.
- * Dest should be inside the SM memory.
- */
-enclave_ret_t copy_from_host(void* source, void* dest, size_t size){
-
-  int region_overlap = 0;
-  spinlock_lock(&encl_lock);
-  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t) source, size);
-  // TODO: Validate that dest is inside the SM.
-  if(!region_overlap)
-    memcpy(dest, source, size);
-  spinlock_unlock(&encl_lock);
-
-  if(region_overlap)
-    return ENCLAVE_REGION_OVERLAPS;
-  else
-    return ENCLAVE_SUCCESS;
-}
-
-/* copies data from enclave, source must be inside EPM */
-static enclave_ret_t copy_from_enclave(struct enclave_t* enclave,
-                                void* dest, void* source, size_t size) {
-  int legal = 0;
-  spinlock_lock(&encl_lock);
-  legal = (source >= (void*) pmp_region_get_addr(enclave->rid)
-      && source + size <= (void*) pmp_region_get_addr(enclave->rid) +
-      pmp_region_get_size(enclave->rid));
-  if(legal)
-    memcpy(dest, source, size);
-  spinlock_unlock(&encl_lock);
-
-  if(!legal)
-    return ENCLAVE_ILLEGAL_ARGUMENT;
-  else
-    return ENCLAVE_SUCCESS;
-}
-
-/* copies data into enclave, destination must be inside EPM */
-static enclave_ret_t copy_to_enclave(struct enclave_t* enclave,
-                              void* dest, void* source, size_t size) {
-  int legal = 0;
-  spinlock_lock(&encl_lock);
-  legal = (dest >= (void*) pmp_region_get_addr(enclave->rid)
-      && dest + size <= (void*) pmp_region_get_addr(enclave->rid) +
-      pmp_region_get_size(enclave->rid));
-  if(legal)
-    memcpy(dest, source, size);
-  spinlock_unlock(&encl_lock);
-
-  if(!legal)
-    return ENCLAVE_ILLEGAL_ARGUMENT;
-  else
-    return ENCLAVE_SUCCESS;
-}
 
