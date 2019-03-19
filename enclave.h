@@ -56,7 +56,8 @@ struct enclave_t
   byte sign[SIGNATURE_SIZE];
 
   /* parameters */
-  struct runtime_params_t params;
+  struct runtime_va_params_t params;
+  struct runtime_pa_params_t pa_params;
 
   /* enclave execution context */
   unsigned int n_thread;
@@ -107,7 +108,7 @@ enclave_ret_t copy_from_enclave(struct enclave_t* enclave,
 enclave_ret_t copy_to_enclave(struct enclave_t* enclave,
                     void* dest, void* source, size_t size);
 
-/*** SBI functions ***/
+/*** SBI functions & external functions ***/
 enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args);
 enclave_ret_t destroy_enclave(eid_t eid);
 enclave_ret_t run_enclave(uintptr_t* host_regs, eid_t eid);

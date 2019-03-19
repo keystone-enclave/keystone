@@ -63,18 +63,33 @@ struct keystone_sbi_pregion_t
   uintptr_t paddr;
   size_t size;
 };
-struct runtime_params_t
+struct runtime_va_params_t
 {
-  uint64_t runtime_entry;
-  uint64_t user_entry;
-  uint64_t untrusted_ptr;
-  uint64_t untrusted_size;
+  uintptr_t runtime_entry;
+  uintptr_t user_entry;
+  uintptr_t untrusted_ptr;
+  uintptr_t untrusted_size;
 };
+
+struct runtime_pa_params_t
+{
+  uintptr_t dram_base;
+  uintptr_t dram_size;
+  uintptr_t runtime_base;
+  uintptr_t user_base;
+  uintptr_t free_base;
+};
+
 struct keystone_sbi_create_t
 {
   struct keystone_sbi_pregion_t epm_region;
   struct keystone_sbi_pregion_t utm_region;
-  struct runtime_params_t params;
+
+  uintptr_t runtime_paddr;
+  uintptr_t user_paddr;
+  uintptr_t free_paddr;
+
+  struct runtime_va_params_t params;
   unsigned int* eid_pptr;
 };
 
