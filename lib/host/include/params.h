@@ -21,6 +21,7 @@ class Params
       enclave_stack_size = DEFAULT_STACK_SIZE;
       untrusted = DEFAULT_UNTRUSTED_PTR;
       untrusted_size = DEFAULT_UNTRUSTED_SIZE;
+      freemem_size = DEFAULT_FREEMEM_SIZE;
     }
 
     void setEnclaveEntry(uint64_t) { printf("WARN: setEnclaveEntry() is deprecated.\n"); }
