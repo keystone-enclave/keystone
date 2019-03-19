@@ -152,6 +152,35 @@ int keystone_add_page(unsigned long arg)
   return ret;
 }
 
+/* This IOCTL allows user to prepare page tables prior to the actual page allocation.
+ * This is needed when an enclave requires linear physical layout.
+ * The user must call this before allocating pages */
+int keystone_alloc_vspace(unsigned long arg)
+{
+  int ret = 0;
+  vaddr_t va;
+  size_t num_pages;
+  enclave_t* enclave;
+  struct keystone_ioctl_alloc_vspace* enclp = (struct keystone_ioctl_alloc_vspace *) arg;
+
+  va = enclp->vaddr;
+  num_pages = PAGE_UP(enclp->size)/PAGE_SIZE;
+
+  enclave = get_enclave_by_id(enclp->eid);
+
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
+  if (epm_alloc_vspace(enclave->epm, va, num_pages) != num_pages) {
+    keystone_err("failed to allocate vspace\n");
+    return -ENOMEM;
+  }
+
+  return ret;
+}
+
 int utm_init_ioctl(struct file *filp, unsigned long arg)
 {
   int ret = 0;
@@ -272,6 +301,9 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
       break;
     case KEYSTONE_IOC_ADD_PAGE:
       ret = keystone_add_page((unsigned long) data);
+      break;
+    case KEYSTONE_IOC_ALLOC_VSPACE:
+      ret = keystone_alloc_vspace((unsigned long) data);
       break;
     case KEYSTONE_IOC_FINALIZE_ENCLAVE:
       ret = keystone_finalize_enclave((unsigned long) data);

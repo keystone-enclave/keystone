@@ -128,6 +128,7 @@ int epm_clean_free_list(epm_t* epm);
 int utm_clean_free_list(utm_t* utm);
 
 vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags);
+size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages);
 vaddr_t epm_alloc_rt_page(epm_t* epm, vaddr_t addr);
 vaddr_t epm_alloc_rt_page_noexec(epm_t* epm, vaddr_t addr);
 vaddr_t epm_alloc_user_page(epm_t* epm, vaddr_t addr);

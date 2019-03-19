@@ -168,6 +168,8 @@ int utm_init(utm_t* utm, size_t untrusted_size)
 
   utm->order = order;
 
+  /* Currently, UTM does not utilize CMA.
+   * It is always allocated from the buddy allocator */
   utm->ptr = (void*) __get_free_pages(GFP_HIGHUSER, order);
   if (!utm->ptr) {
     return -ENOMEM;
@@ -175,6 +177,7 @@ int utm_init(utm_t* utm, size_t untrusted_size)
 
   utm->size = count * PAGE_SIZE;
   if (utm->size != untrusted_size) {
+    /* Instead of failing, we just warn that the user has to fix the parameter. */
     keystone_warn("shared buffer size is not multiple of PAGE_SIZE\n");
   }
 
@@ -243,18 +246,52 @@ static int __ept_va_avail(epm_t* epm, vaddr_t vaddr)
 }
 */
 
+/* This function pre-allocates the required page tables so that
+ * the virtual addresses are linearly mapped to the physical memory */
+size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages)
+{
+  vaddr_t walk;
+  size_t count;
+
+  for(walk=addr, count=0; count < num_pages; count++, addr += PAGE_SIZE)
+  {
+    pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
+    if(!pte)
+      break;
+  }
+
+  return count;
+}
+
+
 vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags)
 {
+  vaddr_t page_addr;
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
-  vaddr_t page_addr = get_free_page(&utm->utm_free_list);
+
+  /* if the page has been already allocated, return the page */
+  if(pte_val(*pte) & PTE_V) {
+    return (vaddr_t) __va(pte_ppn(*pte) << RISCV_PGSHIFT);
+  }
+
+	/* otherwise, allocate one from UTM freelist */
+  page_addr = get_free_page(&utm->utm_free_list);
   *pte = pte_create(ppn(page_addr), flags | PTE_V);
   return page_addr;
 }
 
 vaddr_t epm_alloc_page(epm_t* epm, vaddr_t addr, unsigned long flags)
 {
+  vaddr_t page_addr;
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
-  vaddr_t page_addr = get_free_page(&epm->epm_free_list);
+
+	/* if the page has been already allocated, return the page */
+  if(pte_val(*pte) & PTE_V) {
+    return (vaddr_t) __va(pte_ppn(*pte) << RISCV_PGSHIFT);
+  }
+
+	/* otherwise, allocate one from EPM freelist */
+  page_addr = get_free_page(&epm->epm_free_list);
   *pte = pte_create(ppn(page_addr), flags | PTE_V);
   return page_addr;
 }

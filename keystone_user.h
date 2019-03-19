@@ -27,8 +27,8 @@
   _IOR(KEYSTONE_IOC_MAGIC, 0x08, struct addr_packed)
 #define KEYSTONE_IOC_UTM_INIT \
   _IOR(KEYSTONE_IOC_MAGIC, 0x09, struct keystone_ioctl_create_enclave)
-
-
+#define KEYSTONE_IOC_ALLOC_VSPACE \
+  _IOR(KEYSTONE_IOC_MAGIC, 0x0a, struct keystone_ioctl_alloc_vspace)
 
 #define RT_NOEXEC 0
 #define USER_NOEXEC 1
@@ -36,41 +36,43 @@
 #define USER_FULL 3
 #define UTM_FULL 4
 
-#undef	ELF_CLASS
-#define ELF_CLASS	ELFCLASS32
-
 
 struct runtime_params_t {
-    __u64 runtime_entry;
-    __u64 user_entry;
-    __u64 untrusted_ptr;
-    __u64 untrusted_size;
+  __u64 runtime_entry;
+  __u64 user_entry;
+  __u64 untrusted_ptr;
+  __u64 untrusted_size;
 };
 
 struct keystone_ioctl_create_enclave {
     __u64 eid;
 
-    //Min page required
+    //Min pages required
     __u64 min_pages;
 
     // Runtime Parameters
     struct runtime_params_t params;
-
 };
 
 struct keystone_ioctl_run_enclave {
-    __u64 eid;
-    __u64 entry;
-    __u64 args_ptr;
-    __u64 args_size;
-    __u64 ret;
+  __u64 eid;
+  __u64 entry;
+  __u64 args_ptr;
+  __u64 args_size;
+  __u64 ret;
 };
 
 struct addr_packed {
-    vaddr_t va;
-    vaddr_t copied;
-    unsigned int eid;
-    unsigned int mode;
+  __u64 va;
+  __u64 copied;
+  __u64 eid;
+  __u64 mode;
+};
+
+struct keystone_ioctl_alloc_vspace {
+  __u64 eid;
+  __u64 vaddr;
+  __u64 size;
 };
 
 #endif
