@@ -45,13 +45,17 @@ struct runtime_params_t {
 };
 
 struct keystone_ioctl_create_enclave {
-    __u64 eid;
+  __u64 eid;
 
-    //Min pages required
-    __u64 min_pages;
+  //Min pages required
+  __u64 min_pages;
 
-    // Runtime Parameters
-    struct runtime_params_t params;
+  // virtual addresses
+  __u64 runtime_vaddr;
+  __u64 user_vaddr;
+
+  // Runtime Parameters
+  struct runtime_params_t params;
 };
 
 struct keystone_ioctl_run_enclave {

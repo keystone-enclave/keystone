@@ -126,7 +126,9 @@ int utm_destroy(utm_t* utm);
 int utm_init(utm_t* utm, size_t untrusted_size);
 int epm_clean_free_list(epm_t* epm);
 int utm_clean_free_list(utm_t* utm);
-
+size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages);
+paddr_t epm_va_to_pa(epm_t* epm, vaddr_t addr);
+paddr_t epm_get_free_pa(epm_t* epm);
 vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags);
 size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages);
 vaddr_t epm_alloc_rt_page(epm_t* epm, vaddr_t addr);

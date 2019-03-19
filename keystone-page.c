@@ -78,17 +78,18 @@ int epm_init(epm_t* epm, unsigned int min_pages)
 
   /* allocate contiguous memory */
 #ifdef CONFIG_CMA
+  epm->is_cma = 1;
   epm_vaddr = (vaddr_t) dma_alloc_coherent(keystone_dev.this_device,
       count << PAGE_SHIFT,
       &device_phys_addr,
       GFP_KERNEL);
 #endif
   /* If CMA fails, we fall back to the buddy allocator */
-  epm->is_cma = !epm_vaddr || !device_phys_addr;
-  if(epm->is_cma) {
+  if(!epm_vaddr || !device_phys_addr) {
     order = ilog2(min_pages - 1) + 1;
     count = 0x1 << order;
     epm_vaddr = (vaddr_t) __get_free_pages(GFP_HIGHUSER, order);
+    epm->is_cma = 0;
   }
 
   if(!epm_vaddr) {
@@ -226,12 +227,11 @@ static pte_t* __ept_walk_internal(struct list_head* pg_list, pte_t* root_page_ta
   }
   return &t[pt_idx(addr, 0)];
 }
-/*
+
 static pte_t* __ept_walk(struct list_head* pg_list, pte_t* root_page_table, vaddr_t addr)
 {
   return __ept_walk_internal(pg_list, root_page_table, addr, 0);
 }
-*/
 
 static pte_t* __ept_walk_create(struct list_head* pg_list, pte_t* root_page_table, vaddr_t addr)
 {
@@ -245,6 +245,30 @@ static int __ept_va_avail(epm_t* epm, vaddr_t vaddr)
   return pte == 0 || pte_val(*pte) == 0;
 }
 */
+
+paddr_t epm_get_free_pa(epm_t* epm)
+{
+  struct free_page_t* page;
+  struct list_head* pg_list;
+  paddr_t addr;
+
+  pg_list = &(epm->epm_free_list);
+
+  if(list_empty(pg_list))
+    return 0;
+
+  page = list_first_entry(pg_list, struct free_page_t, freelist);
+  return __pa(page->vaddr);
+}
+
+paddr_t epm_va_to_pa(epm_t* epm, vaddr_t addr)
+{
+  pte_t* pte = __ept_walk(NULL, epm->root_page_table,addr);
+  if(pte)
+    return pte_ppn(*pte) << RISCV_PGSHIFT;
+  else
+    return 0;
+}
 
 /* This function pre-allocates the required page tables so that
  * the virtual addresses are linearly mapped to the physical memory */

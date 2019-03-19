@@ -19,6 +19,11 @@ struct keystone_sbi_create_t
   struct keystone_sbi_pregion_t epm_region;
   struct keystone_sbi_pregion_t utm_region;
 
+  // physical addresses
+  uintptr_t runtime_paddr;
+  uintptr_t user_paddr;
+  uintptr_t free_paddr;
+
   // Parameters
   struct runtime_params_t params;
 

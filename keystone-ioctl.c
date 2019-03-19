@@ -56,6 +56,11 @@ int keystone_finalize_enclave(unsigned long arg)
     create_args.utm_region.size = 0;
   }
 
+  // physical addresses for runtime, user, and freemem
+  create_args.runtime_paddr = epm_va_to_pa(enclave->epm, enclp->runtime_vaddr);
+  create_args.user_paddr = epm_va_to_pa(enclave->epm, enclp->user_vaddr);
+  create_args.free_paddr = epm_get_free_pa(enclave->epm);
+
   create_args.params = enclp->params;
 
   // SM will write the eid to enclave_t.eid
