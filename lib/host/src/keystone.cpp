@@ -111,6 +111,17 @@ keystone_status_t Keystone::loadELF(ELFFile* elf)
   static char nullpage[PAGE_SIZE] = {0,};
   unsigned int mode = elf->getPageMode();
 
+  /* reserve virtual address space for linear mapping */
+  struct keystone_ioctl_alloc_vspace vspace;
+  vspace.eid = eid;
+  vspace.vaddr = elf->getMinVaddr();
+  vspace.size = elf->getTotalMemorySize();
+  if(ioctl(fd, KEYSTONE_IOC_ALLOC_VSPACE, &vspace)) {
+    PERROR("failed to reserve vspace - ioctl() failed");
+    destroy();
+    return KEYSTONE_ERROR;
+  }
+
   for (unsigned int i = 0; i < elf->getNumProgramHeaders(); i++) {
 
     if (elf->getProgramHeaderType(i) != PT_LOAD) {

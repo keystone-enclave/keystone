@@ -22,13 +22,6 @@
 class Keystone;
 typedef void (*OcallFunc)(void*);
 
-struct addr_packed {
-    vaddr_t va;
-    vaddr_t copied;
-    unsigned int eid;
-    unsigned int mode;
-};
-
 class Keystone
 {
 private:
