@@ -110,28 +110,7 @@ _start:
   /* runtime stack starts from 0x0 and grows downward! */
   li sp, 0
 
-  la t0, encl_trap_handler
-  csrw stvec, t0
-
-  /* parameters */
-  //$sepc: already contains user_entry
-  //$a1: (PA) DRAM base,
-  //$a2: (PA) DRAM size,
-  //$a3: (PA) kernel location,
-  //$a4: (PA) user location,
-  //$a5: (PA) freemem location,
-  //$a6: (VA) utm base,
-  //$a7: (size_t) utm size)
-
-  la t1, shared_buffer
-  STORE a6, (t1)
-
-  la t0, shared_buffer_size
-  STORE a7, (t0)
-
-  call init_timer
-
-  call init_edge_internals
+  jal eyrie_boot
 
   /* set user stack below the runtime */
   la t0, rt_base
@@ -143,6 +122,7 @@ _start:
 
 .align 6
 encl_trap_handler:
+  .global encl_trap_handler
   csrrw sp, sscratch, sp
 
   addi sp, sp, -ENCL_CONTEXT_SIZE

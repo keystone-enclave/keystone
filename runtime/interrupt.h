@@ -9,4 +9,6 @@
 #define INTERRUPT_CAUSE_TIMER     5
 #define INTERRUPT_CAUSE_EXTERNAL  9
 
+void init_timer(void);
+
 #endif

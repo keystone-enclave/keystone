@@ -15,5 +15,5 @@
 #define RUNTIME_SYSCALL_EXIT            1101
 
 void handle_syscall(struct encl_ctx_t* ctx);
-
+void init_edge_internals(void);
 #endif /* syscall.h */
