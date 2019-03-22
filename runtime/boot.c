@@ -5,7 +5,7 @@
 #include "printf.h"
 #include "interrupt.h"
 #include "syscall.h"
-
+#include "vm.h"
 /* defined in syscall.c */
 extern uintptr_t shared_buffer;
 extern uintptr_t shared_buffer_size;
@@ -18,6 +18,19 @@ size_t utm_size;
 
 /* defined in entry.S */
 extern void* encl_trap_handler;
+
+void
+init_freemem(uintptr_t freemem_base,
+             size_t freemem_size)
+{
+  /* initialize free memory with a simple page allocator*/
+
+}
+
+void remap_kernel_space(uintptr_t dram_base,
+                        uintptr_t dram_size)
+{
+}
 
 void
 eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI

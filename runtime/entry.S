@@ -107,8 +107,7 @@
 .endm
 
 _start:
-  /* runtime stack starts from 0x0 and grows downward! */
-  li sp, 0
+  la sp, kernel_stack_end
 
   jal eyrie_boot
 
