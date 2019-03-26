@@ -76,6 +76,9 @@ int epm_init(epm_t* epm, unsigned int min_pages)
   unsigned long count = min_pages;
   phys_addr_t device_phys_addr = 0;
 
+  /* Always init the head */
+  INIT_LIST_HEAD(&epm->epm_free_list);
+
   /* allocate contiguous memory */
 #ifdef CONFIG_CMA
   epm->is_cma = 1;
@@ -99,8 +102,6 @@ int epm_init(epm_t* epm, unsigned int min_pages)
 
   /* zero out */
   memset((void*)epm_vaddr, 0, PAGE_SIZE*count);
-
-  INIT_LIST_HEAD(&epm->epm_free_list);
   init_free_pages(&epm->epm_free_list, epm_vaddr, count);
 
   /* The first free page will be the enclave's top-level page table */
