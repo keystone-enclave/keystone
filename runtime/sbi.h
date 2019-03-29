@@ -46,8 +46,13 @@ static inline void sbi_set_timer(uint64_t stime_value){
 #endif
 }
 
-static inline void sbi_stop_enclave(uint64_t request) {
+static inline void sbi_stop_enclave(uint64_t request)
+{
   SBI_CALL_1(SBI_SM_STOP_ENCLAVE, request);
 }
 
+static inline void sbi_exit_enclave(uint64_t retval)
+{
+  SBI_CALL_1(SBI_SM_EXIT_ENCLAVE, retval);
+}
 #endif

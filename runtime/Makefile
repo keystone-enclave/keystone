@@ -1,10 +1,10 @@
 CC = riscv64-unknown-linux-gnu-gcc
-CFLAGS = -Wall -Werror -fPIC
-SRCS = vm.c interrupt.c printf.c syscall.c string.c boot.c
+CFLAGS = -Wall -Werror -fPIC -nostdlib -nodefaultlibs
+SRCS = vm.c boot.c interrupt.c printf.c syscall.c string.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = riscv64-unknown-linux-gnu-ld
-LDFLAGS = -static
+LDFLAGS = -static -nostdlib
 
 SDK_LIB_DIR = ../lib
 SDK_INCLUDE_EDGE_DIR = $(SDK_LIB_DIR)/edge/include
