@@ -47,6 +47,7 @@ struct thread_state_t
 {
   uintptr_t prev_mepc;
   uintptr_t prev_stvec;
+  uintptr_t prev_satp;
   struct ctx_t prev_state;
 };
 
@@ -54,4 +55,5 @@ struct thread_state_t
 void swap_prev_state(struct thread_state_t* state, uintptr_t* regs);
 void swap_prev_mepc(struct thread_state_t* state, uintptr_t mepc);
 void swap_prev_stvec(struct thread_state_t* state, uintptr_t stvec);
+void swap_prev_satp(struct thread_state_t* state, uintptr_t satp);
 #endif /* thread */

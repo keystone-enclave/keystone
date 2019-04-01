@@ -8,6 +8,7 @@
 #include "enclave.h"
 #include "pmp.h"
 #include "page.h"
+#include "cpu.h"
 #include <string.h>
 #include "atomic.h"
 #include "platform.h"
@@ -45,6 +46,7 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
   swap_prev_state(&enclaves[eid].threads[0], regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
+  swap_prev_satp(&enclaves[eid].threads[0], read_csr(satp));
 
   if(load_parameters){
     // passing parameters for a first run
@@ -67,10 +69,9 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
     // $a7: (size_t) utm size
     regs[17] = (uintptr_t) enclaves[eid].params.untrusted_size;
 
+    // switch to the initial enclave page table
+    write_csr(satp, enclaves[eid].encl_satp);
   }
-
-  // switch to enclave page table
-  write_csr(satp, enclaves[eid].encl_satp);
 
   // disable timer set by the OS
   clear_csr(mie, MIP_MTIP);
@@ -87,6 +88,8 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
 
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid].ped));
+
+  cpu_enter_enclave_context(eid);
   return ENCLAVE_SUCCESS;
 }
 
@@ -103,15 +106,18 @@ inline void context_switch_to_host(uintptr_t* encl_regs,
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+  swap_prev_satp(&enclaves[eid].threads[0], read_csr(satp));
 
   // switch to host page table
-  write_csr(satp, encl.host_satp);
+  // write_csr(satp, encl.host_satp);
 
   // enable timer interrupt
   set_csr(mie, MIP_MTIP);
 
   // Reconfigure platform specific defenses
   platform_switch_from_enclave(&(enclaves[eid].ped));
+
+  cpu_exit_enclave_context();
   return;
 }
 
@@ -156,20 +162,6 @@ static enclave_ret_t init_enclave_memory(uintptr_t base, uintptr_t size,
   return ret;
 }
 
-/* FIXME: this takes O(n), change it to use a hash table */
-static enclave_ret_t encl_satp_to_eid(uintptr_t satp, eid_t* eid)
-{
-  unsigned int i;
-  for(i=0; i<ENCL_MAX; i++)
-  {
-    if(enclaves[i].encl_satp == satp){
-      *eid = i;
-      return ENCLAVE_SUCCESS;
-    }
-  }
-  return ENCLAVE_INVALID_ID;
-}
-/* FIXME: this takes O(n), change it to use a hash table */
 static enclave_ret_t host_satp_to_eid(uintptr_t satp, eid_t* eid)
 {
   unsigned int i;
@@ -509,13 +501,9 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, eid_t eid)
   return context_switch_to_enclave(host_regs, eid, 1);
 }
 
-enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
+enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval, eid_t eid)
 {
-  eid_t eid;
   int exitable;
-
-  if(encl_satp_to_eid(read_csr(satp),&eid) != ENCLAVE_SUCCESS)
-    return ENCLAVE_INVALID_ID;
 
   spinlock_lock(&encl_lock);
   exitable = enclaves[eid].state == RUNNING;
@@ -536,12 +524,9 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval)
   return ENCLAVE_SUCCESS;
 }
 
-enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
+enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request, eid_t eid)
 {
-  eid_t eid;
   int stoppable;
-  if(encl_satp_to_eid(read_csr(satp),&eid) != ENCLAVE_SUCCESS)
-    return ENCLAVE_INVALID_ID;
 
   spinlock_lock(&encl_lock);
   stoppable = enclaves[eid].state == RUNNING;
@@ -560,10 +545,7 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request)
   default:
     return ENCLAVE_UNKNOWN_ERROR;
   }
-
-
 }
-
 
 enclave_ret_t resume_enclave(uintptr_t* host_regs, eid_t eid)
 {
@@ -583,14 +565,11 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, eid_t eid)
   return context_switch_to_enclave(host_regs, eid, 0);
 }
 
-enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size)
+enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, eid_t eid)
 {
   int attestable;
   struct report_t report;
   int ret;
-  eid_t eid;
-  if(encl_satp_to_eid(read_csr(satp),&eid) != ENCLAVE_SUCCESS)
-    return ENCLAVE_INVALID_ID;
 
   if (size > ATTEST_DATA_MAXLEN)
     return ENCLAVE_ILLEGAL_ARGUMENT;

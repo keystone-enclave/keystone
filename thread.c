@@ -33,3 +33,10 @@ void swap_prev_stvec(struct thread_state_t* thread, uintptr_t current_stvec)
   thread->prev_stvec = current_stvec;
   write_csr(stvec, tmp);
 }
+
+void swap_prev_satp(struct thread_state_t* thread, uintptr_t current_satp)
+{
+  uintptr_t tmp = thread->prev_satp;
+  thread->prev_satp = current_satp;
+  write_csr(satp, tmp);
+}

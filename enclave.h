@@ -35,8 +35,6 @@ typedef enum {
 #define STOP_EDGE_CALL_HOST   1
 #define STOP_EXIT_ENCLAVE     2
 
-
-
 /* For now, eid's are a simple unsigned int */
 typedef unsigned int eid_t;
 
@@ -88,13 +86,16 @@ struct report_t
 };
 
 /*** SBI functions & external functions ***/
+// callables from the host
 enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args);
 enclave_ret_t destroy_enclave(eid_t eid);
 enclave_ret_t run_enclave(uintptr_t* host_regs, eid_t eid);
-enclave_ret_t exit_enclave(uintptr_t* regs, unsigned long retval);
-enclave_ret_t stop_enclave(uintptr_t* regs, uint64_t request);
 enclave_ret_t resume_enclave(uintptr_t* regs, eid_t eid);
-enclave_ret_t attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size);
+// callables from the enclave
+enclave_ret_t exit_enclave(uintptr_t* regs, unsigned long retval, eid_t eid);
+enclave_ret_t stop_enclave(uintptr_t* regs, uint64_t request, eid_t eid);
+enclave_ret_t attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, eid_t eid);
+
 /* attestation */
 enclave_ret_t hash_enclave(struct enclave_t* enclave);
 // TODO: These functions are supposed to be internal functions.
