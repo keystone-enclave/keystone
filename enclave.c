@@ -111,8 +111,6 @@ inline void context_switch_to_host(uintptr_t* encl_regs,
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
   swap_prev_satp(&enclaves[eid].threads[0], read_csr(satp));
 
-  // switch to host page table
-  // write_csr(satp, encl.host_satp);
 
   // enable timer interrupt
   set_csr(mie, MIP_MTIP);
