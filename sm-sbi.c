@@ -124,11 +124,15 @@ uintptr_t mcall_sm_not_implemented(uintptr_t* encl_regs, unsigned long cause)
     // discard MSB
     cause = cause << 1;
     cause = cause >> 1;
-    printm("the runtime could not handle interrupt %ld\n", cause );
+    printm("the runtime could not handle interrupt %ld\r\n", cause );
+    printm("mideleg: 0x%lx\r\n");
+
   }
   else
   {
-    printm("the runtime could not handle exception %ld\n", cause);
+    printm("the runtime could not handle exception %ld\r\n", cause);
+    printm("medeleg: 0x%lx (expected? %ld)\r\n", read_csr(medeleg), read_csr(medeleg) & (1<<cause));
   }
+
   return exit_enclave(encl_regs, (uint64_t)-1UL, cpu_get_enclave_id());
 }

@@ -86,6 +86,9 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
   osm_pmp_set(PMP_NO_PERM);
   pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
 
+  // TODO: enable floats?
+  write_csr(sstatus, read_csr(sstatus) | SSTATUS_FS);
+
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid].ped));
 
@@ -615,5 +618,3 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
 
   return ENCLAVE_SUCCESS;
 }
-
-
