@@ -135,7 +135,12 @@ _start:
 
   /* set user stack below the runtime */
   la t0, rt_base
-  csrw sscratch, t0
+//  csrw sscratch, t0
+
+  /* Setup user stack env/aux */
+  mv a0, t0
+  call setup_start
+  csrw sscratch, a0
 
   /* start running enclave */
   csrrw sp, sscratch, sp
@@ -218,19 +223,19 @@ not_implemented:
   .section ".rodata"
 rt_trap_table:
   .align 6
-  .dword not_implemented //0
-  .dword not_implemented //1
-  .dword not_implemented //2
-  .dword not_implemented //3
-  .dword not_implemented //4
-  .dword not_implemented //5
-  .dword not_implemented //6
-  .dword not_implemented //7
+  .dword not_implemented_fatal //0
+  .dword not_implemented_fatal //1
+  .dword not_implemented_fatal //2
+  .dword not_implemented_fatal //3
+  .dword not_implemented_fatal //4
+  .dword not_implemented_fatal //5
+  .dword not_implemented_fatal //6
+  .dword not_implemented_fatal //7
   .dword handle_syscall //8
-  .dword not_implemented //9
-  .dword not_implemented //10
-  .dword not_implemented //11
-  .dword not_implemented //12: fetch page fault - code always presents in memory
+  .dword not_implemented_fatal //9
+  .dword not_implemented_fatal //10
+  .dword not_implemented_fatal //11
+  .dword not_implemented_fatal //12: fetch page fault - code always presents in memory
   .dword rt_page_fault //13: load page fault - stack/heap access
-  .dword not_implemented //14
+  .dword not_implemented_fatal //14
   .dword rt_page_fault //15: store page fault - stack/heap access

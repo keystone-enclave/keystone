@@ -65,7 +65,6 @@ ENTRY(__copy_user)
 	j 3b
 ENDPROC(__copy_user)
 
-
 ENTRY(__clear_user)
 
 	/* Enable access to user memory */
