@@ -8,6 +8,7 @@
 #include "sbi.h"
 #include "freemem.h"
 #include "mm.h"
+#include "env.h"
 
 /* defined in vm.h */
 extern uintptr_t shared_buffer;
@@ -19,9 +20,6 @@ size_t utm_size;
 
 /* defined in entry.S */
 extern void* encl_trap_handler;
-
-/* defined in env.c */
-extern void* setup_start(void* _sp);
 
 #ifdef USE_FREEMEM
 
@@ -163,15 +161,24 @@ init_freemem()
 
 /* initialize user stack */
 void
-init_user_stack()
+init_user_stack_and_env()
 {
+  size_t count;
+  void* user_sp = (void*) EYRIE_USER_STACK_START;
+  uintptr_t stack_end = EYRIE_USER_STACK_END;
+  size_t stack_count = EYRIE_USER_STACK_SIZE >> RISCV_PAGE_BITS;
+
   // allocated stack pages right below the runtime
-  alloc_pages(vpn(runtime_va_start - EYRIE_USER_STACK_SIZE),
-      EYRIE_USER_STACK_SIZE >> RISCV_PAGE_BITS,
+  count = alloc_pages(vpn(stack_end), stack_count,
       PTE_R | PTE_W | PTE_D | PTE_A | PTE_U);
 
+  assert(count == stack_count);
+
+  // setup user stack env/aux
+  user_sp = setup_start(user_sp);
+
   // prepare user sp
-  csr_write(sscratch, runtime_va_start);
+  csr_write(sscratch, user_sp);
 }
 
 #endif // USE_FREEMEM
@@ -210,10 +217,8 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   init_freemem();
 
   /* initialize user stack */
-  init_user_stack();
+  init_user_stack_and_env();
 
-  /* settup user stack env/aux */
-  setup_start((void*)runtime_va_start);
 #endif // USE_FREEMEM
 
   /* set trap vector */

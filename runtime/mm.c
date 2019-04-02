@@ -71,7 +71,7 @@ remap_physical_page(uintptr_t vpn, uintptr_t ppn, int flags)
  * and returns the number of pages mapped
  * WARNING: the physical page must be accessible and usable */
 size_t
-remap_physical_range(uintptr_t vpn, uintptr_t ppn, size_t count, int flags)
+remap_physical_pages(uintptr_t vpn, uintptr_t ppn, size_t count, int flags)
 {
   unsigned int i;
 
