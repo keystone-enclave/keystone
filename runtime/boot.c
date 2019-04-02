@@ -4,100 +4,164 @@
 #include "interrupt.h"
 #include "syscall.h"
 #include "vm.h"
+#include "string.h"
 #include "sbi.h"
+#include "freemem.h"
 
 /* defined in syscall.c */
 extern uintptr_t shared_buffer;
 extern uintptr_t shared_buffer_size;
 
 /* initial memory layout */
-uintptr_t freemem_base;
-size_t freemem_size;
 uintptr_t utm_base;
 size_t utm_size;
 
 /* defined in entry.S */
 extern void* encl_trap_handler;
 
-void
-init_freemem(uintptr_t freemem_base,
-             size_t freemem_size)
-{
-  /* initialize free memory with a simple page allocator*/
+/* root page table */
+pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+/* page tables for kernel remap */
+pte_t kernel_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte_t kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+/* page tables for loading physical memory */
+pte_t load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte_t load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 
+void
+map_physical_memory_with_megapages(uintptr_t dram_base,
+                                   uintptr_t dram_size,
+                                   uintptr_t ptr)
+{
+  uintptr_t offset = 0;
+
+  /* we're gonna use L2 mega pages, so the memory
+   * is supposed to be smaller than a gigapage */
+  assert(dram_size <= RISCV_GET_LVL_PGSIZE(1));
+
+  /* if the enclave memory is larger than a megapage,
+   * it is supposed to be aligned with a megapage */
+  assert(IS_ALIGNED(dram_base, RISCV_GET_LVL_PGSIZE_BITS(2)));
+
+  /* the starting VA must be aligned with a gigapage so that
+   * we can use all entries of an L2 page table */
+  assert(IS_ALIGNED(ptr, RISCV_GET_LVL_PGSIZE_BITS(1)));
+
+  /* root page table */
+  root_page_table[RISCV_GET_PT_INDEX(ptr, 1)] =
+    ptd_create(kernel_va_to_pa(load_l2_page_table) >> RISCV_PAGE_BITS);
+
+  /* map megapages */
+  for (offset = 0;
+       offset < dram_size;
+       offset += RISCV_GET_LVL_PGSIZE(2))
+  {
+    load_l2_page_table[RISCV_GET_PT_INDEX(ptr + offset, 2)] =
+      pte_create((dram_base + offset) >> RISCV_PAGE_BITS,
+          PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+  }
 }
 
-/* page tables for kernel remap */
-pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte_t l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte_t l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+void
+map_physical_memory_with_kilopages(uintptr_t dram_base,
+                                   uintptr_t dram_size,
+                                   uintptr_t ptr)
+{
+  uintptr_t offset = 0;
 
-/* map the entire physical addresses to the remap range */
-void remap_kernel_space(uintptr_t runtime_base,
-                        uintptr_t runtime_size)
+  assert(dram_size <= RISCV_GET_LVL_PGSIZE(2));
+
+  /* the memory is supposed to be aligned with a 4K page */
+  assert(IS_ALIGNED(dram_base, RISCV_GET_LVL_PGSIZE_BITS(3)));
+
+  /* the starting VA must be aligned with a megapage so that
+   * we can use all entries of a last-level page table */
+  assert(IS_ALIGNED(ptr, RISCV_GET_LVL_PGSIZE_BITS(2)));
+
+  /* root page table */
+  root_page_table[RISCV_GET_PT_INDEX(ptr, 1)] =
+    ptd_create(kernel_va_to_pa(load_l2_page_table) >> RISCV_PAGE_BITS);
+
+  /* l2 page table */
+  load_l2_page_table[RISCV_GET_PT_INDEX(ptr, 2)] =
+    ptd_create(kernel_va_to_pa(load_l3_page_table) >> RISCV_PAGE_BITS);
+
+  /* map pages */
+  for (offset = 0;
+       offset < dram_size;
+       offset += RISCV_GET_LVL_PGSIZE(3))
+  {
+    load_l3_page_table[RISCV_GET_PT_INDEX(ptr + offset, 3)] =
+      pte_create((dram_base + offset) >> RISCV_PAGE_BITS,
+          PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+  }
+}
+
+/* map entire enclave physical memory so that
+ * we can access the old page table and free memory */
+/* remap runtime kernel to a new root page table */
+void
+map_physical_memory(uintptr_t dram_base,
+                    uintptr_t dram_size)
+{
+  uintptr_t ptr = EYRIE_LOAD_START;
+  /* load address should not override kernel address */
+  assert(RISCV_GET_PT_INDEX(ptr, 1) != RISCV_GET_PT_INDEX(runtime_va_start, 1));
+
+  if (dram_size > RISCV_GET_LVL_PGSIZE(2))
+    map_physical_memory_with_megapages(dram_base, dram_size, ptr);
+  else
+    map_physical_memory_with_kilopages(dram_base, dram_size, ptr);
+}
+
+void
+remap_kernel_space(uintptr_t runtime_base,
+                   uintptr_t runtime_size)
 {
   uintptr_t offset;
 
-  if (runtime_size > RISCV_GET_LVL_PGSIZE(2))
-  {
-    printf("Eyrie runtime is supposed to be smaller than %lu", RISCV_GET_LVL_PGSIZE(2));
-    sbi_exit_enclave(-1);
-  }
+  /* eyrie runtime is supposed to be smaller than a megapage */
+  assert(runtime_size <= RISCV_GET_LVL_PGSIZE(2));
 
   /* root page table */
-  root_page_table[RISCV_GET_PT_INDEX(runtime_va_start, 1)] = ptd_create(kernel_va_to_pa(l2_page_table) >> RISCV_PAGE_BITS);
+  root_page_table[RISCV_GET_PT_INDEX(runtime_va_start, 1)] =
+    ptd_create(kernel_va_to_pa(kernel_l2_page_table) >> RISCV_PAGE_BITS);
 
   /* L2 page talbe */
-  l2_page_table[RISCV_GET_PT_INDEX(runtime_va_start, 2)] = ptd_create(kernel_va_to_pa(l3_page_table) >> RISCV_PAGE_BITS);
+  kernel_l2_page_table[RISCV_GET_PT_INDEX(runtime_va_start, 2)] =
+    ptd_create(kernel_va_to_pa(kernel_l3_page_table) >> RISCV_PAGE_BITS);
 
-  for (offset = 0; offset < runtime_size; offset += RISCV_GET_LVL_PGSIZE(3))
+  for (offset = 0;
+       offset < runtime_size;
+       offset += RISCV_GET_LVL_PGSIZE(3))
   {
-    l3_page_table[RISCV_GET_PT_INDEX(runtime_va_start + offset, 3)] =
-      pte_create((runtime_base + offset) >> RISCV_PAGE_BITS, PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+    kernel_l3_page_table[RISCV_GET_PT_INDEX(runtime_va_start + offset, 3)] =
+      pte_create((runtime_base + offset) >> RISCV_PAGE_BITS,
+          PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
   }
+}
 
-  printf("writing satp... 0x%lx\n", kernel_va_to_pa(root_page_table));
-  csr_write(satp, satp_new(kernel_va_to_pa(root_page_table)));
-  printf("done! %d\n",1);
-  /*
-  if (dram_size > RISCV_GET_LVL_PGSIZE(1))
-  {
-    // We could have used gigapages in this case, but the memory is probably not aligned.
-    // So we exit the enclave because we cannot handle that
-    printf("Eyrie runtime does not support enclave larger than %d bytes\n", RISCV_GET_LVL_PGSIZE(1));
-    sbi_exit_enclave(-1);
-  }
-  else if (dram_size > RISCV_GET_LVL_PGSIZE(2))
-  {
-    uintptr_t offset;
-    // the enclave is supposed to be aligned to the 2nd level
-    // page table granularity (2 MB) so that we can use megapages
-    if (!IS_ALIGNED(dram_base, RISCV_GET_LVL_PGSIZE_BITS(2))) {
-      printf("[eyrie] memory address not properly algiend");
-      sbi_exit_enclave(-1);
-    }
+void
+copy_root_page_table()
+{
+  /* the old table lives in the first page */
+  pte_t* old_root_page_table = (pte_t*) EYRIE_LOAD_START;
+  int i;
 
-    // root page table
-    root_page_table[RISCV_GET_PT_INDEX(va, 1)] = ptd_create(kernel_va_to_pa(l2_page_table));
-
-    // L2 Megapages
-    for (offset = 0; offset < dram_size; offset += RISCV_GET_LVL_PGSIZE(2))
-    {
-      l2_page_table[RISCV_GET_PT_INDEX(va + offset, 2)] = pte_create(dram_base + offset, PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+  /* copy all valid entries of the old root page table */
+  for (i = 0; i < BIT(RISCV_PT_INDEX_BITS); i++) {
+    if (old_root_page_table[i] & PTE_V &&
+        !(root_page_table[i] & PTE_V)) {
+      root_page_table[i] = old_root_page_table[i];
     }
   }
-  // Enclaves smaller than 2MB
-  else {
+}
 
-  }
-  for (va = EYRIE_REMAP_START, i = RISCV_GET_PT_INDEX(va, 1);
-       va < EYRIE_REMAP_END;
-       va += RISCV_GET_LVL_PGSIZE(1), i++) {
-
-    // mapping level 1
-    root_page_table[BIT(RISCV_PT_INDEX_BITS)] = ptd_create(kernel_va_to_pa(l2_page_table));
-  }
-  */
+/* initialize free memory with a simple page allocator*/
+void
+init_freemem()
+{
+  spa_init(freemem_va_start, freemem_size);
 }
 
 void
@@ -111,25 +175,36 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
            uintptr_t utm_size)
 {
   /* set initial values */
-  freemem_base = free_paddr;
-  freemem_size = dram_base + dram_size - free_paddr;
+  load_pa_start = dram_base;
   shared_buffer = utm_vaddr;
   shared_buffer_size = utm_size;
   runtime_va_start = (uintptr_t) &rt_base;
+  freemem_va_start = __va(free_paddr);
+  freemem_size = dram_base + dram_size - free_paddr;
   kernel_offset = runtime_va_start - runtime_paddr;
 
-  printf("dram_base: 0x%lx\n", dram_base);
-  printf("runtime_paddr: 0x%lx\n", runtime_paddr);
-  printf("user_paddr: 0x%lx\n", user_paddr);
-
+  /* remap kernel VA */
   remap_kernel_space(runtime_paddr, user_paddr - runtime_paddr);
+  map_physical_memory(dram_base, dram_size);
+
+  /* switch to the new page table */
+  csr_write(satp, satp_new(kernel_va_to_pa(root_page_table)));
+
+  /* copy valid entries from the old page table */
+  copy_root_page_table();
 
   /* set trap vector */
   csr_write(stvec, &encl_trap_handler);
 
+  /* prepare edge & system calls */
+  init_edge_internals();
+
+  /* initialize free memory */
+  init_freemem();
+
   /* set timer */
   init_timer();
 
-  /* prepare edge & system calls */
-  init_edge_internals();
+  /* booting all finished, droping to the user land */
+  return;
 }

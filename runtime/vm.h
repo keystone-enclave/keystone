@@ -3,6 +3,7 @@
 
 #include <asm/csr.h>
 #include "printf.h"
+#include "common.h"
 #define BIT(n) (1ul << (n))
 #define MASK(n) (BIT(n)-1ul)
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
@@ -17,10 +18,8 @@
 #define RISCV_GET_LVL_PGSIZE_BITS(n) (((RISCV_PT_INDEX_BITS) * (RISCV_PT_LEVELS - (n))) + RISCV_PAGE_BITS)
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 
-
-#define EYRIE_REMAP_START 0xffffffff00000000
-#define EYRIE_REMAP_END   0xffffffff40000000
-#define EYRIE_REMAP_MAX_SIZE  (EYRIE_REMAP_END - EYRIE_REMAP_START)
+/* Starting address of the enclave memory */
+#define EYRIE_LOAD_START 0xffffffff00000000
 
 #define PTE_V     0x001 // Valid
 #define PTE_R     0x002 // Read
@@ -44,9 +43,18 @@ static inline uintptr_t satp_new(uintptr_t pa)
 static uintptr_t kernel_offset;
 static inline uintptr_t kernel_va_to_pa(void* ptr)
 {
-  printf("ptr: 0x%lx\n",(uintptr_t) ptr);
-  printf("off: 0x%lx\n",kernel_offset);
   return (uintptr_t) ptr - kernel_offset;
+}
+
+static uintptr_t load_pa_start;
+static inline uintptr_t __va(uintptr_t pa)
+{
+  return (pa - load_pa_start) + EYRIE_LOAD_START;
+}
+
+static inline uintptr_t __pa(uintptr_t va)
+{
+  return (va - EYRIE_LOAD_START) + load_pa_start;
 }
 
 typedef uintptr_t pte_t;
@@ -59,5 +67,9 @@ static inline pte_t ptd_create(uintptr_t ppn)
 {
   return pte_create(ppn, PTE_V);
 }
+
+/* freemem */
+uintptr_t freemem_va_start;
+size_t freemem_size;
 
 #endif

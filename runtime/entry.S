@@ -109,6 +109,10 @@
 _start:
   la sp, kernel_stack_end
 
+  /* set sscratch zero so that the trap handler can
+   * notice that the trap is from S-mode */
+  csrw sscratch, x0
+
   jal eyrie_boot
 
   /* set user stack below the runtime */

@@ -1,6 +1,6 @@
 CC = riscv64-unknown-linux-gnu-gcc
 CFLAGS = -Wall -Werror -fPIC -nostdlib -nodefaultlibs
-SRCS = vm.c boot.c interrupt.c printf.c syscall.c string.c
+SRCS = vm.c boot.c interrupt.c printf.c syscall.c string.c freemem.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = riscv64-unknown-linux-gnu-ld
