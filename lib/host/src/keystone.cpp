@@ -16,7 +16,6 @@ Keystone::Keystone() {
     enclaveFile = NULL;
     enclave_stk_sz = 0;
     enclave_stk_start = 0;
-    runtime_stk_sz = 0;
     untrusted_size = 0;
     untrusted_start = 0;
     eid = -1;
@@ -33,14 +32,12 @@ Keystone::~Keystone() {
 unsigned long calculate_required_pages(
         unsigned long eapp_sz,
         unsigned long eapp_stack_sz,
-        unsigned long rt_sz,
-        unsigned long rt_stack_sz) {
+        unsigned long rt_sz) {
     unsigned long req_pages = 0;
 
     req_pages += ceil(eapp_sz / PAGE_SIZE);
     req_pages += ceil(eapp_stack_sz / PAGE_SIZE);
     req_pages += ceil(rt_sz / PAGE_SIZE);
-    req_pages += ceil(rt_stack_sz / PAGE_SIZE);
 
     /* FIXME: calculate the required number of pages for the page table.
      * We actually don't know how many page tables the enclave might need,
@@ -236,11 +233,10 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   // We just add freemem size for now.
   enclp.min_pages = ROUND_UP(params.getFreeMemSize(), PAGE_BITS)/PAGE_SIZE;
   enclp.min_pages += calculate_required_pages(enclaveFile->getTotalMemorySize(), params.getEnclaveStack(),
-      runtimeFile->getTotalMemorySize(), params.getRuntimeStack());
+      runtimeFile->getTotalMemorySize());
   enclp.runtime_vaddr = (unsigned long) runtimeFile->getMinVaddr();
   enclp.user_vaddr = (unsigned long) enclaveFile->getMinVaddr();
 
-  runtime_stk_sz = params.getRuntimeStack();
   enclave_stk_sz = params.getEnclaveStack();
   untrusted_size = params.getUntrustedSize();
   untrusted_start = params.getUntrustedMem();
@@ -271,7 +267,6 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 
   /* initialize stack.
    * this will be deprecated with freemem support */
-  initStack(-1UL, runtime_stk_sz, 1);
   initStack(enclave_stk_start, enclave_stk_sz, 0);
 
   ret = ioctl(fd, KEYSTONE_IOC_UTM_INIT, &enclp);
