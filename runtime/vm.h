@@ -72,4 +72,9 @@ static inline pte_t ptd_create(uintptr_t ppn)
 uintptr_t freemem_va_start;
 size_t freemem_size;
 
+/* shared buffer */
+uintptr_t shared_buffer;
+uintptr_t shared_buffer_size;
+
+
 #endif

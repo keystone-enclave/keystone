@@ -8,6 +8,7 @@
 #include "printf.h"
 #include "regs.h"
 #include "edge_syscall.h"
+#include "vm.h"
 
 #define RUNTIME_SYSCALL_UNKNOWN         1000
 #define RUNTIME_SYSCALL_OCALL           1001

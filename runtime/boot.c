@@ -8,7 +8,7 @@
 #include "sbi.h"
 #include "freemem.h"
 
-/* defined in syscall.c */
+/* defined in vm.h */
 extern uintptr_t shared_buffer;
 extern uintptr_t shared_buffer_size;
 
