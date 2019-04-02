@@ -79,21 +79,30 @@ int epm_init(epm_t* epm, unsigned int min_pages)
   /* Always init the head */
   INIT_LIST_HEAD(&epm->epm_free_list);
 
-  /* allocate contiguous memory */
+  /* try to allocate contiguous memory */
+  epm->is_cma = 0;
+  order = ilog2(min_pages - 1) + 1;
+  count = 0x1 << order;
+
+  /* prevent kernel from complaining about an invalid argument */
+  if (order <= MAX_ORDER)
+    epm_vaddr = (vaddr_t) __get_free_pages(GFP_HIGHUSER, order);
+
 #ifdef CONFIG_CMA
-  epm->is_cma = 1;
-  epm_vaddr = (vaddr_t) dma_alloc_coherent(keystone_dev.this_device,
+  /* If buddy allocator fails, we fall back to the CMA */
+  if (!epm_vaddr) {
+    epm->is_cma = 1;
+    count = min_pages;
+
+    epm_vaddr = (vaddr_t) dma_alloc_coherent(keystone_dev.this_device,
       count << PAGE_SHIFT,
       &device_phys_addr,
       GFP_KERNEL);
-#endif
-  /* If CMA fails, we fall back to the buddy allocator */
-  if(!epm_vaddr || !device_phys_addr) {
-    order = ilog2(min_pages - 1) + 1;
-    count = 0x1 << order;
-    epm_vaddr = (vaddr_t) __get_free_pages(GFP_HIGHUSER, order);
-    epm->is_cma = 0;
+
+    if(!device_phys_addr)
+      epm_vaddr = 0;
   }
+#endif
 
   if(!epm_vaddr) {
     keystone_err("failed to allocate %lu page(s)\n", count);
