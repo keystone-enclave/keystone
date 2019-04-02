@@ -5,7 +5,7 @@
 #ifndef _EDGE_WRAPPER_H_
 #define _EDGE_WRAPPER_H_
 
-#include <edge_call.hpp>
+#include "edge_call.h"
 #include "keystone.h"
 
 typedef struct packaged_str{

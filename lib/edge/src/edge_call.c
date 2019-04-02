@@ -17,14 +17,14 @@ int edge_call_get_ptr_from_offset(edge_data_offset offset, size_t data_len,
 				  uintptr_t* ptr){
 
   //TODO double check these checks
-  
+
   /* Validate that _shared_start+offset is sane */
   if( offset > UINTPTR_MAX - _shared_start ||
       offset > _shared_len ){
     return -1;
   }
-  
-  
+
+
   /* Validate that _shared_start+offset+data_len in range */
   if( data_len > UINTPTR_MAX - (_shared_start+offset) ||
       data_len > _shared_len - offset ){
@@ -37,11 +37,10 @@ int edge_call_get_ptr_from_offset(edge_data_offset offset, size_t data_len,
 }
 
 
-int edge_call_get_offset_from_ptr(uintptr_t ptr, size_t data_len,
-				  edge_data_offset* offset){
+int edge_call_check_ptr_valid(uintptr_t ptr, size_t data_len){
 
   //TODO double check these checks
-  
+
   /* Validate that ptr starts in range */
   if( ptr > _shared_start+_shared_len ||
       ptr < _shared_start ){
@@ -51,11 +50,21 @@ int edge_call_get_offset_from_ptr(uintptr_t ptr, size_t data_len,
   if( data_len > UINTPTR_MAX - ptr){
     return 2;
   }
-  
+
   /* Validate that the end is in range */
   if( ptr+data_len  > _shared_start+_shared_len){
     return 3;
   }
+
+  return 0;
+}
+
+int edge_call_get_offset_from_ptr(uintptr_t ptr, size_t data_len,
+				  edge_data_offset* offset){
+
+  int valid = edge_call_check_ptr_valid(ptr, data_len);
+  if( valid != 0)
+    return valid;
 
   /* ptr looks valid, create it */
   *offset = ptr-_shared_start;
@@ -101,7 +110,7 @@ int edge_call_setup_wrapped_ret(edge_call_t* edge_call, void* ptr, size_t size){
   memcpy((void*)(_shared_start+sizeof(edge_call_t)),
 	 &data_wrapper,
 	 sizeof(edge_data_t));
-  
+
   edge_call->return_data.call_ret_size = sizeof(edge_data_t);
   return edge_call_get_offset_from_ptr(_shared_start+sizeof(edge_call_t),
 				       sizeof(edge_data_t),

@@ -18,7 +18,8 @@ typedef void (*edgecallwrapper)(void*);
 
 #define MAX_EDGE_CALL 10
 
-extern edgecallwrapper edge_call_table[10];
+
+extern edgecallwrapper edge_call_table[MAX_EDGE_CALL];
 
 /* Call status indicates if the wrapper code, pointers, offsets, etc went OK
  * It has no bearing on data contained in the returns. */
@@ -27,6 +28,7 @@ extern edgecallwrapper edge_call_table[10];
 #define CALL_STATUS_BAD_OFFSET 2
 #define CALL_STATUS_BAD_PTR 3
 #define CALL_STATUS_ERROR 4
+#define CALL_STATUS_SYSCALL_FAILED 5
 
 /* Must init these */
 extern uintptr_t _shared_start;
@@ -66,10 +68,11 @@ typedef struct edge_call_t{
    * structure for the call. (User/call defined)*/
   edge_data_offset call_arg_offset;
   size_t call_arg_size;
-  
+
   /* Pre-set location to structure return data */
   edge_return_t return_data;
 } edge_call_t;
+
 
 
 #endif /* __EDGE_COMMON_H_ */

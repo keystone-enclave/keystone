@@ -5,6 +5,8 @@
 #define PAGE_SIZE (1UL<<PAGE_BITS)
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
 #define ROUND_DOWN(n, b) (n & ~((2 << (b-1)) - 1))
+#define PAGE_DOWN(n) ROUND_DOWN(n, PAGE_BITS)
+#define PAGE_UP(n) ROUND_UP(n, PAGE_BITS)
 
 #define BOOST_STRINGIZE(X) BOOST_DO_STRINGIZE(X)
 #define BOOST_DO_STRINGIZE(X) #X

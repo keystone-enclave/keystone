@@ -134,6 +134,20 @@ keystone_status_t Keystone::loadELF(ELFFile* elf)
     char* src = (char*) elf->getProgramSegment(i);
     vaddr_t va = start;
 
+    /* FIXME: This is a temporary fix for loading iozone binary
+     * which has a page-misaligned program header. */
+    if(!IS_ALIGNED(va, PAGE_SIZE)) {
+      size_t offset = va - PAGE_DOWN(va);
+      size_t length = PAGE_UP(va) - va;
+      char page[PAGE_SIZE];
+      memset(page, 0, PAGE_SIZE);
+      memcpy(page + offset, (const void*) src, length);
+      if (allocPage(PAGE_DOWN(va), page, mode) != KEYSTONE_SUCCESS)
+        return KEYSTONE_ERROR;
+      va += length;
+      src += length;
+    }
+
     /* first load all pages that do not include .bss segment */
     while (va + PAGE_SIZE <= file_end) {
       if (allocPage(va, src, mode) != KEYSTONE_SUCCESS)
