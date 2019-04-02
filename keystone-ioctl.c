@@ -234,4 +234,6 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
   return ret;
 }
 
-
+int keystone_release(struct inode *inode, struct file *file) {
+  pr_info("Released fd: %d\n", file);
+}

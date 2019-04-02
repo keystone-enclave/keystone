@@ -24,7 +24,8 @@ MODULE_LICENSE("Dual BSD/GPL");
 static const struct file_operations keystone_fops = {
     .owner          = THIS_MODULE,
     .mmap           = keystone_mmap,
-    .unlocked_ioctl = keystone_ioctl
+    .unlocked_ioctl = keystone_ioctl,
+    .release        = keystone_release
 };
 
 struct miscdevice keystone_dev = {

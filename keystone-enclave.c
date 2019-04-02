@@ -72,6 +72,7 @@ enclave_t* create_enclave(unsigned long min_pages)
 
   enclave->utm = NULL;
   enclave->epm = NULL;
+  enclave->close_on_pexit = 1;
 
   /* allocate contiguous memory */
 
