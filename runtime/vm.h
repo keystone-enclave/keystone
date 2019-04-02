@@ -22,7 +22,10 @@
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 
 /* Starting address of the enclave memory */
-#define EYRIE_LOAD_START 0xffffffff00000000
+#define EYRIE_LOAD_START        0xffffffff00000000
+#define EYRIE_UNTRUSTED_START   0xffffffff80000000
+#define EYRIE_USER_STACK_START  0x0000000040000000
+#define EYRIE_USER_STACK_SIZE   0x8000
 
 #define PTE_V     0x001 // Valid
 #define PTE_R     0x002 // Read
@@ -43,13 +46,13 @@ static inline uintptr_t satp_new(uintptr_t pa)
   return (SATP_MODE | (pa >> RISCV_PAGE_BITS));
 }
 
-static uintptr_t kernel_offset;
+uintptr_t kernel_offset;
 static inline uintptr_t kernel_va_to_pa(void* ptr)
 {
   return (uintptr_t) ptr - kernel_offset;
 }
 
-static uintptr_t load_pa_start;
+uintptr_t load_pa_start;
 static inline uintptr_t __va(uintptr_t pa)
 {
   return (pa - load_pa_start) + EYRIE_LOAD_START;
@@ -71,7 +74,32 @@ static inline pte_t ptd_create(uintptr_t ppn)
   return pte_create(ppn, PTE_V);
 }
 
+static inline uintptr_t ppn(uintptr_t pa)
+{
+  return pa >> RISCV_PAGE_BITS;
+}
+
+// this is identical to ppn, but separate it to avoid confusion between va/pa
+static inline uintptr_t vpn(uintptr_t va)
+{
+  return va >> RISCV_PAGE_BITS;
+}
+
+static inline uintptr_t pte_ppn(pte_t pte)
+{
+  return pte >> PTE_PPN_SHIFT;
+}
+
 #ifdef USE_FREEMEM
+
+/* root page table */
+pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+/* page tables for kernel remap */
+pte_t kernel_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte_t kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+/* page tables for loading physical memory */
+pte_t load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte_t load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 
 /* freemem */
 uintptr_t freemem_va_start;

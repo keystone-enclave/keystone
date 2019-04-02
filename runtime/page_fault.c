@@ -5,6 +5,7 @@
 #include "regs.h"
 #include "vm.h"
 #include "printf.h"
+#include "freemem.h"
 
 void rt_page_fault(struct encl_ctx_t* ctx)
 {

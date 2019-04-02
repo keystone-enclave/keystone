@@ -18,7 +18,7 @@ static pg_list_t spa_free_pages;
 
 /* get a free page from the simple page allocator */
 uintptr_t
-spa_get()
+spa_get(void)
 {
   uintptr_t free_page;
 

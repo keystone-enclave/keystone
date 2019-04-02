@@ -7,6 +7,7 @@
 #include "string.h"
 #include "sbi.h"
 #include "freemem.h"
+#include "mm.h"
 
 /* defined in vm.h */
 extern uintptr_t shared_buffer;
@@ -19,16 +20,10 @@ size_t utm_size;
 /* defined in entry.S */
 extern void* encl_trap_handler;
 
-#ifdef USE_FREEMEM
+/* defined in env.c */
+extern void* setup_start(void* _sp);
 
-/* root page table */
-pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-/* page tables for kernel remap */
-pte_t kernel_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte_t kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-/* page tables for loading physical memory */
-pte_t load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte_t load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+#ifdef USE_FREEMEM
 
 void
 map_physical_memory_with_megapages(uintptr_t dram_base,
@@ -51,7 +46,7 @@ map_physical_memory_with_megapages(uintptr_t dram_base,
 
   /* root page table */
   root_page_table[RISCV_GET_PT_INDEX(ptr, 1)] =
-    ptd_create(kernel_va_to_pa(load_l2_page_table) >> RISCV_PAGE_BITS);
+    ptd_create(ppn(kernel_va_to_pa(load_l2_page_table)));
 
   /* map megapages */
   for (offset = 0;
@@ -59,7 +54,7 @@ map_physical_memory_with_megapages(uintptr_t dram_base,
        offset += RISCV_GET_LVL_PGSIZE(2))
   {
     load_l2_page_table[RISCV_GET_PT_INDEX(ptr + offset, 2)] =
-      pte_create((dram_base + offset) >> RISCV_PAGE_BITS,
+      pte_create(ppn(dram_base + offset),
           PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
   }
 }
@@ -82,11 +77,11 @@ map_physical_memory_with_kilopages(uintptr_t dram_base,
 
   /* root page table */
   root_page_table[RISCV_GET_PT_INDEX(ptr, 1)] =
-    ptd_create(kernel_va_to_pa(load_l2_page_table) >> RISCV_PAGE_BITS);
+    ptd_create(ppn(kernel_va_to_pa(load_l2_page_table)));
 
   /* l2 page table */
   load_l2_page_table[RISCV_GET_PT_INDEX(ptr, 2)] =
-    ptd_create(kernel_va_to_pa(load_l3_page_table) >> RISCV_PAGE_BITS);
+    ptd_create(ppn(kernel_va_to_pa(load_l3_page_table)));
 
   /* map pages */
   for (offset = 0;
@@ -94,7 +89,7 @@ map_physical_memory_with_kilopages(uintptr_t dram_base,
        offset += RISCV_GET_LVL_PGSIZE(3))
   {
     load_l3_page_table[RISCV_GET_PT_INDEX(ptr + offset, 3)] =
-      pte_create((dram_base + offset) >> RISCV_PAGE_BITS,
+      pte_create(ppn(dram_base + offset),
           PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
   }
 }
@@ -127,18 +122,18 @@ remap_kernel_space(uintptr_t runtime_base,
 
   /* root page table */
   root_page_table[RISCV_GET_PT_INDEX(runtime_va_start, 1)] =
-    ptd_create(kernel_va_to_pa(kernel_l2_page_table) >> RISCV_PAGE_BITS);
+    ptd_create(ppn(kernel_va_to_pa(kernel_l2_page_table)));
 
   /* L2 page talbe */
   kernel_l2_page_table[RISCV_GET_PT_INDEX(runtime_va_start, 2)] =
-    ptd_create(kernel_va_to_pa(kernel_l3_page_table) >> RISCV_PAGE_BITS);
+    ptd_create(ppn(kernel_va_to_pa(kernel_l3_page_table)));
 
   for (offset = 0;
        offset < runtime_size;
        offset += RISCV_GET_LVL_PGSIZE(3))
   {
     kernel_l3_page_table[RISCV_GET_PT_INDEX(runtime_va_start + offset, 3)] =
-      pte_create((runtime_base + offset) >> RISCV_PAGE_BITS,
+      pte_create(ppn(runtime_base + offset),
           PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
   }
 }
@@ -164,6 +159,19 @@ void
 init_freemem()
 {
   spa_init(freemem_va_start, freemem_size);
+}
+
+/* initialize user stack */
+void
+init_user_stack()
+{
+  // allocated stack pages right below the runtime
+  alloc_pages(vpn(runtime_va_start - EYRIE_USER_STACK_SIZE),
+      EYRIE_USER_STACK_SIZE >> RISCV_PAGE_BITS,
+      PTE_R | PTE_W | PTE_D | PTE_A | PTE_U);
+
+  // prepare user sp
+  csr_write(sscratch, runtime_va_start);
 }
 
 #endif // USE_FREEMEM
@@ -200,6 +208,12 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* initialize free memory */
   init_freemem();
+
+  /* initialize user stack */
+  init_user_stack();
+
+  /* settup user stack env/aux */
+  setup_start((void*)runtime_va_start);
 #endif // USE_FREEMEM
 
   /* set trap vector */

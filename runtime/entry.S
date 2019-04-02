@@ -115,15 +115,6 @@ _start:
 
   jal eyrie_boot
 
-  /* set user stack below the runtime */
-  la t0, rt_base
-//  csrw sscratch, t0
-
-  /* Setup user stack env/aux */
-  mv a0, t0
-  call setup_start
-  csrw sscratch, a0
-
   /* start running enclave */
   csrrw sp, sscratch, sp
   sret
