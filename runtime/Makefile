@@ -50,3 +50,5 @@ $(ASM_OBJS): $(ASM_SRCS)
 clean:
 	rm -f $(RUNTIME) *.o
 	$(MAKE) -C tmplib clean
+	# for legacy reasons, remove any lingering uaccess.h
+	rm -f uaccess.h
