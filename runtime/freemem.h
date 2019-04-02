@@ -1,3 +1,5 @@
+#ifndef WITHOUT_FREEMEM
+
 #ifndef __FREEMEM_H__
 #define __FREEMEM_H__
 
@@ -15,4 +17,6 @@ typedef struct pg_list_t
 void spa_init(uintptr_t base, size_t size);
 uintptr_t spa_get();
 void spa_put(uintptr_t page);
+
+#endif
 #endif

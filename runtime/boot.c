@@ -19,6 +19,8 @@ size_t utm_size;
 /* defined in entry.S */
 extern void* encl_trap_handler;
 
+#ifndef WITHOUT_FREEMEM
+
 /* root page table */
 pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 /* page tables for kernel remap */
@@ -164,6 +166,8 @@ init_freemem()
   spa_init(freemem_va_start, freemem_size);
 }
 
+#endif // WITHOUT_FREEMEM
+
 void
 eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
            uintptr_t dram_base,
@@ -183,6 +187,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   freemem_size = dram_base + dram_size - free_paddr;
   kernel_offset = runtime_va_start - runtime_paddr;
 
+#ifndef WITHOUT_FREEMEM
   /* remap kernel VA */
   remap_kernel_space(runtime_paddr, user_paddr - runtime_paddr);
   map_physical_memory(dram_base, dram_size);
@@ -193,14 +198,15 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   /* copy valid entries from the old page table */
   copy_root_page_table();
 
+  /* initialize free memory */
+  init_freemem();
+#endif // WITHOUT_FREEMEM
+
   /* set trap vector */
   csr_write(stvec, &encl_trap_handler);
 
   /* prepare edge & system calls */
   init_edge_internals();
-
-  /* initialize free memory */
-  init_freemem();
 
   /* set timer */
   init_timer();

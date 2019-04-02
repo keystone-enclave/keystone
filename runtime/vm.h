@@ -1,9 +1,13 @@
 #ifndef __VM_H__
 #define __VM_H__
 
+
 #include <asm/csr.h>
 #include "printf.h"
 #include "common.h"
+
+#ifndef WITHOUT_FREEMEM
+
 #define BIT(n) (1ul << (n))
 #define MASK(n) (BIT(n)-1ul)
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
@@ -71,6 +75,8 @@ static inline pte_t ptd_create(uintptr_t ppn)
 /* freemem */
 uintptr_t freemem_va_start;
 size_t freemem_size;
+
+#endif // WITHOUT_FREEMEM
 
 /* shared buffer */
 uintptr_t shared_buffer;

@@ -1,3 +1,4 @@
+#ifndef WITHOUT_FREEMEM
 #include "common.h"
 #include "vm.h"
 #include "freemem.h"
@@ -76,3 +77,4 @@ spa_init(uintptr_t base, size_t size)
     spa_put(cur);
   }
 }
+#endif // WITHOUT_FREEMEM
