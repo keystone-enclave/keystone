@@ -7,6 +7,7 @@
 
 #include "printf.h"
 #include "regs.h"
+#include "edge_syscall.h"
 
 #define RUNTIME_SYSCALL_UNKNOWN         1000
 #define RUNTIME_SYSCALL_OCALL           1001
@@ -16,4 +17,16 @@
 
 void handle_syscall(struct encl_ctx_t* ctx);
 void init_edge_internals(void);
+uintptr_t dispatch_edgecall_syscall(edge_syscall_t* syscall_data_ptr,
+                                    size_t data_len);
+
+// Define this to enable printing of a large amount of syscall information
+//#define INTERNAL_STRACE 1
+
+#ifdef INTERNAL_STRACE
+#define print_strace printf
+#else
+#define print_strace(...)
+#endif
+
 #endif /* syscall.h */

@@ -1,6 +1,7 @@
 CC = riscv64-unknown-linux-gnu-gcc
-CFLAGS = -Wall -Werror -fPIC -nostdlib -nodefaultlibs
-SRCS = vm.c boot.c interrupt.c printf.c syscall.c string.c freemem.c
+OPTIONS_FLAGS ?=
+CFLAGS = -Wall -Werror -fPIC -fno-builtin $(OPTIONS_FLAGS)
+SRCS = boot.c page_fault.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c fatal.c mm.c env.c freemem.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = riscv64-unknown-linux-gnu-ld
@@ -11,8 +12,8 @@ SDK_INCLUDE_EDGE_DIR = $(SDK_LIB_DIR)/edge/include
 SDK_EDGE_LIB = $(SDK_LIB_DIR)/libkeystone-edge.a
 
 LDFLAGS += -L$(SDK_LIB_DIR)
-CFLAGS += -I$(SDK_INCLUDE_EDGE_DIR)
-CFLAGS += -I./tmplib
+CFLAGS += -I$(SDK_INCLUDE_EDGE_DIR) -I ./tmplib
+
 DISK_IMAGE = ../busybear-linux/busybear.bin
 MOUNT_DIR = ./tmp_busybear
 

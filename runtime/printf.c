@@ -10,10 +10,10 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -119,16 +119,6 @@ static inline void _out_fct(char character, void* buffer, size_t idx, size_t max
   (void)idx; (void)maxlen;
   // buffer is the output fct pointer
   ((out_fct_wrap_type*)buffer)->fct(character, ((out_fct_wrap_type*)buffer)->arg);
-}
-
-
-// internal strlen
-// \return The length of the string (excluding the terminating 0)
-static inline unsigned int _strlen(const char* str)
-{
-  const char* s;
-  for (s = str; *s; ++s);
-  return (unsigned int)(s - str);
 }
 
 
