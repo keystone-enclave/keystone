@@ -159,6 +159,8 @@ init_freemem()
   spa_init(freemem_va_start, freemem_size);
 }
 
+#endif // USE_FREEMEM
+
 /* initialize user stack */
 void
 init_user_stack_and_env()
@@ -168,11 +170,13 @@ init_user_stack_and_env()
   uintptr_t stack_end = EYRIE_USER_STACK_END;
   size_t stack_count = EYRIE_USER_STACK_SIZE >> RISCV_PAGE_BITS;
 
+#ifdef USE_FREEMEM
   // allocated stack pages right below the runtime
   count = alloc_pages(vpn(stack_end), stack_count,
       PTE_R | PTE_W | PTE_D | PTE_A | PTE_U);
 
   assert(count == stack_count);
+#endif // USE_FREEMEM
 
   // setup user stack env/aux
   user_sp = setup_start(user_sp);
@@ -180,8 +184,6 @@ init_user_stack_and_env()
   // prepare user sp
   csr_write(sscratch, user_sp);
 }
-
-#endif // USE_FREEMEM
 
 void
 eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
@@ -216,10 +218,10 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   /* initialize free memory */
   init_freemem();
 
+#endif // USE_FREEMEM
+
   /* initialize user stack */
   init_user_stack_and_env();
-
-#endif // USE_FREEMEM
 
   /* set trap vector */
   csr_write(stvec, &encl_trap_handler);
