@@ -7,133 +7,251 @@
 #include "keystone_user.h"
 #include <linux/uaccess.h>
 
-
-int keystone_create_enclave(struct file* filp, unsigned long arg)
+int keystone_create_enclave(unsigned long arg)
 {
-  int ret;
-  
   /* create parameters */
-  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave*) arg;
-  
-  // User ELF
-  void* __user user_elf_ptr = (void*) enclp->user_elf_ptr;
-  size_t user_elf_size = enclp->user_elf_size;
-  size_t  user_stack_size = enclp->user_stack_size;
+  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
 
-  // Runtime ELF
-  void* __user runtime_elf_ptr = (void*) enclp->runtime_elf_ptr;
-  size_t  runtime_elf_size = enclp->runtime_elf_size;
-  size_t  runtime_stack_size = enclp->runtime_stack_size;
+  enclave_t *enclave;
+  enclave = create_enclave(enclp->min_pages);
 
-  // Untrusted mmap size
-  void* untrusted_ptr = (void*) enclp->params.untrusted_ptr;
-  size_t untrusted_size = enclp->params.untrusted_size;
- 
-  // runtime parameters
-  struct keystone_sbi_create_t create_args;
-
-  enclave_t* enclave;
-
-  /* local variables */
-  unsigned long rt_offset;
-  unsigned long min_pages = calculate_required_pages(user_elf_size, user_stack_size, runtime_elf_size, runtime_stack_size);
-  struct utm_t* utm;
-  
-  /* argument validity */
-  if (!user_elf_ptr || !runtime_elf_ptr || !user_elf_size || !runtime_elf_size){
-    ret = -EINVAL;
-    goto error_no_free;
-  }
-
-
-  enclave = create_enclave(min_pages);
-  if(enclave == NULL){
-    ret = -ENOMEM;
-    goto error_no_free;
-  }
-  
-  /* initialize runtime */
-  ret = -EFAULT;
-  if (keystone_rtld_init_runtime(enclave, runtime_elf_ptr, runtime_elf_size, runtime_stack_size, &rt_offset)) {
-    keystone_err("failed to initialize runtime\n");
-    goto error_destroy_enclave;
-  }
-
-  /* initialize user app */
-  if (keystone_rtld_init_app(enclave, user_elf_ptr, user_elf_size, user_stack_size, rt_offset)) {
-    keystone_err("failed to initialize app\n");
-    goto error_destroy_enclave;
-  }
-
-  /* Untrusted Memory */
-  utm = kmalloc(sizeof(struct utm_t), GFP_KERNEL);
-  if (!utm) {
-    ret = -ENOMEM;
-    goto error_destroy_enclave;
-  }
-
-  ret = utm_init(utm, untrusted_size);
-  if (ret != 0)
-    goto error_destroy_enclave;
-
-  filp->private_data = utm;
-  enclave->utm = utm; 
-
-  if (keystone_rtld_init_untrusted(enclave, untrusted_ptr, untrusted_size)) {
-    keystone_err("failed to initialize untrusted memory\n");
-    goto error_destroy_enclave;
-  }
-
-  /* SBI Call */
-  create_args.epm_region.paddr = enclave->epm->pa;
-  create_args.epm_region.size = enclave->epm->total;
-  create_args.utm_region.paddr = __pa(utm->ptr);
-  create_args.utm_region.size = utm->size;
-
-  create_args.params = enclp->params;
-
-  // SM will write the eid to enclave_t.eid
-  create_args.eid_pptr =  (unsigned int*)__pa(&enclave->eid);
-  ret = SBI_CALL_1(SBI_SM_CREATE_ENCLAVE, __pa(&create_args));
-  if (ret)
-  {
-    keystone_err("keystone_create_enclave: SBI call failed\n");
-    goto error_destroy_enclave;
+  if (enclave == NULL) {
+    return -ENOMEM;
   }
 
   /* allocate UID */
   enclp->eid = enclave_idr_alloc(enclave);
 
+  return 0;
+}
+
+
+int keystone_finalize_enclave(unsigned long arg)
+{
+  int ret;
+  enclave_t *enclave;
+  struct utm_t *utm;
+  struct keystone_sbi_create_t create_args;
+
+  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
+
+  enclave = get_enclave_by_id(enclp->eid);
+
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
+  /* SBI Call */
+  create_args.epm_region.paddr = enclave->epm->pa;
+  create_args.epm_region.size = enclave->epm->size;
+
+  utm = enclave->utm;
+
+  if(utm) {
+    create_args.utm_region.paddr = __pa(utm->ptr);
+    create_args.utm_region.size = utm->size;
+  } else {
+    create_args.utm_region.paddr = 0;
+    create_args.utm_region.size = 0;
+  }
+
+  // physical addresses for runtime, user, and freemem
+  create_args.runtime_paddr = epm_va_to_pa(enclave->epm, enclp->runtime_vaddr);
+  create_args.user_paddr = epm_va_to_pa(enclave->epm, enclp->user_vaddr);
+  create_args.free_paddr = epm_get_free_pa(enclave->epm);
+
+  create_args.params = enclp->params;
+
+  // SM will write the eid to enclave_t.eid
+  create_args.eid_pptr = (unsigned int *) __pa(&enclave->eid);
+
+  ret = SBI_CALL_1(SBI_SM_CREATE_ENCLAVE, __pa(&create_args));
+  if (ret) {
+    keystone_err("keystone_create_enclave: SBI call failed\n");
+    goto error_destroy_enclave;
+  }
+
   /* We cleanup the free lists here since the kernel will no longer be
      managing them, they are part of the enclave now. */
   utm_clean_free_list(utm);
   epm_clean_free_list(enclave->epm);
-  
+
   return 0;
 
- error_destroy_enclave:
+error_destroy_enclave:
   /* This can handle partial initialization failure */
   destroy_enclave(enclave);
-  
- error_no_free:
+
   return ret;
+
 }
 
-int keystone_destroy_enclave(struct file* filp, unsigned long arg)
+int keystone_run_enclave(unsigned long arg)
 {
-  int ret;
-  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave*) arg;
-  unsigned long ueid = enclp->eid;
+  int ret = 0;
+  unsigned long ueid;
   enclave_t* enclave;
+  struct keystone_ioctl_run_enclave *run = (struct keystone_ioctl_run_enclave*) arg;
+
+  ueid = run->eid;
   enclave = get_enclave_by_id(ueid);
 
-  if(!enclave)
-  {
+  if(!enclave) {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
+
+  ret = SBI_CALL_1(SBI_SM_RUN_ENCLAVE, enclave->eid);
+  /* if the enclave was interrupted, just resume the enclave */
+  while(ret == ENCLAVE_INTERRUPTED)
+  {
+    keystone_handle_interrupts();
+    ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
+  }
+
+  return ret;
+}
+
+int keystone_add_page(unsigned long arg)
+{
+  int ret = 0;
+  vaddr_t epm_page;
+  struct addr_packed *addr = (struct addr_packed *) arg;
+  unsigned long ueid = addr->eid;
+  unsigned int mode = addr->mode;
+  enclave_t *enclave;
+
+  enclave = get_enclave_by_id(ueid);
+
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
+  switch (mode) {
+    case USER_NOEXEC: {
+      epm_alloc_user_page_noexec(enclave->epm, addr->va);
+      break;
+    }
+    case RT_NOEXEC: {
+      epm_alloc_rt_page_noexec(enclave->epm, addr->va);
+      break;
+    }
+    case RT_FULL: {
+      epm_page = epm_alloc_rt_page(enclave->epm, addr->va);
+      if (copy_from_user((void *) epm_page, (void *) addr->copied, PAGE_SIZE) != 0)
+        ret = -ENOEXEC;
+      break;
+    }
+    case USER_FULL: {
+      epm_page = epm_alloc_user_page(enclave->epm, addr->va);
+      if (copy_from_user((void *) epm_page, (void *) addr->copied, PAGE_SIZE) != 0)
+        ret = -ENOEXEC;
+      break;
+    }
+    default:
+      ret = -ENOSYS;
+  }
+
+  return ret;
+}
+
+/* This IOCTL allows user to prepare page tables prior to the actual page allocation.
+ * This is needed when an enclave requires linear physical layout.
+ * The user must call this before allocating pages */
+int keystone_alloc_vspace(unsigned long arg)
+{
+  int ret = 0;
+  vaddr_t va;
+  size_t num_pages;
+  enclave_t* enclave;
+  struct keystone_ioctl_alloc_vspace* enclp = (struct keystone_ioctl_alloc_vspace *) arg;
+
+  va = enclp->vaddr;
+  num_pages = PAGE_UP(enclp->size)/PAGE_SIZE;
+
+  enclave = get_enclave_by_id(enclp->eid);
+
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
+  if (epm_alloc_vspace(enclave->epm, va, num_pages) != num_pages) {
+    keystone_err("failed to allocate vspace\n");
+    return -ENOMEM;
+  }
+
+  return ret;
+}
+
+int utm_init_ioctl(struct file *filp, unsigned long arg)
+{
+  int ret = 0;
+  struct utm_t *utm;
+  enclave_t *enclave;
+  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
+  long long unsigned untrusted_size = enclp->params.untrusted_size;
+
+  enclave = get_enclave_by_id(enclp->eid);
+
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
+  utm = kmalloc(sizeof(struct utm_t), GFP_KERNEL);
+  if (!utm) {
+    ret = -ENOMEM;
+    return ret;
+  }
+
+  ret = utm_init(utm, untrusted_size);
+
+  /* prepare for mmap */
+  filp->private_data = utm;
+  enclave->utm = utm;
+
+  return ret;
+}
+
+int utm_alloc(unsigned long arg)
+{
+  int ret = 0;
+  enclave_t *enclave;
+  struct addr_packed *addr = (struct addr_packed *) arg;
+  unsigned long ueid = addr->eid;
+
+  enclave = get_enclave_by_id(ueid);
+
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
+  utm_alloc_page(enclave->utm, enclave->epm, addr->va, PTE_D | PTE_A | PTE_R | PTE_W);
+
+  return ret;
+}
+
+
+int keystone_destroy_enclave(unsigned long arg)
+{
+  int ret;
+  enclave_t *enclave;
+  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
+  unsigned long ueid = enclp->eid;
+
+  enclave = get_enclave_by_id(ueid);
+
+  if (!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+
   ret = SBI_CALL_1(SBI_SM_DESTROY_ENCLAVE, enclave->eid);
-  if(ret) {
+  if (ret) {
     keystone_err("fatal: cannot destroy enclave: SBI failed\n");
     return ret;
   }
@@ -144,52 +262,26 @@ int keystone_destroy_enclave(struct file* filp, unsigned long arg)
   return 0;
 }
 
-int keystone_run_enclave(struct file* filp, unsigned long arg)
-{
-  int ret = 0;
-  struct keystone_ioctl_run_enclave *run = (struct keystone_ioctl_run_enclave*) arg;
-  unsigned long ueid = run->eid;
-  enclave_t* enclave;
-  enclave = get_enclave_by_id(ueid);
-
-  if(!enclave)
-  {
-    keystone_err("invalid enclave id\n");
-    return -EINVAL;
-  }
-  
-  ret = SBI_CALL_1(SBI_SM_RUN_ENCLAVE, enclave->eid);
-  /* if the enclave is timer-interrupted, just resume the enclave */
-  while(ret == ENCLAVE_INTERRUPTED)
-  {
-    keystone_handle_interrupts();
-    ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
-  }
-
-  return ret;
-}
-
-int keystone_resume_enclave(struct file* filp, unsigned long arg)
+int keystone_resume_enclave(unsigned long arg)
 {
   int ret = 0;
   struct keystone_ioctl_run_enclave *resume = (struct keystone_ioctl_run_enclave*) arg;
   unsigned long ueid = resume->eid;
   enclave_t* enclave;
   enclave = get_enclave_by_id(ueid);
-  
-  if(!enclave)
+
+  if (!enclave)
   {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
 
   ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
-  while(ret == ENCLAVE_INTERRUPTED)
+  while (ret == ENCLAVE_INTERRUPTED)
   {
     keystone_handle_interrupts();
     ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
   }
-
   return ret;
 }
 
@@ -199,38 +291,54 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
   char data[256];
   size_t ioc_size;
 
-  //pr_info("keystone_enclave: keystone_ioctl() command = %d\n",cmd);
-
-  if(!arg)
+  if (!arg)
     return -EINVAL;
- 
+
   ioc_size = _IOC_SIZE(cmd);
   ioc_size = ioc_size > sizeof(data) ? sizeof(data) : ioc_size;
 
-  if(copy_from_user(data, (void __user*) arg, ioc_size))
+  if (copy_from_user(data,(void __user *) arg, ioc_size))
     return -EFAULT;
 
-  switch(cmd)
-  {
+  switch (cmd) {
     case KEYSTONE_IOC_CREATE_ENCLAVE:
-      ret = keystone_create_enclave(filep, (unsigned long) data);
+      ret = keystone_create_enclave((unsigned long) data);
+      break;
+    case KEYSTONE_IOC_ADD_PAGE:
+      ret = keystone_add_page((unsigned long) data);
+      break;
+    case KEYSTONE_IOC_ALLOC_VSPACE:
+      ret = keystone_alloc_vspace((unsigned long) data);
+      break;
+    case KEYSTONE_IOC_FINALIZE_ENCLAVE:
+      ret = keystone_finalize_enclave((unsigned long) data);
       break;
     case KEYSTONE_IOC_DESTROY_ENCLAVE:
-      ret = keystone_destroy_enclave(filep, (unsigned long) data);
+      ret = keystone_destroy_enclave((unsigned long) data);
       break;
     case KEYSTONE_IOC_RUN_ENCLAVE:
-      ret = keystone_run_enclave(filep, (unsigned long) data);
+      ret = keystone_run_enclave((unsigned long) data);
       break;
     case KEYSTONE_IOC_RESUME_ENCLAVE:
-      ret = keystone_resume_enclave(filep, (unsigned long) data);
+      ret = keystone_resume_enclave((unsigned long) data);
+      break;
+    /* Note that following commands could have been implemented as a part of ADD_PAGE ioctl.
+     * However, there was a weird bug in compiler that generates a wrong control flow
+     * that ends up with an illegal instruction if we combine switch-case and if statements.
+     * We didn't identified the exact problem, so we'll have these until we figure out */
+    case KEYSTONE_IOC_UTM_ALLOC:
+      ret = utm_alloc((unsigned long) data);
+      break;
+    case KEYSTONE_IOC_UTM_INIT:
+      ret = utm_init_ioctl(filep, (unsigned long) data);
       break;
     default:
       return -ENOSYS;
   }
 
-  if(copy_to_user((void __user*) arg, data, ioc_size))
+  if (copy_to_user((void __user*) arg, data, ioc_size))
     return -EFAULT;
-  
+
   return ret;
 }
 

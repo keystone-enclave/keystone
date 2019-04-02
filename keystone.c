@@ -14,7 +14,7 @@
 #include <linux/miscdevice.h>
 #include "keystone_user.h"
 #define   DRV_DESCRIPTION   "keystone enclave"
-#define   DRV_VERSION       "0.1"
+#define   DRV_VERSION       "0.2"
 
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Dayeol Lee <dayeol@berkeley.edu>");
@@ -51,8 +51,8 @@ int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
   if (vsize > psize)
     return -EINVAL;
 
-  remap_pfn_range(vma, 
-      vma->vm_start, 
+  remap_pfn_range(vma,
+      vma->vm_start,
       __pa(utm->ptr) >> PAGE_SHIFT,
       vsize, vma->vm_page_prot);
   return 0;
@@ -65,9 +65,9 @@ static int __init keystone_dev_init(void)
   ret = misc_register(&keystone_dev);
   if (ret < 0)
   {
-    pr_err("keystone_enclave: misc_register() failed\n"); 
+    pr_err("keystone_enclave: misc_register() failed\n");
   }
-  pr_info("keystone_enclave: " DRV_DESCRIPTION " v" DRV_VERSION "\n"); 
+  pr_info("keystone_enclave: " DRV_DESCRIPTION " v" DRV_VERSION "\n");
   return ret;
 }
 

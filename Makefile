@@ -5,7 +5,6 @@ DRIVER = keystone-driver.ko
 ifneq ($(KERNELRELEASE),)
 	keystone-driver-y := \
 		keystone.o \
-		keystone-rtld.o \
 		keystone-page.o \
 		keystone-ioctl.o \
 		keystone-enclave.o
@@ -13,7 +12,7 @@ ifneq ($(KERNELRELEASE),)
 else
 
 PWD := $(shell pwd)
-KDIR := $(PWD)/../riscv-linux/
+KDIR := $(PWD)/../riscv-linux
 
 default:
 	$(MAKE) -C $(KDIR) ARCH=riscv SUBDIRS=$(PWD) modules

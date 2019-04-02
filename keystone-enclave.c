@@ -3,7 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include <linux/dma-mapping.h>
-#include "keystone.h" 
+#include "keystone.h"
 /* idr for enclave UID to enclave_t */
 DEFINE_IDR(idr_enclave);
 DEFINE_SPINLOCK(idr_enclave_lock);
@@ -18,7 +18,7 @@ unsigned long calculate_required_pages(
     unsigned long rt_stack_sz)
 {
   unsigned long req_pages = 0;
-  
+
   req_pages += PAGE_UP(eapp_sz)/PAGE_SIZE;
   req_pages += PAGE_UP(eapp_stack_sz)/PAGE_SIZE;
   req_pages += PAGE_UP(rt_sz)/PAGE_SIZE;
@@ -57,56 +57,28 @@ int destroy_enclave(enclave_t* enclave)
 
 enclave_t* create_enclave(unsigned long min_pages)
 {
-  vaddr_t epm_vaddr = 0;
-  unsigned long order = ilog2(min_pages - 1) + 1;
-  unsigned long count = 0x1 << order;
-  epm_t* epm;
   enclave_t* enclave;
-  phys_addr_t device_phys_addr = 0;
 
   enclave = kmalloc(sizeof(enclave_t), GFP_KERNEL);
   if (!enclave){
-    keystone_err("keystone_create_epm(): failed to allocate enclave struct\n");
+    keystone_err("failed to allocate enclave struct\n");
     goto error_no_free;
   }
 
   enclave->utm = NULL;
-  enclave->epm = NULL;
   enclave->close_on_pexit = 1;
 
-  /* allocate contiguous memory */
-
-#ifdef CONFIG_CMA
-  epm_vaddr = dma_alloc_coherent(keystone_dev.this_device, 
-      count << PAGE_SHIFT,
-      &device_phys_addr,
-      GFP_KERNEL);
-#endif
-  if(!epm_vaddr || !device_phys_addr)
+  enclave->epm = kmalloc(sizeof(epm_t), GFP_KERNEL);
+  if (!enclave->epm)
   {
-    epm_vaddr = __get_free_pages(GFP_HIGHUSER, order);
-  }
-    
-  if(!epm_vaddr) {
-    keystone_err("keystone_create_epm(): failed to allocate %lu page(s)\n", count);
+    keystone_err("failed to allocate epm\n");
     goto error_destroy_enclave;
   }
 
-  /* initialize */
-  memset((void*)epm_vaddr, 0, PAGE_SIZE*count);
-
-  epm = kmalloc(sizeof(epm_t), GFP_KERNEL);
-  if (!epm)
-  {
-    keystone_err("keystone_create_epm(): failed to allocate epm\n");
+  if(epm_init(enclave->epm, min_pages)) {
+    keystone_err("failed to initialize epm\n");
     goto error_destroy_enclave;
   }
- 
-  INIT_LIST_HEAD(&epm->epm_free_list);
-  epm->pa = __pa(epm_vaddr);
-  epm->order = order;
-  epm_init(epm, epm_vaddr, count);
-  enclave->epm = epm;
   return enclave;
 
  error_destroy_enclave:
@@ -122,16 +94,16 @@ unsigned int enclave_idr_alloc(enclave_t* enclave)
   spin_lock_bh(&idr_enclave_lock);
   ueid = idr_alloc(&idr_enclave, enclave, ENCLAVE_IDR_MIN, ENCLAVE_IDR_MAX, GFP_KERNEL);
   spin_unlock_bh(&idr_enclave_lock);
-  
+
   if (ueid < ENCLAVE_IDR_MIN || ueid >= ENCLAVE_IDR_MAX) {
     keystone_err("failed to allocate UID\n");
     return 0;
   }
-  
+
   return ueid;
 }
 
-enclave_t* enclave_idr_remove(unsigned int ueid) 
+enclave_t* enclave_idr_remove(unsigned int ueid)
 {
   enclave_t* enclave;
   spin_lock_bh(&idr_enclave_lock);
@@ -144,7 +116,7 @@ enclave_t* get_enclave_by_id(unsigned int ueid)
 {
   enclave_t* enclave;
   spin_lock_bh(&idr_enclave_lock);
-  enclave = idr_find(&idr_enclave, ueid); 
+  enclave = idr_find(&idr_enclave, ueid);
   spin_unlock_bh(&idr_enclave_lock);
   return enclave;
 }

@@ -7,11 +7,11 @@
 #include "keystone.h"
 #include <linux/dma-mapping.h>
 
-void init_free_pages(struct list_head* pg_list, vaddr_t base, unsigned int count)
+void init_free_pages(struct list_head* pg_list, vaddr_t ptr, unsigned int count)
 {
   unsigned int i;
   vaddr_t cur;
-  cur = base;
+  cur = ptr;
   for(i=0; i<count; i++)
   {
     put_free_page(pg_list, cur);
@@ -32,7 +32,7 @@ vaddr_t get_free_page(struct list_head* pg_list)
   addr = page->vaddr;
   list_del(&page->freelist);
   kfree(page);
-  
+
   return addr;
 }
 
@@ -44,39 +44,88 @@ void put_free_page(struct list_head* pg_list, vaddr_t page_addr)
   return;
 }
 
-int epm_destroy(epm_t* epm){
+/* Destroy all memory associated with an EPM */
+int epm_destroy(epm_t* epm) {
 
   /* Clean anything in the free list */
   epm_clean_free_list(epm);
 
-#ifdef CONFIG_CMA
-  if(epm->base != 0){
-    dma_free_coherent(keystone_dev.this_device, 
-        (0x1 << epm->order) << PAGE_SHIFT,
-        epm->base,
+  if(!epm->ptr || !epm->size)
+    return 0;
+
+  /* free the EPM hold by the enclave */
+  if (epm->is_cma) {
+    dma_free_coherent(keystone_dev.this_device,
+        epm->size,
+        (void*) epm->ptr,
         epm->pa);
+  } else {
+    free_pages(epm->ptr, epm->order);
   }
-#else
-  if(epm->base != 0){
-    free_pages(epm->base, epm->order);
-  }
-#endif
-  
+
   return 0;
 }
 
-void epm_init(epm_t* epm, vaddr_t base, unsigned int count)
+/* Create an EPM and initialize the free list */
+int epm_init(epm_t* epm, unsigned int min_pages)
 {
   pte_t* t;
-  
-  init_free_pages(&epm->epm_free_list, base, count); 
-  epm->base = base;
-  epm->total = count * PAGE_SIZE; 
 
+  vaddr_t epm_vaddr = 0;
+  unsigned long order = 0;
+  unsigned long count = min_pages;
+  phys_addr_t device_phys_addr = 0;
+
+  /* Always init the head */
+  INIT_LIST_HEAD(&epm->epm_free_list);
+
+  /* try to allocate contiguous memory */
+  epm->is_cma = 0;
+  order = ilog2(min_pages - 1) + 1;
+  count = 0x1 << order;
+
+  /* prevent kernel from complaining about an invalid argument */
+  if (order <= MAX_ORDER)
+    epm_vaddr = (vaddr_t) __get_free_pages(GFP_HIGHUSER, order);
+
+#ifdef CONFIG_CMA
+  /* If buddy allocator fails, we fall back to the CMA */
+  if (!epm_vaddr) {
+    epm->is_cma = 1;
+    count = min_pages;
+
+    epm_vaddr = (vaddr_t) dma_alloc_coherent(keystone_dev.this_device,
+      count << PAGE_SHIFT,
+      &device_phys_addr,
+      GFP_KERNEL);
+
+    if(!device_phys_addr)
+      epm_vaddr = 0;
+  }
+#endif
+
+  if(!epm_vaddr) {
+    keystone_err("failed to allocate %lu page(s)\n", count);
+    return -ENOMEM;
+  }
+
+  /* zero out */
+  memset((void*)epm_vaddr, 0, PAGE_SIZE*count);
+  init_free_pages(&epm->epm_free_list, epm_vaddr, count);
+
+  /* The first free page will be the enclave's top-level page table */
   t = (pte_t*) get_free_page(&epm->epm_free_list);
+  if (!t) {
+    return -ENOMEM;
+  }
+
   epm->root_page_table = t;
-  
-  return;
+  epm->pa = __pa(epm_vaddr);
+  epm->order = order;
+  epm->size = count << PAGE_SHIFT;
+  epm->ptr = epm_vaddr;
+
+  return 0;
 }
 
 int epm_clean_free_list(epm_t* epm)
@@ -101,7 +150,7 @@ int utm_destroy(utm_t* utm){
   if(utm->ptr != NULL){
     free_pages((vaddr_t)utm->ptr, utm->order);
   }
-  
+
   return 0;
 }
 
@@ -129,7 +178,9 @@ int utm_init(utm_t* utm, size_t untrusted_size)
   count = 0x1 << order;
 
   utm->order = order;
-  
+
+  /* Currently, UTM does not utilize CMA.
+   * It is always allocated from the buddy allocator */
   utm->ptr = (void*) __get_free_pages(GFP_HIGHUSER, order);
   if (!utm->ptr) {
     return -ENOMEM;
@@ -137,6 +188,7 @@ int utm_init(utm_t* utm, size_t untrusted_size)
 
   utm->size = count * PAGE_SIZE;
   if (utm->size != untrusted_size) {
+    /* Instead of failing, we just warn that the user has to fix the parameter. */
     keystone_warn("shared buffer size is not multiple of PAGE_SIZE\n");
   }
 
@@ -185,12 +237,11 @@ static pte_t* __ept_walk_internal(struct list_head* pg_list, pte_t* root_page_ta
   }
   return &t[pt_idx(addr, 0)];
 }
-/*
+
 static pte_t* __ept_walk(struct list_head* pg_list, pte_t* root_page_table, vaddr_t addr)
 {
   return __ept_walk_internal(pg_list, root_page_table, addr, 0);
 }
-*/
 
 static pte_t* __ept_walk_create(struct list_head* pg_list, pte_t* root_page_table, vaddr_t addr)
 {
@@ -205,18 +256,76 @@ static int __ept_va_avail(epm_t* epm, vaddr_t vaddr)
 }
 */
 
+paddr_t epm_get_free_pa(epm_t* epm)
+{
+  struct free_page_t* page;
+  struct list_head* pg_list;
+  paddr_t addr;
+
+  pg_list = &(epm->epm_free_list);
+
+  if(list_empty(pg_list))
+    return 0;
+
+  page = list_first_entry(pg_list, struct free_page_t, freelist);
+  return __pa(page->vaddr);
+}
+
+paddr_t epm_va_to_pa(epm_t* epm, vaddr_t addr)
+{
+  pte_t* pte = __ept_walk(NULL, epm->root_page_table,addr);
+  if(pte)
+    return pte_ppn(*pte) << RISCV_PGSHIFT;
+  else
+    return 0;
+}
+
+/* This function pre-allocates the required page tables so that
+ * the virtual addresses are linearly mapped to the physical memory */
+size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages)
+{
+  vaddr_t walk;
+  size_t count;
+
+  for(walk=addr, count=0; count < num_pages; count++, addr += PAGE_SIZE)
+  {
+    pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
+    if(!pte)
+      break;
+  }
+
+  return count;
+}
+
+
 vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags)
 {
+  vaddr_t page_addr;
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
-  vaddr_t page_addr = get_free_page(&utm->utm_free_list);
+
+  /* if the page has been already allocated, return the page */
+  if(pte_val(*pte) & PTE_V) {
+    return (vaddr_t) __va(pte_ppn(*pte) << RISCV_PGSHIFT);
+  }
+
+	/* otherwise, allocate one from UTM freelist */
+  page_addr = get_free_page(&utm->utm_free_list);
   *pte = pte_create(ppn(page_addr), flags | PTE_V);
   return page_addr;
 }
 
 vaddr_t epm_alloc_page(epm_t* epm, vaddr_t addr, unsigned long flags)
 {
+  vaddr_t page_addr;
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
-  vaddr_t page_addr = get_free_page(&epm->epm_free_list);
+
+	/* if the page has been already allocated, return the page */
+  if(pte_val(*pte) & PTE_V) {
+    return (vaddr_t) __va(pte_ppn(*pte) << RISCV_PGSHIFT);
+  }
+
+	/* otherwise, allocate one from EPM freelist */
+  page_addr = get_free_page(&epm->epm_free_list);
   *pte = pte_create(ppn(page_addr), flags | PTE_V);
   return page_addr;
 }
@@ -239,9 +348,4 @@ vaddr_t epm_alloc_user_page_noexec(epm_t* epm, vaddr_t addr)
 vaddr_t epm_alloc_user_page(epm_t* epm, vaddr_t addr)
 {
   return epm_alloc_page(epm, addr, PTE_D | PTE_A | PTE_R | PTE_X | PTE_W | PTE_U);
-}
-
-void epm_free_page(epm_t* epm, vaddr_t addr)
-{
-  /* TODO: Must Implement Quickly */
 }

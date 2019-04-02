@@ -56,7 +56,7 @@ extern struct miscdevice keystone_dev;
 #define SBI_CALL_5(which, arg0, arg1, arg2, arg3, arg4) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, 0)
 #define SBI_CALL_6(which, arg0, arg1, arg2, arg3, arg4, arg5) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5)
 
-void keystone_handle_interrupts(void); 
+void keystone_handle_interrupts(void);
 
 long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
 int keystone_release(struct inode *inode, struct file *file);
@@ -71,10 +71,11 @@ struct free_page_t {
 typedef struct epm_t {
   struct list_head epm_free_list;
   pte_t* root_page_table;
-  vaddr_t base;
-  paddr_t pa;
+  vaddr_t ptr;
+  size_t size;
   unsigned long order;
-  unsigned int total;
+  paddr_t pa;
+  bool is_cma;
 } epm_t;
 
 typedef struct utm_t {
@@ -86,7 +87,7 @@ typedef struct utm_t {
 } utm_t;
 
 
-typedef struct keystone_enclave_t 
+typedef struct keystone_enclave_t
 {
   unsigned int eid;
   int close_on_pexit;
@@ -122,13 +123,15 @@ void put_free_page(struct list_head* pg_list, vaddr_t page_addr);
 vaddr_t get_free_page(struct list_head* pg_list);
 
 int epm_destroy(epm_t* epm);
-void epm_init(epm_t* epm, vaddr_t base, unsigned int count);
+int epm_init(epm_t* epm, unsigned int count);
 int utm_destroy(utm_t* utm);
 int utm_init(utm_t* utm, size_t untrusted_size);
 int epm_clean_free_list(epm_t* epm);
 int utm_clean_free_list(utm_t* utm);
-
+paddr_t epm_va_to_pa(epm_t* epm, vaddr_t addr);
+paddr_t epm_get_free_pa(epm_t* epm);
 vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags);
+size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages);
 vaddr_t epm_alloc_rt_page(epm_t* epm, vaddr_t addr);
 vaddr_t epm_alloc_rt_page_noexec(epm_t* epm, vaddr_t addr);
 vaddr_t epm_alloc_user_page(epm_t* epm, vaddr_t addr);
@@ -137,10 +140,10 @@ void epm_free_page(epm_t* epm, vaddr_t addr);
 
 
 unsigned long calculate_required_pages(
-    unsigned long eapp_sz,
-    unsigned long eapp_stack_sz,
-    unsigned long rt_sz,
-    unsigned long rt_stack_sz);
+		unsigned long eapp_sz,
+		unsigned long eapp_stack_sz,
+		unsigned long rt_sz,
+		unsigned long rt_stack_sz);
 
 #define keystone_info(fmt, ...) \
   pr_info("keystone_enclave: " fmt, ##__VA_ARGS__)
