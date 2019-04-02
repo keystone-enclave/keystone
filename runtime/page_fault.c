@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "regs.h"
+#include "vm.h"
 #include "printf.h"
 
 void rt_page_fault(struct encl_ctx_t* ctx)
@@ -14,6 +15,7 @@ void rt_page_fault(struct encl_ctx_t* ctx)
   cause = ctx->scause;
 
   printf("[runtime] page fault at 0x%lx on 0x%lx (scause: 0x%lx)\n", pc, addr, cause);
-  SBI_CALL_1(SBI_SM_EXIT_ENCLAVE,-1);
+
+  sbi_exit_enclave(-1);
   return;
 }

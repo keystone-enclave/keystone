@@ -23,10 +23,6 @@
 
 extern void exit_enclave(uintptr_t arg0);
 
-/* These are set by entry.S during init */
-uintptr_t shared_buffer;
-uintptr_t shared_buffer_size;
-
 uintptr_t dispatch_edgecall_syscall(edge_syscall_t* syscall_data_ptr, size_t data_len){
   int ret;
 
