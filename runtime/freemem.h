@@ -1,4 +1,4 @@
-#ifndef WITHOUT_FREEMEM
+#ifdef USE_FREEMEM
 
 #ifndef __FREEMEM_H__
 #define __FREEMEM_H__

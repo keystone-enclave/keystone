@@ -19,7 +19,7 @@ size_t utm_size;
 /* defined in entry.S */
 extern void* encl_trap_handler;
 
-#ifndef WITHOUT_FREEMEM
+#ifdef USE_FREEMEM
 
 /* root page table */
 pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
@@ -166,7 +166,7 @@ init_freemem()
   spa_init(freemem_va_start, freemem_size);
 }
 
-#endif // WITHOUT_FREEMEM
+#endif // USE_FREEMEM
 
 void
 eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
@@ -183,11 +183,11 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   shared_buffer = utm_vaddr;
   shared_buffer_size = utm_size;
   runtime_va_start = (uintptr_t) &rt_base;
+  kernel_offset = runtime_va_start - runtime_paddr;
+#ifdef USE_FREEMEM
   freemem_va_start = __va(free_paddr);
   freemem_size = dram_base + dram_size - free_paddr;
-  kernel_offset = runtime_va_start - runtime_paddr;
 
-#ifndef WITHOUT_FREEMEM
   /* remap kernel VA */
   remap_kernel_space(runtime_paddr, user_paddr - runtime_paddr);
   map_physical_memory(dram_base, dram_size);
@@ -200,7 +200,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* initialize free memory */
   init_freemem();
-#endif // WITHOUT_FREEMEM
+#endif // USE_FREEMEM
 
   /* set trap vector */
   csr_write(stvec, &encl_trap_handler);

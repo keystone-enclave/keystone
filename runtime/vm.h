@@ -6,7 +6,6 @@
 #include "printf.h"
 #include "common.h"
 
-#ifndef WITHOUT_FREEMEM
 
 #define BIT(n) (1ul << (n))
 #define MASK(n) (BIT(n)-1ul)
@@ -72,11 +71,13 @@ static inline pte_t ptd_create(uintptr_t ppn)
   return pte_create(ppn, PTE_V);
 }
 
+#ifdef USE_FREEMEM
+
 /* freemem */
 uintptr_t freemem_va_start;
 size_t freemem_size;
 
-#endif // WITHOUT_FREEMEM
+#endif // USE_FREEMEM
 
 /* shared buffer */
 uintptr_t shared_buffer;
