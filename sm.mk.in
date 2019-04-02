@@ -21,8 +21,7 @@ sm_c_srcs = \
   ed25519/sc.c \
   platform/@TARGET_PLATFORM@/@TARGET_PLATFORM@.c \
 
-sm_asm_srcs = \
-  sanitizer.S \
+sm_asm_srcs =
 
 sm_test_srcs =
 
