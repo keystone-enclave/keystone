@@ -9,7 +9,7 @@
 
 #define DEFAULT_FREEMEM_SIZE    1024*1024 // 1 MB
 #define DEFAULT_STACK_SIZE      1024*1024 // 1 MB
-#define DEFAULT_UNTRUSTED_PTR   0xffffffffe0000000
+#define DEFAULT_UNTRUSTED_PTR   0xffffffff80000000
 #define DEFAULT_UNTRUSTED_SIZE  8192 // 8 KB
 
 /* parameters for enclave creation */
