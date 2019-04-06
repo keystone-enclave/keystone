@@ -44,8 +44,12 @@ void keystone_handle_interrupts(void)
 int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
 {
   struct utm_t* utm;
+  struct keystone_enclave_t* enclave;
   unsigned long vsize, psize;
-  utm = filp->private_data;
+  if (!(enclave = filp->private_data)) {
+    return -EINVAL;
+  }
+  utm = enclave->utm;
   vsize = vma->vm_end - vma->vm_start;
   psize = utm->size;
   if (vsize > psize)

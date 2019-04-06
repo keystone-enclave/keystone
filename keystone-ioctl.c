@@ -7,7 +7,7 @@
 #include "keystone_user.h"
 #include <linux/uaccess.h>
 
-int keystone_create_enclave(unsigned long arg)
+int keystone_create_enclave(struct file *filep, unsigned long arg)
 {
   /* create parameters */
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
@@ -18,6 +18,8 @@ int keystone_create_enclave(unsigned long arg)
   if (enclave == NULL) {
     return -ENOMEM;
   }
+
+  filep->private_data = enclave;
 
   /* allocate UID */
   enclp->eid = enclave_idr_alloc(enclave);
@@ -210,7 +212,7 @@ int utm_init_ioctl(struct file *filp, unsigned long arg)
   ret = utm_init(utm, untrusted_size);
 
   /* prepare for mmap */
-  filp->private_data = utm;
+  filp->private_data = enclave;
   enclave->utm = utm;
 
   return ret;
@@ -302,7 +304,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 
   switch (cmd) {
     case KEYSTONE_IOC_CREATE_ENCLAVE:
-      ret = keystone_create_enclave((unsigned long) data);
+      ret = keystone_create_enclave(filep, (unsigned long) data);
       break;
     case KEYSTONE_IOC_ADD_PAGE:
       ret = keystone_add_page((unsigned long) data);
@@ -315,6 +317,8 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
       break;
     case KEYSTONE_IOC_DESTROY_ENCLAVE:
       ret = keystone_destroy_enclave((unsigned long) data);
+      /* Although this is not necessary, we want to invalidate the eid just incase the fd gets closed now. */
+      filep->private_data = NULL;
       break;
     case KEYSTONE_IOC_RUN_ENCLAVE:
       ret = keystone_run_enclave((unsigned long) data);
@@ -343,5 +347,17 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 }
 
 int keystone_release(struct inode *inode, struct file *file) {
-  pr_info("Released fd: %d\n", file);
+  struct keystone_enclave_t* enclave = file->private_data;
+  if (!enclave) {
+    /* If eid is set to the invalid id, then we do not do anything. */
+    return -EINVAL;
+  }
+  pr_info("Releasing enclave: %d\n", enclave->eid);
+  if (enclave->close_on_pexit) {
+    /* We need to send destroy enclave just the eid to close. */
+    struct keystone_ioctl_create_enclave enclp;
+    enclp.eid = enclave->eid;
+    return keystone_destroy_enclave((unsigned long) &enclp);
+  }
+  return 0;
 }
