@@ -11,6 +11,7 @@
 #define MASK(n) (BIT(n)-1ul)
 #define IS_ALIGNED(n, b) (!((n) & MASK(b)))
 
+
 #define RISCV_PT_INDEX_BITS 9
 #define RISCV_PT_LEVELS 3
 #define RISCV_PAGE_BITS 12
@@ -21,10 +22,17 @@
 #define RISCV_GET_LVL_PGSIZE_BITS(n) (((RISCV_PT_INDEX_BITS) * (RISCV_PT_LEVELS - (n))) + RISCV_PAGE_BITS)
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 
+#define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
+#define ROUND_DOWN(n, b) (n & ~((2 << (b-1)) - 1))
+#define PAGE_DOWN(n) ROUND_DOWN(n, RISCV_PAGE_BITS)
+#define PAGE_UP(n) ROUND_UP(n, RISCV_PAGE_BITS)
+
 /* Starting address of the enclave memory */
 #define EYRIE_LOAD_START        0xffffffff00000000
 #define EYRIE_UNTRUSTED_START   0xffffffff80000000
 #define EYRIE_USER_STACK_START  0x0000000040000000
+#define EYRIE_ANON_REGION_START 0x0000002000000000 // Arbitrary VA to start looking for large mappings
+#define EYRIE_ANON_REGION_END   EYRIE_LOAD_START
 #define EYRIE_USER_STACK_SIZE   0x8000
 #define EYRIE_USER_STACK_END    (EYRIE_USER_STACK_START - EYRIE_USER_STACK_SIZE)
 
@@ -101,6 +109,9 @@ pte_t kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISC
 /* page tables for loading physical memory */
 pte_t load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 pte_t load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+
+/* Program break */
+uintptr_t program_break;
 
 /* freemem */
 uintptr_t freemem_va_start;

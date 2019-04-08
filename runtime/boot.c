@@ -178,6 +178,7 @@ init_user_stack_and_env()
       PTE_R | PTE_W | PTE_D | PTE_A | PTE_U);
 
   assert(count == stack_count);
+
 #endif // USE_FREEMEM
 
   // setup user stack env/aux
@@ -219,6 +220,10 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* initialize free memory */
   init_freemem();
+
+  //TODO: This should be set by walking the userspace vm and finding
+  //highest used addr. Instead we start partway through the anon space
+  set_program_break(EYRIE_ANON_REGION_START + (1024 * 1024 * 1024));
 
 #endif // USE_FREEMEM
 

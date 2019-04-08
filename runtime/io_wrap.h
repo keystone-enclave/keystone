@@ -13,6 +13,8 @@ uintptr_t io_syscall_openat(int dirfd, char* path,
                             int flags, mode_t mode);
 uintptr_t io_syscall_fstatat(int dirfd, char *pathname, struct stat *statbuf,
                              int flags);
+uintptr_t io_syscall_unlinkat(int dirfd, char* path,
+                              int flags);
 uintptr_t io_syscall_fsync(int fd);
 uintptr_t io_syscall_close(int fd);
 uintptr_t io_syscall_sync();

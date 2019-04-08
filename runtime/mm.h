@@ -6,9 +6,11 @@ size_t remap_physical_pages(uintptr_t vpn, uintptr_t ppn, size_t count, int flag
 uintptr_t translate(uintptr_t va);
 
 uintptr_t alloc_page(uintptr_t vpn, int flags);
+void free_page(uintptr_t vpn);
 size_t alloc_pages(uintptr_t vpn, size_t count, int flags);
+void free_pages(uintptr_t vpn, size_t count);
+size_t test_va_range(uintptr_t vpn, size_t count);
 
-uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
-                  int fd, __off_t offset);
-
+uintptr_t get_program_break();
+void set_program_break(uintptr_t new_break);
 #endif /* _MM_H_ */

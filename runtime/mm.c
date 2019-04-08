@@ -8,6 +8,17 @@
 static pte_t*
 __walk_create(pte_t* root, uintptr_t addr);
 
+/* Hacky storage of current u-mode break */
+static uintptr_t current_program_break;
+
+uintptr_t get_program_break(){
+  return current_program_break;
+}
+
+void set_program_break(uintptr_t new_break){
+  current_program_break = new_break;
+}
+
 static pte_t*
 __continue_walk_create(pte_t* root, uintptr_t addr, pte_t* pte)
 {
@@ -118,6 +129,27 @@ alloc_page(uintptr_t vpn, int flags)
   return page;
 }
 
+void
+free_page(uintptr_t vpn){
+
+  pte_t* pte = __walk(root_page_table, vpn << RISCV_PAGE_BITS);
+
+  // No such PTE, or invalid
+  if(!pte || !(*pte & PTE_V))
+    return;
+
+  uintptr_t ppn = pte_ppn(*pte);
+  // Mark invalid
+  // TODO maybe do more here
+  *pte = (*pte & (~PTE_V));
+
+  // Return phys page
+  spa_put(__va(ppn << RISCV_PAGE_BITS));
+
+  return;
+
+}
+
 /* allocate n new pages from a given vpn
  * returns the number of pages allocated */
 size_t
@@ -132,9 +164,31 @@ alloc_pages(uintptr_t vpn, size_t count, int flags)
   return i;
 }
 
-uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
-                 int fd, __off_t offset){
+void
+free_pages(uintptr_t vpn, size_t count){
+  unsigned int i;
+  for (i = 0; i < count; i++) {
+    free_page(vpn + i);
+  }
 
-  print_strace("[runtime] [mmap]: addr: %p, length %lu, prot 0x%x, flags 0x%x, fd %i, offset %lu\r\n", addr, length, prot, flags, fd, offset);
-  return (uintptr_t)((void*)-1);
+}
+
+/*
+ * Check if a range of VAs contains any allocated pages, starting with
+ * the given VA. Returns the number of sequential pages that meet the
+ * conditions.
+ */
+size_t
+test_va_range(uintptr_t vpn, size_t count){
+
+  unsigned int i;
+  /* Validate the region */
+  for (i = 0; i < count; i++) {
+    pte_t* pte = __walk_internal(root_page_table, (vpn+i) << RISCV_PAGE_BITS, 0);
+    // If the page exists and is valid then we cannot use it
+    if(pte && (*pte & PTE_V)){
+      break;
+    }
+  }
+  return i;
 }

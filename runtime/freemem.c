@@ -59,6 +59,11 @@ spa_put(uintptr_t page_addr)
   return;
 }
 
+unsigned int
+spa_available(){
+  return spa_free_pages.count;
+}
+
 void
 spa_init(uintptr_t base, size_t size)
 {

@@ -1,6 +1,9 @@
 #include "uaccess.h"
 #include "linux_wrap.h"
 #include "syscall.h"
+#include <sys/mman.h>
+#include "freemem.h"
+#include "mm.h"
 
 #define CLOCK_FREQ 1000000000
 
@@ -47,17 +50,125 @@ uintptr_t linux_getpid(){
 }
 
 uintptr_t linux_getrandom(void *buf, size_t buflen, unsigned int flags){
-  print_strace("[runtime] [UNSAFE] getrandom not supported (size %lx), returning non-random values\r\n", buflen);
+#pragma message("getrandom syscall emulation is NOT SAFE, use for testing only")
   unsigned char v;
   size_t remaining = buflen;
 
   unsigned char* next_buf = (unsigned char*)buf;
   while(remaining > 0){
-    v = remaining%255;
+    unsigned long cycles;
+    asm volatile ("rdcycle %0" : "=r" (cycles));
+    v = cycles % 255;
     copy_to_user(next_buf,&v,sizeof(unsigned char));
     remaining--;
     next_buf++;
   }
 
+  print_strace("[runtime] [UNSAFE] getrandom not supported (size %lx), returning non-random values\r\n", buflen);
   return buflen;
+}
+
+uintptr_t syscall_munmap(void *addr, size_t length){
+  uintptr_t ret = (uintptr_t)((void*)-1);
+
+  free_pages(vpn((uintptr_t)addr), length/RISCV_PAGE_SIZE);
+  ret = 0;
+  return ret;
+}
+
+uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
+                 int fd, __off_t offset){
+  uintptr_t ret = (uintptr_t)((void*)-1);
+
+  int pte_flags = PTE_U | PTE_A;
+
+  if(flags != (MAP_ANONYMOUS | MAP_PRIVATE) || fd != -1){
+    // we don't support mmaping any other way yet
+    goto done;
+  }
+
+  // Set flags
+  if(prot & PROT_READ)
+    pte_flags |= PTE_R;
+  if(prot & PROT_WRITE)
+    pte_flags |= PTE_W | PTE_D;
+  if(prot & PROT_EXEC)
+    pte_flags |= PTE_X;
+
+
+
+  // Find a continuous VA space that will fit the req. size
+  int req_pages = vpn(PAGE_UP(length));
+
+  // Do we have enough available phys pages?
+  if( req_pages > spa_available()){
+    goto done;
+  }
+
+  // Start looking at EYRIE_ANON_REGION_START for VA space
+  uintptr_t starting_vpn = vpn(EYRIE_ANON_REGION_START);
+  uintptr_t valid_pages;
+  while((starting_vpn + req_pages) <= EYRIE_ANON_REGION_END){
+    valid_pages = test_va_range(starting_vpn, req_pages);
+
+    if(req_pages == valid_pages){
+      // Set a successful value if we allocate
+      // TODO free partial allocation on failure
+      if(alloc_pages(starting_vpn, req_pages, pte_flags) == req_pages){
+        ret = starting_vpn << RISCV_PAGE_BITS;
+      }
+      break;
+    }
+    else
+      starting_vpn += valid_pages + 1;
+  }
+
+ done:
+  print_strace("[runtime] [mmap]: addr: 0x%p, length %lu, prot 0x%x, flags 0x%x, fd %i, offset %lu (%li pages %x) = 0x%p\r\n", addr, length, prot, flags, fd, offset, req_pages, pte_flags, ret);
+
+  // If we get here everything went wrong
+  return ret;
+}
+
+
+uintptr_t syscall_brk(void* addr){
+  // Two possible valid calls to brk we handle:
+  // NULL -> give current break
+  // ADDR -> give more pages up to ADDR if possible
+
+  uintptr_t req_break = (uintptr_t)addr;
+
+  uintptr_t current_break = get_program_break();
+  uintptr_t ret = current_break;
+  int req_page_count = 0;
+
+  // Return current break if null or current break
+  if( req_break == 0  || req_break <= current_break){
+    goto done;
+  }
+
+  // Otherwise try to allocate pages
+
+  // Can we allocate enough phys pages?
+  req_page_count = (PAGE_UP(req_break) - current_break) / RISCV_PAGE_SIZE;
+  if( spa_available() < req_page_count){
+    goto done;
+  }
+
+  // Allocate pages
+  // TODO free pages on failure
+  if( alloc_pages(vpn(current_break),
+                  req_page_count,
+                  PTE_W | PTE_R | PTE_D | PTE_U | PTE_A)
+      != req_page_count){
+    goto done;
+  }
+
+  // Success
+  ret = req_break;
+
+ done:
+  print_strace("[runtime] brk (0x%p) (req pages %i) = 0x%p\r\n",req_break, req_page_count, ret);
+  return ret;
+
 }
