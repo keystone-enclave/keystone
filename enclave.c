@@ -578,7 +578,7 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   /* copy data to be signed */
   ret = copy_from_enclave(&enclaves[eid],
       report.enclave.data,
-      (void*) get_phys_addr(data),
+      (void*)data,
       size);
   report.enclave.data_len = size;
 
@@ -599,7 +599,7 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
 
   /* copy report to the enclave */
   ret = copy_to_enclave(&enclaves[eid],
-      (void*) get_phys_addr(report_ptr),
+      (void*)report_ptr,
       &report,
       sizeof(struct report_t));
   if (ret) {
