@@ -2,9 +2,6 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "sm.h"
-#include "bits.h"
-#include "vm.h"
 #include "enclave.h"
 #include "pmp.h"
 #include "page.h"
@@ -45,8 +42,6 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
-  swap_prev_satp(&enclaves[eid].threads[0], read_csr(satp));
 
   if(load_parameters){
     // passing parameters for a first run
@@ -86,9 +81,6 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
   osm_pmp_set(PMP_NO_PERM);
   pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
 
-  // TODO: enable floats?
-  write_csr(sstatus, read_csr(sstatus) | SSTATUS_FS);
-
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid].ped));
 
@@ -107,9 +99,7 @@ inline void context_switch_to_host(uintptr_t* encl_regs,
 
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
-  swap_prev_stvec(&enclaves[eid].threads[0], read_csr(stvec));
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-  swap_prev_satp(&enclaves[eid].threads[0], read_csr(satp));
 
 
   // enable timer interrupt
@@ -140,7 +130,6 @@ void enclave_init_metadata(){
     platform_init(&(enclaves[eid].ped));
   }
 }
-
 
 static enclave_ret_t init_enclave_memory(uintptr_t base, uintptr_t size,
     uintptr_t utbase, uintptr_t utsize)
@@ -412,6 +401,9 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   enclaves[eid].params = params;
   enclaves[eid].pa_params = pa_params;
 
+  /* Init enclave state (regs etc) */
+  clean_state(&enclaves[eid].threads[0]);
+
   /* prepare hash and signature for attestation */
   spinlock_lock(&encl_lock);
   enclaves[eid].state = FRESH;
@@ -614,5 +606,27 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
     return ret;
   }
 
+  return ENCLAVE_SUCCESS;
+}
+
+
+#define MAX_SM_STACK_BUFFER 256
+enclave_ret_t enclave_getrandom(uint8_t* buffer, uintptr_t size, eid_t eid){
+
+  unsigned char rnd_buffer[MAX_SM_STACK_BUFFER];
+  uintptr_t copy_size;
+  enclave_ret_t ret;
+  do{
+    copy_size = size <= MAX_SM_STACK_BUFFER?size:MAX_SM_STACK_BUFFER;
+
+    platform_getrandom_fill(rnd_buffer, copy_size);
+    ret = copy_to_enclave(&(enclaves[eid]), buffer, rnd_buffer, copy_size);
+
+    if( ret != ENCLAVE_SUCCESS)
+      return ret;
+
+    size -= copy_size;
+    buffer = buffer+copy_size;
+  }while(size > 0);
   return ENCLAVE_SUCCESS;
 }

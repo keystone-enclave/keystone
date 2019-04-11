@@ -9,9 +9,11 @@
 #error "SM requires a defined platform to build"
 #endif
 
+#include "sm.h"
+#include "bits.h"
+#include "vm.h"
 #include "pmp.h"
 #include "thread.h"
-#include "sm.h"
 #include "crypto.h"
 
 // Special target platform header, set by configure script
@@ -95,7 +97,7 @@ enclave_ret_t resume_enclave(uintptr_t* regs, eid_t eid);
 enclave_ret_t exit_enclave(uintptr_t* regs, unsigned long retval, eid_t eid);
 enclave_ret_t stop_enclave(uintptr_t* regs, uint64_t request, eid_t eid);
 enclave_ret_t attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, eid_t eid);
-
+enclave_ret_t enclave_getrandom(uint8_t* buffer, uintptr_t size, eid_t eid);
 /* attestation */
 enclave_ret_t hash_enclave(struct enclave_t* enclave);
 // TODO: These functions are supposed to be internal functions.

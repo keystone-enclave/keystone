@@ -18,4 +18,8 @@ void platform_switch_from_enclave(struct platform_enclave_data_t* enclave);
    enclave B */
 // void platform_switch_between_enclaves(platform_enclave_data_t* enclaveA,
 //                                       platform_enclave_data_t* enclaveB);
+
+/* This is a required feature, it must be filled on demand and never
+   fail. If it would fail it may power off instead. */
+void platform_getrandom_fill(uint8_t* buffer, unsigned long size);
 #endif /* _PLATFORM_H_ */
