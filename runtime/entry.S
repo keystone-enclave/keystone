@@ -122,6 +122,9 @@ _start:
 .align 6
 encl_trap_handler:
   .global encl_trap_handler
+
+/* TODO we may want to explicitly disable the FPU here ala linux */
+
   csrrw sp, sscratch, sp
 
   addi sp, sp, -ENCL_CONTEXT_SIZE
@@ -177,6 +180,10 @@ encl_trap_handler:
 return_to_encl:
   LOAD t0, (sp)
   csrw sepc, t0
+
+  // Enable FPU
+  li   t0, 0x6000
+  csrs sstatus, t0
 
   // restore user stack
   LOAD t0, 2*REGBYTES(sp)

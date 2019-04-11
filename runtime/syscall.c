@@ -259,7 +259,7 @@ void handle_syscall(struct encl_ctx_t* ctx)
 
   case(RUNTIME_SYSCALL_UNKNOWN):
   default:
-    print_strace("[runtime] syscall %ld not implemented\n", (unsigned long) n);
+    print_strace("[runtime] syscall %ld not implemented\r\n", (unsigned long) n);
     ret = -1;
     break;
   }

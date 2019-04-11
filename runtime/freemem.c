@@ -44,6 +44,9 @@ spa_put(uintptr_t page_addr)
 {
   uintptr_t prev;
 
+  assert(IS_ALIGNED(page_addr, RISCV_PAGE_BITS));
+  assert(page_addr >= freemem_va_start && page_addr < (freemem_va_start  + freemem_size));
+
   if (!LIST_EMPTY(spa_free_pages)) {
     prev = spa_free_pages.tail;
     assert(prev);

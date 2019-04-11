@@ -198,6 +198,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
            uintptr_t utm_vaddr,
            uintptr_t utm_size)
 {
+
   /* set initial values */
   load_pa_start = dram_base;
   shared_buffer = utm_vaddr;
@@ -238,6 +239,9 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* set timer */
   init_timer();
+
+  /* Enable the FPU */
+  csr_write(sstatus, csr_read(sstatus) | 0x6000);
 
   /* booting all finished, droping to the user land */
   return;
