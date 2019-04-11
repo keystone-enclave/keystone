@@ -51,7 +51,8 @@ uintptr_t linux_getpid(){
 
 uintptr_t linux_getrandom(void *buf, size_t buflen, unsigned int flags){
 
-  uintptr_t ret = SBI_CALL_2(SBI_SM_ENCLAVE_GETRANDOM, translate((uintptr_t)buf), buflen) == 0?buflen:-1;
+  uintptr_t buf_trans = translate((uintptr_t)buf);
+  uintptr_t ret = SBI_CALL_2(SBI_SM_ENCLAVE_GETRANDOM, buf_trans, buflen) == 0?buflen:-1;
 
   print_strace("[runtime] getrandom IGNORES FLAGS (size %lx), PLATFORM DEPENDENT IF SAFE = ret %lu\r\n", buflen, ret);
   return ret;

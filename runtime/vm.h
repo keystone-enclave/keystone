@@ -16,7 +16,8 @@
 #define RISCV_PT_LEVELS 3
 #define RISCV_PAGE_BITS 12
 #define RISCV_PAGE_SIZE (1<<RISCV_PAGE_BITS)
-#define RISCV_GET_PT_INDEX(addr, n) \
+#define RISCV_PAGE_OFFSET(addr) (addr % RISCV_PAGE_SIZE)
+#define RISCV_GET_PT_INDEX(addr, n)                                     \
   (((addr) >> (((RISCV_PT_INDEX_BITS) * ((RISCV_PT_LEVELS) - (n))) + RISCV_PAGE_BITS)) \
    & MASK(RISCV_PT_INDEX_BITS))
 #define RISCV_GET_LVL_PGSIZE_BITS(n) (((RISCV_PT_INDEX_BITS) * (RISCV_PT_LEVELS - (n))) + RISCV_PAGE_BITS)

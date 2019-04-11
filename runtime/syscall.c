@@ -163,8 +163,11 @@ void handle_syscall(struct encl_ctx_t* ctx)
   case(RUNTIME_SYSCALL_SHAREDCOPY):
     ret = handle_copy_from_shared((void*)arg0, arg1, arg2);
     break;
-  case(RUNTIME_SYSCALL_ATTEST_ENCLAVE):
-    ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, arg0, arg1, arg2);
+  case(RUNTIME_SYSCALL_ATTEST_ENCLAVE):;
+    uintptr_t arg0_trans = translate(arg0);
+    uintptr_t arg1_trans = translate(arg1);
+    ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, arg0_trans, arg1_trans, arg2);
+    //print_strace("[ATTEST] p1 0x%p->0x%p p2 0x%p->0x%p sz %lx = %lu\r\n",arg0,arg0_trans,arg1,arg1_trans,arg2,ret);
     break;
 
 

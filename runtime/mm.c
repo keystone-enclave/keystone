@@ -101,7 +101,7 @@ translate(uintptr_t va)
   pte_t* pte = __walk(root_page_table, va);
 
   if(*pte & PTE_V)
-    return pte_ppn(*pte) << RISCV_PAGE_BITS;
+    return (pte_ppn(*pte) << RISCV_PAGE_BITS) | (RISCV_PAGE_OFFSET(va));
   else
     return 0;
 }
