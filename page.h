@@ -19,6 +19,4 @@
 #endif
 
 #define RISCV_PGLEVEL_TOP ((VA_BITS - RISCV_PGSHIFT)/RISCV_PGLEVEL_BITS)
-
-int init_encl_pgtable(int level, pte_t* pte, uintptr_t base, uintptr_t size, uintptr_t utbase, uintptr_t utsize);
 #endif

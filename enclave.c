@@ -131,25 +131,16 @@ void enclave_init_metadata(){
   }
 }
 
-static enclave_ret_t init_enclave_memory(uintptr_t base, uintptr_t size,
-    uintptr_t utbase, uintptr_t utsize)
+static enclave_ret_t clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
 {
-  int ret;
-  int ptlevel = RISCV_PGLEVEL_TOP;
 
-  // this function does the followings:
-  // (1) Traverse the page table to see if any address points to the outside of EPM
-  // (2) Zero out every page table entry that is not valid
-  ret = init_encl_pgtable(ptlevel, (pte_t*) base, base, size, utbase, utsize);
-
-  // FIXME: probably we will also need to:
-  // (3) Zero out every page that is not pointed by the page table
+  // This function is quite temporary. See issue #38
 
   // Zero out the untrusted memory region, since it may be in
   // indeterminate state.
   memset((void*)utbase, 0, utsize);
 
-  return ret;
+  return ENCLAVE_SUCCESS;
 }
 
 static enclave_ret_t host_satp_to_eid(uintptr_t satp, eid_t* eid)
@@ -318,10 +309,14 @@ static int is_create_args_valid(struct keystone_sbi_create_t* args)
     return 0;
 
   // check the order of physical addresses
-  if (args->runtime_paddr >= args->user_paddr)
+  if (args->runtime_paddr > args->user_paddr)
     return 0;
-  if (args->user_paddr >= args->free_paddr)
+  if (args->user_paddr > args->free_paddr)
     return 0;
+
+  /* printm("[create args] runtimep: %lx userp: %lx epm_end: %lx epm_start: %lx\r\n", */
+  /*        args->runtime_paddr, args->user_paddr, */
+  /*        epm_end, epm_start); */
 
   return 1;
 }
@@ -387,8 +382,8 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   if(pmp_set_global(region, PMP_NO_PERM))
     goto free_shared_region;
 
-  // initialize and verify enclave memory layout.
-  init_enclave_memory(base, size, utbase, utsize);
+  // cleanup some memory regions for sanity See issue #38
+  clean_enclave_memory(utbase, utsize);
 
   // initialize enclave metadata
   enclaves[eid].eid = eid;
@@ -404,11 +399,16 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   /* Init enclave state (regs etc) */
   clean_state(&enclaves[eid].threads[0]);
 
-  /* prepare hash and signature for attestation */
+  /* Validate memory, prepare hash and signature for attestation */
   spinlock_lock(&encl_lock);
   enclaves[eid].state = FRESH;
-  hash_enclave(&enclaves[eid]);
+
+  ret = validate_and_hash_enclave(&enclaves[eid],
+                                  &create_args);
   spinlock_unlock(&encl_lock);
+
+  if(ret != ENCLAVE_SUCCESS)
+    goto free_shared_region;
 
   /* EIDs are unsigned int in size, copy via simple copy */
   copy_word_to_host((uintptr_t*)eidptr, (uintptr_t)eid);

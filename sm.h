@@ -41,6 +41,7 @@
 #define ENCLAVE_NOT_INITIALIZED             (enclave_ret_t)12
 #define ENCLAVE_NO_FREE_RESOURCE            (enclave_ret_t)13
 #define ENCLAVE_SBI_PROHIBITED              (enclave_ret_t)14
+#define ENCLAVE_ILLEGAL_PTE                 (enclave_ret_t)15
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0
