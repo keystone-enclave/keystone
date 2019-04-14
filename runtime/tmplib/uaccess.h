@@ -6,19 +6,21 @@
 /* This is a limited set of the features from linux uaccess, only the
    ones we need for now */
 
-extern unsigned long __copy_user(void  *to,
-				 const void  *from, unsigned long n);
+extern unsigned long __asm_copy_to_user(void  *to,
+                                        const void  *from, unsigned long n);
+extern unsigned long __asm_copy_from_user(void  *to,
+                                          const void  *from, unsigned long n);
 
 static inline unsigned long
 copy_to_user(void *to, const void *from, unsigned long n)
 {
-	return __copy_user(to, from, n);
+	return __asm_copy_to_user(to, from, n);
 }
 
 static inline unsigned long
 copy_from_user(void *to, const void *from, unsigned long n)
 {
-	return __copy_user(to, from, n);
+	return __asm_copy_from_user(to, from, n);
 }
 
 /* Dangerous feature needed for a few things (ex: strlen on usermemory) */
