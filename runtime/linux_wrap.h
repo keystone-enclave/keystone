@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
+uintptr_t linux_uname(void* buf);
 uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp);
 uintptr_t linux_rt_sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 uintptr_t linux_getrandom(void *buf, size_t buflen, unsigned int flags);

@@ -1,5 +1,7 @@
 #ifndef _MM_H_
 #define _MM_H_
+#include <stdint.h>
+#include <stddef.h>
 
 uintptr_t remap_physical_page(uintptr_t vpn, uintptr_t ppn, int flags);
 size_t remap_physical_pages(uintptr_t vpn, uintptr_t ppn, size_t count, int flags);

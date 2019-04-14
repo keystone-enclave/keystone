@@ -1,4 +1,10 @@
-#include "regs.h"
+#define STORE sd
+#define LOAD ld
+#define LWU lwu
+#define LOG_REGBYTES  3
+#define REGBYTES (1<<LOG_REGBYTES)
+#define ENCL_CONTEXT_SIZE (REGBYTES*35)
+#define HOST_CONTEXT_SIZE (REGBYTES*32)
 
 #define ENCL_STACK_SIZE (8*1024)
 

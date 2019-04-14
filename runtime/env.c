@@ -1,6 +1,7 @@
 #include "elf.h"
 #include "tmplib/uaccess.h"
-
+#include "rt_util.h"
+#include "string.h"
 /******
  *
  * This is for setting up a minimal ENV/AUX etc to let libc init
@@ -9,6 +10,7 @@
  * STACK LAYOUT
  *
  * 0xFFFFFFFF
+ * AT_RANDOM bytes (16 bytes)
  *    [...]
  * auxv[1] VALUE
  * auxv[0] INDEX (AT_#)
@@ -23,9 +25,8 @@
 // How many AUX things are we actually defining? Add one for terminator
 #define AUXV_COUNT 11
 
-
-// Size in number-of-words (argc, argv, null_env, auxv)
-#define SIZE_OF_SETUP (1+1+1+(2*AUXV_COUNT))
+// Size in number-of-words (argc, argv, null_env, auxv, randombytes
+#define SIZE_OF_SETUP (1+1+1+(2*AUXV_COUNT) + 2)
 
 // We return the new sp
 void* setup_start(void* _sp){
@@ -37,16 +38,18 @@ void* setup_start(void* _sp){
   sp = sp - SIZE_OF_SETUP;
 
   //setup argc
-  staging[0] = 0;
+  staging[0] = (void*)0;
 
   //argv
   staging[1] = (void*)0; // NULL
+  //TODO We need to support /at least/ argv[0]
 
   //envp[0] (terminate)
   staging[2] = (void*)0; // NULL
 
   //AUX vectors
   unsigned long i = 0;
+  void** at_random_ptr = 0;
   unsigned long* auxv = (unsigned long*)&(staging[3]);
 
   auxv[i++] = AT_HWCAP;
@@ -60,7 +63,9 @@ void* setup_start(void* _sp){
   auxv[i++] = AT_SECURE;
   auxv[i++] = 0;
   auxv[i++] = AT_RANDOM;
-  auxv[i++] = 0; // TODO Need random value here for stack canaries
+  at_random_ptr = (void**)&(auxv[i]);
+  auxv[i++] = 0; //"The address of sixteen bytes containing a random value."
+  // We'll do that at the end
 
   // TODO: What do we want to do about UIDs and GIDs?
   auxv[i++] = AT_GID;
@@ -73,8 +78,15 @@ void* setup_start(void* _sp){
   auxv[i++] = 1;
   auxv[i++] = AT_NULL;
   auxv[i++] = 0;
-
   // should be that i == AUXV_COUNT*2
+
+  // Ask for random values
+  int ret = rt_util_getrandom((void*)&auxv[i], 16);
+  if( ret != 0 )
+  rt_util_misc_fatal();
+  //Assign the ptr
+  *at_random_ptr = &sp[i+3];
+  i+=2; // fixup i
 
   // We don't do PHDR or PHNUM etc right now, TLS might need it though
 

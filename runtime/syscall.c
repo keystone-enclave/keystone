@@ -189,7 +189,7 @@ void handle_syscall(struct encl_ctx_t* ctx)
     break;
 
   case(SYS_uname):
-    ret = linux_RET_ZERO_wrap(n);
+    ret = linux_uname((void*) arg0);
     break;
 
   case(SYS_rt_sigaction):

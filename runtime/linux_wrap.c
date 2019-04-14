@@ -4,6 +4,8 @@
 #include <sys/mman.h>
 #include "freemem.h"
 #include "mm.h"
+#include "rt_util.h"
+#include <sys/utsname.h>
 
 #define CLOCK_FREQ 1000000000
 
@@ -51,10 +53,42 @@ uintptr_t linux_getpid(){
 
 uintptr_t linux_getrandom(void *buf, size_t buflen, unsigned int flags){
 
-  uintptr_t buf_trans = translate((uintptr_t)buf);
-  uintptr_t ret = SBI_CALL_2(SBI_SM_ENCLAVE_GETRANDOM, buf_trans, buflen) == 0?buflen:-1;
-
+  uintptr_t ret = rt_util_getrandom(buf, buflen) == 0?buflen:-1;
   print_strace("[runtime] getrandom IGNORES FLAGS (size %lx), PLATFORM DEPENDENT IF SAFE = ret %lu\r\n", buflen, ret);
+  return ret;
+}
+
+#define UNAME_SYSNAME "Linux\0"
+#define UNAME_NODENAME "Encl\0"
+#define UNAME_RELEASE "4.15.0\0"
+#define UNAME_VERSION "Eyrie\0"
+#define UNAME_MACHINE "NA\0"
+
+uintptr_t linux_uname(void* buf){
+  // Here we go
+
+  struct utsname *user_uname = (struct utsname *)buf;
+  uintptr_t ret;
+
+  ret = copy_to_user(&user_uname->sysname, UNAME_SYSNAME, sizeof(UNAME_SYSNAME));
+  if(ret != 0) goto uname_done;
+
+  ret = copy_to_user(&user_uname->nodename, UNAME_NODENAME, sizeof(UNAME_NODENAME));
+  if(ret != 0) goto uname_done;
+
+  ret = copy_to_user(&user_uname->release, UNAME_RELEASE, sizeof(UNAME_RELEASE));
+  if(ret != 0) goto uname_done;
+
+  ret = copy_to_user(&user_uname->version, UNAME_VERSION, sizeof(UNAME_VERSION));
+  if(ret != 0) goto uname_done;
+
+  ret = copy_to_user(&user_uname->machine, UNAME_MACHINE, sizeof(UNAME_MACHINE));
+  if(ret != 0) goto uname_done;
+
+
+
+ uname_done:
+  print_strace("[runtime] uname = %x\n",ret);
   return ret;
 }
 
