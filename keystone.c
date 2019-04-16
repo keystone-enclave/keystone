@@ -41,12 +41,15 @@ void keystone_handle_interrupts(void)
   csr_set(sstatus, SR_SIE);
   csr_write(sstatus, old);
 }
+
 int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
 {
   struct utm_t* utm;
   struct keystone_enclave_t* enclave;
   unsigned long vsize, psize;
-  if (!(enclave = filp->private_data)) {
+  enclave = get_enclave_by_id((unsigned int) filp->private_data);
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
   utm = enclave->utm;
