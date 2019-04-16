@@ -40,7 +40,7 @@ void rt_page_fault(struct encl_ctx_t* ctx)
   pc = ctx->regs.sepc;
   addr = ctx->sbadaddr;
   cause = ctx->scause;
-  printf("[runtime] page fault at 0x%lx on 0x%lx (scause: 0x%lx)\n", pc, addr, cause);
+  printf("[runtime] page fault at 0x%lx on 0x%lx (scause: 0x%lx)\r\n", pc, addr, cause);
 #endif
 
   sbi_exit_enclave(-1);
