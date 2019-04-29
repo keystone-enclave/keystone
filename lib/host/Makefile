@@ -1,7 +1,10 @@
 CC = riscv64-unknown-linux-gnu-g++
 INCLUDE_DIR = include/
 SRC_DIR = src
-CCFLAGS = -Wall -Werror -I $(INCLUDE_DIR)
+
+OPTIONS_FLAGS ?=
+
+CCFLAGS = -Wall -Werror -I $(INCLUDE_DIR) $(OPTIONS_FLAGS)
 SRCS = keystone.cpp elffile.cpp elf.cpp elf32.cpp elf64.cpp
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 AR = riscv64-unknown-linux-gnu-ar
@@ -18,4 +21,4 @@ $(OBJS): %.o: $(addprefix $(SRC_DIR)/, %.cpp)
 	$(CC) $(CCFLAGS) -c $<
 
 clean:
-	rm -f $(OBJS) $(TARGET) 
+	rm -f $(OBJS) $(TARGET)

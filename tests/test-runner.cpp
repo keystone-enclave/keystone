@@ -63,6 +63,9 @@ int main(int argc, char** argv)
   Keystone enclave;
   Params params;
 
+  params.setFreeMemSize(48 * 1024 * 1024);
+  params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 1024*1024*2);
+
   enclave.init(argv[1], argv[2], params);
 
   edge_init(&enclave);
@@ -71,4 +74,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-

@@ -97,6 +97,7 @@ keystone_status_t Keystone::allocPage(vaddr_t va, void* src, unsigned int mode)
     return KEYSTONE_ERROR;
   }
   return KEYSTONE_SUCCESS;
+
 }
 
 keystone_status_t Keystone::loadELF(ELFFile* elf)
@@ -256,8 +257,14 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
     return KEYSTONE_ERROR;
   }
 
-  /* initialize stack.
-   * this will be deprecated with freemem support */
+  /* initialize stack. If not using freemem */
+#ifndef USE_FREEMEM
+  if( initStack(DEFAULT_STACK_START, DEFAULT_STACK_SIZE, 0) != KEYSTONE_SUCCESS){
+    ERROR("failed to init static stack");
+    destroy();
+    return KEYSTONE_ERROR;
+  }
+#endif /* USE_FREEMEM */
 
   ret = ioctl(fd, KEYSTONE_IOC_UTM_INIT, &enclp);
 
