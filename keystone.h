@@ -59,6 +59,7 @@ extern struct miscdevice keystone_dev;
 void keystone_handle_interrupts(void);
 
 long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
+int keystone_release(struct inode *inode, struct file *file);
 int keystone_mmap(struct file *filp, struct vm_area_struct *vma);
 
 struct free_page_t {
@@ -89,6 +90,7 @@ typedef struct utm_t {
 typedef struct keystone_enclave_t
 {
   unsigned int eid;
+  int close_on_pexit;
   struct utm_t* utm;
   struct epm_t* epm;
 } enclave_t;

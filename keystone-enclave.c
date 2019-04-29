@@ -66,6 +66,7 @@ enclave_t* create_enclave(unsigned long min_pages)
   }
 
   enclave->utm = NULL;
+  enclave->close_on_pexit = 1;
 
   enclave->epm = kmalloc(sizeof(epm_t), GFP_KERNEL);
   if (!enclave->epm)

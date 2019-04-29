@@ -24,7 +24,8 @@ MODULE_LICENSE("Dual BSD/GPL");
 static const struct file_operations keystone_fops = {
     .owner          = THIS_MODULE,
     .mmap           = keystone_mmap,
-    .unlocked_ioctl = keystone_ioctl
+    .unlocked_ioctl = keystone_ioctl,
+    .release        = keystone_release
 };
 
 struct miscdevice keystone_dev = {
@@ -40,11 +41,18 @@ void keystone_handle_interrupts(void)
   csr_set(sstatus, SR_SIE);
   csr_write(sstatus, old);
 }
+
 int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
 {
   struct utm_t* utm;
+  struct keystone_enclave_t* enclave;
   unsigned long vsize, psize;
-  utm = filp->private_data;
+  enclave = get_enclave_by_id((unsigned int) filp->private_data);
+  if(!enclave) {
+    keystone_err("invalid enclave id\n");
+    return -EINVAL;
+  }
+  utm = enclave->utm;
   vsize = vma->vm_end - vma->vm_start;
   psize = utm->size;
   if (vsize > psize)

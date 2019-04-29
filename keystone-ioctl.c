@@ -7,7 +7,9 @@
 #include "keystone_user.h"
 #include <linux/uaccess.h>
 
-int keystone_create_enclave(unsigned long arg)
+int __keystone_destroy_enclave(unsigned int ueid);
+
+int keystone_create_enclave(struct file *filep, unsigned long arg)
 {
   /* create parameters */
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
@@ -21,6 +23,8 @@ int keystone_create_enclave(unsigned long arg)
 
   /* allocate UID */
   enclp->eid = enclave_idr_alloc(enclave);
+  
+  filep->private_data = (void *) enclp->eid;
 
   return 0;
 }
@@ -36,7 +40,6 @@ int keystone_finalize_enclave(unsigned long arg)
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
 
   enclave = get_enclave_by_id(enclp->eid);
-
   if(!enclave) {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
@@ -210,7 +213,6 @@ int utm_init_ioctl(struct file *filp, unsigned long arg)
   ret = utm_init(utm, untrusted_size);
 
   /* prepare for mmap */
-  filp->private_data = utm;
   enclave->utm = utm;
 
   return ret;
@@ -236,20 +238,29 @@ int utm_alloc(unsigned long arg)
 }
 
 
-int keystone_destroy_enclave(unsigned long arg)
+int keystone_destroy_enclave(struct file *filep, unsigned long arg)
+{
+  int ret;
+  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
+  unsigned long ueid = enclp->eid;
+  
+  ret = __keystone_destroy_enclave(ueid);
+  if (!ret) {
+    filep->private_data = NULL;
+  }
+  return ret;
+}
+
+int __keystone_destroy_enclave(unsigned int ueid)
 {
   int ret;
   enclave_t *enclave;
-  struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
-  unsigned long ueid = enclp->eid;
-
   enclave = get_enclave_by_id(ueid);
 
   if (!enclave) {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
-
   ret = SBI_CALL_1(SBI_SM_DESTROY_ENCLAVE, enclave->eid);
   if (ret) {
     keystone_err("fatal: cannot destroy enclave: SBI failed\n");
@@ -299,10 +310,10 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 
   if (copy_from_user(data,(void __user *) arg, ioc_size))
     return -EFAULT;
-
+    
   switch (cmd) {
     case KEYSTONE_IOC_CREATE_ENCLAVE:
-      ret = keystone_create_enclave((unsigned long) data);
+      ret = keystone_create_enclave(filep, (unsigned long) data);
       break;
     case KEYSTONE_IOC_ADD_PAGE:
       ret = keystone_add_page((unsigned long) data);
@@ -314,7 +325,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
       ret = keystone_finalize_enclave((unsigned long) data);
       break;
     case KEYSTONE_IOC_DESTROY_ENCLAVE:
-      ret = keystone_destroy_enclave((unsigned long) data);
+      ret = keystone_destroy_enclave(filep, (unsigned long) data);
       break;
     case KEYSTONE_IOC_RUN_ENCLAVE:
       ret = keystone_run_enclave((unsigned long) data);
@@ -340,4 +351,22 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
     return -EFAULT;
 
   return ret;
+}
+
+int keystone_release(struct inode *inode, struct file *file) {
+  unsigned long ueid = file->private_data;
+ 
+  /* pr_info("Releasing enclave: %d\n", ueid); */
+
+  /* We need to send destroy enclave just the eid to close. */
+    enclave_t *enclave = get_enclave_by_id(ueid);
+
+  if (!enclave) {
+    /* If eid is set to the invalid id, then we do not do anything. */
+    return -EINVAL;
+  }
+  if (enclave->close_on_pexit) {
+    return __keystone_destroy_enclave(ueid);
+  }
+  return 0;
 }
