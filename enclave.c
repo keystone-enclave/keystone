@@ -402,9 +402,9 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
   /* Validate memory, prepare hash and signature for attestation */
   spinlock_lock(&encl_lock);
   enclaves[eid].state = FRESH;
-
   ret = validate_and_hash_enclave(&enclaves[eid],
                                   &create_args);
+
   spinlock_unlock(&encl_lock);
 
   if(ret != ENCLAVE_SUCCESS)
@@ -451,6 +451,7 @@ enclave_ret_t destroy_enclave(eid_t eid)
   // requires no lock (single runner)
   void* base = (void*) pmp_region_get_addr(enclaves[eid].rid);
   size_t size = (size_t) pmp_region_get_size(enclaves[eid].rid);
+
   memset((void*) base, 0, size);
 
   // 2. free pmp region
@@ -606,27 +607,5 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
     return ret;
   }
 
-  return ENCLAVE_SUCCESS;
-}
-
-
-#define MAX_SM_STACK_BUFFER 256
-enclave_ret_t enclave_getrandom(uint8_t* buffer, uintptr_t size, eid_t eid){
-
-  unsigned char rnd_buffer[MAX_SM_STACK_BUFFER];
-  uintptr_t copy_size;
-  enclave_ret_t ret;
-  do{
-    copy_size = size <= MAX_SM_STACK_BUFFER?size:MAX_SM_STACK_BUFFER;
-
-    platform_getrandom_fill(rnd_buffer, copy_size);
-    ret = copy_to_enclave(&(enclaves[eid]), buffer, rnd_buffer, copy_size);
-
-    if( ret != ENCLAVE_SUCCESS)
-      return ret;
-
-    size -= copy_size;
-    buffer = buffer+copy_size;
-  }while(size > 0);
   return ENCLAVE_SUCCESS;
 }

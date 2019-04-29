@@ -8,6 +8,7 @@
 #include "page.h"
 #include "cpu.h"
 #include <errno.h>
+#include "platform.h"
 
 uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 {
@@ -111,16 +112,9 @@ uintptr_t mcall_sm_attest_enclave(uintptr_t report, uintptr_t data, uintptr_t si
   return attest_enclave(report, data, size, cpu_get_enclave_id());
 }
 
-uintptr_t mcall_sm_enclave_getrandom(uintptr_t buffer, uintptr_t size)
+uintptr_t mcall_sm_random()
 {
-  /* only an enclave itself can call this SBI */
-  if (!cpu_is_enclave_context()) {
-    return ENCLAVE_SBI_PROHIBITED;
-  }
-
-  eid_t eid = cpu_get_enclave_id();
-
-  return enclave_getrandom((uint8_t*)buffer, size, eid);
+  return platform_random();
 }
 
 /* TODO: this should be removed in the future. */
