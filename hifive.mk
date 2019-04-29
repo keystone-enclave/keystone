@@ -22,7 +22,8 @@ buildroot_rootfs_config := $(confdir)/buildroot_rootfs_config
 
 linux_srcdir := $(srcdir)/riscv-linux
 linux_wrkdir := $(wrkdir)/hifive-linux
-linux_defconfig := $(confdir)/linux_defconfig
+#linux_defconfig := $(confdir)/linux_defconfig
+linux_defconfig := $(confdir)/linux_cma_conf
 
 vmlinux := $(linux_wrkdir)/vmlinux
 vmlinux_stripped := $(linux_wrkdir)/vmlinux-stripped
@@ -153,7 +154,8 @@ $(bbl): $(pk_srcdir) $(vmlinux_stripped)
 		--host=$(target) \
 		--with-payload=$(vmlinux_stripped) \
 		--enable-logo \
-		--with-logo=$(abspath $(confdir)/sifive_logo.txt)
+		--with-logo=$(abspath $(confdir)/sifive_logo.txt) \
+#		--with-target-platform=fu540
 	CFLAGS="-mabi=$(ABI) -march=$(ISA)" $(MAKE) -C $(pk_wrkdir)
 
 $(bin): $(bbl)
