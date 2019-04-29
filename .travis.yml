@@ -79,6 +79,10 @@ jobs:
         - source ./source.sh
         - travis_wait 120 make -j2
         - travis_wait 10 ./scripts/travis.sh
+        - cd sdk; make clean; OPTIONS_FLAGS="" make
+        - cd ..
+        - make
+        - travis_wait 10 ./scripts/travis.sh
         - cd riscv-qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-qemu-git  .git;cd ..
         - cd riscv-linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-linux-git .git;cd ..
       after_failure:
