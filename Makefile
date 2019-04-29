@@ -3,15 +3,15 @@ DISK_IMAGE = ../busybear-linux/busybear.bin
 MOUNT_DIR = ./tmp_busybear
 RUNTIME = eyrie-rt
 
-OPTIONS_FLAGS =
-OPTIONS_FLAGS += -DIO_SYSCALL_WRAPPING -DLINUX_SYSCALL_WRAPPING -DUSE_FREEMEM
-OPTIONS_FLAGS += -DENV_SETUP
+OPTIONS_FLAGS ?= -DIO_SYSCALL_WRAPPING -DLINUX_SYSCALL_WRAPPING -DUSE_FREEMEM -DENV_SETUP
 #OPTIONS_FLAGS += -DDYN_ALLOCATION
 #OPTIONS_FLAGS += -DINTERNAL_STRACE
-
 export OPTIONS_FLAGS
 
+
 all:
+
+
 	$(MAKE) -C lib
 	$(MAKE) -C runtime
 	$(MAKE) -C tests
@@ -23,16 +23,6 @@ all:
 	cp samples/tiny-AES-c/aes.riscv $(BINS_DIR)
 
 	cp runtime/$(RUNTIME) $(BINS_DIR)
-
-
-copy-tests:
-	$(MAKE) -C tests
-# Copy into the mount
-	mkdir -p $(MOUNT_DIR)
-	sudo mount $(DISK_IMAGE) $(MOUNT_DIR)
-	sudo rsync -a $(BINS_DIR)/ $(MOUNT_DIR)/root/
-	sudo umount $(MOUNT_DIR)
-	rmdir $(MOUNT_DIR)
 
 clean:
 	rm -rf bin
