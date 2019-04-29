@@ -5,11 +5,30 @@
 #include "mm.h"
 #include "rt_util.h"
 #include "printf.h"
+#include "uaccess.h"
+#include "vm.h"
 
-int rt_util_getrandom(void* vaddr, size_t buflen){
-  //TODO: Warning, this may not be safe to cross pages!
-  uintptr_t buf_trans = translate((uintptr_t)vaddr);
-  uintptr_t ret = SBI_CALL_2(SBI_SM_ENCLAVE_GETRANDOM, buf_trans, buflen);
+// Statically allocated copy-buffer
+unsigned char rt_copy_buffer_1[RISCV_PAGE_SIZE];
+unsigned char rt_copy_buffer_2[RISCV_PAGE_SIZE];
+
+size_t rt_util_getrandom(void* vaddr, size_t buflen){
+  size_t remaining = buflen;
+  uintptr_t rnd;
+  uintptr_t* next = (uintptr_t*)vaddr;
+  // Get data
+  while(remaining > sizeof(uintptr_t)){
+    rnd = SBI_CALL_0(SBI_SM_RANDOM);
+    ALLOW_USER_ACCESS( *next = rnd );
+    remaining -= sizeof(uintptr_t);
+    next++;
+  }
+  // Cleanup
+  if( remaining > 0 ){
+    rnd = SBI_CALL_0(SBI_SM_RANDOM);
+    copy_to_user(next, &rnd, remaining);
+  }
+  size_t ret = buflen;
   return ret;
 }
 

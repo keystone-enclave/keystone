@@ -1,8 +1,15 @@
+
+
 #include "common.h"
 #include "syscall.h"
 #include "mm.h"
 #include "freemem.h"
 #include "vm.h"
+
+
+
+
+#ifdef USE_FREEMEM
 
 /* Page table utilities */
 static pte_t*
@@ -94,17 +101,6 @@ remap_physical_pages(uintptr_t vpn, uintptr_t ppn, size_t count, int flags)
   return i;
 }
 
-/* get a mapped physical address for a VA */
-uintptr_t
-translate(uintptr_t va)
-{
-  pte_t* pte = __walk(root_page_table, va);
-
-  if(*pte & PTE_V)
-    return (pte_ppn(*pte) << RISCV_PAGE_BITS) | (RISCV_PAGE_OFFSET(va));
-  else
-    return 0;
-}
 
 /* allocate a new page to a given vpn
  * returns VA of the page, (returns 0 if fails) */
@@ -192,3 +188,17 @@ test_va_range(uintptr_t vpn, size_t count){
   }
   return i;
 }
+
+/* get a mapped physical address for a VA */
+uintptr_t
+translate(uintptr_t va)
+{
+  pte_t* pte = __walk(root_page_table, va);
+
+  if(*pte & PTE_V)
+    return (pte_ppn(*pte) << RISCV_PAGE_BITS) | (RISCV_PAGE_OFFSET(va));
+  else
+    return 0;
+}
+
+#endif /* USE_FREEMEM */

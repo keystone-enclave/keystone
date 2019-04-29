@@ -34,7 +34,7 @@
 #define EYRIE_USER_STACK_START  0x0000000040000000
 #define EYRIE_ANON_REGION_START 0x0000002000000000 // Arbitrary VA to start looking for large mappings
 #define EYRIE_ANON_REGION_END   EYRIE_LOAD_START
-#define EYRIE_USER_STACK_SIZE   0x8000
+#define EYRIE_USER_STACK_SIZE   0x10000
 #define EYRIE_USER_STACK_END    (EYRIE_USER_STACK_START - EYRIE_USER_STACK_SIZE)
 
 #define PTE_V     0x001 // Valid
@@ -100,8 +100,9 @@ static inline uintptr_t pte_ppn(pte_t pte)
   return pte >> PTE_PPN_SHIFT;
 }
 
-#ifdef USE_FREEMEM
 
+
+#ifdef USE_FREEMEM
 /* root page table */
 pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 /* page tables for kernel remap */
@@ -117,7 +118,6 @@ uintptr_t program_break;
 /* freemem */
 uintptr_t freemem_va_start;
 size_t freemem_size;
-
 #endif // USE_FREEMEM
 
 /* shared buffer */

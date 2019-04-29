@@ -1,3 +1,4 @@
+#ifdef IO_SYSCALL_WRAPPING
 #include <stdint.h>
 #include "io_wrap.h"
 #include <alloca.h>
@@ -294,3 +295,4 @@ uintptr_t io_syscall_fstatat(int dirfd, char *pathname, struct stat *statbuf,
   return ret;
 
 }
+#endif /* IO_SYSCALL_WRAPPING */

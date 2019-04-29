@@ -32,9 +32,13 @@
 void* setup_start(void* _sp){
   // Staging for eventual stack data
 
-  void* staging[SIZE_OF_SETUP];
 
   void** sp = (void**)_sp;
+
+#ifdef ENV_SETUP
+
+  void* staging[SIZE_OF_SETUP];
+
   sp = sp - SIZE_OF_SETUP;
 
   //setup argc
@@ -81,9 +85,8 @@ void* setup_start(void* _sp){
   // should be that i == AUXV_COUNT*2
 
   // Ask for random values
-  int ret = rt_util_getrandom((void*)&auxv[i], 16);
-  if( ret != 0 )
-  rt_util_misc_fatal();
+  size_t ret = rt_util_getrandom((void*)&auxv[i], 16);
+  if( ret != 16 )  rt_util_misc_fatal();
   //Assign the ptr
   *at_random_ptr = &sp[i+3];
   i+=2; // fixup i
@@ -92,6 +95,8 @@ void* setup_start(void* _sp){
 
   // Copy staging to userstack
   copy_to_user(sp, staging, SIZE_OF_SETUP*sizeof(void*));
+
+#endif /* ENV_SETUP */
 
   // Fully setup, tell them to use this SP instead of the given one
   return sp;

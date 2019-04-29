@@ -1,3 +1,4 @@
+#ifdef IO_SYSCALL_WRAPPING
 #ifndef _IO_WRAP_H_
 #define _IO_WRAP_H_
 
@@ -21,3 +22,4 @@ uintptr_t io_syscall_sync();
 uintptr_t io_syscall_lseek(int fd, off_t offset, int whence);
 uintptr_t io_syscall_ftruncate(int fd, off_t length);
 #endif /* _IO_WRAP_H_ */
+#endif /* IO_SYSCALL_WRAPPING */

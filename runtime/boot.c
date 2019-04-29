@@ -226,7 +226,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   //highest used addr. Instead we start partway through the anon space
   set_program_break(EYRIE_ANON_REGION_START + (1024 * 1024 * 1024));
 
-#endif // USE_FREEMEM
+#endif /* USE_FREEMEM */
 
   /* initialize user stack */
   init_user_stack_and_env();

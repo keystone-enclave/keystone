@@ -9,7 +9,7 @@
 #include "edge_call.h"
 #include "uaccess.h"
 #include "mm.h"
-
+#include "rt_util.h"
 
 #include "syscall_nums.h"
 
@@ -164,9 +164,15 @@ void handle_syscall(struct encl_ctx_t* ctx)
     ret = handle_copy_from_shared((void*)arg0, arg1, arg2);
     break;
   case(RUNTIME_SYSCALL_ATTEST_ENCLAVE):;
-    uintptr_t arg0_trans = translate(arg0);
-    uintptr_t arg1_trans = translate(arg1);
-    ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, arg0_trans, arg1_trans, arg2);
+    uintptr_t copy_buffer_1_pa = kernel_va_to_pa(rt_copy_buffer_1);
+    uintptr_t copy_buffer_2_pa = kernel_va_to_pa(rt_copy_buffer_2);
+
+    copy_from_user((void*)rt_copy_buffer_2, (void*)arg1, arg2);
+
+    ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, copy_buffer_1_pa, copy_buffer_2_pa, arg2);
+
+    /* TODO we consistently don't have report size when we need it */
+    copy_to_user((void*)arg0, (void*)rt_copy_buffer_1, 2048);
     //print_strace("[ATTEST] p1 0x%p->0x%p p2 0x%p->0x%p sz %lx = %lu\r\n",arg0,arg0_trans,arg1,arg1_trans,arg2,ret);
     break;
 
