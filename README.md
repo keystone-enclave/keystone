@@ -1,19 +1,11 @@
 # Keystone SDK
 
-## How to build
+Build as part of the top-level [Keystone](https://github.com/keystone-enclave/keystone)
 
-```
-make
-```
+## Build options
 
-## Copy tests into a disk image.
+See the Makefile for current build options. These will modify both how
+libraries are built, as well as the Eyrie runtime.
 
-Change `DISK\_IMAGE` in Makefile
-```
-make copy-tests
-```
-
-## Running tests
-```
-./test
-```
+After changing options, we suggest `make clean` in the sdk directory,
+and then a top-level Keystone build.
