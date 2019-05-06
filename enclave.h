@@ -30,7 +30,7 @@ typedef enum {
   INITIALIZED,
   RUNNING,
   ALLOCATED,
-} enclave_state_kt;
+} enclave_state;
 
 /* Enclave stop reasons requested */
 #define STOP_TIMER_INTERRUPT  0
@@ -38,18 +38,18 @@ typedef enum {
 #define STOP_EXIT_ENCLAVE     2
 
 /* For now, eid's are a simple unsigned int */
-typedef unsigned int eid_kt;
+typedef unsigned int enclave_id;
 
 /* enclave metadata */
 struct enclave
 {
   //spinlock_t lock; //local enclave lock. we don't need this until we have multithreaded enclave
-  eid_kt eid; //enclave id
+  enclave_id eid; //enclave id
   int rid; //region id
   int utrid; // untrusted shared region id
   unsigned long host_satp; //supervisor satp
   unsigned long encl_satp; // enclave's page table base
-  enclave_state_kt state; // global state of the enclave
+  enclave_state state; // global state of the enclave
 
   /* measurement */
   byte hash[MDSIZE];
@@ -89,19 +89,19 @@ struct report
 
 /*** SBI functions & external functions ***/
 // callables from the host
-enclave_ret_kt create_enclave(struct keystone_sbi_create create_args);
-enclave_ret_kt destroy_enclave(eid_kt eid);
-enclave_ret_kt run_enclave(uintptr_t* host_regs, eid_kt eid);
-enclave_ret_kt resume_enclave(uintptr_t* regs, eid_kt eid);
+enclave_ret_code create_enclave(struct keystone_sbi_create create_args);
+enclave_ret_code destroy_enclave(enclave_id eid);
+enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid);
+enclave_ret_code resume_enclave(uintptr_t* regs, enclave_id eid);
 // callables from the enclave
-enclave_ret_kt exit_enclave(uintptr_t* regs, unsigned long retval, eid_kt eid);
-enclave_ret_kt stop_enclave(uintptr_t* regs, uint64_t request, eid_kt eid);
-enclave_ret_kt attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, eid_kt eid);
+enclave_ret_code exit_enclave(uintptr_t* regs, unsigned long retval, enclave_id eid);
+enclave_ret_code stop_enclave(uintptr_t* regs, uint64_t request, enclave_id eid);
+enclave_ret_code attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, enclave_id eid);
 /* attestation and virtual mapping validation */
-enclave_ret_kt validate_and_hash_enclave(struct enclave* enclave, struct keystone_sbi_create* cargs);
+enclave_ret_code validate_and_hash_enclave(struct enclave* enclave, struct keystone_sbi_create* cargs);
 // TODO: These functions are supposed to be internal functions.
 void enclave_init_metadata();
-enclave_ret_kt copy_from_host(void* source, void* dest, size_t size);
-enclave_ret_kt get_host_satp(eid_kt eid, unsigned long* satp);
+enclave_ret_code copy_from_host(void* source, void* dest, size_t size);
+enclave_ret_code get_host_satp(enclave_id eid, unsigned long* satp);
 
 #endif

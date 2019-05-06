@@ -16,7 +16,7 @@ int cpu_get_enclave_id()
   return cpus[read_csr(mhartid)].eid;
 }
 
-void cpu_enter_enclave_context(eid_kt eid)
+void cpu_enter_enclave_context(enclave_id eid)
 {
   cpus[read_csr(mhartid)].is_enclave = 1;
   cpus[read_csr(mhartid)].eid = eid;

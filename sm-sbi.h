@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef uintptr_t enclave_ret_kt;
+typedef uintptr_t enclave_ret_code;
 
 uintptr_t mcall_sm_create_enclave(uintptr_t create_args);
 

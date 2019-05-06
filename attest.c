@@ -154,7 +154,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
   return -1;
 }
 
-enclave_ret_kt validate_and_hash_enclave(struct enclave* enclave,
+enclave_ret_code validate_and_hash_enclave(struct enclave* enclave,
                                         struct keystone_sbi_create* cargs){
 
   hash_ctx hash_ctx;

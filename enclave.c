@@ -35,8 +35,8 @@ extern byte dev_public_key[PUBLIC_KEY_SIZE];
  *
  * Expects that eid has already been valided, and it is OK to run this enclave
 */
-static inline enclave_ret_kt context_switch_to_enclave(uintptr_t* regs,
-                                                eid_kt eid,
+static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
+                                                enclave_id eid,
                                                 int load_parameters){
 
   /* save host context */
@@ -90,7 +90,7 @@ static inline enclave_ret_kt context_switch_to_enclave(uintptr_t* regs,
 }
 
 inline void context_switch_to_host(uintptr_t* encl_regs,
-    eid_kt eid){
+    enclave_id eid){
   // get the running enclave on this SM
   struct enclave encl = enclaves[eid];
 
@@ -121,7 +121,7 @@ inline void context_switch_to_host(uintptr_t* encl_regs,
  * Called once by the SM on startup
  */
 void enclave_init_metadata(){
-  eid_kt eid;
+  enclave_id eid;
 
   /* Assumes eids are incrementing values, which they are for now */
   for(eid=0; eid < ENCL_MAX; eid++){
@@ -132,7 +132,7 @@ void enclave_init_metadata(){
   }
 }
 
-static enclave_ret_kt clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
+static enclave_ret_code clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
 {
 
   // This function is quite temporary. See issue #38
@@ -144,7 +144,7 @@ static enclave_ret_kt clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
   return ENCLAVE_SUCCESS;
 }
 
-static enclave_ret_kt host_satp_to_eid(uintptr_t satp, eid_kt* eid)
+static enclave_ret_code host_satp_to_eid(uintptr_t satp, enclave_id* eid)
 {
   unsigned int i;
   for(i=0; i<ENCL_MAX; i++)
@@ -157,9 +157,9 @@ static enclave_ret_kt host_satp_to_eid(uintptr_t satp, eid_kt* eid)
   return ENCLAVE_INVALID_ID;
 }
 
-static enclave_ret_kt encl_alloc_eid(eid_kt* _eid)
+static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
 {
-  eid_kt eid;
+  enclave_id eid;
 
   spinlock_lock(&encl_lock);
 
@@ -183,7 +183,7 @@ static enclave_ret_kt encl_alloc_eid(eid_kt* _eid)
   }
 }
 
-static enclave_ret_kt encl_free_eid(eid_kt eid)
+static enclave_ret_code encl_free_eid(enclave_id eid)
 {
   spinlock_lock(&encl_lock);
   enclaves[eid].state = DESTROYED;
@@ -193,7 +193,7 @@ static enclave_ret_kt encl_free_eid(eid_kt eid)
 
 // TODO: This function is externally used by sm-sbi.c.
 // refactoring needed
-enclave_ret_kt get_host_satp(eid_kt eid, unsigned long* satp)
+enclave_ret_code get_host_satp(enclave_id eid, unsigned long* satp)
 {
   if(!ENCLAVE_EXISTS(eid))
     return ENCLAVE_NOT_ACCESSIBLE;
@@ -205,7 +205,7 @@ enclave_ret_kt get_host_satp(eid_kt eid, unsigned long* satp)
 
 /* Ensures that dest ptr is in host, not in enclave regions
  */
-static enclave_ret_kt copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
+static enclave_ret_code copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
 {
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
@@ -227,7 +227,7 @@ static enclave_ret_kt copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
  * Does NOT do verification of dest, assumes caller knows what that is.
  * Dest should be inside the SM memory.
  */
-enclave_ret_kt copy_from_host(void* source, void* dest, size_t size){
+enclave_ret_code copy_from_host(void* source, void* dest, size_t size){
 
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
@@ -244,7 +244,7 @@ enclave_ret_kt copy_from_host(void* source, void* dest, size_t size){
 }
 
 /* copies data from enclave, source must be inside EPM */
-static enclave_ret_kt copy_from_enclave(struct enclave* enclave,
+static enclave_ret_code copy_from_enclave(struct enclave* enclave,
                                 void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
@@ -262,7 +262,7 @@ static enclave_ret_kt copy_from_enclave(struct enclave* enclave,
 }
 
 /* copies data into enclave, destination must be inside EPM */
-static enclave_ret_kt copy_to_enclave(struct enclave* enclave,
+static enclave_ret_code copy_to_enclave(struct enclave* enclave,
                               void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
@@ -335,18 +335,18 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
  *
  * This may fail if: it cannot allocate PMP regions, EIDs, etc
  */
-enclave_ret_kt create_enclave(struct keystone_sbi_create create_args)
+enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
 {
   /* EPM and UTM parameters */
   uintptr_t base = create_args.epm_region.paddr;
   size_t size = create_args.epm_region.size;
   uintptr_t utbase = create_args.utm_region.paddr;
   size_t utsize = create_args.utm_region.size;
-  eid_kt* eidptr = create_args.eid_pptr;
+  enclave_id* eidptr = create_args.eid_pptr;
 
   uint8_t perm = 0;
-  eid_kt eid;
-  enclave_ret_kt ret;
+  enclave_id eid;
+  enclave_ret_code ret;
   int region, shared_region;
   int i;
   int region_overlap = 0;
@@ -431,7 +431,7 @@ error:
  * Deallocates EID, clears epm, etc
  * Fails only if the enclave isn't running.
  */
-enclave_ret_kt destroy_enclave(eid_kt eid)
+enclave_ret_code destroy_enclave(enclave_id eid)
 {
   int destroyable;
 
@@ -475,7 +475,7 @@ enclave_ret_kt destroy_enclave(eid_kt eid)
   return ENCLAVE_SUCCESS;
 }
 
-enclave_ret_kt run_enclave(uintptr_t* host_regs, eid_kt eid)
+enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid)
 {
   int runable;
 
@@ -496,7 +496,7 @@ enclave_ret_kt run_enclave(uintptr_t* host_regs, eid_kt eid)
   return context_switch_to_enclave(host_regs, eid, 1);
 }
 
-enclave_ret_kt exit_enclave(uintptr_t* encl_regs, unsigned long retval, eid_kt eid)
+enclave_ret_code exit_enclave(uintptr_t* encl_regs, unsigned long retval, enclave_id eid)
 {
   int exitable;
 
@@ -519,7 +519,7 @@ enclave_ret_kt exit_enclave(uintptr_t* encl_regs, unsigned long retval, eid_kt e
   return ENCLAVE_SUCCESS;
 }
 
-enclave_ret_kt stop_enclave(uintptr_t* encl_regs, uint64_t request, eid_kt eid)
+enclave_ret_code stop_enclave(uintptr_t* encl_regs, uint64_t request, enclave_id eid)
 {
   int stoppable;
 
@@ -542,7 +542,7 @@ enclave_ret_kt stop_enclave(uintptr_t* encl_regs, uint64_t request, eid_kt eid)
   }
 }
 
-enclave_ret_kt resume_enclave(uintptr_t* host_regs, eid_kt eid)
+enclave_ret_code resume_enclave(uintptr_t* host_regs, enclave_id eid)
 {
   int resumable;
 
@@ -560,7 +560,7 @@ enclave_ret_kt resume_enclave(uintptr_t* host_regs, eid_kt eid)
   return context_switch_to_enclave(host_regs, eid, 0);
 }
 
-enclave_ret_kt attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, eid_kt eid)
+enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, enclave_id eid)
 {
   int attestable;
   struct report report;
