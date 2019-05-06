@@ -71,35 +71,35 @@ enum pmp_priority {
 }
 
 /* PMP IPI mailbox */
-typedef struct {
+struct ipi_msg{
   uint8_t pending;
   uint8_t perm;
-} ipi_msg_t;
+};
 
 /* PMP region type */
-typedef struct
+struct pmp_region
 {
   uint64_t size;
   uint8_t addrmode;
   uintptr_t addr;
   int allow_overlap;
   int reg_idx;
-} region_t;
+};
 
-typedef int pmpreg_id_t;
-typedef int region_id_t;
+typedef int pmpreg_id_kt;
+typedef int region_id_kt;
 
 /* external functions */
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id_t* rid, int allow_overlap);
-int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id_t* rid, int allow_overlap);
-int pmp_region_free_atomic(region_id_t region);
-int pmp_set(region_id_t n, uint8_t perm);
-int pmp_set_global(region_id_t n, uint8_t perm);
-int pmp_unset(region_id_t n);
-int pmp_unset_global(region_id_t n);
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id_kt* rid, int allow_overlap);
+int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id_kt* rid, int allow_overlap);
+int pmp_region_free_atomic(region_id_kt region);
+int pmp_set(region_id_kt n, uint8_t perm);
+int pmp_set_global(region_id_kt n, uint8_t perm);
+int pmp_unset(region_id_kt n);
+int pmp_unset_global(region_id_kt n);
 int pmp_detect_region_overlap_atomic(uintptr_t base, uintptr_t size);
 
-uintptr_t pmp_region_get_addr(region_id_t i);
-uint64_t pmp_region_get_size(region_id_t i);
+uintptr_t pmp_region_get_addr(region_id_kt i);
+uint64_t pmp_region_get_size(region_id_kt i);
 
 #endif

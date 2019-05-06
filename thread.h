@@ -6,7 +6,7 @@
 #define __THREAD_H__
 
 #include <stdint.h>
-struct ctx_t
+struct ctx
 {
   uintptr_t slot;
   uintptr_t ra;
@@ -42,7 +42,7 @@ struct ctx_t
   uintptr_t t6;
 };
 
-struct csrs_t
+struct csrs
 {
   uintptr_t sstatus;    //Supervisor status register.
   uintptr_t sedeleg;    //Supervisor exception delegation register.
@@ -65,19 +65,19 @@ struct csrs_t
 };
 
 /* enclave thread state */
-struct thread_state_t
+struct thread_state
 {
   uintptr_t prev_mepc;
-  struct csrs_t prev_csrs;
-  struct ctx_t prev_state;
+  struct csrs prev_csrs;
+  struct ctx prev_state;
 };
 
 /* swap previous and current thread states */
-void swap_prev_state(struct thread_state_t* state, uintptr_t* regs);
-void swap_prev_mepc(struct thread_state_t* state, uintptr_t mepc);
-void swap_prev_smode_csrs(struct thread_state_t* thread);
+void swap_prev_state(struct thread_state* state, uintptr_t* regs);
+void swap_prev_mepc(struct thread_state* state, uintptr_t mepc);
+void swap_prev_smode_csrs(struct thread_state* thread);
 
 /* Clean state generation */
-void clean_state(struct thread_state_t* state);
-void clean_smode_csrs(struct thread_state_t* state);
+void clean_state(struct thread_state* state);
+void clean_smode_csrs(struct thread_state* state);
 #endif /* thread */

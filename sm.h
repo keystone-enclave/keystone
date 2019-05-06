@@ -24,24 +24,24 @@
 #define SBI_SM_NOT_IMPLEMENTED  1111
 
 /* error codes */
-#define ENCLAVE_NOT_IMPLEMENTED             (enclave_ret_t)-2U
-#define ENCLAVE_UNKNOWN_ERROR               (enclave_ret_t)-1U
-#define ENCLAVE_SUCCESS                     (enclave_ret_t)0
-#define ENCLAVE_INVALID_ID                  (enclave_ret_t)1
-#define ENCLAVE_INTERRUPTED                 (enclave_ret_t)2
-#define ENCLAVE_PMP_FAILURE                 (enclave_ret_t)3
-#define ENCLAVE_NOT_RUNNABLE                (enclave_ret_t)4
-#define ENCLAVE_NOT_DESTROYABLE             (enclave_ret_t)5
-#define ENCLAVE_REGION_OVERLAPS             (enclave_ret_t)6
-#define ENCLAVE_NOT_ACCESSIBLE              (enclave_ret_t)7
-#define ENCLAVE_ILLEGAL_ARGUMENT            (enclave_ret_t)8
-#define ENCLAVE_NOT_RUNNING                 (enclave_ret_t)9
-#define ENCLAVE_NOT_RESUMABLE               (enclave_ret_t)10
-#define ENCLAVE_EDGE_CALL_HOST              (enclave_ret_t)11
-#define ENCLAVE_NOT_INITIALIZED             (enclave_ret_t)12
-#define ENCLAVE_NO_FREE_RESOURCE            (enclave_ret_t)13
-#define ENCLAVE_SBI_PROHIBITED              (enclave_ret_t)14
-#define ENCLAVE_ILLEGAL_PTE                 (enclave_ret_t)15
+#define ENCLAVE_NOT_IMPLEMENTED             (enclave_ret_kt)-2U
+#define ENCLAVE_UNKNOWN_ERROR               (enclave_ret_kt)-1U
+#define ENCLAVE_SUCCESS                     (enclave_ret_kt)0
+#define ENCLAVE_INVALID_ID                  (enclave_ret_kt)1
+#define ENCLAVE_INTERRUPTED                 (enclave_ret_kt)2
+#define ENCLAVE_PMP_FAILURE                 (enclave_ret_kt)3
+#define ENCLAVE_NOT_RUNNABLE                (enclave_ret_kt)4
+#define ENCLAVE_NOT_DESTROYABLE             (enclave_ret_kt)5
+#define ENCLAVE_REGION_OVERLAPS             (enclave_ret_kt)6
+#define ENCLAVE_NOT_ACCESSIBLE              (enclave_ret_kt)7
+#define ENCLAVE_ILLEGAL_ARGUMENT            (enclave_ret_kt)8
+#define ENCLAVE_NOT_RUNNING                 (enclave_ret_kt)9
+#define ENCLAVE_NOT_RESUMABLE               (enclave_ret_kt)10
+#define ENCLAVE_EDGE_CALL_HOST              (enclave_ret_kt)11
+#define ENCLAVE_NOT_INITIALIZED             (enclave_ret_kt)12
+#define ENCLAVE_NO_FREE_RESOURCE            (enclave_ret_kt)13
+#define ENCLAVE_SBI_PROHIBITED              (enclave_ret_kt)14
+#define ENCLAVE_ILLEGAL_PTE                 (enclave_ret_kt)15
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0
@@ -61,7 +61,7 @@ void sm_retrieve_pubkey(void* dest);
 void sm_sign(void* sign, const void* data, size_t len);
 
 /* creation parameters */
-struct keystone_sbi_pregion_t
+struct keystone_sbi_pregion
 {
   uintptr_t paddr;
   size_t size;
@@ -74,7 +74,7 @@ struct runtime_va_params_t
   uintptr_t untrusted_size;
 };
 
-struct runtime_pa_params_t
+struct runtime_pa_params
 {
   uintptr_t dram_base;
   uintptr_t dram_size;
@@ -83,10 +83,10 @@ struct runtime_pa_params_t
   uintptr_t free_base;
 };
 
-struct keystone_sbi_create_t
+struct keystone_sbi_create
 {
-  struct keystone_sbi_pregion_t epm_region;
-  struct keystone_sbi_pregion_t utm_region;
+  struct keystone_sbi_pregion epm_region;
+  struct keystone_sbi_pregion utm_region;
 
   uintptr_t runtime_paddr;
   uintptr_t user_paddr;

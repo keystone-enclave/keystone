@@ -12,17 +12,17 @@
 
 uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 {
-  struct keystone_sbi_create_t create_args_local;
-  enclave_ret_t ret;
+  struct keystone_sbi_create create_args_local;
+  enclave_ret_kt ret;
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  ret = copy_from_host((struct keystone_sbi_create_t*)create_args,
+  ret = copy_from_host((struct keystone_sbi_create*)create_args,
                        &create_args_local,
-                       sizeof(struct keystone_sbi_create_t));
+                       sizeof(struct keystone_sbi_create));
 
   if( ret != ENCLAVE_SUCCESS )
     return ret;
@@ -33,7 +33,7 @@ uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 
 uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
 {
-  enclave_ret_t ret;
+  enclave_ret_kt ret;
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
@@ -45,7 +45,7 @@ uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
 }
 uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
 {
-  enclave_ret_t ret;
+  enclave_ret_kt ret;
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
@@ -59,7 +59,7 @@ uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
 
 uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
 {
-  enclave_ret_t ret;
+  enclave_ret_kt ret;
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
@@ -72,7 +72,7 @@ uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
 
 uintptr_t mcall_sm_exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 {
-  enclave_ret_t ret;
+  enclave_ret_kt ret;
   /* only an enclave itself can call this SBI */
   if (!cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
@@ -84,7 +84,7 @@ uintptr_t mcall_sm_exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 
 uintptr_t mcall_sm_stop_enclave(uintptr_t* encl_regs, unsigned long request)
 {
-  enclave_ret_t ret;
+  enclave_ret_kt ret;
   /* only an enclave itself can call this SBI */
   if (!cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
@@ -96,7 +96,7 @@ uintptr_t mcall_sm_stop_enclave(uintptr_t* encl_regs, unsigned long request)
 
 uintptr_t mcall_sm_attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size)
 {
-  enclave_ret_t ret;
+  enclave_ret_kt ret;
   /* only an enclave itself can call this SBI */
   if (!cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;

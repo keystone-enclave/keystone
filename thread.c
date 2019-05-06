@@ -6,7 +6,7 @@
 #include "mtrap.h"
 
 /* Swaps the entire s-mode visible state, general registers and then csrs */
-void swap_prev_state(struct thread_state_t* thread, uintptr_t* regs)
+void swap_prev_state(struct thread_state* thread, uintptr_t* regs)
 {
   int i;
 
@@ -28,7 +28,7 @@ void swap_prev_state(struct thread_state_t* thread, uintptr_t* regs)
 /* TODO: Right now we are only handling the ones that our test
    platforms support. Realistically we should have these behind
    defines for extensions (ex: N extension)*/
-void swap_prev_smode_csrs(struct thread_state_t*
+void swap_prev_smode_csrs(struct thread_state*
 thread){
 
   uintptr_t tmp;
@@ -55,7 +55,7 @@ thread){
 #undef LOCAL_SWAP_CSR
 }
 
-void swap_prev_mepc(struct thread_state_t* thread, uintptr_t current_mepc)
+void swap_prev_mepc(struct thread_state* thread, uintptr_t current_mepc)
 {
   uintptr_t tmp = thread->prev_mepc;
   thread->prev_mepc = current_mepc;
@@ -63,7 +63,7 @@ void swap_prev_mepc(struct thread_state_t* thread, uintptr_t current_mepc)
 }
 
 
-void clean_state(struct thread_state_t* state){
+void clean_state(struct thread_state* state){
   int i;
   uintptr_t* prev = (uintptr_t*) &state->prev_state;
   for(i=1; i<32; i++)
@@ -74,7 +74,7 @@ void clean_state(struct thread_state_t* state){
   clean_smode_csrs(state);
 }
 
-void clean_smode_csrs(struct thread_state_t* state){
+void clean_smode_csrs(struct thread_state* state){
 
   state->prev_csrs.sstatus = 0;
 

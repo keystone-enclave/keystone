@@ -12,7 +12,7 @@
 
 #define ENCL_MAX  16
 
-struct enclave_t enclaves[ENCL_MAX];
+struct enclave enclaves[ENCL_MAX];
 #define ENCLAVE_EXISTS(eid) (enclaves[eid].state >= 0)
 
 static spinlock_t encl_lock = SPINLOCK_INIT;
@@ -35,8 +35,8 @@ extern byte dev_public_key[PUBLIC_KEY_SIZE];
  *
  * Expects that eid has already been valided, and it is OK to run this enclave
 */
-static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
-                                                eid_t eid,
+static inline enclave_ret_kt context_switch_to_enclave(uintptr_t* regs,
+                                                eid_kt eid,
                                                 int load_parameters){
 
   /* save host context */
@@ -71,6 +71,7 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
   // disable timer set by the OS
   clear_csr(mie, MIP_MTIP);
 
+  // Clear pending interrupts
   clear_csr(mip, MIP_MTIP);
   clear_csr(mip, MIP_STIP);
   clear_csr(mip, MIP_SSIP);
@@ -89,9 +90,9 @@ static inline enclave_ret_t context_switch_to_enclave(uintptr_t* regs,
 }
 
 inline void context_switch_to_host(uintptr_t* encl_regs,
-    eid_t eid){
+    eid_kt eid){
   // get the running enclave on this SM
-  struct enclave_t encl = enclaves[eid];
+  struct enclave encl = enclaves[eid];
 
   // set PMP
   pmp_set(encl.rid, PMP_NO_PERM);
@@ -120,7 +121,7 @@ inline void context_switch_to_host(uintptr_t* encl_regs,
  * Called once by the SM on startup
  */
 void enclave_init_metadata(){
-  eid_t eid;
+  eid_kt eid;
 
   /* Assumes eids are incrementing values, which they are for now */
   for(eid=0; eid < ENCL_MAX; eid++){
@@ -131,7 +132,7 @@ void enclave_init_metadata(){
   }
 }
 
-static enclave_ret_t clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
+static enclave_ret_kt clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
 {
 
   // This function is quite temporary. See issue #38
@@ -143,7 +144,7 @@ static enclave_ret_t clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
   return ENCLAVE_SUCCESS;
 }
 
-static enclave_ret_t host_satp_to_eid(uintptr_t satp, eid_t* eid)
+static enclave_ret_kt host_satp_to_eid(uintptr_t satp, eid_kt* eid)
 {
   unsigned int i;
   for(i=0; i<ENCL_MAX; i++)
@@ -156,9 +157,9 @@ static enclave_ret_t host_satp_to_eid(uintptr_t satp, eid_t* eid)
   return ENCLAVE_INVALID_ID;
 }
 
-static enclave_ret_t encl_alloc_eid(eid_t* _eid)
+static enclave_ret_kt encl_alloc_eid(eid_kt* _eid)
 {
-  eid_t eid;
+  eid_kt eid;
 
   spinlock_lock(&encl_lock);
 
@@ -182,7 +183,7 @@ static enclave_ret_t encl_alloc_eid(eid_t* _eid)
   }
 }
 
-static enclave_ret_t encl_free_eid(eid_t eid)
+static enclave_ret_kt encl_free_eid(eid_kt eid)
 {
   spinlock_lock(&encl_lock);
   enclaves[eid].state = DESTROYED;
@@ -192,7 +193,7 @@ static enclave_ret_t encl_free_eid(eid_t eid)
 
 // TODO: This function is externally used by sm-sbi.c.
 // refactoring needed
-enclave_ret_t get_host_satp(eid_t eid, unsigned long* satp)
+enclave_ret_kt get_host_satp(eid_kt eid, unsigned long* satp)
 {
   if(!ENCLAVE_EXISTS(eid))
     return ENCLAVE_NOT_ACCESSIBLE;
@@ -204,7 +205,7 @@ enclave_ret_t get_host_satp(eid_t eid, unsigned long* satp)
 
 /* Ensures that dest ptr is in host, not in enclave regions
  */
-static enclave_ret_t copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
+static enclave_ret_kt copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
 {
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
@@ -226,7 +227,7 @@ static enclave_ret_t copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
  * Does NOT do verification of dest, assumes caller knows what that is.
  * Dest should be inside the SM memory.
  */
-enclave_ret_t copy_from_host(void* source, void* dest, size_t size){
+enclave_ret_kt copy_from_host(void* source, void* dest, size_t size){
 
   int region_overlap = 0;
   spinlock_lock(&encl_lock);
@@ -243,7 +244,7 @@ enclave_ret_t copy_from_host(void* source, void* dest, size_t size){
 }
 
 /* copies data from enclave, source must be inside EPM */
-static enclave_ret_t copy_from_enclave(struct enclave_t* enclave,
+static enclave_ret_kt copy_from_enclave(struct enclave* enclave,
                                 void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
@@ -261,7 +262,7 @@ static enclave_ret_t copy_from_enclave(struct enclave_t* enclave,
 }
 
 /* copies data into enclave, destination must be inside EPM */
-static enclave_ret_t copy_to_enclave(struct enclave_t* enclave,
+static enclave_ret_kt copy_to_enclave(struct enclave* enclave,
                               void* dest, void* source, size_t size) {
   int legal = 0;
   spinlock_lock(&encl_lock);
@@ -278,7 +279,7 @@ static enclave_ret_t copy_to_enclave(struct enclave_t* enclave,
     return ENCLAVE_SUCCESS;
 }
 
-static int is_create_args_valid(struct keystone_sbi_create_t* args)
+static int is_create_args_valid(struct keystone_sbi_create* args)
 {
   uintptr_t epm_start, epm_end;
 
@@ -334,18 +335,18 @@ static int is_create_args_valid(struct keystone_sbi_create_t* args)
  *
  * This may fail if: it cannot allocate PMP regions, EIDs, etc
  */
-enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
+enclave_ret_kt create_enclave(struct keystone_sbi_create create_args)
 {
   /* EPM and UTM parameters */
   uintptr_t base = create_args.epm_region.paddr;
   size_t size = create_args.epm_region.size;
   uintptr_t utbase = create_args.utm_region.paddr;
   size_t utsize = create_args.utm_region.size;
-  eid_t* eidptr = create_args.eid_pptr;
+  eid_kt* eidptr = create_args.eid_pptr;
 
   uint8_t perm = 0;
-  eid_t eid;
-  enclave_ret_t ret;
+  eid_kt eid;
+  enclave_ret_kt ret;
   int region, shared_region;
   int i;
   int region_overlap = 0;
@@ -356,7 +357,7 @@ enclave_ret_t create_enclave(struct keystone_sbi_create_t create_args)
 
   /* set va params */
   struct runtime_va_params_t params = create_args.params;
-  struct runtime_pa_params_t pa_params;
+  struct runtime_pa_params pa_params;
   pa_params.dram_base = base;
   pa_params.dram_size = size;
   pa_params.runtime_base = create_args.runtime_paddr;
@@ -430,7 +431,7 @@ error:
  * Deallocates EID, clears epm, etc
  * Fails only if the enclave isn't running.
  */
-enclave_ret_t destroy_enclave(eid_t eid)
+enclave_ret_kt destroy_enclave(eid_kt eid)
 {
   int destroyable;
 
@@ -466,7 +467,7 @@ enclave_ret_t destroy_enclave(eid_t eid)
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = (struct runtime_va_params_t) {0};
-  enclaves[eid].pa_params = (struct runtime_pa_params_t) {0};
+  enclaves[eid].pa_params = (struct runtime_pa_params) {0};
 
   // 3. release eid
   encl_free_eid(eid);
@@ -474,7 +475,7 @@ enclave_ret_t destroy_enclave(eid_t eid)
   return ENCLAVE_SUCCESS;
 }
 
-enclave_ret_t run_enclave(uintptr_t* host_regs, eid_t eid)
+enclave_ret_kt run_enclave(uintptr_t* host_regs, eid_kt eid)
 {
   int runable;
 
@@ -495,7 +496,7 @@ enclave_ret_t run_enclave(uintptr_t* host_regs, eid_t eid)
   return context_switch_to_enclave(host_regs, eid, 1);
 }
 
-enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval, eid_t eid)
+enclave_ret_kt exit_enclave(uintptr_t* encl_regs, unsigned long retval, eid_kt eid)
 {
   int exitable;
 
@@ -518,7 +519,7 @@ enclave_ret_t exit_enclave(uintptr_t* encl_regs, unsigned long retval, eid_t eid
   return ENCLAVE_SUCCESS;
 }
 
-enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request, eid_t eid)
+enclave_ret_kt stop_enclave(uintptr_t* encl_regs, uint64_t request, eid_kt eid)
 {
   int stoppable;
 
@@ -541,7 +542,7 @@ enclave_ret_t stop_enclave(uintptr_t* encl_regs, uint64_t request, eid_t eid)
   }
 }
 
-enclave_ret_t resume_enclave(uintptr_t* host_regs, eid_t eid)
+enclave_ret_kt resume_enclave(uintptr_t* host_regs, eid_kt eid)
 {
   int resumable;
 
@@ -559,10 +560,10 @@ enclave_ret_t resume_enclave(uintptr_t* host_regs, eid_t eid)
   return context_switch_to_enclave(host_regs, eid, 0);
 }
 
-enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, eid_t eid)
+enclave_ret_kt attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, eid_kt eid)
 {
   int attestable;
-  struct report_t report;
+  struct report report;
   int ret;
 
   if (size > ATTEST_DATA_MAXLEN)
@@ -594,7 +595,7 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
   sm_sign(report.enclave.signature,
       &report.enclave,
-      sizeof(struct enclave_report_t)
+      sizeof(struct enclave_report)
       - SIGNATURE_SIZE
       - ATTEST_DATA_MAXLEN + size);
 
@@ -602,7 +603,7 @@ enclave_ret_t attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   ret = copy_to_enclave(&enclaves[eid],
       (void*)report_ptr,
       &report,
-      sizeof(struct report_t));
+      sizeof(struct report));
   if (ret) {
     return ret;
   }

@@ -14,51 +14,51 @@ static spinlock_t pmp_ipi_global_lock = SPINLOCK_INIT;
 static spinlock_t pmp_lock = SPINLOCK_INIT;
 
 /* PMP region getter/setters */
-static region_t regions[PMP_MAX_N_REGION];
+static struct pmp_region regions[PMP_MAX_N_REGION];
 static uint32_t reg_bitmap = 0;
 static uint32_t region_def_bitmap = 0;
 
-static inline int region_register_idx(region_id_t i)
+static inline int region_register_idx(region_id_kt i)
 {
   return regions[i].reg_idx;
 }
 
-static inline int region_allows_overlap(region_id_t i)
+static inline int region_allows_overlap(region_id_kt i)
 {
   return regions[i].allow_overlap;
 }
 
-static inline uintptr_t region_get_addr(region_id_t i)
+static inline uintptr_t region_get_addr(region_id_kt i)
 {
   return regions[i].addr;
 }
 
-static inline uint64_t region_get_size(region_id_t i)
+static inline uint64_t region_get_size(region_id_kt i)
 {
   return regions[i].size;
 }
 
-static inline int region_is_napot(region_id_t i)
+static inline int region_is_napot(region_id_kt i)
 {
   return regions[i].addrmode == PMP_NAPOT;
 }
 
-static inline int region_is_tor(region_id_t i)
+static inline int region_is_tor(region_id_kt i)
 {
   return regions[i].addrmode == PMP_TOR;
 }
 
-static inline int region_needs_two_entries(region_id_t i)
+static inline int region_needs_two_entries(region_id_kt i)
 {
   return region_is_tor(i) && regions[i].reg_idx > 0;
 }
 
-static inline int region_is_napot_all(region_id_t i)
+static inline int region_is_napot_all(region_id_kt i)
 {
   return regions[i].addr == 0 && regions[i].size == -1UL;
 }
 
-static inline uintptr_t region_pmpaddr_val(region_id_t i)
+static inline uintptr_t region_pmpaddr_val(region_id_kt i)
 {
   if(region_is_napot_all(i))
     return (-1UL);
@@ -70,12 +70,12 @@ static inline uintptr_t region_pmpaddr_val(region_id_t i)
     return 0;
 }
 
-static inline uintptr_t region_pmpcfg_val(region_id_t i, pmpreg_id_t reg_idx, uint8_t perm_bits)
+static inline uintptr_t region_pmpcfg_val(region_id_kt i, pmpreg_id_kt reg_idx, uint8_t perm_bits)
 {
   return (uintptr_t) (regions[i].addrmode | perm_bits) << (8*(reg_idx%PMP_PER_GROUP));
 }
 
-static void region_clear_all(region_id_t i)
+static void region_clear_all(region_id_kt i)
 {
   regions[i].addr = 0;
   regions[i].size = 0;
@@ -84,12 +84,12 @@ static void region_clear_all(region_id_t i)
   regions[i].reg_idx = 0;
 }
 
-static void region_init(region_id_t i,
+static void region_init(region_id_kt i,
                         uintptr_t addr,
                         uint64_t size,
                         uint8_t addrmode,
                         int allow_overlap,
-                        pmpreg_id_t reg_idx)
+                        pmpreg_id_kt reg_idx)
 {
   regions[i].addr = addr;
   regions[i].size = size;
@@ -98,7 +98,7 @@ static void region_init(region_id_t i,
   regions[i].reg_idx = (addrmode == PMP_TOR && reg_idx > 0 ? reg_idx + 1 : reg_idx);
 }
 
-static int is_pmp_region_valid(region_id_t region_idx)
+static int is_pmp_region_valid(region_id_kt region_idx)
 {
   return TEST_BIT(region_def_bitmap, region_idx);
 }
@@ -119,24 +119,24 @@ static int search_rightmost_unset(uint32_t bitmap, int max, uint32_t mask)
   return -1;
 }
 
-static region_id_t get_free_region_idx()
+static region_id_kt get_free_region_idx()
 {
   return search_rightmost_unset(region_def_bitmap, PMP_MAX_N_REGION, 0x1);
 }
 
-static pmpreg_id_t get_free_reg_idx()
+static pmpreg_id_kt get_free_reg_idx()
 {
   return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x1);
 }
 
-static pmpreg_id_t get_conseq_free_reg_idx()
+static pmpreg_id_kt get_conseq_free_reg_idx()
 {
   return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x3);
 }
 
 /* IPI-related functions */
-static ipi_msg_t ipi_mailbox[MAX_HARTS] = {0,};
-static region_id_t ipi_region_idx = -1;
+static struct ipi_msg ipi_mailbox[MAX_HARTS] = {0,};
+static region_id_kt ipi_region_idx = -1;
 static enum ipi_type {IPI_PMP_INVALID=-1,
                       IPI_PMP_SET,
                       IPI_PMP_UNSET} ipi_type = IPI_PMP_INVALID;
@@ -284,7 +284,7 @@ int pmp_set(int region_idx, uint8_t perm)
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
 
   uint8_t perm_bits = perm & PMP_ALL_PERM;
-  pmpreg_id_t reg_idx = region_register_idx(region_idx);
+  pmpreg_id_kt reg_idx = region_register_idx(region_idx);
   uintptr_t pmpcfg = region_pmpcfg_val(region_idx, reg_idx, perm_bits);
   uintptr_t pmpaddr;
 
@@ -329,7 +329,7 @@ int pmp_unset(int region_idx)
   if(!is_pmp_region_valid(region_idx))
     PMP_ERROR(PMP_REGION_INVALID,"Invalid PMP region index");
 
-  pmpreg_id_t reg_idx = region_register_idx(region_idx);
+  pmpreg_id_kt reg_idx = region_register_idx(region_idx);
   int n=reg_idx;
   switch(n) {
 #define X(n,g) case n: { PMP_UNSET(n, g); break;}
@@ -354,7 +354,7 @@ int pmp_unset(int region_idx)
   return PMP_SUCCESS;
 }
 
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_t* rid, int allow_overlap)
+int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_kt* rid, int allow_overlap)
 {
   int ret;
   spinlock_lock(&pmp_lock);
@@ -363,10 +363,10 @@ int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri
   return ret;
 }
 
-static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_t* rid, int allow_overlap)
+static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_kt* rid, int allow_overlap)
 {
-  pmpreg_id_t reg_idx = -1;
-  region_id_t region_idx = -1;
+  pmpreg_id_kt reg_idx = -1;
+  region_id_kt region_idx = -1;
   int region_overlap = 0, i=0;
 
   assert(size);
@@ -414,10 +414,10 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
   return PMP_SUCCESS;
 }
 
-static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_t* rid, int allow_overlap)
+static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id_kt* rid, int allow_overlap)
 {
-  pmpreg_id_t reg_idx = -1;
-  region_id_t region_idx = -1;
+  pmpreg_id_kt reg_idx = -1;
+  region_id_kt region_idx = -1;
   int region_overlap = 0, i = 0;
 
   assert(size);
@@ -484,7 +484,7 @@ int pmp_region_free_atomic(int region_idx)
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
   }
 
-  pmpreg_id_t reg_idx = region_register_idx(region_idx);
+  pmpreg_id_kt reg_idx = region_register_idx(region_idx);
   UNSET_BIT(region_def_bitmap, region_idx);
   UNSET_BIT(reg_bitmap, reg_idx);
   if(region_needs_two_entries(region_idx))
@@ -531,14 +531,14 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
   }
 }
 
-uintptr_t pmp_region_get_addr(region_id_t i)
+uintptr_t pmp_region_get_addr(region_id_kt i)
 {
   if(is_pmp_region_valid(i))
     return region_get_addr(i);
   return 0;
 }
 
-uint64_t pmp_region_get_size(region_id_t i)
+uint64_t pmp_region_get_size(region_id_kt i)
 {
   if(is_pmp_region_valid(i))
     return region_get_size(i);

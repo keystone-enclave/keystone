@@ -8,9 +8,9 @@
 
 /* This will walk the entire vaddr space in the enclave, validating
    linear at-most-once paddr mappings, and then hashing valid pages */
-int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
+int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
                           pte_t* tb, uintptr_t vaddr, int contiguous,
-                          struct keystone_sbi_create_t* cargs,
+                          struct keystone_sbi_create* cargs,
                           uintptr_t* runtime_max_seen,
                           uintptr_t* user_max_seen)
 {
@@ -154,10 +154,10 @@ int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
   return -1;
 }
 
-enclave_ret_t validate_and_hash_enclave(struct enclave_t* enclave,
-                                        struct keystone_sbi_create_t* cargs){
+enclave_ret_kt validate_and_hash_enclave(struct enclave* enclave,
+                                        struct keystone_sbi_create* cargs){
 
-  hash_ctx_t hash_ctx;
+  hash_ctx hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
   int i;
 
