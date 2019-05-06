@@ -34,32 +34,23 @@ uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
 {
   enclave_ret_t ret;
-  unsigned long host_satp;
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  if(get_host_satp(eid, &host_satp) != ENCLAVE_SUCCESS ||
-     host_satp != read_csr(satp))
-    return ENCLAVE_NOT_ACCESSIBLE;
   ret = destroy_enclave((unsigned int)eid);
   return ret;
 }
 uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
 {
   enclave_ret_t ret;
-  unsigned long host_satp;
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
-
-  if(get_host_satp(eid, &host_satp) != ENCLAVE_SUCCESS ||
-     host_satp != read_csr(satp))
-    return ENCLAVE_NOT_ACCESSIBLE;
 
   ret = run_enclave(regs, (unsigned int) eid);
 
@@ -68,52 +59,57 @@ uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
 
 uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
 {
-  unsigned long host_satp;
+  enclave_ret_t ret;
 
   /* an enclave cannot call this SBI */
   if (cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  if(get_host_satp(eid, &host_satp) != ENCLAVE_SUCCESS ||
-     host_satp != read_csr(satp))
-    return ENCLAVE_NOT_ACCESSIBLE;
-
-  return resume_enclave(host_regs, (unsigned int) eid);
+  ret = resume_enclave(host_regs, (unsigned int) eid);
+  return ret;
 }
 
 uintptr_t mcall_sm_exit_enclave(uintptr_t* encl_regs, unsigned long retval)
 {
+  enclave_ret_t ret;
   /* only an enclave itself can call this SBI */
   if (!cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  return exit_enclave(encl_regs, (unsigned long) retval, cpu_get_enclave_id());
+  ret = exit_enclave(encl_regs, (unsigned long) retval, cpu_get_enclave_id());
+  return ret;
 }
 
 uintptr_t mcall_sm_stop_enclave(uintptr_t* encl_regs, unsigned long request)
 {
+  enclave_ret_t ret;
   /* only an enclave itself can call this SBI */
   if (!cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  return stop_enclave(encl_regs, (uint64_t)request, cpu_get_enclave_id());
+  ret = stop_enclave(encl_regs, (uint64_t)request, cpu_get_enclave_id());
+  return ret;
 }
 
 uintptr_t mcall_sm_attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size)
 {
+  enclave_ret_t ret;
   /* only an enclave itself can call this SBI */
   if (!cpu_is_enclave_context()) {
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  return attest_enclave(report, data, size, cpu_get_enclave_id());
+  ret = attest_enclave(report, data, size, cpu_get_enclave_id());
+  return ret;
 }
 
 uintptr_t mcall_sm_random()
 {
+  /* Anyone may call this interface. */
+
   return platform_random();
 }
 
