@@ -5,13 +5,12 @@ sm_hdrs = \
 sm_c_srcs = \
   sm.c \
   sm-sbi.c \
-	cpu.c \
-	thread.c \
+  cpu.c \
+  thread.c \
   pmp.c \
   enclave.c \
-	crypto.c \
-	attest.c \
-	aes/aes.c \
+  crypto.c \
+  attest.c \
   sha3/sha3.c \
   ed25519/keypair.c \
   ed25519/sign.c \
