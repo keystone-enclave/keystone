@@ -40,7 +40,7 @@ sizeof(unsigned long), 0, 0);`` It passes a pointer to the value, the
 size of the argument, and any needed return buffer information. (None
 in this case)
 
-The runtime then allocates an ``edge_call_t`` structure in the shared
+The runtime then allocates an ``edge_call`` structure in the shared
 memory region, fills out the call type, copies the value into another
 part of the shared memory, and sets up the offset to the argument
 value. Note that edge calls do not use pointers, but instead offset
@@ -54,7 +54,7 @@ The Keystone kernel driver resumes execution, checks the exit status
 of the enclave, notes a pending ocall, and passes execution to the
 userspace host process.
 
-The userspace host process consumes the ``edge_call_t`` and dispatches
+The userspace host process consumes the ``edge_call`` and dispatches
 the registered ocall handler wrapper for ``OCALL_PRINT_VALUE``. The
 wrapper generates a pointer to the argument value from the offset in
 the shared memory region, and calls ``print_value`` with the value as
@@ -64,7 +64,7 @@ an argument.
 
 On return, the host wrapper checks if any return values need to be
 copied into the shared memory region (none in this case.) Sets the
-``edge_call_t`` return status to SUCCESS, and returns into the
+``edge_call`` return status to SUCCESS, and returns into the
 driver.
 
 The driver re-enters the enclave runtime via an ``SBI_CALL``.

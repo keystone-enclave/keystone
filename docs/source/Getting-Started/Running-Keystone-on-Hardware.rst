@@ -19,9 +19,6 @@ build will work on the board.
 This will build a new copy of the kernel, driver, and generate a full
 buildroot Linux image.
 
-All HiFive specific build elements are done in ``keystone/hifive-work``.
-
-
 Setting up the HiFive
 ---------------------
 
@@ -45,7 +42,8 @@ Load Linux Image
 
 The hifive build process generates a bbl.bin in
 ``hifive-work/bbl.bin``. Flash this to the Linux partition on the
-card.
+card. (Note that this is a relocated version of the bbl binary used
+for QEMU)
 
 
 Example loading script
@@ -90,18 +88,16 @@ bootloader itself. (Likely never)
   PART_LINUX=$DISK"2"
   PART_FSBL=$DISK"4"
 
-  echo "Copying FSBL"
-
-  # Setup the FSBL FS and copy the bin into it
-  $MKE2FS -t ext3 $PART_FSBL
-  echo "COPYING FSBL to $PART_FSBL"
-  dd if=fsbl.bin of=$PART_FSBL
-
-  echo "Copying Linux image"
-
-  # Copy the Linux image in
   echo "COPYING BBL to $PART_BBL"
+  test -b $PART_BBL
   dd if=bbl.bin of=$PART_BBL bs=4096
+  echo "Copy done"
+
+  echo "COPYING FSBL to $PART_FSBL"
+  test -b $PART_FSBL
+  $MKE2FS -t ext3 $PART_FSBL
+  dd if=fsbl.bin of=$PART_FSBL bs=1024
+  echo "Copy done"
 
 
 Running on the HiFive
@@ -109,7 +105,7 @@ Running on the HiFive
 
 The needed driver, bins, etc are included in the base image.
 
-If you need to add files or change them we suggest ``scp``ing them to
+If you need to add files or change them we suggest ``scp`` ing them to
 the board after boot.
 
 
@@ -148,4 +144,4 @@ Example
 ::
 
    insmod keystone-driver.ko
-   ./test.sh
+   ./test

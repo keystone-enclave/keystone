@@ -9,7 +9,6 @@ Toolchain
 ---------
 
 All compilation will need to be done using the riscv64- toolchain.
-This is provided by the riscv-gnu-toolchain submodule, and must be built first.
 
 Libraries
 ---------
@@ -23,6 +22,9 @@ Applications will want to link against the enclave app library ``libkeystone-app
 Applications
 ------------
 
-Eapps need to be linked in a specific way. As this may change, please
-see the ``app.lds`` linker script in the sdk/tests directory to see
-the most up to date linking requirements.
+eapps may be a standard unmodified statically linked binary. This
+requires most options for the `eyrie` runtime to be enabled.
+
+Otherwise, eapps need to be linked in a specific way. As this may
+change, please see the ``app.lds`` linker script in the sdk/tests
+directory to see the most up to date linking requirements.
