@@ -5,7 +5,7 @@ Running Keystone with QEMU
 The latest QEMU supports RISC-V ISA.
 
 Keystone is tested in the latest RISC-V QEMU (`GitHub <https://github.com/riscv/riscv-qemu>`_).
-The upstream QEMU might not work because it has a bug in the PMP module (`See GitHub issue <https://github.com/keystone-enclave/keystone/issues/25>`.
+The upstream QEMU might not work because it has a bug in the PMP module (`See GitHub issue <https://github.com/keystone-enclave/keystone/issues/25>`_).
 The fix will be upstreamed in the future.
 
 Installing Dependencies
@@ -54,7 +54,7 @@ branch (``dev``, ``master``, etc)::
 
   git submodule update --init --recursive
 
-For additional inormation, see `git submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`.
+For additional inormation, see `git submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_.
 
 
 Compile Sources
