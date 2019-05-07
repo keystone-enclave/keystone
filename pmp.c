@@ -9,6 +9,7 @@
 #include "disabled_hart_mask.h"
 #include "safe_math_util.h"
 
+
 /* PMP global spin locks */
 static spinlock_t pmp_ipi_global_lock = SPINLOCK_INIT;
 static spinlock_t pmp_lock = SPINLOCK_INIT;
@@ -109,7 +110,8 @@ static int search_rightmost_unset(uint32_t bitmap, int max, uint32_t mask)
 
   assert(max < 32);
   assert(!((mask + 1) & mask));
-  while(mask < (1 << (max-1) )) {
+
+  while(mask < (1UL << max)) {
     if((~bitmap & mask) == mask)
       return i;
     mask = mask << 1;
