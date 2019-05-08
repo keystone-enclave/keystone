@@ -28,6 +28,8 @@ riscv-gnu-toolchain
 Unmodified toolchain for building riscv targets. Required to build all
 other components.
 
+Prebuilt toolchains are available `here <https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/releases>`.
+
 linux-keystone-driver
 ---------------------
 

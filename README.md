@@ -25,6 +25,11 @@ libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \
 python pkg-config libglib2.0-dev libpixman-1-dev device-tree-compiler expect
 ```
 
+Checkout branch (optional)
+```
+git checkout dev
+```
+
 Setup Tools and Submodules
 ```
 ./fast-setup.sh

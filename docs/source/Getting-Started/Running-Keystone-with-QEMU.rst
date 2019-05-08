@@ -5,7 +5,7 @@ Running Keystone with QEMU
 The latest QEMU supports RISC-V ISA.
 
 Keystone is tested in the latest RISC-V QEMU (`GitHub <https://github.com/riscv/riscv-qemu>`_).
-The upstream QEMU might not work because it has a bug in the PMP module (`See GitHub issue <>`.
+The upstream QEMU might not work because it has a bug in the PMP module (`See GitHub issue <https://github.com/keystone-enclave/keystone/issues/25>`_).
 The fix will be upstreamed in the future.
 
 Installing Dependencies
@@ -18,19 +18,14 @@ Ubuntu
 
 ::
 
-  sudo apt update
-  sudo apt install autoconf automake autotools-dev bc bison build-essential curl \
-  expat libexpat1-dev flex gawk gcc git gperf libgmp-dev libmpc-dev libmpfr-dev \
-  libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \
-  python pkg-config libglib2.0-dev libpixman-1-dev libssl-dev device-tree-compiler
+  sudo apt update sudo apt install autoconf automake autotools-dev bc \
+  bison build-essential curl expat libexpat1-dev flex gawk gcc git \
+  gperf libgmp-dev libmpc-dev libmpfr-dev libtool texinfo tmux \
+  patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python \
+  pkg-config libglib2.0-dev libpixman-1-dev libssl-dev \
+  device-tree-compiler expect
 
-.. note::
-
-    Some of the utilities also use ``expect`` so we recommend that you install that as well though it is not strictly necessary.
-    ::
-      sudo apt install expect
-
-Quick Setup
+Setup
 ----------------------------
 
 In this stage, you will (1) install RISC-V toolchain, and (2) checkout git submodules.
@@ -40,23 +35,36 @@ You can quickly setup everything by running ``./fast-setup.sh``
 
   ./fast-setup.sh
 
-NOTE: the prebuilt toolchain in fast-setup is known to have problems
-on Ubuntu 18.04 due to library versioning mismatches.
+This will download pre-compiled RISC-V tools and extract it to
+``riscv`` directory and setup submodules.
 
-This will download pre-compiled RISC-V tools and extract it to ``riscv`` directory.
+If you want to compile RISC-V tools from source code, run
+``./setup.sh`` instead. This may be necessary on some platforms due to
+library issues.
 
-If you want to compile RISC-V tools from source code, run ``./setup.sh`` instead.
+To keep environment variables, add export
+PATH=$PATH:<path/to/keystone>/riscv/bin to your .bashrc. You can also
+manually run ``source source.sh`` to set the environment variables.
 
-To keep environment variables, add export PATH=$PATH:<path/to/keystone>/riscv/bin to your .bashrc. You can also manually run ``source source.sh`` to set the environment variables.
+Init and Sync Submodules
+########################
+
+If you did not use ``fast-setup`` after checkout of the relevant
+branch (``dev``, ``master``, etc)::
+
+  git submodule update --init --recursive
+
+For additional inormation, see `git submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_.
 
 
 Compile Sources
 -----------------------------
 
 Build All
-########################
+#########
 
-If you want to build all, simply run ``make``.
+If you want to build all, simply run ``make``. This also rebuilds any
+modifications.
 
 ``PATH`` must include the RISC-V tool path.
 
@@ -64,7 +72,11 @@ If you want to build all, simply run ``make``.
 
   make
 
-If you want to manually build each individual component, please follow the instructions below.
+If you want to manually build each individual component, please follow
+the instructions below. If you run into any issues, check our
+``Makefile`` and ``hifive.mk`` as they will always have up-to-date
+build instructions.
+
 Otherwise, skip to :ref:`LaunchQEMU`.
 
 
@@ -94,7 +106,7 @@ This is handled as part of the top-level make, see ``hifive.mk`` for
 details.
 
 Optionally, add ``--with-target-platform=PLATFORM`` if you have a
-platform specific set of files for the security monitor (defined in ``riscv-pk/
+platform specific set of files for the security monitor (defined in ``riscv-pk/sm/platform/``)
 
 Build Root-of-Trust Boot ROM
 ###############################
@@ -108,11 +120,8 @@ Build Root-of-Trust Boot ROM
 Build Keystone Driver
 ##############################
 
-::
-
-  cd linux-keystone-driver
-  make
-  cd ..
+This is handled as part of the top-level make, see ``hifive.mk`` for
+details.
 
 Build Keystone SDK
 #############################
@@ -173,8 +182,6 @@ Currently, Keystone is only compatible with a prototype runtime, ``eyrie-rt``, w
 
   ./test-runner.riscv <user elf> <runtime elf>
 
-To run all tests, you could simply run
-
-::
+To run all tests::
 
   ./test
