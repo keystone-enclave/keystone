@@ -13,9 +13,6 @@ all: hifive
 qemu:
 	./scripts/run-qemu.sh
 
-.PHONY: busybear-qemu
-busybear-qemu: $(BOOTROM) $(QEMU) sdk
-	$(MAKE) -f busybear.mk
 
 .PHONY: hifive
 hifive: sdk $(QEMU) $(BOOTROM)
@@ -35,10 +32,5 @@ $(QEMU):
 $(BOOTROM):
 	cd bootrom; make; cd ..
 
-busybear-clean:
-	$(MAKE) -f busybear.mk clean
-
 clean:
 	$(MAKE) -f hifive.mk clean
-
-clean-all: busybear-clean clean

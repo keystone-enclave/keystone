@@ -1,9 +1,6 @@
 [submodule "riscv-gnu-toolchain"]
 	path = riscv-gnu-toolchain
 	url = https://github.com/riscv/riscv-gnu-toolchain
-[submodule "busybear-linux"]
-	path = busybear-linux
-	url = https://github.com/keystone-enclave/busybear-linux
 [submodule "riscv-linux"]
 	path = riscv-linux
 	url = https://github.com/riscv/riscv-linux

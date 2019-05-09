@@ -1,10 +1,10 @@
 Getting Started
 ==================================
 
-What is Keystone Enclave
+What is Keystone?
 -----------------------------------
 
-Keystone Enclave is an open source secure enclave for RISC-V processors.
+Keystone is an open-source TEE framework for RISC-V processors.
 
 You can currently run Keystone on qemu, `FireSim <https://fires.im/>`_ (FPGA), or the SiFive `HiFive Unleashed <https://www.sifive.com/boards/hifive-unleashed>`_ board.
 

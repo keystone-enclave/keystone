@@ -2,7 +2,7 @@ SDK Overview
 ============
 
 .. attention::
-  
+
   Keystone SDK is work in progress, so programming enclaves requires a lot of manual efforts.
   However, it still provides enough libraries to run simple enclaves such as :doc:`Keystone Demo <../Keystone-Demo/Demo-Basics>`.
 
@@ -26,7 +26,7 @@ applications via the `Keystone` class. Most of this library will work
 regardless of the runtime, but is tied directly to the kernel driver
 provided in the `riscv-linux` repository branches.
 
-EApp Libraries
+eapp Libraries
 --------------
 
 The eapp libraries provide both simple enclave tools (EXIT, etc) as
@@ -82,7 +82,8 @@ the host library. To start an enclave application, first create one::
   Keystone enclave;
   Params params;
 
-  params.setEnclaveEntry(ENTRY_VADDR);
+  [... Optional params settings ...]
+
   enclave.init(PATH_TO_EAPP_ELF, PATH_TO_RUNTIME, params);
 
   edge_init(&enclave);
@@ -105,12 +106,7 @@ when the enclave exits, or when an edgecall is made.
 Writing an eapp
 ---------------
 
-An enclave application has a main equivalent::
-
-  void EAPP_ENTRY eapp_entry(){}
-
-This is the entry point that the runtime will start at in the enclave
-application.
+A generic RISC-V statically compiled ELF binary will run.
 
 As with the host, the first action should be::
 
