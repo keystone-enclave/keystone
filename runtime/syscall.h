@@ -16,9 +16,9 @@
 #define RUNTIME_SYSCALL_ATTEST_ENCLAVE  1003
 #define RUNTIME_SYSCALL_EXIT            1101
 
-void handle_syscall(struct encl_ctx_t* ctx);
+void handle_syscall(struct encl_ctx* ctx);
 void init_edge_internals(void);
-uintptr_t dispatch_edgecall_syscall(edge_syscall_t* syscall_data_ptr,
+uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr,
                                     size_t data_len);
 
 // Define this to enable printing of a large amount of syscall information

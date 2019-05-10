@@ -23,7 +23,7 @@ void handle_timer_interrupt()
   return;
 }
 
-void handle_interrupts(struct encl_ctx_t* regs)
+void handle_interrupts(struct encl_ctx* regs)
 {
   unsigned long cause = regs->scause;
 

@@ -73,13 +73,13 @@ static inline uintptr_t __pa(uintptr_t va)
   return (va - EYRIE_LOAD_START) + load_pa_start;
 }
 
-typedef uintptr_t pte_t;
-static inline pte_t pte_create(uintptr_t ppn, int type)
+typedef uintptr_t pte;
+static inline pte pte_create(uintptr_t ppn, int type)
 {
-  return (pte_t)((ppn << PTE_PPN_SHIFT) | PTE_V | type );
+  return (pte)((ppn << PTE_PPN_SHIFT) | PTE_V | type );
 }
 
-static inline pte_t ptd_create(uintptr_t ppn)
+static inline pte ptd_create(uintptr_t ppn)
 {
   return pte_create(ppn, PTE_V);
 }
@@ -95,7 +95,7 @@ static inline uintptr_t vpn(uintptr_t va)
   return va >> RISCV_PAGE_BITS;
 }
 
-static inline uintptr_t pte_ppn(pte_t pte)
+static inline uintptr_t pte_ppn(pte pte)
 {
   return pte >> PTE_PPN_SHIFT;
 }
@@ -104,13 +104,13 @@ static inline uintptr_t pte_ppn(pte_t pte)
 
 #ifdef USE_FREEMEM
 /* root page table */
-pte_t root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 /* page tables for kernel remap */
-pte_t kernel_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte_t kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte kernel_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 /* page tables for loading physical memory */
-pte_t load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte_t load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 
 /* Program break */
 uintptr_t program_break;

@@ -140,7 +140,7 @@ void
 copy_root_page_table()
 {
   /* the old table lives in the first page */
-  pte_t* old_root_page_table = (pte_t*) EYRIE_LOAD_START;
+  pte* old_root_page_table = (pte*) EYRIE_LOAD_START;
   int i;
 
   /* copy all valid entries of the old root page table */

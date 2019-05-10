@@ -7,7 +7,7 @@
 #define _REGS_H_
 #include <stdint.h>
 
-struct regs_t {
+struct regs {
 	uintptr_t sepc; // use this slot as sepc
 	uintptr_t ra;
 	uintptr_t sp;
@@ -42,8 +42,8 @@ struct regs_t {
 	uintptr_t t6;
 };
 
-struct encl_ctx_t {
-	struct regs_t regs;
+struct encl_ctx {
+	struct regs regs;
   /* Supervisor CSRs */
 	uintptr_t sstatus;//32
 	uintptr_t sbadaddr;//33

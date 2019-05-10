@@ -21,11 +21,11 @@
 #define MAX_STRACE_PRINT 20
 
 uintptr_t io_syscall_sync(){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
 
   edge_syscall->syscall_num = SYS_sync;
 
-  size_t totalsize = (sizeof(edge_syscall_t));
+  size_t totalsize = (sizeof(struct edge_syscall));
 
   uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
   print_strace("[runtime] proxied sync\r\n");
@@ -33,14 +33,14 @@ uintptr_t io_syscall_sync(){
 }
 
 uintptr_t io_syscall_ftruncate(int fd, off_t offset){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_ftruncate* args = (sargs_SYS_ftruncate*)edge_syscall->data;
   edge_syscall->syscall_num = SYS_ftruncate;
 
   args->fd = fd;
   args->offset = offset;
 
-  size_t totalsize = (sizeof(edge_syscall_t)+
+  size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_ftruncate));
 
   uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
@@ -48,13 +48,13 @@ uintptr_t io_syscall_ftruncate(int fd, off_t offset){
   return ret;
 }
 uintptr_t io_syscall_fsync(int fd){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_fsync* args = (sargs_SYS_fsync*)edge_syscall->data;
   edge_syscall->syscall_num = SYS_fsync;
 
   args->fd = fd;
 
-  size_t totalsize = (sizeof(edge_syscall_t)+
+  size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_fsync));
 
   uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
@@ -63,7 +63,7 @@ uintptr_t io_syscall_fsync(int fd){
 }
 
 uintptr_t io_syscall_lseek(int fd, off_t offset, int whence){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_lseek* args = (sargs_SYS_lseek*)edge_syscall->data;
   edge_syscall->syscall_num = SYS_lseek;
 
@@ -71,7 +71,7 @@ uintptr_t io_syscall_lseek(int fd, off_t offset, int whence){
   args->offset = offset;
   args->whence = whence;
 
-  size_t totalsize = (sizeof(edge_syscall_t)+
+  size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_lseek));
 
   uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
@@ -81,13 +81,13 @@ uintptr_t io_syscall_lseek(int fd, off_t offset, int whence){
 }
 
 uintptr_t io_syscall_close(int fd){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_close* args = (sargs_SYS_close*)edge_syscall->data;
   edge_syscall->syscall_num = SYS_close;
 
   args->fd = fd;
 
-  size_t totalsize = (sizeof(edge_syscall_t)+
+  size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_close));
 
   uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
@@ -96,7 +96,7 @@ uintptr_t io_syscall_close(int fd){
 }
 
 uintptr_t io_syscall_read(int fd, void* buf, size_t len){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_read* args = (sargs_SYS_read*)edge_syscall->data;
   uintptr_t ret = -1;
   edge_syscall->syscall_num = SYS_read;
@@ -108,7 +108,7 @@ uintptr_t io_syscall_read(int fd, void* buf, size_t len){
     goto done;
   }
 
-  size_t totalsize = (sizeof(edge_syscall_t) +
+  size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_read) +
                       len);
 
@@ -137,7 +137,7 @@ uintptr_t io_syscall_write(int fd, void* buf, size_t len){
   /*   print_strace("[write] \"%s\"\r\n", (char*)lbuf); */
   /* } */
 
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_write* args = (sargs_SYS_write*)edge_syscall->data;
   uintptr_t ret = -1;
 
@@ -152,7 +152,7 @@ uintptr_t io_syscall_write(int fd, void* buf, size_t len){
 
   copy_from_user(args->buf, buf, len);
 
-  size_t totalsize = (sizeof(edge_syscall_t) +
+  size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_write) +
                       len);
 
@@ -165,7 +165,7 @@ uintptr_t io_syscall_write(int fd, void* buf, size_t len){
 
 uintptr_t io_syscall_openat(int dirfd, char* path,
                             int flags, mode_t mode){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_openat* args = (sargs_SYS_openat*)edge_syscall->data;
 
   edge_syscall->syscall_num = SYS_openat;
@@ -182,7 +182,7 @@ uintptr_t io_syscall_openat(int dirfd, char* path,
   }
   copy_from_user(args->path, path, pathlen);
 
-  size_t totalsize = (sizeof(edge_syscall_t) +
+  size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_openat) +
                       pathlen);
 
@@ -199,7 +199,7 @@ uintptr_t io_syscall_openat(int dirfd, char* path,
 
 uintptr_t io_syscall_unlinkat(int dirfd, char* path,
                               int flags){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_unlinkat* args = (sargs_SYS_unlinkat*)edge_syscall->data;
   uintptr_t ret = -1;
 
@@ -214,7 +214,7 @@ uintptr_t io_syscall_unlinkat(int dirfd, char* path,
   }
   copy_from_user(args->path, path, pathlen);
 
-  size_t totalsize = (sizeof(edge_syscall_t) +
+  size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_unlinkat) +
                       pathlen);
 
@@ -263,7 +263,7 @@ uintptr_t io_syscall_readv(int fd, const struct iovec *iov, int iovcnt){
 
 uintptr_t io_syscall_fstatat(int dirfd, char *pathname, struct stat *statbuf,
                                 int flags){
-  edge_syscall_t* edge_syscall = (edge_syscall_t*)edge_call_data_ptr();
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_fstatat* args = (sargs_SYS_fstatat*)edge_syscall->data;
   uintptr_t ret = -1;
 
@@ -279,7 +279,7 @@ uintptr_t io_syscall_fstatat(int dirfd, char *pathname, struct stat *statbuf,
   }
   copy_from_user(args->pathname, pathname, pathlen);
 
-  size_t totalsize = (sizeof(edge_syscall_t) +
+  size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_fstatat) +
                       pathlen);
 

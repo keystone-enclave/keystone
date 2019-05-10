@@ -37,7 +37,7 @@ void rt_util_misc_fatal(){
   sbi_exit_enclave(-1);
 }
 
-void not_implemented_fatal(struct encl_ctx_t* ctx){
+void not_implemented_fatal(struct encl_ctx* ctx){
 #ifdef FATAL_DEBUG
     unsigned long addr, cause, pc;
     pc = ctx->regs.sepc;
@@ -52,7 +52,7 @@ void not_implemented_fatal(struct encl_ctx_t* ctx){
     return;
 }
 
-void rt_page_fault(struct encl_ctx_t* ctx)
+void rt_page_fault(struct encl_ctx* ctx)
 {
 #ifdef FATAL_DEBUG
   unsigned long addr, cause, pc;

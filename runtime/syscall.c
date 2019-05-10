@@ -23,13 +23,13 @@
 
 extern void exit_enclave(uintptr_t arg0);
 
-uintptr_t dispatch_edgecall_syscall(edge_syscall_t* syscall_data_ptr, size_t data_len){
+uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr, size_t data_len){
   int ret;
 
   // Syscall data should already be at the edge_call_data section
   /* For now we assume by convention that the start of the buffer is
    * the right place to put calls */
-  struct edge_call_t* edge_call = (struct edge_call_t*)shared_buffer;
+  struct edge_call* edge_call = (struct edge_call*)shared_buffer;
 
   edge_call->call_id = EDGECALL_SYSCALL;
 
@@ -63,7 +63,7 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
   uintptr_t ret;
   /* For now we assume by convention that the start of the buffer is
    * the right place to put calls */
-  struct edge_call_t* edge_call = (struct edge_call_t*)shared_buffer;
+  struct edge_call* edge_call = (struct edge_call*)shared_buffer;
 
   /* We encode the call id, copy the argument data into the shared
    * region, calculate the offsets to the argument data, and then
@@ -136,7 +136,7 @@ void init_edge_internals(){
   edge_call_init_internals(shared_buffer, shared_buffer_size);
 }
 
-void handle_syscall(struct encl_ctx_t* ctx)
+void handle_syscall(struct encl_ctx* ctx)
 {
   uintptr_t n = ctx->regs.a7;
   uintptr_t arg0 = ctx->regs.a0;

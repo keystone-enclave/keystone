@@ -12,8 +12,8 @@
 #ifdef USE_FREEMEM
 
 /* Page table utilities */
-static pte_t*
-__walk_create(pte_t* root, uintptr_t addr);
+static pte*
+__walk_create(pte* root, uintptr_t addr);
 
 /* Hacky storage of current u-mode break */
 static uintptr_t current_program_break;
@@ -26,8 +26,8 @@ void set_program_break(uintptr_t new_break){
   current_program_break = new_break;
 }
 
-static pte_t*
-__continue_walk_create(pte_t* root, uintptr_t addr, pte_t* pte)
+static pte*
+__continue_walk_create(pte* root, uintptr_t addr, pte* pte)
 {
   uintptr_t new_page = spa_get();
   unsigned long free_ppn = ppn(__pa(new_page));
@@ -35,10 +35,10 @@ __continue_walk_create(pte_t* root, uintptr_t addr, pte_t* pte)
   return __walk_create(root, addr);
 }
 
-static pte_t*
-__walk_internal(pte_t* root, uintptr_t addr, int create)
+static pte*
+__walk_internal(pte* root, uintptr_t addr, int create)
 {
-  pte_t* t = root;
+  pte* t = root;
   int i;
   for (i = 1; i < RISCV_PT_LEVELS; i++)
   {
@@ -47,7 +47,7 @@ __walk_internal(pte_t* root, uintptr_t addr, int create)
     if (!(t[idx] & PTE_V))
       return create ? __continue_walk_create(root, addr, &t[idx]) : 0;
 
-    t = (pte_t*) __va(pte_ppn(t[idx]) << RISCV_PAGE_BITS);
+    t = (pte*) __va(pte_ppn(t[idx]) << RISCV_PAGE_BITS);
   }
 
   return &t[RISCV_GET_PT_INDEX(addr, 3)];
@@ -55,16 +55,16 @@ __walk_internal(pte_t* root, uintptr_t addr, int create)
 
 /* walk the page table and return PTE
  * return 0 if no mapping exists */
-static pte_t*
-__walk(pte_t* root, uintptr_t addr)
+static pte*
+__walk(pte* root, uintptr_t addr)
 {
   return __walk_internal(root, addr, 0);
 }
 
 /* walk the page table and return PTE
  * create the mapping if non exists */
-static pte_t*
-__walk_create(pte_t* root, uintptr_t addr)
+static pte*
+__walk_create(pte* root, uintptr_t addr)
 {
   return __walk_internal(root, addr, 1);
 }
@@ -75,7 +75,7 @@ __walk_create(pte_t* root, uintptr_t addr)
 uintptr_t
 remap_physical_page(uintptr_t vpn, uintptr_t ppn, int flags)
 {
-  pte_t* pte =  __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
+  pte* pte =  __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
 
   if (!pte)
     return 0;
@@ -108,7 +108,7 @@ uintptr_t
 alloc_page(uintptr_t vpn, int flags)
 {
   uintptr_t page;
-  pte_t* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
+  pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
 
   if (!pte)
     return 0;
@@ -128,7 +128,7 @@ alloc_page(uintptr_t vpn, int flags)
 void
 free_page(uintptr_t vpn){
 
-  pte_t* pte = __walk(root_page_table, vpn << RISCV_PAGE_BITS);
+  pte* pte = __walk(root_page_table, vpn << RISCV_PAGE_BITS);
 
   // No such PTE, or invalid
   if(!pte || !(*pte & PTE_V))
@@ -180,7 +180,7 @@ test_va_range(uintptr_t vpn, size_t count){
   unsigned int i;
   /* Validate the region */
   for (i = 0; i < count; i++) {
-    pte_t* pte = __walk_internal(root_page_table, (vpn+i) << RISCV_PAGE_BITS, 0);
+    pte* pte = __walk_internal(root_page_table, (vpn+i) << RISCV_PAGE_BITS, 0);
     // If the page exists and is valid then we cannot use it
     if(pte && (*pte & PTE_V)){
       break;
@@ -193,7 +193,7 @@ test_va_range(uintptr_t vpn, size_t count){
 uintptr_t
 translate(uintptr_t va)
 {
-  pte_t* pte = __walk(root_page_table, va);
+  pte* pte = __walk(root_page_table, va);
 
   if(*pte & PTE_V)
     return (pte_ppn(*pte) << RISCV_PAGE_BITS) | (RISCV_PAGE_OFFSET(va));

@@ -14,7 +14,7 @@
  * spa_free_pages will only hold the head and the tail pages so that
  * SPA can allocate/free a page in constant time. */
 
-static pg_list_t spa_free_pages;
+static struct pg_list spa_free_pages;
 
 /* get a free page from the simple page allocator */
 uintptr_t
