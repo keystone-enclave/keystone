@@ -62,13 +62,13 @@ long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
 int keystone_release(struct inode *inode, struct file *file);
 int keystone_mmap(struct file *filp, struct vm_area_struct *vma);
 
-struct free_page_t {
+struct free_page {
   vaddr_t vaddr;
   struct list_head freelist;
 };
 
 /* enclave private memory */
-typedef struct epm_t {
+struct epm {
   struct list_head epm_free_list;
   pte_t* root_page_table;
   vaddr_t ptr;
@@ -76,67 +76,67 @@ typedef struct epm_t {
   unsigned long order;
   paddr_t pa;
   bool is_cma;
-} epm_t;
+};
 
-typedef struct utm_t {
+struct utm {
   struct list_head utm_free_list;
   pte_t* root_page_table;
   void* ptr;
   size_t size;
   unsigned long order;
-} utm_t;
+};
 
 
-typedef struct keystone_enclave_t
+struct enclave
 {
   unsigned int eid;
   int close_on_pexit;
-  struct utm_t* utm;
-  struct epm_t* epm;
-} enclave_t;
+  struct utm* utm;
+  struct epm* epm;
+};
 
 
 // global debug functions
 void debug_dump(char* ptr, unsigned long size);
 
 // runtime/app loader
-int keystone_rtld_init_runtime(enclave_t* enclave, void* __user rt_ptr, size_t rt_sz, unsigned long rt_stack_sz, unsigned long* rt_offset);
+int keystone_rtld_init_runtime(struct enclave* enclave, void* __user rt_ptr, size_t rt_sz, unsigned long rt_stack_sz, unsigned long* rt_offset);
 
-int keystone_rtld_init_app(enclave_t* enclave, void* __user app_ptr, size_t app_sz, size_t app_stack_sz, unsigned long stack_offset);
+int keystone_rtld_init_app(struct enclave* enclave, void* __user app_ptr, size_t app_sz, size_t app_stack_sz, unsigned long stack_offset);
 
 // untrusted memory mapper
-int keystone_rtld_init_untrusted(enclave_t* enclave, void* untrusted_ptr, size_t untrusted_size);
+int keystone_rtld_init_untrusted(struct enclave* enclave, void* untrusted_ptr, size_t untrusted_size);
 
-enclave_t* get_enclave_by_id(unsigned int ueid);
-enclave_t* create_enclave(unsigned long min_pages);
-int destroy_enclave(enclave_t* enclave);
+struct enclave* get_enclave_by_id(unsigned int ueid);
+struct enclave* create_enclave(unsigned long min_pages);
+int destroy_enclave(struct enclave* enclave);
 
-unsigned int enclave_idr_alloc(enclave_t* enclave);
-enclave_t* enclave_idr_remove(unsigned int ueid);
-enclave_t* get_enclave_by_id(unsigned int ueid);
+unsigned int enclave_idr_alloc(struct enclave* enclave);
+struct enclave* enclave_idr_remove(unsigned int ueid);
+struct enclave* get_enclave_by_id(unsigned int ueid);
 
-static inline uintptr_t  epm_satp(epm_t* epm) {
+static inline uintptr_t  epm_satp(struct epm* epm) {
   return ((uintptr_t)epm->root_page_table >> RISCV_PGSHIFT | SATP_MODE_CHOICE);
 }
 void init_free_pages(struct list_head* pg_list, vaddr_t base, unsigned int count);
 void put_free_page(struct list_head* pg_list, vaddr_t page_addr);
 vaddr_t get_free_page(struct list_head* pg_list);
 
-int epm_destroy(epm_t* epm);
-int epm_init(epm_t* epm, unsigned int count);
-int utm_destroy(utm_t* utm);
-int utm_init(utm_t* utm, size_t untrusted_size);
-int epm_clean_free_list(epm_t* epm);
-int utm_clean_free_list(utm_t* utm);
-paddr_t epm_va_to_pa(epm_t* epm, vaddr_t addr);
-paddr_t epm_get_free_pa(epm_t* epm);
-vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags);
-size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages);
-vaddr_t epm_alloc_rt_page(epm_t* epm, vaddr_t addr);
-vaddr_t epm_alloc_rt_page_noexec(epm_t* epm, vaddr_t addr);
-vaddr_t epm_alloc_user_page(epm_t* epm, vaddr_t addr);
-vaddr_t epm_alloc_user_page_noexec(epm_t* epm, vaddr_t addr);
-void epm_free_page(epm_t* epm, vaddr_t addr);
+int epm_destroy(struct epm* epm);
+int epm_init(struct epm* epm, unsigned int count);
+int utm_destroy(struct utm* utm);
+int utm_init(struct utm* utm, size_t untrusted_size);
+int epm_clean_free_list(struct epm* epm);
+int utm_clean_free_list(struct utm* utm);
+paddr_t epm_va_to_pa(struct epm* epm, vaddr_t addr);
+paddr_t epm_get_free_pa(struct epm* epm);
+vaddr_t utm_alloc_page(struct utm* utm, struct epm* epm, vaddr_t addr, unsigned long flags);
+size_t epm_alloc_vspace(struct epm* epm, vaddr_t addr, size_t num_pages);
+vaddr_t epm_alloc_rt_page(struct epm* epm, vaddr_t addr);
+vaddr_t epm_alloc_rt_page_noexec(struct epm* epm, vaddr_t addr);
+vaddr_t epm_alloc_user_page(struct epm* epm, vaddr_t addr);
+vaddr_t epm_alloc_user_page_noexec(struct epm* epm, vaddr_t addr);
+void epm_free_page(struct epm* epm, vaddr_t addr);
 
 
 unsigned long calculate_required_pages(

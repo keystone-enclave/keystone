@@ -4,7 +4,7 @@
 //------------------------------------------------------------------------------
 #include <linux/dma-mapping.h>
 #include "keystone.h"
-/* idr for enclave UID to enclave_t */
+/* idr for enclave UID to struct enclave */
 DEFINE_IDR(idr_enclave);
 DEFINE_SPINLOCK(idr_enclave_lock);
 
@@ -31,10 +31,10 @@ unsigned long calculate_required_pages(
 }
 
 /* Smart destroy, handles partial initialization of epm and utm etc */
-int destroy_enclave(enclave_t* enclave)
+int destroy_enclave(struct enclave* enclave)
 {
-  epm_t* epm;
-  utm_t* utm;
+  struct epm* epm;
+  struct utm* utm;
   if (enclave == NULL)
     return -ENOSYS;
 
@@ -55,11 +55,11 @@ int destroy_enclave(enclave_t* enclave)
   return 0;
 }
 
-enclave_t* create_enclave(unsigned long min_pages)
+struct enclave* create_enclave(unsigned long min_pages)
 {
-  enclave_t* enclave;
+  struct enclave* enclave;
 
-  enclave = kmalloc(sizeof(enclave_t), GFP_KERNEL);
+  enclave = kmalloc(sizeof(struct enclave), GFP_KERNEL);
   if (!enclave){
     keystone_err("failed to allocate enclave struct\n");
     goto error_no_free;
@@ -68,7 +68,7 @@ enclave_t* create_enclave(unsigned long min_pages)
   enclave->utm = NULL;
   enclave->close_on_pexit = 1;
 
-  enclave->epm = kmalloc(sizeof(epm_t), GFP_KERNEL);
+  enclave->epm = kmalloc(sizeof(struct epm), GFP_KERNEL);
   if (!enclave->epm)
   {
     keystone_err("failed to allocate epm\n");
@@ -87,7 +87,7 @@ enclave_t* create_enclave(unsigned long min_pages)
   return NULL;
 }
 
-unsigned int enclave_idr_alloc(enclave_t* enclave)
+unsigned int enclave_idr_alloc(struct enclave* enclave)
 {
   unsigned int ueid;
 
@@ -103,18 +103,18 @@ unsigned int enclave_idr_alloc(enclave_t* enclave)
   return ueid;
 }
 
-enclave_t* enclave_idr_remove(unsigned int ueid)
+struct enclave* enclave_idr_remove(unsigned int ueid)
 {
-  enclave_t* enclave;
+  struct enclave* enclave;
   spin_lock_bh(&idr_enclave_lock);
   enclave = idr_remove(&idr_enclave, ueid);
   spin_unlock_bh(&idr_enclave_lock);
   return enclave;
 }
 
-enclave_t* get_enclave_by_id(unsigned int ueid)
+struct enclave* get_enclave_by_id(unsigned int ueid)
 {
-  enclave_t* enclave;
+  struct enclave* enclave;
   spin_lock_bh(&idr_enclave_lock);
   enclave = idr_find(&idr_enclave, ueid);
   spin_unlock_bh(&idr_enclave_lock);

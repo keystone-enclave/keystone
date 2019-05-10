@@ -44,10 +44,10 @@ void keystone_handle_interrupts(void)
 
 int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
 {
-  struct utm_t* utm;
-  struct keystone_enclave_t* enclave;
+  struct utm* utm;
+  struct enclave* enclave;
   unsigned long vsize, psize;
-  enclave = get_enclave_by_id((unsigned int) filp->private_data);
+  enclave = get_enclave_by_id((unsigned long) filp->private_data);
   if(!enclave) {
     keystone_err("invalid enclave id\n");
     return -EINVAL;

@@ -22,13 +22,13 @@ void init_free_pages(struct list_head* pg_list, vaddr_t ptr, unsigned int count)
 
 vaddr_t get_free_page(struct list_head* pg_list)
 {
-  struct free_page_t* page;
+  struct free_page* page;
   vaddr_t addr;
 
   if(list_empty(pg_list))
     return 0;
 
-  page = list_first_entry(pg_list, struct free_page_t, freelist);
+  page = list_first_entry(pg_list, struct free_page, freelist);
   addr = page->vaddr;
   list_del(&page->freelist);
   kfree(page);
@@ -38,14 +38,14 @@ vaddr_t get_free_page(struct list_head* pg_list)
 
 void put_free_page(struct list_head* pg_list, vaddr_t page_addr)
 {
-  struct free_page_t* page = kmalloc(sizeof(struct free_page_t),GFP_KERNEL);
+  struct free_page* page = kmalloc(sizeof(struct free_page),GFP_KERNEL);
   page->vaddr = page_addr;
   list_add_tail(&page->freelist, pg_list);
   return;
 }
 
 /* Destroy all memory associated with an EPM */
-int epm_destroy(epm_t* epm) {
+int epm_destroy(struct epm* epm) {
 
   /* Clean anything in the free list */
   epm_clean_free_list(epm);
@@ -67,7 +67,7 @@ int epm_destroy(epm_t* epm) {
 }
 
 /* Create an EPM and initialize the free list */
-int epm_init(epm_t* epm, unsigned int min_pages)
+int epm_init(struct epm* epm, unsigned int min_pages)
 {
   pte_t* t;
 
@@ -128,21 +128,21 @@ int epm_init(epm_t* epm, unsigned int min_pages)
   return 0;
 }
 
-int epm_clean_free_list(epm_t* epm)
+int epm_clean_free_list(struct epm* epm)
 {
-  struct free_page_t* page;
+  struct free_page* page;
   struct list_head* pg_list;
   pg_list = &epm->epm_free_list;
   while (!list_empty(&epm->epm_free_list))
   {
-    page = list_first_entry(pg_list, struct free_page_t, freelist);
+    page = list_first_entry(pg_list, struct free_page, freelist);
     list_del(&page->freelist);
     kfree(page);
   }
   return 0;
 }
 
-int utm_destroy(utm_t* utm){
+int utm_destroy(struct utm* utm){
 
   /* Clean anything in the free list */
   utm_clean_free_list(utm);
@@ -154,21 +154,21 @@ int utm_destroy(utm_t* utm){
   return 0;
 }
 
-int utm_clean_free_list(utm_t* utm)
+int utm_clean_free_list(struct utm* utm)
 {
-  struct free_page_t* page;
+  struct free_page* page;
   struct list_head* pg_list;
   pg_list = &utm->utm_free_list;
   while (!list_empty(&utm->utm_free_list))
   {
-    page = list_first_entry(pg_list, struct free_page_t, freelist);
+    page = list_first_entry(pg_list, struct free_page, freelist);
     list_del(&page->freelist);
     kfree(page);
   }
   return 0;
 }
 
-int utm_init(utm_t* utm, size_t untrusted_size)
+int utm_init(struct utm* utm, size_t untrusted_size)
 {
   unsigned long req_pages = 0;
   unsigned long order = 0;
@@ -249,29 +249,28 @@ static pte_t* __ept_walk_create(struct list_head* pg_list, pte_t* root_page_tabl
 }
 
 /*
-static int __ept_va_avail(epm_t* epm, vaddr_t vaddr)
+static int __ept_va_avail(struct epm* epm, vaddr_t vaddr)
 {
   pte_t* pte = __ept_walk(epm, vaddr);
   return pte == 0 || pte_val(*pte) == 0;
 }
 */
 
-paddr_t epm_get_free_pa(epm_t* epm)
+paddr_t epm_get_free_pa(struct epm* epm)
 {
-  struct free_page_t* page;
+  struct free_page* page;
   struct list_head* pg_list;
-  paddr_t addr;
 
   pg_list = &(epm->epm_free_list);
 
   if(list_empty(pg_list))
     return 0;
 
-  page = list_first_entry(pg_list, struct free_page_t, freelist);
+  page = list_first_entry(pg_list, struct free_page, freelist);
   return __pa(page->vaddr);
 }
 
-paddr_t epm_va_to_pa(epm_t* epm, vaddr_t addr)
+paddr_t epm_va_to_pa(struct epm* epm, vaddr_t addr)
 {
   pte_t* pte = __ept_walk(NULL, epm->root_page_table,addr);
   if(pte)
@@ -282,7 +281,7 @@ paddr_t epm_va_to_pa(epm_t* epm, vaddr_t addr)
 
 /* This function pre-allocates the required page tables so that
  * the virtual addresses are linearly mapped to the physical memory */
-size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages)
+size_t epm_alloc_vspace(struct epm* epm, vaddr_t addr, size_t num_pages)
 {
   vaddr_t walk;
   size_t count;
@@ -298,7 +297,7 @@ size_t epm_alloc_vspace(epm_t* epm, vaddr_t addr, size_t num_pages)
 }
 
 
-vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags)
+vaddr_t utm_alloc_page(struct utm* utm, struct epm* epm, vaddr_t addr, unsigned long flags)
 {
   vaddr_t page_addr;
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
@@ -314,7 +313,7 @@ vaddr_t utm_alloc_page(utm_t* utm, epm_t* epm, vaddr_t addr, unsigned long flags
   return page_addr;
 }
 
-vaddr_t epm_alloc_page(epm_t* epm, vaddr_t addr, unsigned long flags)
+vaddr_t epm_alloc_page(struct epm* epm, vaddr_t addr, unsigned long flags)
 {
   vaddr_t page_addr;
   pte_t* pte = __ept_walk_create(&epm->epm_free_list, epm->root_page_table, addr);
@@ -330,22 +329,22 @@ vaddr_t epm_alloc_page(epm_t* epm, vaddr_t addr, unsigned long flags)
   return page_addr;
 }
 
-vaddr_t epm_alloc_rt_page_noexec(epm_t* epm, vaddr_t addr)
+vaddr_t epm_alloc_rt_page_noexec(struct epm* epm, vaddr_t addr)
 {
   return epm_alloc_page(epm, addr, PTE_D | PTE_A | PTE_R | PTE_W);
 }
 
-vaddr_t epm_alloc_rt_page(epm_t* epm, vaddr_t addr)
+vaddr_t epm_alloc_rt_page(struct epm* epm, vaddr_t addr)
 {
   return epm_alloc_page(epm, addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X);
 }
 
-vaddr_t epm_alloc_user_page_noexec(epm_t* epm, vaddr_t addr)
+vaddr_t epm_alloc_user_page_noexec(struct epm* epm, vaddr_t addr)
 {
   return epm_alloc_page(epm, addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_U);
 }
 
-vaddr_t epm_alloc_user_page(epm_t* epm, vaddr_t addr)
+vaddr_t epm_alloc_user_page(struct epm* epm, vaddr_t addr)
 {
   return epm_alloc_page(epm, addr, PTE_D | PTE_A | PTE_R | PTE_X | PTE_W | PTE_U);
 }
