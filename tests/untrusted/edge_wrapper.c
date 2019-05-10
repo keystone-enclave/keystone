@@ -33,7 +33,7 @@ unsigned long ocall_print_buffer(char* data, size_t data_len){
   return retval;
 }
 
-void ocall_get_string(edge_data_t* retdata){
-  ocall(OCALL_GET_STRING, NULL, 0, retdata, sizeof(edge_data_t));
+void ocall_get_string(struct edge_data* retdata){
+  ocall(OCALL_GET_STRING, NULL, 0, retdata, sizeof(struct edge_data));
   return;
 }

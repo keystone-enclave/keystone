@@ -15,10 +15,10 @@ extern "C" {
 // Special call number
 #define EDGECALL_SYSCALL MAX_EDGE_CALL+1
 
-typedef struct edge_syscall_t{
+struct edge_syscall{
   size_t syscall_num;
   unsigned char data[];
-} edge_syscall_t;
+};
 
 typedef struct sargs_SYS_openat{
   int dirfd;
@@ -64,7 +64,7 @@ typedef struct sargs_SYS_fstatat{
   char pathname[];
 } sargs_SYS_fstatat;
 
-void incoming_syscall(edge_call_t* buffer);
+void incoming_syscall(struct edge_call* buffer);
 
 #ifdef __cplusplus
 }

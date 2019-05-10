@@ -3,11 +3,9 @@
 #include <unistd.h>
 #include <stdio.h>
 // Special edge-call handler for syscall proxying
-void incoming_syscall(edge_call_t* edge_call){
+void incoming_syscall(struct edge_call* edge_call){
 
-
-
-  edge_syscall_t* syscall_info;
+  struct edge_syscall* syscall_info;
 
   if( edge_call_args_ptr(edge_call, (uintptr_t*)&syscall_info) != 0)
     goto syscall_error;

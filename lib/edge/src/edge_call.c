@@ -72,53 +72,53 @@ int edge_call_get_offset_from_ptr(uintptr_t ptr, size_t data_len,
 }
 
 
-int edge_call_args_ptr(edge_call_t* edge_call, uintptr_t* ptr){
+int edge_call_args_ptr(struct edge_call* edge_call, uintptr_t* ptr){
 
   return edge_call_get_ptr_from_offset(edge_call->call_arg_offset,
 				       edge_call->call_arg_size, ptr);
 }
 
-int edge_call_ret_ptr(edge_call_t* edge_call, uintptr_t* ptr){
+int edge_call_ret_ptr(struct edge_call* edge_call, uintptr_t* ptr){
   return edge_call_get_ptr_from_offset(edge_call->return_data.call_ret_offset,
 				       edge_call->return_data.call_ret_size, ptr);
 }
 
-int edge_call_setup_call(edge_call_t* edge_call, void* ptr, size_t size){
+int edge_call_setup_call(struct edge_call* edge_call, void* ptr, size_t size){
   edge_call->call_arg_size = size;
   return edge_call_get_offset_from_ptr((uintptr_t)ptr, size,
 				       &edge_call->call_arg_offset);
 }
 
-int edge_call_setup_ret(edge_call_t* edge_call, void* ptr, size_t size){
+int edge_call_setup_ret(struct edge_call* edge_call, void* ptr, size_t size){
   edge_call->return_data.call_ret_size = size;
   return edge_call_get_offset_from_ptr((uintptr_t)ptr, size,
 				       &edge_call->return_data.call_ret_offset);
 }
 
 /* This is only usable for the host */
-int edge_call_setup_wrapped_ret(edge_call_t* edge_call, void* ptr, size_t size){
-  edge_data_t data_wrapper;
+int edge_call_setup_wrapped_ret(struct edge_call* edge_call, void* ptr, size_t size){
+  struct edge_data data_wrapper;
   data_wrapper.size = size;
-  edge_call_get_offset_from_ptr(_shared_start+sizeof(edge_call_t)+sizeof(edge_data_t),
-				sizeof(edge_data_t),
+  edge_call_get_offset_from_ptr(_shared_start+sizeof(struct edge_call)+sizeof(struct edge_data),
+				sizeof(struct edge_data),
 				&data_wrapper.offset);
 
-  memcpy((void*)(_shared_start+sizeof(edge_call_t)+sizeof(edge_data_t)),
+  memcpy((void*)(_shared_start+sizeof(struct edge_call)+sizeof(struct edge_data)),
 	 ptr,
 	 size);
 
-  memcpy((void*)(_shared_start+sizeof(edge_call_t)),
+  memcpy((void*)(_shared_start+sizeof(struct edge_call)),
 	 &data_wrapper,
-	 sizeof(edge_data_t));
+	 sizeof(struct edge_data));
 
-  edge_call->return_data.call_ret_size = sizeof(edge_data_t);
-  return edge_call_get_offset_from_ptr(_shared_start+sizeof(edge_call_t),
-				       sizeof(edge_data_t),
+  edge_call->return_data.call_ret_size = sizeof(struct edge_data);
+  return edge_call_get_offset_from_ptr(_shared_start+sizeof(struct edge_call),
+				       sizeof(struct edge_data),
 				       &edge_call->return_data.call_ret_offset);
 }
 
 
 /* This is temporary until we have a better way to handle multiple things */
 uintptr_t edge_call_data_ptr(){
-  return _shared_start + sizeof(edge_call_t);
+  return _shared_start + sizeof(struct edge_call);
 }

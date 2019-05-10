@@ -35,17 +35,17 @@ extern uintptr_t _shared_start;
 extern size_t _shared_len;
 
 /* Useful type for things like packaged strings, etc */
-typedef struct edge_data_t{
+struct edge_data{
   edge_data_offset offset;
   size_t size;
-} edge_data_t;
+};
 
-typedef struct edge_app_retdata_t {
+struct edge_app_retdata {
   void* app_ptr;
   size_t len;
-} edge_app_retdata_t;
+};
 
-typedef struct edge_return_t{
+struct edge_return{
 
   /* Status variable indicating error/success conditions. Not for data
      values. */
@@ -56,9 +56,9 @@ typedef struct edge_return_t{
    * structure for the call. (User/call defined) */
   edge_data_offset call_ret_offset;
   size_t call_ret_size;
-} edge_return_t;
+};
 
-typedef struct edge_call_t{
+struct edge_call{
   /* Similar to syscall number.  User-defined call id, handled at the
    * edges only */
   unsigned long call_id;
@@ -70,8 +70,8 @@ typedef struct edge_call_t{
   size_t call_arg_size;
 
   /* Pre-set location to structure return data */
-  edge_return_t return_data;
-} edge_call_t;
+  struct edge_return return_data;
+};
 
 
 
