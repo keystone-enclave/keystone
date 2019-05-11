@@ -49,7 +49,12 @@ uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr, size_
   }
 
   uintptr_t return_ptr;
-  if(edge_call_ret_ptr(edge_call, &return_ptr) != 0){
+  size_t return_len;
+  if(edge_call_ret_ptr(edge_call, &return_ptr, &return_len) != 0){
+    return -1;
+  }
+
+  if(return_len < sizeof(uintptr_t)){
     return -1;
   }
 
@@ -98,7 +103,7 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
   }
 
   uintptr_t return_ptr;
-  if(edge_call_ret_ptr(edge_call, &return_ptr) != 0){
+  if(edge_call_ret_ptr(edge_call, &return_ptr, &return_len) != 0){
     goto ocall_error;
   }
 
