@@ -7,8 +7,13 @@ void incoming_syscall(struct edge_call* edge_call){
 
   struct edge_syscall* syscall_info;
 
-  if( edge_call_args_ptr(edge_call, (uintptr_t*)&syscall_info) != 0)
+  size_t args_size;
+
+  if( edge_call_args_ptr(edge_call, (uintptr_t*)&syscall_info, &args_size) != 0)
     goto syscall_error;
+
+  // NOTE: Right now we assume that the args data is safe, even though
+  // it may be changing under us. This should be safer in the future.
 
   edge_call->return_data.call_status = CALL_STATUS_OK;
 

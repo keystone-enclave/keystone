@@ -72,15 +72,16 @@ int edge_call_get_offset_from_ptr(uintptr_t ptr, size_t data_len,
 }
 
 
-int edge_call_args_ptr(struct edge_call* edge_call, uintptr_t* ptr){
-
+int edge_call_args_ptr(struct edge_call* edge_call, uintptr_t* ptr, size_t* size){
+  *size = edge_call->call_arg_size;
   return edge_call_get_ptr_from_offset(edge_call->call_arg_offset,
-				       edge_call->call_arg_size, ptr);
+				       *size, ptr);
 }
 
-int edge_call_ret_ptr(struct edge_call* edge_call, uintptr_t* ptr){
+int edge_call_ret_ptr(struct edge_call* edge_call, uintptr_t* ptr, size_t* size){
+  *size = edge_call->return_data.call_ret_size;
   return edge_call_get_ptr_from_offset(edge_call->return_data.call_ret_offset,
-				       edge_call->return_data.call_ret_size, ptr);
+				       *size, ptr);
 }
 
 int edge_call_setup_call(struct edge_call* edge_call, void* ptr, size_t size){

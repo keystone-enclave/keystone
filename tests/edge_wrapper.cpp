@@ -33,7 +33,8 @@ void print_buffer_wrapper(void* buffer)
 
   uintptr_t call_args;
   unsigned long ret_val;
-  if(edge_call_args_ptr(edge_call, &call_args) != 0){
+  size_t arg_len;
+  if(edge_call_args_ptr(edge_call, &call_args, &arg_len) != 0){
     edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
     return;
   }
@@ -65,7 +66,8 @@ void print_value_wrapper(void* buffer)
 
   uintptr_t call_args;
   unsigned long ret_val;
-  if(edge_call_args_ptr(edge_call, &call_args) != 0){
+  size_t args_len;
+  if(edge_call_args_ptr(edge_call, &call_args, &args_len) != 0){
     edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
     return;
   }
@@ -108,7 +110,8 @@ void get_host_string_wrapper(void* buffer)
 
   uintptr_t call_args;
   unsigned long ret_val;
-  if(edge_call_args_ptr(edge_call, &call_args) != 0){
+  size_t args_len;
+  if(edge_call_args_ptr(edge_call, &call_args, &args_len) != 0){
     edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
     return;
   }
