@@ -103,7 +103,8 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
   }
 
   uintptr_t return_ptr;
-  if(edge_call_ret_ptr(edge_call, &return_ptr, &return_len) != 0){
+  size_t ret_len_untrusted;
+  if(edge_call_ret_ptr(edge_call, &return_ptr, &ret_len_untrusted) != 0){
     goto ocall_error;
   }
 
