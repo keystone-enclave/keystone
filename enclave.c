@@ -89,7 +89,7 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   return ENCLAVE_SUCCESS;
 }
 
-inline void context_switch_to_host(uintptr_t* encl_regs,
+static inline void context_switch_to_host(uintptr_t* encl_regs,
     enclave_id eid){
   // get the running enclave on this SM
   struct enclave encl = enclaves[eid];
@@ -142,19 +142,6 @@ static enclave_ret_code clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
   memset((void*)utbase, 0, utsize);
 
   return ENCLAVE_SUCCESS;
-}
-
-static enclave_ret_code host_satp_to_eid(uintptr_t satp, enclave_id* eid)
-{
-  unsigned int i;
-  for(i=0; i<ENCL_MAX; i++)
-  {
-    if(enclaves[i].host_satp == satp){
-      *eid = i;
-      return ENCLAVE_SUCCESS;
-    }
-  }
-  return ENCLAVE_INVALID_ID;
 }
 
 static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
@@ -306,7 +293,8 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
       args->user_paddr >= epm_end)
     return 0;
   if (args->free_paddr < epm_start ||
-      args->free_paddr >= epm_end)
+      args->free_paddr > epm_end)
+      // note: free_paddr == epm_end if there's no free memory
     return 0;
 
   // check the order of physical addresses
