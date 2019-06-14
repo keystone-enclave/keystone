@@ -41,7 +41,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
 
     /* propagate the highest bit of the VA */
     if ( level == RISCV_PGLEVEL_TOP && i & RISCV_PGTABLE_HIGHEST_BIT )
-      vpn = ((-1 << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
+      vpn = ((-1UL << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
     else
       vpn = ((vaddr << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
 
