@@ -54,7 +54,6 @@ void copy_report(void* buffer)
   }
 }
 
-
 int main(int argc, char** argv)
 {
   if(argc < 3 || argc > 8)

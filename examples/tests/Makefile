@@ -1,7 +1,7 @@
 CC = riscv64-unknown-linux-gnu-g++
 OBJCOPY = riscv64-unknown-linux-gnu-objcopy
 
-SDK_LIB_DIR =../lib
+SDK_LIB_DIR =$(KEYSTONE_SDK_DIR)/lib
 SDK_HOST_LIB = $(SDK_LIB_DIR)/libkeystone-host.a
 SDK_EDGE_LIB = $(SDK_LIB_DIR)/libkeystone-edge.a
 SDK_VERIFIER_LIB = $(SDK_LIB_DIR)/libkeystone-verifier.a
