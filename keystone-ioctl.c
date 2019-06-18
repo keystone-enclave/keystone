@@ -7,12 +7,14 @@
 #include "keystone_user.h"
 #include <linux/uaccess.h>
 
-int keystone_create_enclave(unsigned long arg)
+int __keystone_destroy_enclave(unsigned int ueid);
+
+int keystone_create_enclave(struct file *filep, unsigned long arg)
 {
   /* create parameters */
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
 
-  enclave_t *enclave;
+  struct enclave *enclave;
   enclave = create_enclave(enclp->min_pages);
 
   if (enclave == NULL) {
@@ -22,6 +24,8 @@ int keystone_create_enclave(unsigned long arg)
   /* allocate UID */
   enclp->eid = enclave_idr_alloc(enclave);
 
+  filep->private_data = (void *) enclp->eid;
+
   return 0;
 }
 
@@ -29,14 +33,13 @@ int keystone_create_enclave(unsigned long arg)
 int keystone_finalize_enclave(unsigned long arg)
 {
   int ret;
-  enclave_t *enclave;
-  struct utm_t *utm;
+  struct enclave *enclave;
+  struct utm *utm;
   struct keystone_sbi_create_t create_args;
 
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
 
   enclave = get_enclave_by_id(enclp->eid);
-
   if(!enclave) {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
@@ -63,7 +66,7 @@ int keystone_finalize_enclave(unsigned long arg)
 
   create_args.params = enclp->params;
 
-  // SM will write the eid to enclave_t.eid
+  // SM will write the eid to struct enclave.eid
   create_args.eid_pptr = (unsigned int *) __pa(&enclave->eid);
 
   ret = SBI_CALL_1(SBI_SM_CREATE_ENCLAVE, __pa(&create_args));
@@ -91,7 +94,7 @@ int keystone_run_enclave(unsigned long arg)
 {
   int ret = 0;
   unsigned long ueid;
-  enclave_t* enclave;
+  struct enclave* enclave;
   struct keystone_ioctl_run_enclave *run = (struct keystone_ioctl_run_enclave*) arg;
 
   ueid = run->eid;
@@ -120,7 +123,7 @@ int keystone_add_page(unsigned long arg)
   struct addr_packed *addr = (struct addr_packed *) arg;
   unsigned long ueid = addr->eid;
   unsigned int mode = addr->mode;
-  enclave_t *enclave;
+  struct enclave *enclave;
 
   enclave = get_enclave_by_id(ueid);
 
@@ -165,7 +168,7 @@ int keystone_alloc_vspace(unsigned long arg)
   int ret = 0;
   vaddr_t va;
   size_t num_pages;
-  enclave_t* enclave;
+  struct enclave* enclave;
   struct keystone_ioctl_alloc_vspace* enclp = (struct keystone_ioctl_alloc_vspace *) arg;
 
   va = enclp->vaddr;
@@ -189,8 +192,8 @@ int keystone_alloc_vspace(unsigned long arg)
 int utm_init_ioctl(struct file *filp, unsigned long arg)
 {
   int ret = 0;
-  struct utm_t *utm;
-  enclave_t *enclave;
+  struct utm *utm;
+  struct enclave *enclave;
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
   long long unsigned untrusted_size = enclp->params.untrusted_size;
 
@@ -201,7 +204,7 @@ int utm_init_ioctl(struct file *filp, unsigned long arg)
     return -EINVAL;
   }
 
-  utm = kmalloc(sizeof(struct utm_t), GFP_KERNEL);
+  utm = kmalloc(sizeof(struct utm), GFP_KERNEL);
   if (!utm) {
     ret = -ENOMEM;
     return ret;
@@ -210,7 +213,6 @@ int utm_init_ioctl(struct file *filp, unsigned long arg)
   ret = utm_init(utm, untrusted_size);
 
   /* prepare for mmap */
-  filp->private_data = utm;
   enclave->utm = utm;
 
   return ret;
@@ -219,7 +221,7 @@ int utm_init_ioctl(struct file *filp, unsigned long arg)
 int utm_alloc(unsigned long arg)
 {
   int ret = 0;
-  enclave_t *enclave;
+  struct enclave *enclave;
   struct addr_packed *addr = (struct addr_packed *) arg;
   unsigned long ueid = addr->eid;
 
@@ -236,20 +238,29 @@ int utm_alloc(unsigned long arg)
 }
 
 
-int keystone_destroy_enclave(unsigned long arg)
+int keystone_destroy_enclave(struct file *filep, unsigned long arg)
 {
   int ret;
-  enclave_t *enclave;
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
   unsigned long ueid = enclp->eid;
 
+  ret = __keystone_destroy_enclave(ueid);
+  if (!ret) {
+    filep->private_data = NULL;
+  }
+  return ret;
+}
+
+int __keystone_destroy_enclave(unsigned int ueid)
+{
+  int ret;
+  struct enclave *enclave;
   enclave = get_enclave_by_id(ueid);
 
   if (!enclave) {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
-
   ret = SBI_CALL_1(SBI_SM_DESTROY_ENCLAVE, enclave->eid);
   if (ret) {
     keystone_err("fatal: cannot destroy enclave: SBI failed\n");
@@ -267,7 +278,7 @@ int keystone_resume_enclave(unsigned long arg)
   int ret = 0;
   struct keystone_ioctl_run_enclave *resume = (struct keystone_ioctl_run_enclave*) arg;
   unsigned long ueid = resume->eid;
-  enclave_t* enclave;
+  struct enclave* enclave;
   enclave = get_enclave_by_id(ueid);
 
   if (!enclave)
@@ -302,7 +313,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 
   switch (cmd) {
     case KEYSTONE_IOC_CREATE_ENCLAVE:
-      ret = keystone_create_enclave((unsigned long) data);
+      ret = keystone_create_enclave(filep, (unsigned long) data);
       break;
     case KEYSTONE_IOC_ADD_PAGE:
       ret = keystone_add_page((unsigned long) data);
@@ -314,7 +325,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
       ret = keystone_finalize_enclave((unsigned long) data);
       break;
     case KEYSTONE_IOC_DESTROY_ENCLAVE:
-      ret = keystone_destroy_enclave((unsigned long) data);
+      ret = keystone_destroy_enclave(filep, (unsigned long) data);
       break;
     case KEYSTONE_IOC_RUN_ENCLAVE:
       ret = keystone_run_enclave((unsigned long) data);
@@ -340,4 +351,22 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
     return -EFAULT;
 
   return ret;
+}
+
+int keystone_release(struct inode *inode, struct file *file) {
+  unsigned long ueid = (unsigned long)(file->private_data);
+
+  /* pr_info("Releasing enclave: %d\n", ueid); */
+
+  /* We need to send destroy enclave just the eid to close. */
+    struct enclave *enclave = get_enclave_by_id(ueid);
+
+  if (!enclave) {
+    /* If eid is set to the invalid id, then we do not do anything. */
+    return -EINVAL;
+  }
+  if (enclave->close_on_pexit) {
+    return __keystone_destroy_enclave(ueid);
+  }
+  return 0;
 }

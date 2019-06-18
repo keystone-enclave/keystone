@@ -1,13 +1,15 @@
 # Keystone Enclave Driver
 
-This is a loadable kernel module for Keystone Enclave.
-To build the module, make with a proper KDIR path.
-
-```
-make KDIR=<path to linux>
-```
+This is a loadable kernel module for Keystone Enclave.  To build the
+module, make with the top-level
+[Keystone](https://github.com/keystone-enclave/keystone) build
+process.
 
 # Compatibility
+
+The driver will always work correctly with the version of riscv-linux
+pointed to by the top-level
+[Keystone](https://github.com/keystone-enclave/keystone) repository.
 
 For the upstream linux, loadable modules for RISC-V only work on kernel versions later than 4.17.
 
