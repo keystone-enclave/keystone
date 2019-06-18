@@ -16,7 +16,6 @@ qemu:
 
 .PHONY: hifive
 hifive: sdk $(QEMU) $(BOOTROM)
-	$(MAKE) -f hifive.mk
 	$(MAKE) -C hifive-work/buildroot_initramfs
 	$(MAKE) -f hifive.mk
 

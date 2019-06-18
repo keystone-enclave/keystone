@@ -135,7 +135,8 @@ $(linux_module): $(vmlinux)
 		ARCH=riscv \
 		M=$(linux_module_wrkdir) \
 		modules
-	cp $(linux_module) $(buildroot_initramfs_wrkdir)/target/root/
+	mkdir -p buildroot_overlay/root
+	cp $(linux_module) buildroot_overlay/root
 
 $(vmlinux_stripped): $(vmlinux)
 	$(target)-strip -o $@ $<
