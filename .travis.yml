@@ -78,6 +78,7 @@ jobs:
     - stage: build everything & test
       script:
         - source ./source.sh
+        - make -C sdk
         - ./sdk/scripts/init.sh
         - ./sdk/examples/tests/vault.sh
         - travis_wait 120 make -j2

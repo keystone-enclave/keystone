@@ -1,5 +1,4 @@
 BOOTROM_DIR=bootrom
-SDK_DIR=sdk
 QEMU_DIR=riscv-qemu
 
 BOOTROM=$(BOOTROM_DIR)/bootrom.elf
@@ -14,14 +13,12 @@ qemu:
 	./scripts/run-qemu.sh
 
 .PHONY: hifive
-hifive: sdk $(QEMU) $(BOOTROM)
+hifive: $(QEMU) $(BOOTROM)
 	$(MAKE) -f hifive.mk
 	$(MAKE) -C hifive-work/buildroot_initramfs
 	$(MAKE) -f hifive.mk
 
 .PHONY: sdk
-sdk:
-	$(MAKE) -C $(SDK_DIR)
 
 $(QEMU):
 	./scripts/apply-patch.sh
