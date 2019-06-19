@@ -14,7 +14,7 @@ git:
   depth: 1
 
 env:
-  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR/keystone/sdk
 
 addons:
   apt:
@@ -81,10 +81,6 @@ jobs:
         - ./sdk/scripts/init.sh
         - ./sdk/examples/tests/vault.sh
         - travis_wait 120 make -j2
-        - travis_wait 10 ./scripts/travis.sh
-        - cd sdk; make clean; OPTIONS_FLAGS="" make
-        - cd ..
-        - make
         - travis_wait 10 ./scripts/travis.sh
         - cd riscv-qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-qemu-git  .git;cd ..
         - cd riscv-linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-linux-git .git;cd ..
