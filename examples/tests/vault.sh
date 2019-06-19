@@ -3,6 +3,7 @@
 #### Replace the variables ###
 
 NAME=tests
+VAULT_DIR=`dirname $0`
 OUTPUT_DIR=$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
 EYRIE_PLUGINS="freemem"
@@ -15,29 +16,28 @@ PACKAGE_FILES="stack/stack.eapp_riscv \
                untrusted/untrusted.eapp_riscv \
                attestation/attestation.eapp_riscv \
                test-runner.riscv \
-               test"
+               test \
+               $EYRIE_DIR/eyrie-rt"
 PACKAGE_SCRIPT="./test"
 
 ##############################
 
-VAULT_DIR=`dirname $0`
 
 # create a build directory
-
 mkdir -p $OUTPUT_DIR
 OUTPUT_FILES_DIR=$OUTPUT_DIR/files
 mkdir -p $OUTPUT_FILES_DIR
 
 # build eyrie runtime
-
-$EYRIE_DIR/build.sh $OUTPUT_FILES_DIR $EYRIE_PLUGINS
+$EYRIE_DIR/build.sh $EYRIE_PLUGINS
 
 # build the app
-
+pushd $VAULT_DIR
 make
 for output in $PACKAGE_FILES; do
-  cp $VAULT_DIR/$output $OUTPUT_FILES_DIR
+  cp $output $OUTPUT_FILES_DIR
 done
+popd
 
 # package the enclave
 
