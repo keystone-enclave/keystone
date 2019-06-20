@@ -78,9 +78,6 @@ jobs:
     - stage: build everything & test
       script:
         - source ./source.sh
-        - make -C sdk
-        - ./sdk/scripts/init.sh
-        - ./sdk/examples/tests/vault.sh
         - travis_wait 120 make -j2
         - travis_wait 10 ./scripts/travis.sh
         - cd riscv-qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-qemu-git  .git;cd ..

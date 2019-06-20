@@ -29,3 +29,8 @@ fi
 
 git config --global submodule.riscv-gnu-toolchain.update none
 git submodule update --init --recursive
+
+# build tests in SDK
+make -C sdk
+./sdk/scripts/init.sh --runtime eyrie --force
+./sdk/examples/tests/vault.sh

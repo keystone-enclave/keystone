@@ -18,8 +18,6 @@ hifive: $(QEMU) $(BOOTROM)
 	$(MAKE) -C hifive-work/buildroot_initramfs
 	$(MAKE) -f hifive.mk
 
-.PHONY: sdk
-
 $(QEMU):
 	./scripts/apply-patch.sh
 	cd $(QEMU_DIR); ./configure --target-list=riscv64-softmmu,riscv32-softmmu;
