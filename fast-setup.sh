@@ -28,6 +28,7 @@ else
 fi
 
 git config --global submodule.riscv-gnu-toolchain.update none
+git submodule sync --recursive
 git submodule update --init --recursive
 
 # build tests in SDK
