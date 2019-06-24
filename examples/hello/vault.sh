@@ -1,27 +1,20 @@
 #!/bin/bash
 
 set -e
+
 ################################################################
 #                   Replace the variables                      #
 ################################################################
-NAME=tests
+NAME=hello
 VAULT_DIR=`dirname $0`
-BUILD_COMMAND=make
+BUILD_COMMAND="make -C eapp && make -C host"
 OUTPUT_DIR=$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
-EYRIE_PLUGINS="freemem"
-PACKAGE_FILES="stack/stack.eapp_riscv \
-               fibonacci/fibonacci.eapp_riscv \
-               long-nop/long-nop.eapp_riscv \
-               loop/loop.eapp_riscv \
-               malloc/malloc.eapp_riscv \
-               fib-bench/fib-bench.eapp_riscv \
-               untrusted/untrusted.eapp_riscv \
-               attestation/attestation.eapp_riscv \
-               test-runner.riscv \
-               test \
+EYRIE_PLUGINS="freemem untrusted_io_syscall linux_syscall env_setup"
+PACKAGE_FILES="eapp/hello \
+               host/runner \
                $EYRIE_DIR/eyrie-rt"
-PACKAGE_SCRIPT="./test"
+PACKAGE_SCRIPT="./runner hello eyrie-rt"
 
 ################################################################
 #                       Sanity Check                           #
@@ -74,7 +67,7 @@ $EYRIE_DIR/build.sh $EYRIE_PLUGINS
 
 # build the app
 pushd $VAULT_DIR
-$BUILD_COMMAND
+eval $BUILD_COMMAND
 for output in $PACKAGE_FILES; do
   cp $output $OUTPUT_FILES_DIR
 done
@@ -82,4 +75,4 @@ popd
 
 # create vault archive & remove output files
 makeself "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" "$PACKAGE_SCRIPT"
-rm -rf $OUTPUT_FILES_DIR
+#rm -rf $OUTPUT_FILES_DIR
