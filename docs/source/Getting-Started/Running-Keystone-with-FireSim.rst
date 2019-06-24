@@ -1,4 +1,4 @@
-Running Keystone with FireSim
+Testing Keystone with FireSim
 ======================================
 
 `FireSim <https://fires.im>`_ is an FPGA-based cycle-accurate simulator for RISC-V processors.

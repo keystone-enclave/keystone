@@ -14,7 +14,6 @@ Welcome to Keystone Enclave's documentation!
 
    Getting-Started/index
    Getting-Started/How-Keystone-Works/index
-   Getting-Started/Guide-to-Components
    Getting-Started/How-to-Debug
    Getting-Started/FAQ
 

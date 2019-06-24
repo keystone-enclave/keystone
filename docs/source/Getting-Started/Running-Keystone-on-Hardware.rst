@@ -1,4 +1,4 @@
-Running Keystone on Hardware
+Deploying on Hardware (Example)
 ============================
 
 Currently we only support the SiFive HiFive Unleashed development

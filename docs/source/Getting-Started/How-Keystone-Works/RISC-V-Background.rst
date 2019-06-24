@@ -23,6 +23,18 @@ To understand why this is true, see the next section explaining why using M-mode
   This document only contains high-level ideas of several components in the privileged ISA.
   For more details, please refer to `RISC-V Spec Documentations <https://riscv.org/specifications/>`_.
 
+
+ISA Compatibility
+----------------------------------
+
+Currently, Keystone is compatible with a specific subset of RISC-V ISA as follows:
+
+* Keystone requires all of three privilege modes (M/S/U) to support dynamic user-level isolation in Linux machines.
+* Keystone only supports RV64 (64-bit) with Sv39 addressing mode which translates 39-bit virtual addresses into 50-bit physical addresses based on a 3-level page table.
+
+We're actively working on extending compatibility of Keystone by supporting static isolation in M/U-only systems as well as RV32.
+
+
 RISC-V Privilieged ISA
 -----------------------------------
 
@@ -40,8 +52,7 @@ Common usage of each privilege level is as follows:
 * S-mode: kernel (including kernel modules and device drivers), hypervisor
 * M-mode: bootloader, firmware
 
-
-Only M-mode is required, and some embedded devices may have only M-mode or only M/U modes.
+M-mode is the only requirement for any RISC-V cores, so some embedded devices may have only M-mode or only M/U modes.
 
 M-mode is the highest privilege mode and controls all physical resources and events.
 M-mode is somewhat similar to microcode in complex instruction set computer (CISC) ISAs such as x86,
@@ -87,7 +98,6 @@ among processors, the basic guarantees are part of the standard.
 Interrupts and Exceptions
 ----------------------------------
 
-
 By default, M-mode is the first receiver of any interrupts or
 exceptions (i.e., traps) in the system.  Thus, M-mode has complete
 authority over CPU scheduling and configuration, but may delegate this
@@ -111,11 +121,6 @@ RISC-V uses multi-level page table, where number of pages and the size of a page
 addressing mode.
 The ``satp`` CSR determines which addressing mode MMU should use and which physical page contains the
 root page table for beginning page table walks.
-
-.. attention::
-
-  Keystone currently only supports RV64 with Sv39 addressing mode, which translates 39-bit virtual addresses into
-  50-bit physical addresses based on a 3-level page table.
 
 Although S-mode (the OS) may change ``satp`` arbitrarily, Keystone
 enclaves are not susceptible to any attacks based on altering the page
