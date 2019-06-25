@@ -3,7 +3,7 @@ Keystone Basics
 
 Keystone is an open framework for architecting trusted execution environments (TEEs) based on hardware enclaves.
 Keystone aims to provide an easy way of architecting and building a customized TEE for an arbitrary RISC-V platform with a simple workflow.
-This allows the TEE to be higly optimized for better performance, smaller trusted code base (TCB),
+This allows the TEE to be highly optimized for better performance, smaller trusted computing base (TCB),
 and programmability with a given workload and a threat model.
 
 Overview
@@ -14,50 +14,50 @@ A Keystone-capable system consists of several components in different privilege 
 .. figure:: /_static/images/keystone_overview.png
 
 **Trusted Hardware** is a CPU package built by a trustworthy vendor, and must contain Keystone-compatible *standard RISC-V cores* and *root of trust*.
-The hardware may also contain optional features such as cache partitioning or cryptographically-secure source of randomness.
-Keystone security monitor must be built for each of the platform so that it can utilize these additional features for the TEE.
+The hardware may also contain optional features such as cache partitioning, memory encryption, cryptographically-secure source of randomness, etc.
+The Security Monitor requires platform specific plug-ins for optional feature support.
 
-**Security Monitor (SM)** is an M-mode software with small TCB.
-SM provides an interface for managing the lifecycle of enclave, as well as for utilizing platform-specific features.
-The SM is crucial for the security guarantees of the TEE since it enforces the isolation boundary between the enclaves and the untrusted OS.
+**Security Monitor (SM)** is M-mode software with small TCB.
+The SM provides an interface for managing the lifecycle of enclave as well as for utilizing platform-specific features.
+The SM enforces most of Keystone's security guarantees since it manages the isolation boundary between the enclaves and the untrusted OS.
 
-**Enclaves** are trusted execution environments isolated from the untrusted OS or the other enclaves. Each enclave is given a private physical memory region which is exclusively accessible by the enclave itself. Each enclave consists of an user-level enclave application (eapp) and a supervisor-level *runtime*.
+**Enclaves** are environments isolated from the untrusted OS and other enclaves. Each enclave is given a private physical memory region which is accessible by only the enclave and SM.
+Each enclave consists of a user-level enclave application *eapp* and a supervisor-level *runtime*.
 
-**Enclave Application (eapp)** is the user-level application that will run in the enclave. One can build a custom eapp from the scratch, or just run an existing RISC-V executable in Keystone.
+**Enclave Application (eapp)** is the user-level application that executes in the enclave. One can build a custom eapp from the scratch, or just run an existing RISC-V executable in Keystone.
 
-**Runtime** is a S-mode software, which selectively serves the untrusted kernel's functionality such as system call, trap handling, virtual memory management and so on.
+**Runtime** is S-mode software which implements functionality such as system calls, trap handling, virtual memory management and so on.
 
 Keystone Workflow
 -------------------------------
 
 .. figure:: /_static/images/keystone_workflow.png
 
-Keystone is a framework wherein both *platform provider* and *enclave developer* can customize their enclaves depending on their needs.
-This involves two separate workflow from each of the platform provider and the enclave developer. 
+Keystone is a framework wherein both *platform provider* and *enclave developer* customize elements of the system to their needs.
+This involves two separate workflows: one for each of the platform provider and the enclave developer. 
 
 Provisioning the Security Monitor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A **platform provider** is a party who provides a machine which can run Keystone enclaves. In
-*provisioning* stage, the platform provider compiles the security monitor and deploys it to the machine. 
+A **platform provider** the party who provides a machine which can run
+Keystone enclaves. In the *provisioning* stage, the platform provider
+compiles the security monitor and deploys it to the machine.
 
 The platform provider 
-configures and builds the security monitor with target hardware
-(❶ and ❷).
-The platform provider then deploys the security monitor to the machine (❸).
+configures(❶), builds(❷), and then deploys(❸) the security monitor with target hardware.
 
 See :doc:`/Getting-Started/Tutorials/Security-Monitor-Platform-Build` to learn how to build and
 deploy the security monitor.
 
 Developing the Enclave
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
-A **enclave developer** develops an enclave with Keystone SDK.
-The developer builds the eapp, the host, and the runtime binaries, and package them together into
-a
-single file (❹).
+A **enclave developer** develops an enclave with the Keystone SDK.
+The developer builds the eapp, the host, and the runtime binaries, and
+(optionally) packages them together into a single file (❹).
 
-The enclave is sent to the untrusted remote machine and deployed (❺, ❻, and ❼).
+The enclave components are then sent to the remote machine running
+Keystone and deployed (❺, ❻, and ❼).
 
 See :doc:`/Getting-Started/Tutorials/Build-Enclave-App-Hello-World` to learn how to build an
 enclave.
@@ -88,7 +88,7 @@ The untrusted host first allocates the EPM, and initializes it with the enclave'
 the runtime (RT), and the eapp.
 Any residual EPM will be consumed as *free memory*.
 The host calls the SM to create an enclave using ``create_enclave`` SBI call.
-The SM walls off the EPM using a free PMP entry.
+The SM protects and isolates the EPM using a free PMP entry.
 The PMP status is propagated through all cores in the system so that the EPM is protected from any
 cores.
 As soon as the enclave is created, the SM measures and verifies the initial state of the enclave.
