@@ -69,8 +69,7 @@ Keystone supports basic remote attestation workflows. In these
 setups the enclave may present proof of its initial state and
 measurement by the SM to a remote party for validation (❽).
 
-See :doc:`/Getting-Started/Tutorials/Remote-Attestation` to learn how to implement a simple remote
-attestation.
+See :doc:`/Getting-Started/Tutorials/Remote-Attestation` to learn how to implement a simple remote attestation flow.
 
 Enclave Lifecycle
 -------------------------------
@@ -84,11 +83,10 @@ Creation
 An enclave starts with a contiguous range of physical memory called enclave private memory (EPM).
 The untrusted host first allocates the EPM, and initializes it with the enclave's page table (PT),
 the runtime (RT), and the eapp.
-Once the host calls the SM to create an enclave,
-The SM walls off the EPM using a PMP entry.
+Once the host calls the SM to create an enclave the SM isolates and protects the EPM using a PMP entry.
 The PMP status is propagated through all cores in the system so that the EPM is protected from any
 cores.
-As soon as the enclave is created, the SM measures and verifies the initial state of the enclave.
+After creation, but before execution, the SM measures and verifies the initial state of the enclave.
 
 Execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,5 +100,8 @@ isolation.
 Destruction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The host can destroy the enclave to reclaim the memory.
-The SM cleans the EPM and release the PMP entry.
+The host may destroy the enclave at any time.
+
+On destruction, the SM clears the EPM and releases the PMP entry.
+
+The host then finally reclaims the now-free memory.
