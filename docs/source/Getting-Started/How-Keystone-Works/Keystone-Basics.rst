@@ -65,13 +65,11 @@ enclave.
 Remote Attestation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The enclave is challenged at the beginning of the execution by a trusted remote verifier (❽).
-The remote verifier could be the developer herself, a trusted party, or a person who wants to run an
-enclave built by others.
-The remote attestation uses cryptographically-secure signatures and measurements to check if a
-legitimate security monitor was deployed on a trusted hardware and if the enclave is initialized as expected.
+Keystone supports basic remote attestation workflows. In these
+setups the enclave may present proof of its initial state and
+measurement by the SM to a remote party for validation (❽).
 
-See :doc:`/Getting-Started/Tutorials/Remote-Attestation` to learn how to implement remote
+See :doc:`/Getting-Started/Tutorials/Remote-Attestation` to learn how to implement a simple remote
 attestation.
 
 Enclave Lifecycle
@@ -86,9 +84,8 @@ Creation
 An enclave starts with a contiguous range of physical memory called enclave private memory (EPM).
 The untrusted host first allocates the EPM, and initializes it with the enclave's page table (PT),
 the runtime (RT), and the eapp.
-Any residual EPM will be consumed as *free memory*.
-The host calls the SM to create an enclave using ``create_enclave`` SBI call.
-The SM walls off the EPM using a free PMP entry.
+Once the host calls the SM to create an enclave,
+The SM walls off the EPM using a PMP entry.
 The PMP status is propagated through all cores in the system so that the EPM is protected from any
 cores.
 As soon as the enclave is created, the SM measures and verifies the initial state of the enclave.
@@ -96,18 +93,14 @@ As soon as the enclave is created, the SM measures and verifies the initial stat
 Execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The host can enter the enclave using ``run_enclave`` SBI call on one of the cores.
+The host asks the SM to enter the enclave on one of the cores.
 The SM releases the PMP permission to the core, and the core starts to execute the enclave.
-The runtime can exit the enclave any time through ``stop_enclave`` or ``exit_enclave`` SBI call.
-When a core exits the enclave, it restores the PMP entry.
-The core can resume the enclave with ``resume_enclave`` SBI call.
-
-The host can allocate more memory to the enclave using ``extend_enclave`` SBI call.
-This feature is currently under testing, and will be available in the future versions.
+The runtime can exit or re-enter the enclave any time.
+When a core exits/enters the enclave, it accordingly switches the PMP permissions to keep the
+isolation.
 
 Destruction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The host can use ``destroy_enclave`` SBI call to destroy the enclave.
+The host can destroy the enclave to reclaim the memory.
 The SM cleans the EPM and release the PMP entry.
-The host reclaims the EPM and deallocates the memory.

@@ -169,5 +169,3 @@ You can run the test enclaves by using a self-extracting keystone archive called
 
   cd ./tests
   ./tests.ke
-
-For building other enclaves, please see :doc:`Building-Enclaves`.
