@@ -5,8 +5,8 @@ Testing Keystone with QEMU
 The latest QEMU supports RISC-V ISA.
 
 Keystone was tested in a QEMU fork in RISC-V (`GitHub <https://github.com/riscv/riscv-qemu>`_).
-The upstream QEMU might not work because it has a bug in the PMP module (`See GitHub issue <https://github.com/keystone-enclave/keystone/issues/25>`_).
-The fix will be upstreamed in the future.
+The upstream QEMU is not currently supported due to several remaining issues (Ex: `See GitHub issue <https://github.com/keystone-enclave/keystone/issues/25>`_).
+Fixes will be upstreamed in the future.
 
 Installing Dependencies
 ----------------------------

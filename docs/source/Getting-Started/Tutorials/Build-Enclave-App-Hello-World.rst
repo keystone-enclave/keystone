@@ -4,7 +4,7 @@ Tutorial 2: Hello, World!
 This tutorial explains how to build and run a simple "hello world" enclave.
 An enclave consists of an eapp and a runtime, but also needs the host that initializes and launches
 the enclave.
-Thus, each of the enclave source tree contains the host and the eapp.
+Thus, each enclave source tree contains at least the host and eapp.
 
 Before jumping into the tutorial, please complete :doc:`Quick Start
 <../Running-Keystone-with-QEMU>`.
@@ -14,9 +14,8 @@ Prerequisite
 ------------------------------
 
 `musl-libc <https://www.musl-libc.org/>`_ is a lightweight standard library for replacing ``glibc``.
-Eyrie runtime allows the enclave to be statically linked with musl, and supports a few standard
-functions such
-as ``printf``.
+The Eyrie runtime allows the enclave to be statically linked with musl, and supports a few standard
+functions such as ``printf``.
 
 Download source code in your work directory, and build musl with following commands.
 
@@ -142,7 +141,7 @@ application.
 	  return 0;
 	}
 
-It looks like a normal C program, but it runs inside the enclave.
+This is the standard C program that we will run isolated in an enclave.
 
 Host Application: host.cpp
 ------------------------------
@@ -194,7 +193,7 @@ These parameters can be configured by following lines:
 	params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 1024*1024);
 
 In order to handle the edge calls (including system calls), the enclave must register the edge call
-handler and initialize the buffer addresses. This is done by followings:
+handler and initialize the buffer addresses. This is done as following:
 
 .. code-block:: cpp
 
@@ -244,7 +243,7 @@ Insert the Keystone driver
 
 Deploy the enclave
 
-:: 
+::
 
 	# [inside QEMU]
 	./hello/hello.ke

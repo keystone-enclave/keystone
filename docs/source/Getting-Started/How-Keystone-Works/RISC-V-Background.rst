@@ -52,10 +52,10 @@ Common usage of each privilege level is as follows:
 * S-mode: kernel (including kernel modules and device drivers), hypervisor
 * M-mode: bootloader, firmware
 
-M-mode is the only requirement for any RISC-V cores, so some embedded devices may have only M-mode or only M/U modes.
+Some embedded devices may have only M-mode or only M/U modes.
 
-M-mode is the highest privilege mode and controls all physical resources and events.
-M-mode is somewhat similar to microcode in complex instruction set computer (CISC) ISAs such as x86,
+M-mode is the highest privilege mode and controls all physical resources and interrupts.
+M-mode is analogous to microcode in complex instruction set computer (CISC) ISAs such as x86,
 in that it is not interruptible and free from interference of lower modes.
 
 Keystone uses M-mode for running the *security monitor (SM)*, the trusted computing base (TCB) of the system.

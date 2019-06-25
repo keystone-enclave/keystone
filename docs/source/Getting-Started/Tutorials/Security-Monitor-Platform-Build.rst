@@ -7,7 +7,7 @@ This tutorial briefly explains how you can build the SM for your platform.
 The SM is implemented on top of Berkeley Bootloader (bbl).
 You can find the latest SM at `<https://github.com/keystone-enclave/riscv-pk>`_ (upstream bbl:
 `<https://github.com/riscv/riscv-pk>`_).
-Most of Keystone SM source code lives in ``sm`` directory.
+Most of the Keystone SM source code lives in ``sm`` directory.
 
 ::
 
@@ -68,7 +68,7 @@ You will see ``default`` and ``fu540`` directories.
 When you configure the ``bbl``, ``--with-target-platform`` flag specifies which files you want to
 include in the SM.
 For example, ``--with-target-platform=fu540`` will include ``sm/platform/fu540/fu540.c`` in the SM.
-Each of the directory contains the hooks for each platform.
+Each of the directories contains the hooks for each platform.
 
 Let's take a look at ``fu540/fu540_internal.c``:
 
