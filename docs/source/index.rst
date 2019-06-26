@@ -34,6 +34,13 @@ Welcome to Keystone Enclave's documentation!
 
    Keystone-Demo/Demo-Basics
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Keystone Security Monitor:
+   :numbered:
+
+   Security-Monitor/index.rst
+   
 
 .. toctree::
    :maxdepth: 1

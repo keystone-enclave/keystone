@@ -1,0 +1,68 @@
+FU540 Platform Support
+======================
+
+The FU540 module makes use of the L2 controller to provide cache
+partitioning for enclaves as a side-channel defense mechanism.
+
+Building with the FU540 module
+------------------------------
+
+You can re-configure and re-build the ``bbl`` in the build directory:
+
+::
+		--with-target-platform=fu540
+
+
+Waymasking internals
+--------------------
+
+The L2 controller of FU540 provides *waymasking*, which allows the SM
+to mask specific ways of the L2 cache.
+
+Let's take a look at ``fu540/fu540_internal.c``:
+
+.. code-block:: c
+
+	void platform_init(struct platform_enclave_data_t* ped){
+	  ped->num_ways = WM_NUM_WAYS/2;
+	  ped->saved_mask = 0;
+	}
+
+``platform_init`` hook is called at SM initialization.
+This sets the number of ways each enclave gets.
+
+Currently, we have hard-coded the number of ways to 8, which is the
+half of the L2.
+
+On each context switch between the enclave and the host,
+``platform_switch_to_enclave`` and ``platform_switch_from_enclave``
+will be called.  These functions configures the way mask such that the
+half of the L2 is allocated to the enclave.
+
+.. code-block:: c
+
+	void platform_switch_to_enclave(struct platform_enclave_data_t* ped){
+
+	  // Each hart gets special access to some
+	  unsigned int core = read_csr(mhartid) + 1;
+
+	  /* Allocate ways, fresh every time we enter */
+	  size_t remaining = waymask_allocate_ways(ped->num_ways,
+	                                           core,
+	                                           &ped->saved_mask);
+
+	  /* Assign the ways to all cores */
+	  waymask_apply_allocated_mask(ped->saved_mask, core);
+
+	  /* Clear out these ways MUST first apply mask to other masters */
+	  waymask_clear_ways(ped->saved_mask, core);
+
+	}
+	void platform_switch_from_enclave(struct platform_enclave_data_t* ped){
+	  /* Free all our ways */
+	  waymask_free_ways(ped->saved_mask);
+
+	  /* We don't need to clean them, see docs */
+
+	}
+
