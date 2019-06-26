@@ -69,6 +69,7 @@ struct enclave* create_enclave(unsigned long min_pages)
   enclave->close_on_pexit = 1;
 
   enclave->epm = kmalloc(sizeof(struct epm), GFP_KERNEL);
+  enclave->is_init = true;
   if (!enclave->epm)
   {
     keystone_err("failed to allocate epm\n");

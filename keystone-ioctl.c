@@ -6,6 +6,7 @@
 #include "keystone-sbi-arg.h"
 #include "keystone_user.h"
 #include <linux/uaccess.h>
+#include <keystone_user.h>
 
 int __keystone_destroy_enclave(unsigned int ueid);
 
@@ -23,7 +24,7 @@ int keystone_create_enclave(struct file *filep, unsigned long arg)
 
   /* Pass base page table */
   enclp->pt_ptr = __pa(enclave->epm->root_page_table);
-  enclp->size = enclave->epm->size;
+  enclp->epm_size = enclave->epm->size;
 
   /* allocate UID */
   enclp->eid = enclave_idr_alloc(enclave);
@@ -49,6 +50,8 @@ int keystone_finalize_enclave(unsigned long arg)
     return -EINVAL;
   }
 
+  enclave->is_init = false;
+
   /* SBI Call */
   create_args.epm_region.paddr = enclave->epm->pa;
   create_args.epm_region.size = enclave->epm->size;
@@ -66,7 +69,15 @@ int keystone_finalize_enclave(unsigned long arg)
   // physical addresses for runtime, user, and freemem
   create_args.runtime_paddr = epm_va_to_pa(enclave->epm, enclp->runtime_vaddr);
   create_args.user_paddr = epm_va_to_pa(enclave->epm, enclp->user_vaddr);
-  create_args.free_paddr = enclp->free_ptr;
+  create_args.free_paddr = enclp->free_paddr;
+
+  enclp->runtime_paddr = create_args.runtime_paddr;
+  enclp->user_paddr = create_args.user_paddr;
+  enclp->epm_paddr = create_args.epm_region.paddr;
+  enclp->utm_paddr = create_args.utm_region.paddr;
+  enclp->epm_size = create_args.epm_region.size;
+  enclp->utm_size = create_args.utm_region.size;
+
 
   create_args.params = enclp->params;
 
@@ -208,7 +219,8 @@ int keystone_resume_enclave(unsigned long arg)
 long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 {
   long ret;
-  char data[272];
+  char data[512];
+
   size_t ioc_size;
 
   if (!arg)

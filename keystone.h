@@ -86,6 +86,7 @@ struct enclave
   int close_on_pexit;
   struct utm* utm;
   struct epm* epm;
+  bool is_init;
 };
 
 
