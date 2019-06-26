@@ -49,9 +49,18 @@ struct keystone_ioctl_create_enclave {
   __u64 user_vaddr;
 
   __u64 pt_ptr;
-  __u64 free_ptr;
   __u64 utm_free_ptr;
-  __u64 size; 
+
+  //Used for hash
+  __u64 epm_paddr;
+  __u64 utm_paddr;
+  __u64 runtime_paddr;
+  __u64 user_paddr;
+  __u64 free_paddr;
+
+  __u64 epm_size;
+  __u64 utm_size;
+
   // Runtime Parameters
   struct runtime_params_t params;
 };

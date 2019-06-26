@@ -45,6 +45,7 @@ void keystone_handle_interrupts(void)
 int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
 {
   struct utm* utm;
+  struct epm* epm;
   struct enclave* enclave;
   unsigned long vsize, psize;
   enclave = get_enclave_by_id((unsigned long) filp->private_data);
@@ -52,16 +53,30 @@ int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
-  utm = enclave->utm;
-  vsize = vma->vm_end - vma->vm_start;
-  psize = utm->size;
-  if (vsize > psize)
-    return -EINVAL;
 
-  remap_pfn_range(vma,
-      vma->vm_start,
-      __pa(utm->ptr) >> PAGE_SHIFT,
-      vsize, vma->vm_page_prot);
+  utm = enclave->utm;
+  epm = enclave->epm;
+  vsize = vma->vm_end - vma->vm_start;
+
+  if(enclave->is_init){
+    if (vsize > PAGE_SIZE)
+      return -EINVAL;
+    vaddr_t paddr = __pa(epm->root_page_table) + (vma->vm_pgoff << PAGE_SHIFT);
+    remap_pfn_range(vma,
+                    vma->vm_start,
+                    paddr >> PAGE_SHIFT,
+                    vsize, vma->vm_page_prot);
+  }
+  else
+  {
+    psize = utm->size;
+    if (vsize > psize)
+      return -EINVAL;
+    remap_pfn_range(vma,
+                    vma->vm_start,
+                    __pa(utm->ptr) >> PAGE_SHIFT,
+                    vsize, vma->vm_page_prot);
+  }
   return 0;
 }
 
