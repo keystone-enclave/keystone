@@ -11,10 +11,11 @@ BUILD_COMMAND="make -C eapp && make -C host"
 OUTPUT_DIR=$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
 EYRIE_PLUGINS="freemem env_setup"
-PACKAGE_FILES="eapp/hello \
-               host/runner \
-               $EYRIE_DIR/eyrie-rt"
-PACKAGE_SCRIPT="./runner hello eyrie-rt"
+PACKAGE_FILES="eapp/eapp_native \
+               host/host_native \
+               $EYRIE_DIR/eyrie-rt \
+               test.sh"
+PACKAGE_SCRIPT="./host_native eapp_native eyrie-rt"
 
 ################################################################
 #                       Sanity Check                           #
@@ -74,5 +75,5 @@ done
 popd
 
 # create vault archive & remove output files
-makeself "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" "$PACKAGE_SCRIPT"
-#rm -rf $OUTPUT_FILES_DIR
+makeself "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" $PACKAGE_SCRIPT
+rm -rf $OUTPUT_FILES_DIR

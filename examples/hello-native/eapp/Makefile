@@ -12,13 +12,13 @@ LDFLAGS = -static -L$(SDK_LIB_DIR)
 EAPP = eapp_native
 OBJS = $(EAPP).o
 
-all: $(APP_BIN)
+all: $(EAPP)
 
 $(EAPP): $(OBJS)
 	$(LD) $(LDFLAGS) \
 	-o $(EAPP) \
 	$(OBJS) \
-	$(SDK_LIB_DIR)/libkeystone-edge.a \
+	$(SDK_LIB_DIR)/libkeystone-eapp.a \
 	$(SDK_LIB_DIR)/libkeystone-edge.a
 	chmod -x $@
 
@@ -27,4 +27,3 @@ $(OBJS): %.o: %.c
 
 clean:
 	rm -f *.o $(APP_BIN) $(EXTRA_CLEAN)
-

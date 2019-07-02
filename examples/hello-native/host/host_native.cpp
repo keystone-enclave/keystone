@@ -2,11 +2,12 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "keystone.h"
-#include "edge_call.h"
+#include <keystone.h>
+#include <edge_call.h>
 
 unsigned long print_buffer(char* str);
 void print_buffer_wrapper(void* buffer);
+#define OCALL_PRINT_BUFFER 1
 
 /***
  * An example call that will be exposed to the enclave application as
@@ -30,16 +31,14 @@ int main(int argc, char** argv)
 
   enclave.init(argv[1], argv[2], params);
 
-  edge_init(&enclave);
-
-  enclave->registerOcallDispatch(incoming_call_dispatch);
+  enclave.registerOcallDispatch(incoming_call_dispatch);
 
   /* We must specifically register functions we want to export to the
      enclave. */
   register_call(OCALL_PRINT_BUFFER, print_buffer_wrapper);
 
-  edge_call_init_internals((uintptr_t)enclave->getSharedBuffer(),
-			   enclave->getSharedBufferSize());
+  edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(),
+			   enclave.getSharedBufferSize());
 
   enclave.run();
 

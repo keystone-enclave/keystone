@@ -7,22 +7,19 @@ SDK_INCLUDE_HOST_DIR = $(SDK_LIB_DIR)/host/include
 SDK_INCLUDE_EDGE_DIR = $(SDK_LIB_DIR)/edge/include
 
 CCFLAGS = -I$(SDK_INCLUDE_HOST_DIR) -I$(SDK_INCLUDE_EDGE_DIR) -I$(SDK_INCLUDE_VERIFIER_DIR) -std=c++11 -Wall -Werror
-LDFLAGS = -L$(SDK_LIB_DIR) -static
+LDFLAGS = -L$(SDK_LIB_DIR)
 
 HOST = host_native
 OBJS = $(HOST).o
 
 all: $(HOST)
 
-$(HOST): $(OBJS)
-	$(LD) $(LDFLAGS) \
+$(HOST):
+	$(CC) $(LDFLAGS) $(CCFLAGS) \
 	-o $(HOST) \
-	$(OBJS) \
+	$(HOST).cpp \
 	$(SDK_LIB_DIR)/libkeystone-host.a \
 	$(SDK_LIB_DIR)/libkeystone-edge.a
-
-$(OBJS): %.o: %.cpp
-	$(CC) $(CCFLAGS) -c $<
 
 clean:
 	rm -f *.o $(HOST)

@@ -5,6 +5,9 @@
 #include "eapp_utils.h"
 #include "string.h"
 #include "edge_call.h"
+#include <syscall.h>
+
+#define OCALL_PRINT_BUFFER 1
 
 unsigned long ocall_print_buffer(char* data, unsigned long data_len){
   unsigned long retval;
@@ -13,9 +16,9 @@ unsigned long ocall_print_buffer(char* data, unsigned long data_len){
 }
 
 
-void main(){
+int main(){
 
   /* Make your ocall here! */
-  
-  return;
+
+  return 0 ;
 }
