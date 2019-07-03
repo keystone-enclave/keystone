@@ -2,7 +2,7 @@
 # insmod keystone-driver.ko
 # cd tests; ./tests.ke
 Verifying archive integrity... All good.
-Uncompressing Keystone vault archive     0%    47%    95%  100%  
+Uncompressing Keystone vault archive
 testing stack
 testing fibonacci
 testing long-nop
