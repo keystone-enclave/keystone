@@ -7,10 +7,6 @@ screen -L -dmS qemu ./scripts/run-qemu.sh
 sleep 10
 ./scripts/test-qemu.sh
 
-# delete the line containing "Uncompressing ... XX % ..."
-sed "s/^Uncompressing.*//g" -i output.log
-sed "s/^Uncompressing.*//g" -i tests/test-qemu.expected.log
-
 diff output.log tests/test-qemu.expected.log
 if [ $? -eq 0 ]
 then
