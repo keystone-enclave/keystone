@@ -16,7 +16,7 @@ void print_buffer_wrapper(void* buffer);
  * enclave object (below, main).
  ***/
 unsigned long print_buffer(char* str){
-  return printf("Enclave said: \"%s\"",str);
+  return printf("Enclave said: \"%s\"\n",str);
 }
 
 

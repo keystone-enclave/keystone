@@ -10,11 +10,10 @@ VAULT_DIR=`dirname $0`
 BUILD_COMMAND="make -C eapp && make -C host"
 OUTPUT_DIR=$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
-EYRIE_PLUGINS="freemem env_setup"
+EYRIE_PLUGINS="freemem"
 PACKAGE_FILES="eapp/eapp_native \
                host/host_native \
-               $EYRIE_DIR/eyrie-rt \
-               test.sh"
+               $EYRIE_DIR/eyrie-rt"
 PACKAGE_SCRIPT="./host_native eapp_native eyrie-rt"
 
 ################################################################
