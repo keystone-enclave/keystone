@@ -7,19 +7,19 @@
 #include "edge_call.h"
 #include <syscall.h>
 
-#define OCALL_PRINT_BUFFER 1
+#define OCALL_PRINT_STRING 1
 
-unsigned long ocall_print_buffer(char* data, unsigned long data_len);
+unsigned long ocall_print_string(char* string);
 
 int main(){
 
-  /* Put your ocall here */
+  ocall_print_string("Hello World");
 
   EAPP_RETURN(0);
 }
 
-unsigned long ocall_print_buffer(char* data, unsigned long data_len){
+unsigned long ocall_print_string(char* string){
   unsigned long retval;
-  ocall(OCALL_PRINT_BUFFER, data, data_len, &retval ,sizeof(unsigned long));
+  ocall(OCALL_PRINT_STRING, string, strlen(string)+1, &retval ,sizeof(unsigned long));
   return retval;
 }

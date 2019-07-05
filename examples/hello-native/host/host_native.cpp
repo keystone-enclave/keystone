@@ -5,17 +5,17 @@
 #include <keystone.h>
 #include <edge_call.h>
 
-unsigned long print_buffer(char* str);
-void print_buffer_wrapper(void* buffer);
-#define OCALL_PRINT_BUFFER 1
+unsigned long print_string(char* str);
+void print_string_wrapper(void* buffer);
+#define OCALL_PRINT_STRING 1
 
 /***
  * An example call that will be exposed to the enclave application as
  * an "ocall". This is performed by an edge_wrapper function (below,
- * print_buffer_wrapper) and by registering that wrapper with the
+ * print_string_wrapper) and by registering that wrapper with the
  * enclave object (below, main).
  ***/
-unsigned long print_buffer(char* str){
+unsigned long print_string(char* str){
   return printf("Enclave said: \"%s\"\n",str);
 }
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
   /* We must specifically register functions we want to export to the
      enclave. */
-  register_call(OCALL_PRINT_BUFFER, print_buffer_wrapper);
+  register_call(OCALL_PRINT_STRING, print_string_wrapper);
 
   edge_call_init_internals((uintptr_t)enclave.getSharedBuffer(),
 			   enclave.getSharedBufferSize());
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
  * Example edge-wrapper function. These are currently hand-written
  * wrappers, but will have autogeneration tools in the future.
  ***/
-void print_buffer_wrapper(void* buffer){
+void print_string_wrapper(void* buffer){
 
   /* Parse and validate the incoming call data */
   struct edge_call* edge_call = (struct edge_call*)buffer;
@@ -63,7 +63,7 @@ void print_buffer_wrapper(void* buffer){
   }
 
   /* Pass the arguments from the eapp to the exported ocall function */
-  ret_val = print_buffer((char*)call_args);
+  ret_val = print_string((char*)call_args);
 
   /* Setup return data from the ocall function */
   uintptr_t data_section = edge_call_data_ptr();
