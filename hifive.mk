@@ -19,6 +19,7 @@ buildroot_initramfs_sysroot := $(wrkdir)/buildroot_initramfs_sysroot
 buildroot_rootfs_wrkdir := $(wrkdir)/buildroot_rootfs
 buildroot_rootfs_ext := $(buildroot_rootfs_wrkdir)/images/rootfs.ext4
 buildroot_rootfs_config := $(confdir)/buildroot_rootfs_config
+buildroot_rootfs_overlay_dir := $(srcdir)/buildroot_overlay
 
 linux_srcdir := $(srcdir)/riscv-linux
 linux_wrkdir := $(wrkdir)/hifive-linux
@@ -65,7 +66,8 @@ all: $(hex) $(vmlinux) $(linux_module)
 	@echo "  ... you will need gdisk and e2fsprogs installed"
 	@echo
 
-$(buildroot_initramfs_wrkdir)/.config: $(buildroot_srcdir)
+
+$(buildroot_initramfs_wrkdir)/.config: $(buildroot_srcdir) $(buildroot_rootfs_overlay_dir)/.dirstamp
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	cp $(buildroot_initramfs_config) $@
@@ -80,7 +82,7 @@ buildroot_initramfs-menuconfig: $(buildroot_initramfs_wrkdir)/.config $(buildroo
 	$(MAKE) -C $(dir $<) O=$(buildroot_initramfs_wrkdir) savedefconfig
 	cp $(dir $<)/defconfig $(confdir)/buildroot_initramfs_config
 
-$(buildroot_rootfs_wrkdir)/.config: $(buildroot_srcdir)
+$(buildroot_rootfs_wrkdir)/.config: $(buildroot_srcdir) $(buildroot_rootfs_overlay_dir)/.dirstamp
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	cp $(buildroot_rootfs_config) $@
@@ -126,6 +128,10 @@ $(vmlinux): $(linux_srcdir) $(linux_wrkdir)/.config $(buildroot_initramfs_sysroo
 		ARCH=riscv \
 		vmlinux
 
+$(buildroot_rootfs_overlay_dir)/.dirstamp:
+	mkdir -p $(buildroot_rootfs_overlay_dir)
+	touch $@
+
 $(linux_module): $(vmlinux)
 	rm -rf $(linux_module_wrkdir)
 	mkdir -p $(linux_module_wrkdir)
@@ -135,7 +141,8 @@ $(linux_module): $(vmlinux)
 		ARCH=riscv \
 		M=$(linux_module_wrkdir) \
 		modules
-	cp $(linux_module) $(buildroot_initramfs_wrkdir)/target/root/
+	mkdir -p $(buildroot_rootfs_overlay_dir)/root
+	cp $(linux_module) $(buildroot_rootfs_overlay_dir)/root
 
 $(vmlinux_stripped): $(vmlinux)
 	$(target)-strip -o $@ $<

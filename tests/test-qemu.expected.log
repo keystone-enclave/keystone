@@ -1,6 +1,8 @@
 
 # insmod keystone-driver.ko
-# ./test
+# cd tests; ./tests.ke
+Verifying archive integrity... All good.
+Uncompressing Keystone vault archive
 testing stack
 testing fibonacci
 testing long-nop
