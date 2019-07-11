@@ -6,7 +6,7 @@ RUNTIME = eyrie-rt
 LINK = riscv64-unknown-linux-gnu-ld
 LDFLAGS = -static -nostdlib
 
-SDK_LIB_DIR = ../lib
+SDK_LIB_DIR = $(KEYSTONE_SDK_DIR)/lib
 SDK_INCLUDE_EDGE_DIR = $(SDK_LIB_DIR)/edge/include
 SDK_EDGE_LIB = $(SDK_LIB_DIR)/libkeystone-edge.a
 
