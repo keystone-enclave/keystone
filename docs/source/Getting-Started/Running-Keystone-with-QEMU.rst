@@ -79,6 +79,19 @@ build instructions.
 
 Otherwise, skip to :ref:`LaunchQEMU`.
 
+Build Runtime
+##################
+
+Runtime (i.e., Eyrie) can be built by a script in sdk.
+
+::
+
+  ./sdk/scripts/init.sh
+
+This initializes the runtime source code at ``./sdk/rts`` based on the version specified in
+``./sdk/rts/eyrie.version``.
+
+For more usage of the script, try the script with ``--help`` flag.
 
 Build RISC-V QEMU
 ##################
