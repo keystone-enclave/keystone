@@ -37,15 +37,19 @@ Following documents are quick guide to test or deploy Keystone on various platfo
 Tutorials
 --------------------------------------------
 
-.. toctree::
-   :maxdepth: 1
+   :doc:`Hello world with libc<Tutorials/Build-Enclave-App-Hello-World>`
+   :doc:`Hello world without libc<Tutorials/Build-Enclave-App-Hello-World-Native>`
 
-   Tutorials/Security-Monitor-Platform-Build
-   Tutorials/Build-Enclave-App-Hello-World
-   Tutorials/Build-Enclave-App-Benchmark
-   Tutorials/Build-Enclave-App-seL4
-   Tutorials/Remote-Attestation
-   
+
+Keystone Demo
+=============
+
+The Keystone Demo is an example of the current capabilities of the
+Keystone enclave framework.
+
+See https://github.com/keystone-enclave/keystone-demo and
+documentation contained within.
+	
 A Guide to Keystone Components
 --------------------------------------------
 

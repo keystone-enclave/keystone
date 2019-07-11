@@ -1,8 +1,7 @@
-Tutorial 1: Build Keystone Security Monitor
+Building the Keystone Security Monitor
 ===========================================
 
 The security monitor (SM) is the core component of Keystone.
-This tutorial briefly explains how you can build the SM for your platform.
 
 The SM is implemented on top of Berkeley Bootloader (bbl).
 You can find the latest SM at `<https://github.com/keystone-enclave/riscv-pk>`_ (upstream bbl:
@@ -14,7 +13,7 @@ Most of the Keystone SM source code lives in ``sm`` directory.
 	git clone https://github.com/keystone-enclave/riscv-pk
 	cd riscv-pk
 
-If you have followed :doc:`Quick Start <../Running-Keystone-with-QEMU>`, the build directory is
+If you have followed :doc:`Quick Start <../Getting-Started/Running-Keystone-with-QEMU>`, the build directory is
 already created at ``hifive-work/riscv-pk``.
 Otherwise, create a build directory.
 

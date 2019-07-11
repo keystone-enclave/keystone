@@ -93,7 +93,7 @@ security. While the actual hardware implementation of PMP may vary
 among processors, the basic guarantees are part of the standard.
 
 
-:doc:`Security-Monitor` relies on PMP for implementing memory isolation.
+:doc:`/Security-Monitor/index` relies on PMP for implementing memory isolation.
 
 Interrupts and Exceptions
 ----------------------------------

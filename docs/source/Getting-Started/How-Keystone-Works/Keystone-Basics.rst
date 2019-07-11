@@ -46,7 +46,7 @@ compiles the security monitor and deploys it to the machine.
 The platform provider 
 configures(❶), builds(❷), and then deploys(❸) the security monitor with target hardware.
 
-See :doc:`/Getting-Started/Tutorials/Security-Monitor-Platform-Build` to learn how to build and
+See :doc:`/Building-Components/Security-Monitor-Platform-Build` to learn how to build and
 deploy the security monitor.
 
 Developing the Enclave
