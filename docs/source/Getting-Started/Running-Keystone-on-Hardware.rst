@@ -1,5 +1,5 @@
-Running Keystone on Hardware
-============================
+Example Hardware Deployment
+===========================
 
 Currently we only support the SiFive HiFive Unleashed development
 board (referred to as HiFive for the rest of this document) with an
@@ -118,14 +118,17 @@ Boot the HiFive with the custom FSBL/Linux as described above.
 
 Once booted, setup the network such that you can connect to it from
 your development machine. (Either a local network or a simple
-unmanaged switch works)
+unmanaged switch is suggested)
 
 Copy Files
 ##########
 
 All tests are automatically built and added to the hifive image. If
-you wish to update them after modifying the sdk/etc on a board currently available on 10.0.0.3:
+you wish to update them after modifying the sdk or tests themselves
+only the modfied components need to be sent to the board. Modifiying
+the security monitor will require a complete reflash of the image.
 
+Example of copying the runtime, driver, and test binaries to the board after booting and configuring to 10.0.0.3
 
 ::
 
@@ -141,6 +144,7 @@ Run binaries
 Insert the Keystone driver, and run whatever test binaries you wish.
 
 Example
+
 ::
 
    insmod keystone-driver.ko

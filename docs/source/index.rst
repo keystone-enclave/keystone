@@ -14,9 +14,10 @@ Welcome to Keystone Enclave's documentation!
 
    Getting-Started/index
    Getting-Started/How-Keystone-Works/index
-   Getting-Started/Guide-to-Components
    Getting-Started/How-to-Debug
+   Getting-Started/Tutorials/index
    Getting-Started/FAQ
+
 
 .. toctree::
    :maxdepth: 1
@@ -30,11 +31,29 @@ Welcome to Keystone Enclave's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Keystone Demo Application:
+   :caption: Building Keystone Components:
    :numbered:
 
-   Keystone-Demo/Demo-Basics
+   Building-Components/Security-Monitor-Platform-Build
+   Building-Components/Vault
+   Building-Components/Eyrie
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Keystone Runtimes:
+   :numbered:
+
+   Runtimes/Eyrie
+   Runtimes/seL4
+   
+.. toctree::
+   :maxdepth: 1
+   :caption: Keystone Security Monitor:
+   :numbered:
+
+   Security-Monitor/index.rst
+   
 
 .. toctree::
    :maxdepth: 1

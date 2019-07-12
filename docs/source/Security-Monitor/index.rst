@@ -24,6 +24,14 @@ The OS and enclaves may call SM functions using the supervisor binary interface 
 which is implemented in RISC-V environment calls (i.e., ``ecall`` instruction).
 See `SBI Documentation <#>`_ for details.
 
+Specific platforms
+------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   FU540
+
 PMP Internals
 -------------
 
@@ -145,6 +153,34 @@ When an enclave enters and exits, the SM performs the following steps to switch 
 #. Flip PMP permissions
 #. Flush TLB
 
+
+Building platform specific modules
+----------------------------------
+
+You can re-configure and re-build the ``bbl`` in the build directory:
+
+::
+
+	../configure \
+		--enable-sm \
+		--with-target-platform=<platform> \
+		--host=riscv64-unknown-linux-gnu \
+		--with-payload=<path to vmlinux> 
+
+	make
+
+
+Each platform directory contains a top-level C file that handles the module.
+
+For example, ``--with-target-platform=fu540`` will include ``sm/platform/fu540/fu540.c`` in the SM.
+Each of the directories contains the hooks for each platform.
+
+The platform directory ``sm/platform`` contains all current platform specific supports.
+
+Currently that is:
+``default`` and ``fu540`` directories.
+
+   
 System PMP Synchronization
 -------------------------------------
 
@@ -155,7 +191,4 @@ System PMP Synchronization
 Side-Channel Defense
 -------------------------------------
 
-.. note::
-
-  Side-channel defenses are not implemented yet.
-  Note that there are many different side-channels, and each platform will have its own threat model for side-channels.
+The FU540 module supports cache side-channel defenses.

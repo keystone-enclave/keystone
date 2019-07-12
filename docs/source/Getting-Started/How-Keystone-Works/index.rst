@@ -5,6 +5,4 @@ How Keystone Works
    :maxdepth: 2
 
    RISC-V-Background
-   Keystone-Security-Monitor
-   Platform-Integration
-   Runtime-And-SDK
+   Keystone-Basics
