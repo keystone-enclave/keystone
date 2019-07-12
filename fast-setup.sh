@@ -18,6 +18,16 @@ else
   export RISCV=$(pwd)/riscv
   export PATH=$PATH:$RISCV/bin
   wget https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/archive/${TOOL_VER}.tar.gz
+
+  # Check tool integrity
+  echo "Verifying prebuilt toolchain integrity..."
+  sha256sum -c .prebuilt_tools_shasums --status --ignore-missing
+  if [[ $? != 0 ]]
+  then
+      echo "Toolchain binary download incomplete or corrupted. You can build the toolchain locally or try again."
+      exit 1
+  fi
+
   tar -xzvf ${TOOL_VER}.tar.gz
   cd firesim-riscv-tools-prebuilt-${TOOL_VER}
   ./installrelease.sh > riscv-tools-install.log
