@@ -114,3 +114,34 @@ To update the printed message, update the message in
 enclave, then rebuild the top-level qemu image in ``keystone/`` with
 ``make``. If you restart qemu, you'll now have the updated
 ``hello_native.ke`` pacakged enclave application.
+
+Deploying Enclave
+------------------------------
+
+Boot the machine with QEMU.
+
+::
+
+	./scripts/run-qemu.sh
+
+Insert the Keystone driver
+
+::
+
+	# [inside QEMU]
+	insmod keystone-driver.ko
+
+Deploy the enclave
+
+::
+
+	# [inside QEMU]
+	./hello-native/hello-native.ke
+
+You'll see the enclave running!
+
+::
+
+	Verifying archive integrity... All good.
+	Uncompressing Keystone vault archive  100%
+	Hello, world!
