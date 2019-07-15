@@ -37,8 +37,9 @@ Following documents are quick guide to test or deploy Keystone on various platfo
 Tutorials
 --------------------------------------------
 
-   :doc:`Hello world with libc<Tutorials/Build-Enclave-App-Hello-World>`
-   :doc:`Hello world without libc<Tutorials/Build-Enclave-App-Hello-World-Native>`
+
+* :doc:`Hello world with libc<Tutorials/Build-Enclave-App-Hello-World>`
+* :doc:`Hello world without libc<Tutorials/Build-Enclave-App-Hello-World-Native>`
 
 
 Keystone Demo
