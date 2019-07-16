@@ -14,4 +14,3 @@ cd ..
 # build tests in SDK
 make -C sdk
 ./sdk/scripts/init.sh --runtime eyrie --force
-./sdk/examples/tests/vault.sh
