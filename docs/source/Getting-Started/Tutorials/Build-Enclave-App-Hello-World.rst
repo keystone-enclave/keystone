@@ -46,10 +46,13 @@ documentation at :doc:`vault.sh</Building-Components/Vault>`.
 
 	sdk/examples/hello/vault.sh
 
+To build the enclave application package, run::
+
+  ./vault.sh
 
 Enclave Application: hello.c
 ------------------------------
- 
+
 Open ``hello.c`` file in ``sdk/exmamples/hello/eapp/``. This is the source code of the enclave
 application.
 
@@ -71,7 +74,7 @@ Host Application: host.cpp
 Open ``host.cpp`` in ``sdk/examples/hello/host/``. This is the source code of the host application.
 
 .. code-block:: cpp
-	
+
 	#include "keystone.h"
 	#include "edge_call.h"
 	int main(int argc, char** argv)
@@ -94,7 +97,7 @@ Open ``host.cpp`` in ``sdk/examples/hello/host/``. This is the source code of th
 	}
 
 ``keystone.h`` contains ``Keystone`` class which has several member functions to control the
-enclave. 
+enclave.
 
 Following code initializes the enclave memory with the eapp/runtime.
 
@@ -138,7 +141,7 @@ All files included in ``$PACKAGE_FILES`` are copied into a directory and archive
 The final output is ``hello.ke`` which is an executable file for our enclave.
 
 Since we set ``$OUTPUT_DIR`` to buildroot overlay
-directory ``$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME``, 
+directory ``$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME``,
 running ``make`` in the top-level directory (``keystone``) will generate the buildroot disk image
 containing the outputs.
 
