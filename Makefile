@@ -15,8 +15,16 @@ qemu:
 .PHONY: hifive
 hifive: $(QEMU) $(BOOTROM)
 	$(MAKE) -f hifive.mk
+
+image:
 	$(MAKE) -C hifive-work/buildroot_initramfs
 	$(MAKE) -f hifive.mk
+
+run-tests: $(hifive)
+	./tests/tests/vault.sh
+	$(MAKE) -C hifive-work/buildroot_initramfs
+	$(MAKE) -f hifive.mk
+	./scripts/travis.sh
 
 $(QEMU):
 	./scripts/apply-patch.sh
@@ -28,9 +36,6 @@ $(BOOTROM):
 
 sdk:
 	$(MAKE) -C sdk
-
-sdk-tests: sdk
-	$(MAKE) -C sdk tests
 
 clean:
 	$(MAKE) -f hifive.mk clean
