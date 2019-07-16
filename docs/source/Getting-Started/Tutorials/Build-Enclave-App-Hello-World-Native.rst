@@ -136,7 +136,7 @@ Deploy the enclave
 ::
 
 	# [inside QEMU]
-	./hello-native/hello-native.ke
+	./hello_native/hello_native.ke
 
 You'll see the enclave running!
 
