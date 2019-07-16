@@ -26,5 +26,11 @@ $(QEMU):
 $(BOOTROM):
 	cd bootrom; make; cd ..
 
+sdk:
+	$(MAKE) -C sdk
+
+sdk-tests: sdk
+	$(MAKE) -C sdk tests
+
 clean:
 	$(MAKE) -f hifive.mk clean
