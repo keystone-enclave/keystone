@@ -19,11 +19,12 @@ Install Dependencies (Ubuntu)
 
 ```
 sudo apt update
-sudo apt install autoconf automake autotools-dev bc bison build-essential curl \
-expat libexpat1-dev flex gawk gcc git gperf libgmp-dev libmpc-dev libmpfr-dev \
-libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \
-python pkg-config libglib2.0-dev libpixman-1-dev device-tree-compiler expect \
-libssl
+sudo apt install autoconf automake autotools-dev bc \
+bison build-essential curl expat libexpat1-dev flex gawk gcc git \
+gperf libgmp-dev libmpc-dev libmpfr-dev libtool texinfo tmux \
+patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python \
+pkg-config libglib2.0-dev libpixman-1-dev libssl-dev \
+device-tree-compiler expect makeself unzip
 ```
 
 Checkout branch (optional)
@@ -43,32 +44,8 @@ make
 
 ##Test
 
-Build SDK Tests
 ```
-make sdk-tests
-```
-
-Rebuild Image
-```
-make
-```
-
-Run QEMU
-```
-./scripts/run-qemu.sh
-```
-
-login with `root`/`sifive`.
-
-```
-[in QEMU machine]
-insmod keystone-driver.ko
-./test
-```
-
-Terminate QEMU
-```
-poweroff
+make run-tests
 ```
 
 ## Rebuilding
@@ -76,18 +53,12 @@ poweroff
 Any modifications in a submodule should be built with the top-level
 `make` in Keystone.
 
-Modifications to SDK tests require running
-```
-make sdk-tests
-```
-or running the build-and-copy scripts for the individual tests.
-
 ## Adding Files
 
 Any additional files/binaries to be included in the image should be
 placed in `keystone/buildroot_overlay/root/`.
 
-The top-level `make` will rebuild the image to contain any new files
+The top-level `make image` will rebuild the image to contain any new files
 added.
 
 # Documentation

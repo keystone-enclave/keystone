@@ -142,13 +142,14 @@ The final output is ``hello.ke`` which is an executable file for our enclave.
 
 Since we set ``$OUTPUT_DIR`` to buildroot overlay
 directory ``$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME``,
-running ``make`` in the top-level directory (``keystone``) will generate the buildroot disk image
+running ``make image`` in the top-level directory (``keystone``) will generate the buildroot disk
+image
 containing the outputs.
 
 ::
 
 	# go to top-level keystone directory
-	make
+	make image
 
 Deploying Enclave
 ------------------------------
