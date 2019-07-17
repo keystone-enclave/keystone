@@ -14,9 +14,11 @@ qemu:
 
 .PHONY: hifive
 hifive: $(QEMU) $(BOOTROM)
+	mkdir -p buildroot/dl
 	$(MAKE) -f hifive.mk
 
 image:
+	mkdir -p buildroot/dl
 	$(MAKE) -C hifive-work/buildroot_initramfs
 	$(MAKE) -f hifive.mk
 
