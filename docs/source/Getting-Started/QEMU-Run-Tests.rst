@@ -18,6 +18,7 @@ Build Test Binaries
 
 Simple tests live under ``tests/tests``.
 You can build the tests by executing ``tests/tests/vault.sh`` (See :doc:`../Building-Components/Vault`).
+Note that ``KEYSTONE_SDK_DIR`` must be set to a built SDK path.
 
 ::
 
