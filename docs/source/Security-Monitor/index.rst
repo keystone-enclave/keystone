@@ -26,7 +26,6 @@ See `SBI Documentation <#>`_ for details.
 
 Specific platforms
 ------------------
-
 .. toctree::
    :maxdepth: 1
 
@@ -73,9 +72,6 @@ To understand how the SM utilizes PMP, we need to know several properties of RIS
 	TOR consumes adjacent PMP entry's address register for the bound address to allow shared boundaries efficiently.
         Ex: Two ranges of 0-2048 and 2048-4096 uses 3 entries, 0, 2048, 4096.
 
-.. note::
-
-  The current Keystone SM uses NAPOT (> 4KB), because it relies on Linux memory allocation for contiguous physical memory regions, and these regions are not guaranteed to be contiguous with each other.
 
 At the very beginning of the boot process, physical memory is not accessible by U- or S-modes
 because of property 2 as shown in the diagram below.
@@ -191,4 +187,4 @@ System PMP Synchronization
 Side-Channel Defense
 -------------------------------------
 
-The FU540 module supports cache side-channel defenses.
+The :doc:`FU540<FU540>` module supports cache side-channel defenses.

@@ -10,7 +10,8 @@ Building with the FU540 module
 You can re-configure and re-build the ``bbl`` in the build directory:
 
 ::
-		--with-target-platform=fu540
+
+   --with-target-platform=fu540
 
 
 Waymasking internals
