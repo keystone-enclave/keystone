@@ -48,7 +48,7 @@ For now, you don't need to modify ``vault.sh`` at all. Just run
 ``./vault.sh``, and it should build ``hello-native.ke`` and put a copy
 in the buildroot overlay.
 
-Now, running ``make`` at the top-level of the Keystone project will
+Now, running ``make image`` at the top-level of the Keystone project will
 rebuild the qemu image to include our ``hello-native`` packaged binary.
 
 Once booted, insert the kernel module and run ``./hello-native.ke``,
@@ -112,7 +112,7 @@ Modifying the eapp print
 To update the printed message, update the message in
 ``eapp_native.c``, re-run the vault.sh to rebuild the packaged
 enclave, then rebuild the top-level qemu image in ``keystone/`` with
-``make``. If you restart qemu, you'll now have the updated
+``make image``. If you restart qemu, you'll now have the updated
 ``hello_native.ke`` pacakged enclave application.
 
 Deploying Enclave
@@ -136,7 +136,7 @@ Deploy the enclave
 ::
 
 	# [inside QEMU]
-	./hello-native/hello-native.ke
+	./hello_native/hello_native.ke
 
 You'll see the enclave running!
 
