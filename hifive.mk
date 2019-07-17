@@ -53,6 +53,9 @@ all: $(hex) $(vmlinux) $(linux_module)
 
 
 $(buildroot_initramfs_wrkdir)/.config: $(buildroot_srcdir)
+	cd $(buildroot_srcdir)
+	git status
+	cd ..
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	cp $(buildroot_initramfs_config) $@
