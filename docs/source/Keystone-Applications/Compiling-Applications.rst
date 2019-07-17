@@ -2,7 +2,8 @@ Compiling Applications
 ======================
 
 Building a host and enclave application using the SDK is
-straight-forward. See Keystone-Demo as an example.
+straight-forward. See Keystone-Demo and the
+:doc:`Tutorials</Getting-Started/Tutorials/index>` as examples.
 
 
 Toolchain

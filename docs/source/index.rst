@@ -52,7 +52,7 @@ Welcome to Keystone Enclave's documentation!
    :caption: Keystone Security Monitor:
    :numbered:
 
-   Security-Monitor/index.rst
+   Security-Monitor/index
    
 
 .. toctree::

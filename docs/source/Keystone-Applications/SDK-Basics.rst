@@ -9,12 +9,12 @@ SDK Overview
 The Keystone SDK provides the tools required to build basic enclave
 hosting applications (`hosts`) and enclave applications (`eapps`).
 
-The SDK consists of 4 main components, and the tests and examples.
+The SDK consists of 4 main components, and examples.
 
  - Host libraries (`lib/host`)
  - Enclave Application libraries (`lib/app`)
  - Edge libraries (`lib/edge`)
- - Runtime (`runtime/`)
+ - Runtimes (`rts/`)
 
 
 
@@ -63,9 +63,9 @@ writing 3 things:
  - Runtime (system level, inside enclave, trusted) - most users will not modify this
  - Enclave app (userspace, inside enclave, trusted)
 
-Most users will only need to write a simple Host, and use the default
-Keystone runtime. The bulk of the work is done in the enclave
-application, and in the glue that holds the components together.
+Most users will only need to write a simple Host, and use the Eyrie
+runtime. The bulk of the work is done in the enclave application, and
+in the glue that holds the components together.
 
 NOTE: Right now all "edge" components (that is, anything that handles
 data and calls between enclave code and non-enclave code) is
