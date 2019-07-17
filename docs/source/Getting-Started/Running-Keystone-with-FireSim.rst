@@ -1,6 +1,10 @@
 Testing Keystone with FireSim
 ======================================
 
+.. warning::
+
+  This document is sligtly outdated. We'll update the document soon `GitHub Issue <https://github.com/keystone-enclave/keystone/issues/104>`_.
+
 `FireSim <https://fires.im>`_ is an FPGA-based cycle-accurate simulator for RISC-V processors.
 Using FireSim, you can test Keystone on open-source processors like `RocketChip <https://github.com/freechipsproject/rocket-chip>`_
 or `BOOM <https://github.com/riscv-boom/riscv-boom>`_.

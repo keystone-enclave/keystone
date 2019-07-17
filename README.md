@@ -1,4 +1,4 @@
-# Keystone Enclave: An Open-Source Secure Enclave for RISC-V Processors
+# Keystone: An Open-Source Secure Enclave Framework for RISC-V Processors
 
 ![Documentation Status](https://readthedocs.org/projects/keystone-enclave/badge/)
 [![Build Status](https://travis-ci.org/keystone-enclave/keystone.svg?branch=master)](https://travis-ci.org/keystone-enclave/keystone/)
@@ -19,10 +19,12 @@ Install Dependencies (Ubuntu)
 
 ```
 sudo apt update
-sudo apt install autoconf automake autotools-dev bc bison build-essential curl \
-expat libexpat1-dev flex gawk gcc git gperf libgmp-dev libmpc-dev libmpfr-dev \
-libtool texinfo tmux patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 \
-python pkg-config libglib2.0-dev libpixman-1-dev device-tree-compiler expect
+sudo apt install autoconf automake autotools-dev bc \
+bison build-essential curl expat libexpat1-dev flex gawk gcc git \
+gperf libgmp-dev libmpc-dev libmpfr-dev libtool texinfo tmux \
+patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python \
+pkg-config libglib2.0-dev libpixman-1-dev libssl-dev \
+device-tree-compiler expect makeself unzip
 ```
 
 Checkout branch (optional)
@@ -40,30 +42,24 @@ Build All
 make
 ```
 
-Run QEMU
-```
-./scripts/run-qemu.sh
-```
-
-Test
-
-login with `root`/`sifive`.
+## Test
 
 ```
-[in QEMU machine]
-insmod keystone-driver.ko
-./test
-```
-
-Terminate QEMU
-```
-poweroff
+make run-tests
 ```
 
 ## Rebuilding
 
 Any modifications in a submodule should be built with the top-level
 `make` in Keystone.
+
+## Adding Files
+
+Any additional files/binaries to be included in the image should be
+placed in `keystone/buildroot_overlay/root/`.
+
+The top-level `make image` will rebuild the image to contain any new files
+added.
 
 # Documentation
 

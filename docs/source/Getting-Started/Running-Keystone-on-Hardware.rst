@@ -123,8 +123,9 @@ unmanaged switch is suggested)
 Copy Files
 ##########
 
-All tests are automatically built and added to the hifive image. If
-you wish to update them after modifying the sdk or tests themselves
+All tests are automatically built by ``make run-tests`` and added to the hifive image by ``make
+run-tests``. 
+If you wish to update them after modifying the sdk or tests themselves
 only the modfied components need to be sent to the board. Modifiying
 the security monitor will require a complete reflash of the image.
 
@@ -148,4 +149,4 @@ Example
 ::
 
    insmod keystone-driver.ko
-   ./test
+   ./tests/tests.ke

@@ -26,5 +26,5 @@ eapps may be a standard unmodified statically linked binary. This
 requires most options for the `eyrie` runtime to be enabled.
 
 Otherwise, eapps need to be linked in a specific way. As this may
-change, please see the ``app.lds`` linker script in the sdk/tests
+change, please see the ``app.lds`` linker script in the ``tests/tests``
 directory to see the most up to date linking requirements.

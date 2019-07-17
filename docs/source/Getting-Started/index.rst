@@ -37,19 +37,20 @@ Following documents are quick guide to test or deploy Keystone on various platfo
 Tutorials
 --------------------------------------------
 
-   :doc:`Hello world with libc<Tutorials/Build-Enclave-App-Hello-World>`
-   :doc:`Hello world without libc<Tutorials/Build-Enclave-App-Hello-World-Native>`
+
+* :doc:`Hello world with libc<Tutorials/Build-Enclave-App-Hello-World>`
+* :doc:`Hello world without libc<Tutorials/Build-Enclave-App-Hello-World-Native>`
 
 
 Keystone Demo
-=============
+-------------
 
 The Keystone Demo is an example of the current capabilities of the
 Keystone enclave framework.
 
 See https://github.com/keystone-enclave/keystone-demo and
 documentation contained within.
-	
+
 A Guide to Keystone Components
 --------------------------------------------
 
@@ -59,21 +60,21 @@ gitmodules or directories. This is a brief overview of them.
 ::
 
 	+ keystone/
-  	|-- bootrom/ 
+  	|-- bootrom/
   	|	# Keystone bootROM for QEMU virt board, including trusted boot chain.
-  	|-- buildroot/ 
+  	|-- buildroot/
   	|	# Linux buildroot. Builds a minimal working Linux image for our test platforms.
-  	|-- docs/ 
+  	|-- docs/
   	|	# Contains read-the-docs formatted and hosted documentation, such as this article.
-  	|-- riscv-gnu-toolchain/ 
+  	|-- riscv-gnu-toolchain/
   	|	# Unmodified toolchain for building riscv targets. Required to build all other components.
-  	|-- linux-keystone-driver/ 
+  	|-- linux-keystone-driver/
   	|	# A loadable kernel module for Keystone enclave.
-  	|-- riscv-linux/ 
+  	|-- riscv-linux/
   	|	# Linux kernel with RISC-V patches. We use 4.15 with patches for the loadable module support.
-  	|-- riscv-pk/ 
+  	|-- riscv-pk/
   	|	# Berkeley Bootloader (bbl) firmware + Keystone security monitor
-	|-- riscv-qemu/ 
+	|-- riscv-qemu/
 	|	# QEMU with RISC-V patches
-	+-- sdk/ 
+	+-- sdk/
 		# Tools, libraries, and example apps for building enclaves on Keystone
