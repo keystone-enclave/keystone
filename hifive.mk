@@ -54,7 +54,7 @@ all: $(hex) $(vmlinux) $(linux_module)
 
 $(buildroot_initramfs_wrkdir)/.config: $(buildroot_srcdir)
 	cd $(buildroot_srcdir); git status; ls
-	ls -al $(buildroot_initramfs_wrkdir)
+	ls -al $(buildroot_initramfs_wrkdir) || true
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	cp $(buildroot_initramfs_config) $@
