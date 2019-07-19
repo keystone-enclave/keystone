@@ -1,11 +1,9 @@
 # Keystone SDK
 
-Build as part of the top-level [Keystone](https://github.com/keystone-enclave/keystone)
+Build with `make`. Currently does not support any options.
 
-## Build options
+## Runtimes
 
-See the Makefile for current build options. These will modify both how
-libraries are built, as well as the Eyrie runtime.
-
-After changing options, we suggest `make clean` in the sdk directory,
-and then a top-level Keystone build.
+Runtimes are independent git repos in the ``rts/`` directory. They are
+_not_ submodules of the sdk, and should be versioned and managed
+independently.
