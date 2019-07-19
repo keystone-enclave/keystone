@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 #### Replace the variables ###
 
 NAME=my_enclave
@@ -32,4 +34,4 @@ done
 
 # package the enclave
 
-makeself "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" "$PACKAGE_SCRIPT"
+makeself "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" $PACKAGE_SCRIPT
