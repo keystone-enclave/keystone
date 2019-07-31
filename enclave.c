@@ -178,18 +178,6 @@ static enclave_ret_code encl_free_eid(enclave_id eid)
   return ENCLAVE_SUCCESS;
 }
 
-// TODO: This function is externally used by sm-sbi.c.
-// refactoring needed
-enclave_ret_code get_host_satp(enclave_id eid, unsigned long* satp)
-{
-  if(!ENCLAVE_EXISTS(eid))
-    return ENCLAVE_NOT_ACCESSIBLE;
-
-  *satp = enclaves[eid].host_satp;
-
-  return ENCLAVE_SUCCESS;
-}
-
 /* Ensures that dest ptr is in host, not in enclave regions
  */
 static enclave_ret_code copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
@@ -378,7 +366,6 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   enclaves[eid].eid = eid;
   enclaves[eid].rid = region;
   enclaves[eid].utrid = shared_region;
-  enclaves[eid].host_satp = read_csr(satp);
   //print_pgtable(3, (pte_t*) (read_csr(satp) << RISCV_PGSHIFT), 0);
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
   enclaves[eid].n_thread = 0;
@@ -451,7 +438,6 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   enclaves[eid].eid = 0;
   enclaves[eid].rid = 0;
   enclaves[eid].utrid = 0;
-  enclaves[eid].host_satp = 0;
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = (struct runtime_va_params_t) {0};

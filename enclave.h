@@ -47,7 +47,6 @@ struct enclave
   enclave_id eid; //enclave id
   int rid; //region id
   int utrid; // untrusted shared region id
-  unsigned long host_satp; //supervisor satp
   unsigned long encl_satp; // enclave's page table base
   enclave_state state; // global state of the enclave
 
@@ -102,6 +101,5 @@ enclave_ret_code validate_and_hash_enclave(struct enclave* enclave, struct keyst
 // TODO: These functions are supposed to be internal functions.
 void enclave_init_metadata();
 enclave_ret_code copy_from_host(void* source, void* dest, size_t size);
-enclave_ret_code get_host_satp(enclave_id eid, unsigned long* satp);
 
 #endif
