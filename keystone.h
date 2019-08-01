@@ -62,14 +62,8 @@ long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
 int keystone_release(struct inode *inode, struct file *file);
 int keystone_mmap(struct file *filp, struct vm_area_struct *vma);
 
-struct free_page {
-  vaddr_t vaddr;
-  struct list_head freelist;
-};
-
 /* enclave private memory */
 struct epm {
-  struct list_head epm_free_list;
   pte_t* root_page_table;
   vaddr_t ptr;
   size_t size;
@@ -79,7 +73,6 @@ struct epm {
 };
 
 struct utm {
-  struct list_head utm_free_list;
   pte_t* root_page_table;
   void* ptr;
   size_t size;
@@ -93,6 +86,7 @@ struct enclave
   int close_on_pexit;
   struct utm* utm;
   struct epm* epm;
+  bool is_init;
 };
 
 
@@ -118,25 +112,12 @@ struct enclave* get_enclave_by_id(unsigned int ueid);
 static inline uintptr_t  epm_satp(struct epm* epm) {
   return ((uintptr_t)epm->root_page_table >> RISCV_PGSHIFT | SATP_MODE_CHOICE);
 }
-void init_free_pages(struct list_head* pg_list, vaddr_t base, unsigned int count);
-void put_free_page(struct list_head* pg_list, vaddr_t page_addr);
-vaddr_t get_free_page(struct list_head* pg_list);
 
 int epm_destroy(struct epm* epm);
 int epm_init(struct epm* epm, unsigned int count);
 int utm_destroy(struct utm* utm);
 int utm_init(struct utm* utm, size_t untrusted_size);
-int epm_clean_free_list(struct epm* epm);
-int utm_clean_free_list(struct utm* utm);
 paddr_t epm_va_to_pa(struct epm* epm, vaddr_t addr);
-paddr_t epm_get_free_pa(struct epm* epm);
-vaddr_t utm_alloc_page(struct utm* utm, struct epm* epm, vaddr_t addr, unsigned long flags);
-size_t epm_alloc_vspace(struct epm* epm, vaddr_t addr, size_t num_pages);
-vaddr_t epm_alloc_rt_page(struct epm* epm, vaddr_t addr);
-vaddr_t epm_alloc_rt_page_noexec(struct epm* epm, vaddr_t addr);
-vaddr_t epm_alloc_user_page(struct epm* epm, vaddr_t addr);
-vaddr_t epm_alloc_user_page_noexec(struct epm* epm, vaddr_t addr);
-void epm_free_page(struct epm* epm, vaddr_t addr);
 
 
 unsigned long calculate_required_pages(

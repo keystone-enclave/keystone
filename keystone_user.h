@@ -19,16 +19,10 @@
   _IOR(KEYSTONE_IOC_MAGIC, 0x04, struct keystone_ioctl_run_enclave)
 #define KEYSTONE_IOC_RESUME_ENCLAVE \
   _IOR(KEYSTONE_IOC_MAGIC, 0x05, struct keystone_ioctl_run_enclave)
-#define KEYSTONE_IOC_ADD_PAGE \
-  _IOR(KEYSTONE_IOC_MAGIC, 0x06, struct addr_packed)
 #define KEYSTONE_IOC_FINALIZE_ENCLAVE \
-  _IOR(KEYSTONE_IOC_MAGIC, 0x07, struct keystone_ioctl_create_enclave)
-#define KEYSTONE_IOC_UTM_ALLOC \
-  _IOR(KEYSTONE_IOC_MAGIC, 0x08, struct addr_packed)
+  _IOR(KEYSTONE_IOC_MAGIC, 0x06, struct keystone_ioctl_create_enclave)
 #define KEYSTONE_IOC_UTM_INIT \
-  _IOR(KEYSTONE_IOC_MAGIC, 0x09, struct keystone_ioctl_create_enclave)
-#define KEYSTONE_IOC_ALLOC_VSPACE \
-  _IOR(KEYSTONE_IOC_MAGIC, 0x0a, struct keystone_ioctl_alloc_vspace)
+  _IOR(KEYSTONE_IOC_MAGIC, 0x07, struct keystone_ioctl_create_enclave)
 
 #define RT_NOEXEC 0
 #define USER_NOEXEC 1
@@ -54,6 +48,19 @@ struct keystone_ioctl_create_enclave {
   __u64 runtime_vaddr;
   __u64 user_vaddr;
 
+  __u64 pt_ptr;
+  __u64 utm_free_ptr;
+
+  //Used for hash
+  __u64 epm_paddr;
+  __u64 utm_paddr;
+  __u64 runtime_paddr;
+  __u64 user_paddr;
+  __u64 free_paddr;
+
+  __u64 epm_size;
+  __u64 utm_size;
+
   // Runtime Parameters
   struct runtime_params_t params;
 };
@@ -64,19 +71,6 @@ struct keystone_ioctl_run_enclave {
   __u64 args_ptr;
   __u64 args_size;
   __u64 ret;
-};
-
-struct addr_packed {
-  __u64 va;
-  __u64 copied;
-  __u64 eid;
-  __u64 mode;
-};
-
-struct keystone_ioctl_alloc_vspace {
-  __u64 eid;
-  __u64 vaddr;
-  __u64 size;
 };
 
 #endif
