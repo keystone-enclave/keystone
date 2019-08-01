@@ -1,7 +1,11 @@
 /* Default platform does nothing special here */
 #include "enclave.h"
 
-void platform_init(struct platform_enclave_data* enclave){
+void platform_init_global(){
+  return;
+}
+
+void platform_init_enclave(struct platform_enclave_data* enclave){
   return;
 }
 

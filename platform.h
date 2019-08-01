@@ -4,9 +4,18 @@
 /* These functions are defined by platform/soc specific objects,
    defined in platform/$PLATFORM/$PLATFORM.c */
 
-/* This fires once FOR EACH enclave during init of enclave
-   metadata. It may not fail currently. */
-void platform_init(struct platform_enclave_data* enclave);
+/* This fires once FOR EACH sm supported enclave during init of
+   enclave metadata. It may not fail currently. */
+void platform_init_enclave(struct platform_enclave_data* enclave);
+
+/* This fires once GLOBALLY before any other platform init */
+void platform_init_global();
+
+/* This fires once each time an enclave is created by the sm */
+void platform_create_enclave(struct platform_enclave_data* enclave);
+
+/* This fires once each time an enclave is destroyed by the sm */
+void platform_destroy_enclave(struct platform_enclave_data* enclave);
 
 /* This fires when context switching INTO an enclave from the OS */
 void platform_switch_to_enclave(struct platform_enclave_data* enclave);

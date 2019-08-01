@@ -123,13 +123,17 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
 void enclave_init_metadata(){
   enclave_id eid;
 
+  /* Fire platform specific global init */
+  platform_init_global();
+
   /* Assumes eids are incrementing values, which they are for now */
   for(eid=0; eid < ENCL_MAX; eid++){
     enclaves[eid].state = INVALID;
 
-    /* Fire all platform specific init */
-    platform_init(&(enclaves[eid].ped));
+    /* Fire all platform specific init for each enclave */
+    platform_init_enclave(&(enclaves[eid].ped));
   }
+
 }
 
 static enclave_ret_code clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
@@ -383,6 +387,8 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
 
   spinlock_unlock(&encl_lock);
 
+  platform_create_enclave(&enclaves[eid].ped);
+
   if(ret != ENCLAVE_SUCCESS)
     goto free_shared_region;
 
@@ -442,6 +448,8 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = (struct runtime_va_params_t) {0};
   enclaves[eid].pa_params = (struct runtime_pa_params) {0};
+
+  platform_destroy_enclave(&enclaves[eid].ped);
 
   // 3. release eid
   encl_free_eid(eid);
