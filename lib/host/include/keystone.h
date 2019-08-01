@@ -18,30 +18,41 @@
 #include "common.h"
 #include "elffile.h"
 #include "params.h"
+#include "sha3.h"
+#include "memory.h"
 
 class Keystone;
 typedef void (*OcallFunc)(void*);
+typedef sha3_ctx_t hash_ctx_t;
 
 class Keystone
 {
 private:
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
+  Memory memory;
+  char hash[MDSIZE];
+  hash_ctx_t hash_ctx;
   vaddr_t enclave_stk_start;
   vaddr_t enclave_stk_sz;
   vaddr_t runtime_stk_sz;
   vaddr_t untrusted_size;
   vaddr_t untrusted_start;
+  vaddr_t epm_free_list;
+  vaddr_t root_page_table;
+  vaddr_t utm_free_list;
+  vaddr_t start_addr;
   int eid;
   int fd;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   keystone_status_t mapUntrusted(size_t size);
-  keystone_status_t loadUntrusted(void);
+  keystone_status_t loadUntrusted();
   keystone_status_t loadELF(ELFFile* file);
   keystone_status_t initStack(vaddr_t start, size_t size, bool is_rt);
-  keystone_status_t allocPage(vaddr_t va, void* src, unsigned int mode);
+  keystone_status_t allocPage(vaddr_t va, vaddr_t *free_list, vaddr_t src, unsigned int mode);
+  keystone_status_t validate_and_hash_enclave(struct runtime_params_t args, struct keystone_hash_enclave* cargs);
 public:
   Keystone();
   ~Keystone();
@@ -49,6 +60,7 @@ public:
   size_t getSharedBufferSize();
   keystone_status_t registerOcallDispatch(OcallFunc func);
   keystone_status_t init(const char* filepath, const char* runtime, Params parameters);
+  keystone_status_t measure(const char* filepath, const char* runtime, Params parameters);
   keystone_status_t destroy();
   keystone_status_t run();
 
