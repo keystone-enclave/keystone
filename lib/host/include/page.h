@@ -92,19 +92,19 @@ static size_t pt_idx(vaddr_t addr, int level)
 }
 
 
-static pte_t* __ept_walk_create(Memory memory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr);
+static pte_t* __ept_walk_create(Memory* pMemory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr);
 
-static pte_t* __ept_continue_walk_create(Memory memory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr, pte_t* pte)
+static pte_t* __ept_continue_walk_create(Memory* pMemory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr, pte_t* pte)
 {
 	//Gets free page list from pg_list
 	unsigned long free_ppn = ppn(*pg_list);
 	*pte = ptd_create(free_ppn);
   *pg_list += PAGE_SIZE;
 //  printf("ptd_create: ppn = %p, pte = %p, pg_list: %p\n", (void *) (free_ppn << RISCV_PGSHIFT), (void *) (*pte).pte, (void *) *pg_list);
-  return __ept_walk_create(memory, pg_list, root_page_table, addr);
+  return __ept_walk_create(pMemory, pg_list, root_page_table, addr);
 }
 
-static pte_t* __ept_walk_internal(Memory memory, vaddr_t* pg_list, pte_t* root_page_table, vaddr_t addr, int create)
+static pte_t* __ept_walk_internal(Memory* pMemory, vaddr_t* pg_list, pte_t* root_page_table, vaddr_t addr, int create)
 {
 	pte_t* t = (root_page_table);
 
@@ -114,27 +114,27 @@ static pte_t* __ept_walk_internal(Memory memory, vaddr_t* pg_list, pte_t* root_p
 //		printf("pg_list: %p, pt: %p\n", (void *) *pg_list, (void *) __pa(root_page_table + idx));
 //		printf("    level %d: pt_idx %d (%lu)\n", i, (int) idx, idx);
 		if (!(pte_val(t[idx]) & PTE_V)){
-      return create ? __ept_continue_walk_create(memory, pg_list, root_page_table, addr, &t[idx]) : 0;
+      return create ? __ept_continue_walk_create(pMemory, pg_list, root_page_table, addr, &t[idx]) : 0;
 			}
 
-			t = (pte_t *) memory.ReadMem((vaddr_t) pte_ppn(t[idx]) << RISCV_PGSHIFT, PAGE_SIZE);
+			t = (pte_t *) pMemory->ReadMem((vaddr_t) pte_ppn(t[idx]) << RISCV_PGSHIFT, PAGE_SIZE);
 	}
 	return &t[pt_idx(addr, 0)];
 }
 
-static pte_t* __ept_walk_create(Memory memory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr)
+static pte_t* __ept_walk_create(Memory* pMemory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr)
 {
-    return __ept_walk_internal(memory, pg_list, root_page_table, addr, 1);
+    return __ept_walk_internal(pMemory, pg_list, root_page_table, addr, 1);
 }
 
-static pte_t* __ept_walk(Memory memory, vaddr_t * pg_list, pte_t* root_page_table, vaddr_t addr)
+static pte_t* __ept_walk(Memory* pMemory, vaddr_t * pg_list, pte_t* root_page_table, vaddr_t addr)
 {
-    return __ept_walk_internal(memory, pg_list, root_page_table, addr, 0);
+    return __ept_walk_internal(pMemory, pg_list, root_page_table, addr, 0);
 }
 
-vaddr_t epm_va_to_pa(Memory memory, pte_t* root_page_table, vaddr_t addr)
+vaddr_t epm_va_to_pa(Memory* pMemory, pte_t* root_page_table, vaddr_t addr)
 {
-  pte_t* pte = (pte_t *) __ept_walk(memory, NULL, root_page_table, addr);
+  pte_t* pte = (pte_t *) __ept_walk(pMemory, NULL, root_page_table, addr);
   if(pte)
     return pte_ppn(*pte) << RISCV_PGSHIFT;
   else
@@ -143,13 +143,13 @@ vaddr_t epm_va_to_pa(Memory memory, pte_t* root_page_table, vaddr_t addr)
 
 /* This function pre-allocates the required page tables so that
  * the virtual addresses are linearly mapped to the physical memory */
-size_t epm_alloc_vspace(Memory memory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr, size_t num_pages)
+size_t epm_alloc_vspace(Memory* pMemory, vaddr_t *pg_list, pte_t* root_page_table, vaddr_t addr, size_t num_pages)
 {
 	size_t count;
 
 	for(count=0; count < num_pages; count++, addr += PAGE_SIZE)
 	{
-		pte_t* pte = __ept_walk_create(memory, pg_list, root_page_table, addr);
+		pte_t* pte = __ept_walk_create(pMemory, pg_list, root_page_table, addr);
 		if(!pte)
 			break;
 	}

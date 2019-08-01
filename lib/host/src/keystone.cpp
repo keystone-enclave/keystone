@@ -13,15 +13,21 @@
 #include "hash_util.h"
 #include <math.h>
 
-Keystone::Keystone() {
-    runtimeFile = NULL;
-    enclaveFile = NULL;
-    untrusted_size = 0;
-    untrusted_start = 0;
-    epm_free_list = 0;
-    root_page_table = 0;
-    start_addr = 0;
-    eid = -1;
+Keystone::Keystone(bool isSimulated) {
+  runtimeFile = NULL;
+  enclaveFile = NULL;
+  untrusted_size = 0;
+  untrusted_start = 0;
+  epm_free_list = 0;
+  root_page_table = 0;
+  start_addr = 0;
+  eid = -1;
+
+  if (isSimulated) {
+    pMemory = new SimulatedEnclaveMemory();
+  } else {
+    pMemory = new PhysicalEnclaveMemory();
+  }
 }
 
 Keystone::~Keystone() {
@@ -89,7 +95,7 @@ keystone_status_t Keystone::allocPage(vaddr_t va, vaddr_t *free_list, vaddr_t sr
 
   vaddr_t page_addr;
 
-  pte_t* pte = __ept_walk_create(memory, &epm_free_list, (pte_t *) root_page_table, va);
+  pte_t* pte = __ept_walk_create(pMemory, &epm_free_list, (pte_t *) root_page_table, va);
 
   /* if the page has been already allocated, return the page */
   if(pte_val(*pte) & PTE_V) {
@@ -111,17 +117,17 @@ keystone_status_t Keystone::allocPage(vaddr_t va, vaddr_t *free_list, vaddr_t sr
     }
     case RT_FULL: {
       *pte = pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
-      memory.WriteMem(src, (vaddr_t) page_addr << PAGE_BITS, PAGE_SIZE);
+      pMemory->WriteMem(src, (vaddr_t) page_addr << PAGE_BITS, PAGE_SIZE);
       break;
   }
     case USER_FULL: {
       *pte = pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_U | PTE_V);
-      memory.WriteMem(src, (vaddr_t) page_addr << PAGE_BITS, PAGE_SIZE);
+      pMemory->WriteMem(src, (vaddr_t) page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     case UTM_FULL: {
       *pte = pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W |PTE_V);
-      memory.WriteMem(src, (vaddr_t) page_addr << PAGE_BITS, PAGE_SIZE);
+      pMemory->WriteMem(src, (vaddr_t) page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     default: {
@@ -143,7 +149,7 @@ keystone_status_t Keystone::loadELF(ELFFile* elf)
   size_t num_pages = ROUND_DOWN(elf->getTotalMemorySize(), PAGE_BITS) / PAGE_SIZE;
   va = elf->getMinVaddr();
 
-  if (epm_alloc_vspace(memory, &epm_free_list, (pte_t *) root_page_table, va, num_pages) != num_pages)
+  if (epm_alloc_vspace(pMemory, &epm_free_list, (pte_t *) root_page_table, va, num_pages) != num_pages)
   {
     ERROR("failed to allocate vspace\n");
     return KEYSTONE_ERROR;
@@ -271,7 +277,7 @@ keystone_status_t Keystone::measure(const char *eapppath, const char *runtimepat
     return KEYSTONE_ERROR;
   }
 
-  memory.init(0, 0, false);
+  pMemory->init(0, 0);
 
   /* Call Keystone Driver */
   struct keystone_ioctl_create_enclave enclp;
@@ -299,7 +305,7 @@ keystone_status_t Keystone::measure(const char *eapppath, const char *runtimepat
    *
    * */
   eid = enclp.eid;
-  root_page_table = memory.AllocMem(PAGE_SIZE * enclp.min_pages);
+  root_page_table = pMemory->AllocMem(PAGE_SIZE * enclp.min_pages);
   start_addr = root_page_table;
   epm_free_list = start_addr + PAGE_SIZE;
 
@@ -328,7 +334,7 @@ keystone_status_t Keystone::measure(const char *eapppath, const char *runtimepat
 #endif /* USE_FREEMEM */
 
 
-  utm_free_list = memory.AllocMem(enclp.params.untrusted_size);
+  utm_free_list = pMemory->AllocMem(enclp.params.untrusted_size);
   hash_enclave.free_paddr = epm_free_list;
   hash_enclave.utm_paddr = utm_free_list;
 
@@ -431,12 +437,12 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
     return KEYSTONE_ERROR;
   }
 
-  memory.init(fd, enclp.pt_ptr, true);
+  pMemory->init(fd, enclp.pt_ptr);
 
   eid = enclp.eid;
   start_addr = enclp.pt_ptr;
   //Map root page table to user space
-  root_page_table = memory.AllocMem(PAGE_SIZE);
+  root_page_table = pMemory->AllocMem(PAGE_SIZE);
   epm_free_list = enclp.pt_ptr + PAGE_SIZE;
 
   if(loadELF(runtimeFile) != KEYSTONE_SUCCESS) {

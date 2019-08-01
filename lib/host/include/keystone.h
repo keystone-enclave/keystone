@@ -30,7 +30,7 @@ class Keystone
 private:
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
-  Memory memory;
+  Memory* pMemory;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
   vaddr_t enclave_stk_start;
@@ -54,7 +54,7 @@ private:
   keystone_status_t allocPage(vaddr_t va, vaddr_t *free_list, vaddr_t src, unsigned int mode);
   keystone_status_t validate_and_hash_enclave(struct runtime_params_t args, struct keystone_hash_enclave* cargs);
 public:
-  Keystone();
+  Keystone(bool isSimulated=false);
   ~Keystone();
   void* getSharedBuffer();
   size_t getSharedBufferSize();
