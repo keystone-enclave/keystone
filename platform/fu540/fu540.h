@@ -3,11 +3,12 @@
 
 #include "waymasks.h"
 
-struct platform_enclave_data_t {
+struct platform_enclave_data {
 
   size_t num_ways;
   waymask_t saved_mask;
-
+  waymask_t scratchpad_mask;
+  int scratch_rid;
 };
 
 #endif /* _FU540_H_ */

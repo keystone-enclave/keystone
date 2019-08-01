@@ -15,6 +15,7 @@ size_t waymask_allocate_ways(size_t n_ways, unsigned int target_hart,
 
   // Mark these ways as used by an enclave
   enclave_allocated_ways |= *mask;
+  allocated_ways |= *mask;
 
   return remaining;
 }
@@ -52,6 +53,7 @@ void waymask_free_ways(waymask_t _mask){
 
   // Re-enable those ways as free to be allocated
   enclave_allocated_ways &= WM_FLIP_MASK(_mask);
+  allocated_ways &= WM_FLIP_MASK(_mask);
 }
 
 // Simplest possible way choosing, with reserved way for each hart
@@ -126,10 +128,43 @@ int _wm_assign_mask(waymask_t mask, unsigned int master){
 }
 
 void waymask_init(){
+  allocated_ways = 0;
   enclave_allocated_ways = 0;
+  scratchpad_allocated_ways = 0;
+}
+
+void waymask_allocate_scratchpad(waymask_t* _mask){
+
+  /* Avoid the 'special' ways we reserve for cores */
+  waymask_t mask = 0xFF00;
+
+  /* tmp sanity check */
+  if( (allocated_ways & mask) != 0)
+    return;
+
+  scratchpad_allocated_ways = mask;
+  allocated_ways |= scratchpad_allocated_ways;
+
+  *_mask = mask;
+}
+
+void waymask_free_scratchpad(waymask_t* _mask){
+
+  if((scratchpad_allocated_ways & *_mask) != *_mask){
+    //TODO fatal?
+    return;
+  }
+
+  scratchpad_allocated_ways &= WM_FLIP_MASK(_mask);
+  allocated_ways &= WM_FLIP_MASK(_mask);
+
+  *_mask = 0x0;
+
 }
 
 
+/* TODO, this isn't the right way to use the Zero Device, it should be
+   fine to set a bunch of ways and then write directly */
 void waymask_clear_ways(waymask_t mask, unsigned int core){
 
   /* L2 Scratchpad (L2 Zero Device) allows us to write to non-memory

@@ -38,7 +38,14 @@
 
 typedef uint64_t waymask_t;
 
+/* Ways currently allocated to enclaves */
 waymask_t enclave_allocated_ways;
+
+/* Ways currently allocated to the scratchpad */
+waymask_t scratchpad_allocated_ways;
+
+/* All allocated ways, should be OR of above two */
+waymask_t allocated_ways;
 
 // Waymask master IDs
 #define WM_Hart_0_DCache_MMIO           0
@@ -78,7 +85,7 @@ waymask_t enclave_allocated_ways;
 #define WM_FLIP_MASK(mask) ((!mask) & WM_MASK)
 
 
-#define IS_WAY_ALLOCATED( waynum ) ( enclave_allocated_ways & (0x1 << waynum))
+#define IS_WAY_ALLOCATED( waynum ) ( allocated_ways & (0x1 << waynum))
 
 #define IS_MASTER_RUNNING_UNTRUSTED( master ) (/* TODO */ 0)
 
@@ -97,6 +104,7 @@ waymask_t enclave_allocated_ways;
 
 #define L2_NUM_SETS 512
 #define L2_SET_SIZE (L2_SIZE/L2_NUM_SETS)
+#define L2_WAY_SIZE (L2_SIZE/WM_NUM_WAYS)
 #define L2_LINE_SIZE (64)
 
 /* Interface */
@@ -106,6 +114,9 @@ void waymask_apply_allocated_mask(waymask_t mask, unsigned int target_hart);
 void waymask_free_ways(waymask_t _mask);
 void waymask_init();
 void waymask_clear_ways(waymask_t mask, unsigned int core);
+
+void waymask_allocate_scratchpad(waymask_t* _mask);
+void waymask_free_scratchpad(waymask_t* _mask);
 
 /* Internals */
 int _wm_choose_ways_for_hart(size_t n_ways, waymask_t* _mask, unsigned int target_hart);
