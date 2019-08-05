@@ -387,7 +387,6 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
     hash_enclave.utm_paddr = utm_free_list;
   } else {
     int ret;
-    enclp.free_paddr = epm_free_list;
     ret = ioctl(fd, KEYSTONE_IOC_UTM_INIT, &enclp);
     if (ret) {
       ERROR("failed to init untrusted memory - ioctl() failed: %d", ret);
@@ -398,6 +397,7 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   }
 
   loadUntrusted();
+  enclp.free_paddr = epm_free_list;
 
   if(params.isSimulated()) {
     hash_enclave.utm_size = params.getUntrustedSize();
