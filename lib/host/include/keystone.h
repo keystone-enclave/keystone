@@ -28,9 +28,10 @@ typedef sha3_ctx_t hash_ctx_t;
 class Keystone
 {
 private:
+  Params params;
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
-  Memory memory;
+  Memory* pMemory;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
   vaddr_t enclave_stk_start;
@@ -53,6 +54,11 @@ private:
   keystone_status_t initStack(vaddr_t start, size_t size, bool is_rt);
   keystone_status_t allocPage(vaddr_t va, vaddr_t *free_list, vaddr_t src, unsigned int mode);
   keystone_status_t validate_and_hash_enclave(struct runtime_params_t args, struct keystone_hash_enclave* cargs);
+
+  bool initFiles(const char*, const char*);
+  bool initDevice();
+  bool prepareEnclave(struct keystone_ioctl_create_enclave*);
+  bool initMemory();
 public:
   Keystone();
   ~Keystone();
