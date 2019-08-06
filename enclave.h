@@ -20,6 +20,7 @@
 #include TARGET_PLATFORM_HEADER
 
 #define ATTEST_DATA_MAXLEN  1024
+#define ENCLAVE_REGIONS_MAX 8
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 
@@ -40,15 +41,35 @@ typedef enum {
 /* For now, eid's are a simple unsigned int */
 typedef unsigned int enclave_id;
 
+/* Metadata around memory regions associate with this enclave
+ * EPM is the 'home' for the enclave, contains runtime code/etc
+ * UTM is the untrusted shared pages
+ * OTHER is managed by some other component (e.g. platform_)
+ * INVALID is an unused index
+ */
+enum enclave_region_type{
+  REGION_INVALID,
+  REGION_EPM,
+  REGION_UTM,
+  REGION_OTHER,
+};
+
+struct enclave_region
+{
+  region_id pmp_rid;
+  enum enclave_region_type type;
+};
+
 /* enclave metadata */
 struct enclave
 {
   //spinlock_t lock; //local enclave lock. we don't need this until we have multithreaded enclave
   enclave_id eid; //enclave id
-  int rid; //region id
-  int utrid; // untrusted shared region id
   unsigned long encl_satp; // enclave's page table base
   enclave_state state; // global state of the enclave
+
+  /* Physical memory regions associate with this enclave */
+  struct enclave_region regions[ENCLAVE_REGIONS_MAX];
 
   /* measurement */
   byte hash[MDSIZE];
@@ -97,9 +118,10 @@ enclave_ret_code exit_enclave(uintptr_t* regs, unsigned long retval, enclave_id 
 enclave_ret_code stop_enclave(uintptr_t* regs, uint64_t request, enclave_id eid);
 enclave_ret_code attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, enclave_id eid);
 /* attestation and virtual mapping validation */
-enclave_ret_code validate_and_hash_enclave(struct enclave* enclave, struct keystone_sbi_create* cargs);
+enclave_ret_code validate_and_hash_enclave(struct enclave* enclave);
 // TODO: These functions are supposed to be internal functions.
 void enclave_init_metadata();
 enclave_ret_code copy_from_host(void* source, void* dest, size_t size);
+int get_enclave_region_index(struct enclave* enclave, enum enclave_region_type type);
 
 #endif

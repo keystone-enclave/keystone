@@ -78,9 +78,11 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   clear_csr(mip, MIP_SEIP);
 
   // set PMP
-  pmp_set(enclaves[eid].rid, PMP_ALL_PERM);
+  int epm_idx = get_enclave_region_index(&enclaves[eid], REGION_EPM);
+  pmp_set(enclaves[eid].regions[epm_idx].pmp_rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM);
-  pmp_set(enclaves[eid].utrid, PMP_ALL_PERM);
+  int utm_idx = get_enclave_region_index(&enclaves[eid], REGION_UTM);
+  pmp_set(enclaves[eid].regions[utm_idx].pmp_rid, PMP_ALL_PERM);
 
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid].ped));
@@ -91,11 +93,10 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
 
 static inline void context_switch_to_host(uintptr_t* encl_regs,
     enclave_id eid){
-  // get the running enclave on this SM
-  struct enclave encl = enclaves[eid];
 
   // set PMP
-  pmp_set(encl.rid, PMP_NO_PERM);
+  int epm_idx = get_enclave_region_index(&enclaves[eid], REGION_EPM);
+  pmp_set(enclaves[eid].regions[epm_idx].pmp_rid, PMP_NO_PERM);
   osm_pmp_set(PMP_ALL_PERM);
 
   /* restore host context */
@@ -122,13 +123,18 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
  */
 void enclave_init_metadata(){
   enclave_id eid;
+  int i=0;
 
   /* Assumes eids are incrementing values, which they are for now */
   for(eid=0; eid < ENCL_MAX; eid++){
     enclaves[eid].state = INVALID;
 
+    // Clear out regions
+    for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
+      enclaves[eid].regions[i].type = REGION_INVALID;
+    }
     /* Fire all platform specific init for each enclave */
-    platform_init_enclave(&(enclaves[eid].ped));
+    platform_init(&(enclaves[eid].ped));
   }
 
 }
@@ -179,6 +185,16 @@ static enclave_ret_code encl_free_eid(enclave_id eid)
   return ENCLAVE_SUCCESS;
 }
 
+int get_enclave_region_index(struct enclave* enclave, enum enclave_region_type type){
+  size_t i;
+  for(i = 0;i < ENCLAVE_REGIONS_MAX; i++){
+    if(enclave->regions[i].type == type){
+      return i;
+    }
+  }
+  // No such region for this enclave
+  return -1;
+}
 /* Ensures that dest ptr is in host, not in enclave regions
  */
 static enclave_ret_code copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
@@ -219,14 +235,33 @@ enclave_ret_code copy_from_host(void* source, void* dest, size_t size){
     return ENCLAVE_SUCCESS;
 }
 
+static int buffer_in_enclave_region(struct enclave* enclave,
+                                    void* start, size_t size){
+  int legal = 0;
+
+  int i;
+  /* Check if the source is in a valid region */
+  for(i = 0; i < ENCLAVE_REGIONS_MAX; i++){
+    if(enclave->regions[i].type == REGION_INVALID ||
+       enclave->regions[i].type == REGION_UTM)
+      continue;
+    uintptr_t region_start = pmp_region_get_addr(enclave->regions[i].pmp_rid);
+    size_t region_size = pmp_region_get_size(enclave->regions[i].pmp_rid);
+    if(start >= (void*)region_start
+       && start + size <= (void*)(region_start + region_size)){
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /* copies data from enclave, source must be inside EPM */
 static enclave_ret_code copy_from_enclave(struct enclave* enclave,
-                                void* dest, void* source, size_t size) {
-  int legal = 0;
+                                          void* dest, void* source, size_t size) {
+
   spinlock_lock(&encl_lock);
-  legal = (source >= (void*) pmp_region_get_addr(enclave->rid)
-      && source + size <= (void*) pmp_region_get_addr(enclave->rid) +
-      pmp_region_get_size(enclave->rid));
+  int legal = buffer_in_enclave_region(enclave, source, size);
+
   if(legal)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
@@ -239,12 +274,10 @@ static enclave_ret_code copy_from_enclave(struct enclave* enclave,
 
 /* copies data into enclave, destination must be inside EPM */
 static enclave_ret_code copy_to_enclave(struct enclave* enclave,
-                              void* dest, void* source, size_t size) {
-  int legal = 0;
+                                        void* dest, void* source, size_t size) {
   spinlock_lock(&encl_lock);
-  legal = (dest >= (void*) pmp_region_get_addr(enclave->rid)
-      && dest + size <= (void*) pmp_region_get_addr(enclave->rid) +
-      pmp_region_get_size(enclave->rid));
+  int legal = buffer_in_enclave_region(enclave, dest, size);
+
   if(legal)
     memcpy(dest, source, size);
   spinlock_unlock(&encl_lock);
@@ -363,10 +396,15 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   // cleanup some memory regions for sanity See issue #38
   clean_enclave_memory(utbase, utsize);
 
+
   // initialize enclave metadata
   enclaves[eid].eid = eid;
-  enclaves[eid].rid = region;
-  enclaves[eid].utrid = shared_region;
+
+  enclaves[eid].regions[0].pmp_rid = region;
+  enclaves[eid].regions[0].type = REGION_EPM;
+  enclaves[eid].regions[1].pmp_rid = shared_region;
+  enclaves[eid].regions[1].type = REGION_UTM;
+
   //print_pgtable(3, (pte_t*) (read_csr(satp) << RISCV_PGSHIFT), 0);
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
   enclaves[eid].n_thread = 0;
@@ -376,11 +414,14 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   /* Init enclave state (regs etc) */
   clean_state(&enclaves[eid].threads[0]);
 
+  /* Platform create happens as the last thing before hashing/etc since
+     it may modify the enclave struct */
+  platform_create_enclave(&enclaves[eid]);
+
   /* Validate memory, prepare hash and signature for attestation */
   spinlock_lock(&encl_lock);
   enclaves[eid].state = FRESH;
-  ret = validate_and_hash_enclave(&enclaves[eid],
-                                  &create_args);
+  ret = validate_and_hash_enclave(&enclaves[eid]);
 
   spinlock_unlock(&encl_lock);
 
@@ -426,25 +467,40 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   if(!destroyable)
     return ENCLAVE_NOT_DESTROYABLE;
 
-  // 1. clear all the data in the enclave page
+  // 1. clear all the data in the enclave pages
   // requires no lock (single runner)
-  void* base = (void*) pmp_region_get_addr(enclaves[eid].rid);
-  size_t size = (size_t) pmp_region_get_size(enclaves[eid].rid);
+  int i;
+  void* base;
+  size_t size;
+  region_id rid;
+  for(i = 0; i < ENCLAVE_REGIONS_MAX; i++){
+    if(enclaves[eid].regions[i].type == REGION_INVALID ||
+       enclaves[eid].regions[i].type == REGION_UTM)
+      continue;
+    //1.a Clear all pages
+    rid = enclaves[eid].regions[i].pmp_rid;
+    base = (void*) pmp_region_get_addr(rid);
+    size = (size_t) pmp_region_get_size(rid);
+    memset((void*) base, 0, size);
 
-  memset((void*) base, 0, size);
+    //1.b free pmp region
+    pmp_unset_global(rid);
+    pmp_region_free_atomic(rid);
+  }
 
-  // 2. free pmp region
-  pmp_unset_global(enclaves[eid].rid);
-  pmp_region_free_atomic(enclaves[eid].rid);
-  pmp_region_free_atomic(enclaves[eid].utrid);
+  // 2. free pmp region for UTM
+  rid = get_enclave_region_index(&enclaves[eid], REGION_UTM);
+  if(rid != -1)
+    pmp_region_free_atomic(enclaves[eid].regions[rid].pmp_rid);
 
-  enclaves[eid].eid = 0;
-  enclaves[eid].rid = 0;
-  enclaves[eid].utrid = 0;
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = (struct runtime_va_params_t) {0};
   enclaves[eid].pa_params = (struct runtime_pa_params) {0};
+  for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
+    enclaves[eid].regions[i].type = REGION_INVALID;
+  }
+
 
   platform_destroy_enclave(&enclaves[eid].ped);
 

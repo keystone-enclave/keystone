@@ -10,12 +10,24 @@
    linear at-most-once paddr mappings, and then hashing valid pages */
 int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
                           pte_t* tb, uintptr_t vaddr, int contiguous,
-                          struct keystone_sbi_create* cargs,
+                          struct enclave* encl,
                           uintptr_t* runtime_max_seen,
                           uintptr_t* user_max_seen)
 {
   pte_t* walk;
   int i;
+
+  //TODO check for failures
+  uintptr_t epm_start, epm_size;
+  uintptr_t utm_start, utm_size;
+  int idx = get_enclave_region_index(encl, REGION_EPM);
+  epm_start = pmp_region_get_addr(encl->regions[idx].pmp_rid);
+  epm_size = pmp_region_get_size(encl->regions[idx].pmp_rid);
+  idx = get_enclave_region_index(encl, REGION_UTM);
+  utm_start = pmp_region_get_addr(encl->regions[idx].pmp_rid);
+  utm_size = pmp_region_get_size(encl->regions[idx].pmp_rid);
+
+
 
   /* iterate over PTEs */
   for (walk=tb, i=0; walk < tb + (RISCV_PGSIZE/sizeof(pte_t)); walk += 1,i++)
@@ -28,10 +40,10 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
     uintptr_t phys_addr = (*walk >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
 
     /* Check for blatently invalid mappings */
-    int map_in_epm = (phys_addr >= cargs->epm_region.paddr &&
-                      phys_addr < cargs->epm_region.paddr + cargs->epm_region.size);
-    int map_in_utm = (phys_addr >= cargs->utm_region.paddr &&
-                      phys_addr < cargs->utm_region.paddr + cargs->utm_region.size);
+    int map_in_epm = (phys_addr >= epm_start &&
+                      phys_addr < epm_start + epm_size);
+    int map_in_utm = (phys_addr >= utm_start &&
+                      phys_addr < utm_start + utm_size);
 
     /* EPM may map anything, UTM may not map pgtables */
     if(!map_in_epm && (!map_in_utm || level != 1)){
@@ -72,10 +84,10 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
        *
        * We also validate that all utm vaddrs -> utm paddrs
        */
-      int in_runtime = ((phys_addr >= cargs->runtime_paddr) &&
-                        (phys_addr < (cargs->user_paddr)));
-      int in_user = ((phys_addr >= cargs->user_paddr) &&
-                     (phys_addr < (cargs->free_paddr)));
+      int in_runtime = ((phys_addr >= encl->pa_params.runtime_base) &&
+                        (phys_addr < encl->pa_params.user_base));
+      int in_user = ((phys_addr >= encl->pa_params.user_base) &&
+                     (phys_addr < encl->pa_params.free_base));
 
       /* Validate U bit */
       if(in_user && !(*walk & PTE_U)){
@@ -83,8 +95,8 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
       }
 
       /* If the vaddr is in UTM, the paddr must be in UTM */
-      if(va_start >= cargs->params.untrusted_ptr &&
-         va_start < (cargs->params.untrusted_ptr + cargs->params.untrusted_size) &&
+      if(va_start >= encl->params.untrusted_ptr &&
+         va_start < (encl->params.untrusted_ptr + encl->params.untrusted_size) &&
          !map_in_utm){
         goto fatal_bail;
       }
@@ -131,7 +143,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
                                          (pte_t*) phys_addr,
                                          vpn,
                                          contiguous,
-                                         cargs,
+                                         encl,
                                          runtime_max_seen,
                                          user_max_seen);
       if(contiguous == -1){
@@ -139,10 +151,10 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
                va_start,phys_addr,
                //in_runtime,
                0,
-               cargs->runtime_paddr,
+               encl->pa_params.runtime_base,
                0,
                //in_user,
-               cargs->user_paddr);
+               encl->pa_params.user_base);
         goto fatal_bail;
       }
     }
@@ -154,8 +166,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
   return -1;
 }
 
-enclave_ret_code validate_and_hash_enclave(struct enclave* enclave,
-                                        struct keystone_sbi_create* cargs){
+enclave_ret_code validate_and_hash_enclave(struct enclave* enclave){
 
   hash_ctx hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
@@ -174,7 +185,7 @@ enclave_ret_code validate_and_hash_enclave(struct enclave* enclave,
   int valid = validate_and_hash_epm(&hash_ctx,
                                     ptlevel,
                                     (pte_t*) (enclave->encl_satp << RISCV_PGSHIFT),
-                                    0, 0, cargs, &runtime_max_seen, &user_max_seen);
+                                    0, 0, enclave, &runtime_max_seen, &user_max_seen);
 
   if(valid == -1){
     return ENCLAVE_ILLEGAL_PTE;
