@@ -101,60 +101,59 @@ void platform_init_global(){
 
 }
 
-void platform_init_enclave(struct platform_enclave_data* ped){
-  ped->num_ways = 0; // DISABLE waymasking
+void platform_init_enclave(struct enclave* enclave){
+  enclave->ped.num_ways = 0; // DISABLE waymasking
   //ped->num_ways = WM_NUM_WAYS/2;
-  ped->saved_mask = 0;
+  enclave->ped.saved_mask = 0;
 }
 
-void platform_create_enclave(struct platform_enclave_data* ped){
+void platform_create_enclave(struct enclave* enclave){
   scratch_init();
 
-  ped->use_scratch = 1;
+  enclave->ped.use_scratch = 1;
   //
 }
 
-void platform_destroy_enclave(struct platform_enclave_data* ped){
-  unsigned int core = read_csr(mhartid);
-  ped->use_scratch = 0;
+void platform_destroy_enclave(struct enclave* enclave){
+  enclave->ped.use_scratch = 0;
 
   /* TODO Must clean out the scratchpad if it was in use! */
 
 }
 
-void platform_switch_to_enclave(struct platform_enclave_data* ped){
+void platform_switch_to_enclave(struct enclave* enclave){
 
-   if(ped->num_ways > 0){
+  if(enclave->ped.num_ways > 0){
     // Each hart gets special access to some
     unsigned int core = read_csr(mhartid);
 
     //Allocate ways, fresh every time we enter
-    size_t remaining = waymask_allocate_ways(ped->num_ways,
+    size_t remaining = waymask_allocate_ways(enclave->ped.num_ways,
                                              core,
-                                             &ped->saved_mask);
+                                             &enclave->ped.saved_mask);
 
-    //printm("Chose ways: 0x%x, core 0x%x\r\n",ped->saved_mask, core);
+    //printm("Chose ways: 0x%x, core 0x%x\r\n",enclave->ped.saved_mask, core);
     /* Assign the ways to all cores */
-    waymask_apply_allocated_mask(ped->saved_mask, core);
+    waymask_apply_allocated_mask(enclave->ped.saved_mask, core);
 
     /* Clear out these ways MUST first apply mask to other masters */
-    waymask_clear_ways(ped->saved_mask, core);
+    waymask_clear_ways(enclave->ped.saved_mask, core);
   }
 
   /* Setup PMP region for scratchpad */
-  if(ped->use_scratch != 0){
+  if(enclave->ped.use_scratch != 0){
     pmp_set(scratch_rid, PMP_ALL_PERM);
     //printm("Switching to an enclave with scratchpad access\r\n");
   }
 }
 
-void platform_switch_from_enclave(struct platform_enclave_data* ped){
-  if(ped->num_ways > 0){
+void platform_switch_from_enclave(struct enclave* enclave){
+  if(enclave->ped.num_ways > 0){
     /* Free all our ways */
-    waymask_free_ways(ped->saved_mask);
+    waymask_free_ways(enclave->ped.saved_mask);
     /* We don't need to clean them, see docs */
   }
-  if(ped->use_scratch != 0){
+  if(enclave->ped.use_scratch != 0){
     pmp_set(scratch_rid, PMP_NO_PERM);
   }
 

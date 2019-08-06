@@ -85,7 +85,7 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   pmp_set(enclaves[eid].regions[utm_idx].pmp_rid, PMP_ALL_PERM);
 
   // Setup any platform specific defenses
-  platform_switch_to_enclave(&(enclaves[eid].ped));
+  platform_switch_to_enclave(&(enclaves[eid]));
 
   cpu_enter_enclave_context(eid);
   return ENCLAVE_SUCCESS;
@@ -108,7 +108,7 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
   set_csr(mie, MIP_MTIP);
 
   // Reconfigure platform specific defenses
-  platform_switch_from_enclave(&(enclaves[eid].ped));
+  platform_switch_from_enclave(&(enclaves[eid]));
 
   cpu_exit_enclave_context();
   return;
@@ -134,7 +134,7 @@ void enclave_init_metadata(){
       enclaves[eid].regions[i].type = REGION_INVALID;
     }
     /* Fire all platform specific init for each enclave */
-    platform_init(&(enclaves[eid].ped));
+    platform_init_enclave(&(enclaves[eid]));
   }
 
 }
@@ -425,8 +425,6 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
 
   spinlock_unlock(&encl_lock);
 
-  platform_create_enclave(&enclaves[eid].ped);
-
   if(ret != ENCLAVE_SUCCESS)
     goto free_shared_region;
 
@@ -502,7 +500,7 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   }
 
 
-  platform_destroy_enclave(&enclaves[eid].ped);
+  platform_destroy_enclave(&enclaves[eid]);
 
   // 3. release eid
   encl_free_eid(eid);
