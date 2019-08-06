@@ -75,4 +75,4 @@ popd
 
 # create vault archive & remove output files
 makeself "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" $PACKAGE_SCRIPT
-#rm -rf $OUTPUT_FILES_DIR
+rm -rf $OUTPUT_FILES_DIR

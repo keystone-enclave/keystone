@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+
 ################################################################
 #                   Replace the variables                      #
 ################################################################
@@ -81,5 +82,5 @@ done
 popd
 
 # create vault archive & remove output files
-makeself --noprogress "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" "$PACKAGE_SCRIPT"
+makeself --noprogress "$OUTPUT_FILES_DIR" "$OUTPUT_DIR/$NAME.ke" "Keystone vault archive" $PACKAGE_SCRIPT
 rm -rf $OUTPUT_FILES_DIR
