@@ -13,6 +13,14 @@ void platform_init_enclave(struct platform_enclave_data* enclave){
   return;
 }
 
+void platform_destroy_enclave(struct platform_enclave_data* enclave){
+  return;
+}
+
+void platform_create_enclave(struct platform_enclave_data* enclave){
+  return;
+}
+
 void platform_switch_to_enclave(struct platform_enclave_data* enclave){
   return;
 }
