@@ -9,6 +9,8 @@
 void platform_init_enclave(struct platform_enclave_data* enclave);
 
 /* This fires once GLOBALLY before any other platform init */
+void platform_init_global_once();
+/* Fires once per-hart after global_once */
 void platform_init_global();
 
 /* This fires once each time an enclave is created by the sm */

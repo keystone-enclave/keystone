@@ -1,6 +1,10 @@
 /* Default platform does nothing special here */
 #include "enclave.h"
 
+void platform_init_global_once(){
+  return;
+}
+
 void platform_init_global(){
   return;
 }

@@ -50,6 +50,7 @@ waymask_t allocated_ways;
 
 /* PMP Region ID for the scratchpad */
 region_id scratch_rid;
+region_id l2_controller_rid;
 
 // Waymask master IDs
 #define WM_Hart_0_DCache_MMIO           0
@@ -103,7 +104,7 @@ region_id scratch_rid;
 
 // L2 Zero Device (Scratchpad) info
 #define L2_SCRATCH_START (0x0A000000)
-#define L2_SCRATCH_STOP  (0x0BFFFFFF)
+#define L2_SCRATCH_STOP  (0x0C000000)
 
 /* 2 MB */
 #define L2_SIZE (2*1024*1024)

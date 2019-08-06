@@ -123,9 +123,6 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
 void enclave_init_metadata(){
   enclave_id eid;
 
-  /* Fire platform specific global init */
-  platform_init_global();
-
   /* Assumes eids are incrementing values, which they are for now */
   for(eid=0; eid < ENCL_MAX; eid++){
     enclaves[eid].state = INVALID;
