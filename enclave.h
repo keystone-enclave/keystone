@@ -123,5 +123,4 @@ enclave_ret_code validate_and_hash_enclave(struct enclave* enclave);
 void enclave_init_metadata();
 enclave_ret_code copy_from_host(void* source, void* dest, size_t size);
 int get_enclave_region_index(struct enclave* enclave, enum enclave_region_type type);
-
 #endif

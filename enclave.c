@@ -465,6 +465,11 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   if(!destroyable)
     return ENCLAVE_NOT_DESTROYABLE;
 
+
+  // 0. Let the platform specifics do cleanup/modifications
+  platform_destroy_enclave(&enclaves[eid]);
+
+
   // 1. clear all the data in the enclave pages
   // requires no lock (single runner)
   int i;
@@ -498,9 +503,6 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
     enclaves[eid].regions[i].type = REGION_INVALID;
   }
-
-
-  platform_destroy_enclave(&enclaves[eid]);
 
   // 3. release eid
   encl_free_eid(eid);
