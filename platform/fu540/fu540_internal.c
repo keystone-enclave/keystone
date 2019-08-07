@@ -13,9 +13,7 @@ void scratch_init(){
   }
 
   /* TODO TMP way to try and get the scratchpad allocated */
-  waymask_allocate_scratchpad(&scratchpad_allocated_ways);
-
-
+  waymask_allocate_scratchpad();
 
   /* Clear scratchpad for use */
   unsigned int core = read_csr(mhartid);
@@ -105,20 +103,67 @@ void platform_init_enclave(struct enclave* enclave){
   enclave->ped.num_ways = 0; // DISABLE waymasking
   //ped->num_ways = WM_NUM_WAYS/2;
   enclave->ped.saved_mask = 0;
+  enclave->ped.use_scratch = 0;
 }
 
 void platform_create_enclave(struct enclave* enclave){
-  scratch_init();
 
-  enclave->ped.use_scratch = 1;
-  //
+  enclave->ped.use_scratch = 0;
+  int i;
+  if(enclave->ped.use_scratch){
+    scratch_init();
+
+    /* Swap regions */
+    int old_epm_idx = get_enclave_region_index(enclave, REGION_EPM);
+    int new_idx = get_enclave_region_index(enclave, REGION_INVALID);
+    //TODO safety check
+    enclave->regions[new_idx].pmp_rid = scratch_rid;
+    enclave->regions[new_idx].type = REGION_EPM;
+    enclave->regions[old_epm_idx].type = REGION_OTHER;
+
+    /* Copy the enclave over */
+    uintptr_t old_epm_start = pmp_region_get_addr(enclave->regions[old_epm_idx].pmp_rid);
+    uintptr_t scratch_epm_start = pmp_region_get_addr(scratch_rid);
+    size_t size = enclave->pa_params.free_base - old_epm_start;
+
+    //TODO need a check and failure mode here
+    if(size > pmp_region_get_size(scratch_rid)){
+      printm("FATAL: Enclave too big for scratchpad!\r\n");
+    }
+    memcpy((void*)scratch_epm_start,
+           (void*)old_epm_start,
+           size);
+
+    /* Change pa params to the new region */
+    enclave->pa_params.runtime_base = (scratch_epm_start +
+                                       (enclave->pa_params.runtime_base -
+                                        old_epm_start));
+    enclave->pa_params.user_base = (scratch_epm_start +
+                                    (enclave->pa_params.user_base -
+                                     old_epm_start));
+    enclave->pa_params.free_base = (scratch_epm_start +
+                                       size);
+
+  }
+
+
+
 }
 
 void platform_destroy_enclave(struct enclave* enclave){
+  if(enclave->ped.use_scratch){
+    /* Clean out the region ourselves */
+    /* TODO wipe */
+
+    /* Fix the enclave region info to no longer know about
+       scratchpad */
+    int scratch_epm_idx = get_enclave_region_index(enclave, REGION_EPM);
+    enclave->regions[scratch_epm_idx].type = REGION_INVALID;
+
+    /* Free the scratchpad */
+    waymask_free_scratchpad();
+  }
   enclave->ped.use_scratch = 0;
-
-  /* TODO Must clean out the scratchpad if it was in use! */
-
 }
 
 void platform_switch_to_enclave(struct enclave* enclave){

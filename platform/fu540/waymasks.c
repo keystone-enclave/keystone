@@ -144,7 +144,7 @@ void waymask_init(){
   scratchpad_allocated_ways = 0;
 }
 
-void waymask_allocate_scratchpad(waymask_t* _mask){
+void waymask_allocate_scratchpad(){
 
   /* Avoid the 'special' ways we reserve for cores */
   waymask_t mask = 0xF00 | 0x80 | 0x1000 | 0x2000 | 0x4000;
@@ -157,21 +157,12 @@ void waymask_allocate_scratchpad(waymask_t* _mask){
 
   scratchpad_allocated_ways = mask;
   allocated_ways |= scratchpad_allocated_ways;
-
-  *_mask = mask;
 }
 
-void waymask_free_scratchpad(waymask_t* _mask){
+void waymask_free_scratchpad(){
 
-  if((scratchpad_allocated_ways & *_mask) != *_mask){
-    //TODO fatal?
-    return;
-  }
-
-  scratchpad_allocated_ways &= WM_FLIP_MASK(*_mask);
-  allocated_ways &= WM_FLIP_MASK(*_mask);
-
-  *_mask = 0x0;
+  allocated_ways &= WM_FLIP_MASK(scratchpad_allocated_ways);
+  scratchpad_allocated_ways = 0;
 
 }
 

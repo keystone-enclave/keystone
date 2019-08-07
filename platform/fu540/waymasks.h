@@ -125,8 +125,8 @@ void waymask_free_ways(waymask_t _mask);
 void waymask_init();
 void waymask_clear_ways(waymask_t mask, unsigned int core);
 
-void waymask_allocate_scratchpad(waymask_t* _mask);
-void waymask_free_scratchpad(waymask_t* _mask);
+void waymask_allocate_scratchpad();
+void waymask_free_scratchpad();
 
 /* Internals */
 int _wm_choose_ways_for_hart(size_t n_ways, waymask_t* _mask, unsigned int target_hart);
