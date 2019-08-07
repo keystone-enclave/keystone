@@ -198,12 +198,18 @@ int get_enclave_region_index(enclave_id eid, enum enclave_region_type type){
 
 uintptr_t get_enclave_region_size(enclave_id eid, int memid)
 {
-  return pmp_region_get_size(enclaves[eid].regions[memid].pmp_rid);
+  if (0 <= memid && memid < ENCLAVE_REGIONS_MAX)
+    return pmp_region_get_size(enclaves[eid].regions[memid].pmp_rid);
+
+  return 0;
 }
 
 uintptr_t get_enclave_region_base(enclave_id eid, int memid)
 {
-  return pmp_region_get_size(enclaves[eid].regions[memid].pmp_rid);
+  if (0 <= memid && memid < ENCLAVE_REGIONS_MAX)
+    return pmp_region_get_size(enclaves[eid].regions[memid].pmp_rid);
+
+  return 0;
 }
 
 /* Ensures that dest ptr is in host, not in enclave regions
