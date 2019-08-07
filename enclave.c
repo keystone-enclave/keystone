@@ -78,10 +78,10 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   clear_csr(mip, MIP_SEIP);
 
   // set PMP
-  int epm_idx = get_enclave_region_index(&enclaves[eid], REGION_EPM);
+  int epm_idx = get_enclave_region_index(eid, REGION_EPM);
   pmp_set(enclaves[eid].regions[epm_idx].pmp_rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM);
-  int utm_idx = get_enclave_region_index(&enclaves[eid], REGION_UTM);
+  int utm_idx = get_enclave_region_index(eid, REGION_UTM);
   pmp_set(enclaves[eid].regions[utm_idx].pmp_rid, PMP_ALL_PERM);
 
   // Setup any platform specific defenses
@@ -95,7 +95,7 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
     enclave_id eid){
 
   // set PMP
-  int epm_idx = get_enclave_region_index(&enclaves[eid], REGION_EPM);
+  int epm_idx = get_enclave_region_index(eid, REGION_EPM);
   pmp_set(enclaves[eid].regions[epm_idx].pmp_rid, PMP_NO_PERM);
   osm_pmp_set(PMP_ALL_PERM);
 
@@ -185,16 +185,27 @@ static enclave_ret_code encl_free_eid(enclave_id eid)
   return ENCLAVE_SUCCESS;
 }
 
-int get_enclave_region_index(struct enclave* enclave, enum enclave_region_type type){
+int get_enclave_region_index(enclave_id eid, enum enclave_region_type type){
   size_t i;
   for(i = 0;i < ENCLAVE_REGIONS_MAX; i++){
-    if(enclave->regions[i].type == type){
+    if(enclaves[eid].regions[i].type == type){
       return i;
     }
   }
   // No such region for this enclave
   return -1;
 }
+
+uintptr_t get_enclave_region_size(enclave_id eid, int memid)
+{
+  return pmp_region_get_size(enclaves[eid].regions[memid].pmp_rid);
+}
+
+uintptr_t get_enclave_region_base(enclave_id eid, int memid)
+{
+  return pmp_region_get_size(enclaves[eid].regions[memid].pmp_rid);
+}
+
 /* Ensures that dest ptr is in host, not in enclave regions
  */
 static enclave_ret_code copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
@@ -487,7 +498,7 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   }
 
   // 2. free pmp region for UTM
-  rid = get_enclave_region_index(&enclaves[eid], REGION_UTM);
+  rid = get_enclave_region_index(eid, REGION_UTM);
   if(rid != -1)
     pmp_region_free_atomic(enclaves[eid].regions[rid].pmp_rid);
 

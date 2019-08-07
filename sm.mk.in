@@ -18,6 +18,8 @@ sm_c_srcs = \
   ed25519/ge.c \
   ed25519/sc.c \
   platform/@TARGET_PLATFORM@/@TARGET_PLATFORM@.c \
+	plugins/plugins.c \
+# TODO: should be @PLUGIN_SOURSES@ \
 
 sm_asm_srcs =
 

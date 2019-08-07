@@ -21,4 +21,7 @@ uintptr_t mcall_sm_stop_enclave(uintptr_t* regs, unsigned long request);
 uintptr_t mcall_sm_resume_enclave(uintptr_t* regs, unsigned long eid);
 uintptr_t mcall_sm_attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size);
 uintptr_t mcall_sm_random();
+
+uintptr_t mcall_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1);
+
 #endif

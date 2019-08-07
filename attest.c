@@ -20,10 +20,10 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
   //TODO check for failures
   uintptr_t epm_start, epm_size;
   uintptr_t utm_start, utm_size;
-  int idx = get_enclave_region_index(encl, REGION_EPM);
+  int idx = get_enclave_region_index(encl->eid, REGION_EPM);
   epm_start = pmp_region_get_addr(encl->regions[idx].pmp_rid);
   epm_size = pmp_region_get_size(encl->regions[idx].pmp_rid);
-  idx = get_enclave_region_index(encl, REGION_UTM);
+  idx = get_enclave_region_index(encl->eid, REGION_UTM);
   utm_start = pmp_region_get_addr(encl->regions[idx].pmp_rid);
   utm_size = pmp_region_get_size(encl->regions[idx].pmp_rid);
 

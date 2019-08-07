@@ -9,6 +9,7 @@
 #include "cpu.h"
 #include <errno.h>
 #include "platform.h"
+#include "plugins/plugins.h"
 
 uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 {
@@ -111,6 +112,15 @@ uintptr_t mcall_sm_random()
   /* Anyone may call this interface. */
 
   return platform_random();
+}
+
+uintptr_t mcall_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1)
+{
+  if(!cpu_is_enclave_context()) {
+    return ENCLAVE_SBI_PROHIBITED;
+  }
+
+  return call_plugin(cpu_get_enclave_id(), plugin_id, call_id, arg0, arg1);
 }
 
 /* TODO: this should be removed in the future. */
