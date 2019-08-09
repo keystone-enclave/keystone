@@ -113,8 +113,8 @@ void platform_create_enclave(struct enclave* enclave){
     scratch_init();
 
     /* Swap regions */
-    int old_epm_idx = get_enclave_region_index(enclave, REGION_EPM);
-    int new_idx = get_enclave_region_index(enclave, REGION_INVALID);
+    int old_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
+    int new_idx = get_enclave_region_index(enclave->eid, REGION_INVALID);
     //TODO safety check
     enclave->regions[new_idx].pmp_rid = scratch_rid;
     enclave->regions[new_idx].type = REGION_EPM;
@@ -167,7 +167,7 @@ void platform_destroy_enclave(struct enclave* enclave){
 
     /* Fix the enclave region info to no longer know about
        scratchpad */
-    int scratch_epm_idx = get_enclave_region_index(enclave, REGION_EPM);
+    int scratch_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
     enclave->regions[scratch_epm_idx].type = REGION_INVALID;
 
     /* Free the scratchpad */
