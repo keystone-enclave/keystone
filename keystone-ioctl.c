@@ -67,17 +67,9 @@ int keystone_finalize_enclave(unsigned long arg)
   }
 
   // physical addresses for runtime, user, and freemem
-  create_args.runtime_paddr = epm_va_to_pa(enclave->epm, enclp->runtime_vaddr);
-  create_args.user_paddr = epm_va_to_pa(enclave->epm, enclp->user_vaddr);
+  create_args.runtime_paddr = enclp->runtime_paddr;
+  create_args.user_paddr = enclp->user_paddr;
   create_args.free_paddr = enclp->free_paddr;
-
-  enclp->runtime_paddr = create_args.runtime_paddr;
-  enclp->user_paddr = create_args.user_paddr;
-  enclp->epm_paddr = create_args.epm_region.paddr;
-  enclp->utm_paddr = create_args.utm_region.paddr;
-  enclp->epm_size = create_args.epm_region.size;
-  enclp->utm_size = create_args.utm_region.size;
-
 
   create_args.params = enclp->params;
 

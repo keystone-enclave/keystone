@@ -29,8 +29,6 @@ int epm_destroy(struct epm* epm) {
 /* Create an EPM and initialize the free list */
 int epm_init(struct epm* epm, unsigned int min_pages)
 {
-  pte_t* t;
-
   vaddr_t epm_vaddr = 0;
   unsigned long order = 0;
   unsigned long count = min_pages;
@@ -69,7 +67,7 @@ int epm_init(struct epm* epm, unsigned int min_pages)
   /* zero out */
   memset((void*)epm_vaddr, 0, PAGE_SIZE*count);
 
-  epm->root_page_table = epm_vaddr;
+  epm->root_page_table = (void*)epm_vaddr;
   epm->pa = __pa(epm_vaddr);
   epm->order = order;
   epm->size = count << PAGE_SHIFT;
@@ -112,51 +110,4 @@ int utm_init(struct utm* utm, size_t untrusted_size)
   }
 
   return 0;
-}
-
-static paddr_t pte_ppn(pte_t pte)
-{
-  return pte_val(pte) >> PTE_PPN_SHIFT;
-}
-
-static paddr_t ppn(vaddr_t addr)
-{
-  return __pa(addr) >> RISCV_PGSHIFT;
-}
-
-static size_t pt_idx(vaddr_t addr, int level)
-{
-  size_t idx = addr >> (RISCV_PGLEVEL_BITS*level + RISCV_PGSHIFT);
-  return idx & ((1 << RISCV_PGLEVEL_BITS) - 1);
-}
-
-static pte_t* __ept_walk_internal(struct list_head* pg_list, pte_t* root_page_table, vaddr_t addr, int create)
-{
-  pte_t* t = root_page_table;
-  //pr_info("  page walk:\n");
-  int i;
-  for (i = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS - 1; i > 0; i--) {
-    size_t idx = pt_idx(addr, i);
-    /*Since page management is done on the user side, the PTE must be valid
-     * Otherwise the VA is invalid
-     * */
-    if (unlikely(!(pte_val(t[idx]) & PTE_V)))
-      return -1;
-    t = (pte_t*) __va(pte_ppn(t[idx]) << RISCV_PGSHIFT);
-  }
-  return &t[pt_idx(addr, 0)];
-}
-
-static pte_t* __ept_walk(struct list_head* pg_list, pte_t* root_page_table, vaddr_t addr)
-{
-  return __ept_walk_internal(pg_list, root_page_table, addr, 0);
-}
-
-paddr_t epm_va_to_pa(struct epm* epm, vaddr_t addr)
-{
-  pte_t* pte = __ept_walk(NULL, epm->root_page_table,addr);
-  if(pte)
-    return pte_ppn(*pte) << RISCV_PGSHIFT;
-  else
-    return 0;
 }
