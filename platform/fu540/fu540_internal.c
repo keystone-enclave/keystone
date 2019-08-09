@@ -107,7 +107,6 @@ void platform_init_enclave(struct enclave* enclave){
 }
 
 void platform_create_enclave(struct enclave* enclave){
-
   enclave->ped.use_scratch = 0;
   int i;
   if(enclave->ped.use_scratch){
@@ -125,16 +124,19 @@ void platform_create_enclave(struct enclave* enclave){
     uintptr_t old_epm_start = pmp_region_get_addr(enclave->regions[old_epm_idx].pmp_rid);
     uintptr_t scratch_epm_start = pmp_region_get_addr(scratch_rid);
     size_t size = enclave->pa_params.free_base - old_epm_start;
+    size_t scratch_size = 8*L2_WAY_SIZE;
 
     //TODO need a check and failure mode here
-    if(size > pmp_region_get_size(scratch_rid)){
+    if(size > scratch_size){
       printm("FATAL: Enclave too big for scratchpad!\r\n");
     }
     memcpy((void*)scratch_epm_start,
            (void*)old_epm_start,
            size);
-
+    printm("Performing copy from %llx to %llx\r\n", old_epm_start, scratch_epm_start);
     /* Change pa params to the new region */
+    enclave->pa_params.dram_base = scratch_epm_start;
+    enclave->pa_params.dram_size = scratch_size;
     enclave->pa_params.runtime_base = (scratch_epm_start +
                                        (enclave->pa_params.runtime_base -
                                         old_epm_start));
@@ -143,6 +145,14 @@ void platform_create_enclave(struct enclave* enclave){
                                      old_epm_start));
     enclave->pa_params.free_base = (scratch_epm_start +
                                        size);
+    enclave->encl_satp =((scratch_epm_start >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
+
+  /* printm("[new pa_params]: \r\n\tbase_addr: %llx\r\n\tbasesize: %llx\r\n\truntime_addr: %llx\r\n\tuser_addr: %llx\r\n\tfree_addr: %llx\r\n", */
+  /*        enclave->pa_params.dram_base, */
+  /*        enclave->pa_params.dram_size, */
+  /*        enclave->pa_params.runtime_base, */
+  /*        enclave->pa_params.user_base, */
+  /*        enclave->pa_params.free_base); */
 
   }
 

@@ -86,7 +86,6 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
 
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
-
   cpu_enter_enclave_context(eid);
   return ENCLAVE_SUCCESS;
 }
@@ -309,6 +308,15 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
 {
   uintptr_t epm_start, epm_end;
 
+  /* printm("[create args info]: \r\n\tepm_addr: %llx\r\n\tepmsize: %llx\r\n\tutm_addr: %llx\r\n\tutmsize: %llx\r\n\truntime_addr: %llx\r\n\tuser_addr: %llx\r\n\tfree_addr: %llx\r\n", */
+  /*        args->epm_region.paddr, */
+  /*        args->epm_region.size, */
+  /*        args->utm_region.paddr, */
+  /*        args->utm_region.size, */
+  /*        args->runtime_paddr, */
+  /*        args->user_paddr, */
+  /*        args->free_paddr); */
+
   // check if physical addresses are valid
   if (args->epm_region.size <= 0)
     return 0;
@@ -341,10 +349,6 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
     return 0;
   if (args->user_paddr > args->free_paddr)
     return 0;
-
-  /* printm("[create args] runtimep: %lx userp: %lx epm_end: %lx epm_start: %lx\r\n", */
-  /*        args->runtime_paddr, args->user_paddr, */
-  /*        epm_end, epm_start); */
 
   return 1;
 }
@@ -422,7 +426,6 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   enclaves[eid].regions[1].pmp_rid = shared_region;
   enclaves[eid].regions[1].type = REGION_UTM;
 
-  //print_pgtable(3, (pte_t*) (read_csr(satp) << RISCV_PGSHIFT), 0);
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = params;
@@ -439,7 +442,6 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   spinlock_lock(&encl_lock);
   enclaves[eid].state = FRESH;
   ret = validate_and_hash_enclave(&enclaves[eid]);
-
   spinlock_unlock(&encl_lock);
 
   if(ret != ENCLAVE_SUCCESS)
@@ -526,6 +528,7 @@ enclave_ret_code destroy_enclave(enclave_id eid)
 
   return ENCLAVE_SUCCESS;
 }
+
 
 enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid)
 {
