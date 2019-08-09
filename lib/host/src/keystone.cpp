@@ -134,7 +134,7 @@ keystone_status_t Keystone::allocPage(vaddr_t va, vaddr_t *free_list, vaddr_t sr
 
 }
 
-keystone_status_t Keystone::loadELF(ELFFile* elf)
+keystone_status_t Keystone::loadELF(ELFFile* elf, uintptr_t* data_start)
 {
   static char nullpage[PAGE_SIZE] = {0,};
   unsigned int mode = elf->getPageMode();
@@ -148,7 +148,7 @@ keystone_status_t Keystone::loadELF(ELFFile* elf)
     ERROR("failed to allocate vspace\n");
     return KEYSTONE_ERROR;
   }
-
+  *data_start = epm_free_list;
   for (unsigned int i = 0; i < elf->getNumProgramHeaders(); i++) {
 
     if (elf->getProgramHeaderType(i) != PT_LOAD) {
@@ -285,7 +285,8 @@ bool Keystone::initDevice()
   return true;
 }
 
-bool Keystone::prepareEnclave(struct keystone_ioctl_create_enclave* enclp)
+bool Keystone::prepareEnclave(struct keystone_ioctl_create_enclave* enclp,
+                              uintptr_t alternate_phys_addr)
 {
   enclp->params.runtime_entry = (unsigned long) runtimeFile->getEntryPoint();
   enclp->params.user_entry = (unsigned long) enclaveFile->getEntryPoint();
@@ -322,15 +323,30 @@ bool Keystone::prepareEnclave(struct keystone_ioctl_create_enclave* enclp)
     return false;
   }
 
-  pMemory->init(fd, enclp->pt_ptr);
+  /* We switch out the phys addr as needed */
+
+  uintptr_t starting_phys_range;
+  if(alternate_phys_addr){
+    //printf("Switching prev. %08llx for %08lx\n",enclp->pt_ptr, alternate_phys_addr);
+    starting_phys_range = alternate_phys_addr;
+  }
+  else{
+    starting_phys_range = enclp->pt_ptr;
+  }
+
+  pMemory->init(fd, starting_phys_range);
   eid = enclp->eid;
-  start_addr = enclp->pt_ptr;
+  start_addr = starting_phys_range;
   root_page_table = pMemory->AllocMem(PAGE_SIZE);
-  epm_free_list = enclp->pt_ptr + PAGE_SIZE;
+  epm_free_list = starting_phys_range + PAGE_SIZE;
   return true;
 }
 
-keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, Params _params)
+keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, Params _params){
+  return this->init(eapppath, runtimepath, _params, (uintptr_t)0);
+}
+
+keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, Params _params, uintptr_t alternate_phys_addr)
 {
   params = _params;
 
@@ -350,7 +366,7 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   }
 
   struct keystone_ioctl_create_enclave enclp;
-  if(!prepareEnclave(&enclp)) {
+  if(!prepareEnclave(&enclp, alternate_phys_addr)) {
     destroy();
     return KEYSTONE_ERROR;
   }
@@ -358,19 +374,23 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   //Map root page table to user space
   struct keystone_hash_enclave hash_enclave;
 
-  hash_enclave.runtime_paddr = epm_free_list;
-  if(loadELF(runtimeFile) != KEYSTONE_SUCCESS) {
+  uintptr_t data_start;
+
+  if(loadELF(runtimeFile, &data_start) != KEYSTONE_SUCCESS) {
     ERROR("failed to load runtime ELF");
     destroy();
     return KEYSTONE_ERROR;
   }
+  hash_enclave.runtime_paddr = epm_free_list;
+  enclp.runtime_paddr = (data_start - start_addr) + enclp.pt_ptr;
 
-  hash_enclave.user_paddr = epm_free_list;
-  if(loadELF(enclaveFile) != KEYSTONE_SUCCESS) {
+  if(loadELF(enclaveFile, &data_start) != KEYSTONE_SUCCESS) {
     ERROR("failed to load enclave ELF");
     destroy();
     return KEYSTONE_ERROR;
   }
+  hash_enclave.user_paddr = epm_free_list;
+  enclp.user_paddr = (data_start - start_addr) + enclp.pt_ptr;
 
   /* initialize stack. If not using freemem */
 #ifndef USE_FREEMEM
@@ -380,10 +400,9 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
     return KEYSTONE_ERROR;
   }
 #endif /* USE_FREEMEM */
-
   if(params.isSimulated()) {
     utm_free_list = pMemory->AllocMem(enclp.params.untrusted_size);
-    hash_enclave.free_paddr = epm_free_list;
+    hash_enclave.free_paddr = (epm_free_list - start_addr) + enclp.pt_ptr;
     hash_enclave.utm_paddr = utm_free_list;
   } else {
     int ret;
@@ -397,8 +416,7 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   }
 
   loadUntrusted();
-  enclp.free_paddr = epm_free_list;
-
+  enclp.free_paddr = (epm_free_list - start_addr) + enclp.pt_ptr;
   if(params.isSimulated()) {
     hash_enclave.utm_size = params.getUntrustedSize();
     hash_enclave.epm_size = PAGE_SIZE * enclp.min_pages;
@@ -417,7 +435,6 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
       destroy();
       return KEYSTONE_ERROR;
     }
-
     if (mapUntrusted(params.getUntrustedSize()))
     {
       ERROR("failed to finalize enclave - cannot obtain the untrusted buffer pointer \n");
@@ -431,7 +448,6 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   delete runtimeFile;
   enclaveFile = NULL;
   runtimeFile = NULL;
-
   return KEYSTONE_SUCCESS;
 }
 
