@@ -1,9 +1,9 @@
-Setup 
+Setup
 ----------------------------
 
 In this stage, you will (1) install RISC-V toolchain, (2) checkout git submodules, and (3) Install
 SDK.
-You can either quickly setup everything (:ref:`QEMUSetupQuick`) or manually setup 
+You can either quickly setup everything (:ref:`QEMUSetupQuick`) or manually setup
 (:ref:`QEMUSetupManual`).
 
 .. _QEMUSetupQuick:
@@ -29,7 +29,7 @@ To keep environment variables, add following lines to your ``.bashrc``.
 ::
 
   export RISCV=<path/to/keystone>/riscv
-  export PATH=$PATH:$RISCV/bin 
+  export PATH=$PATH:$RISCV/bin
   export KEYSTONE_SDK_DIR=<path/to/keystone>/sdk
 
 You can also manually run ``source source.sh`` to set the environment variables.
@@ -59,7 +59,7 @@ See `riscv-gnu-toolchain <https://github.com/riscv/riscv-gnu-toolchain>`_ for de
 ::
 
   cd riscv-gnu-toolchain
-  ./configure --prefix=$(pwd)/riscv --enable-multilib
+  ./configure --prefix=$(pwd)/../riscv
   make; make linux
 
 Install the Keystone SDK and prepare Eyrie runtime source code.
@@ -84,7 +84,7 @@ To keep environment variables, add following lines to your ``.bashrc``.
 ::
 
   export RISCV=<path/to/keystone>/riscv
-  export PATH=$PATH:$RISCV/bin 
+  export PATH=$PATH:$RISCV/bin
   export KEYSTONE_SDK_DIR=<path/to/keystone>/sdk
 
 You can also manually run ``source source.sh`` to set the environment variables.
