@@ -17,7 +17,7 @@ else
 
   export RISCV=$(pwd)/riscv
   export PATH=$PATH:$RISCV/bin
-  wget https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/archive/${TOOL_VER}.tar.gz
+  wget https://keystone-enclave.eecs.berkeley.edu/files/${TOOL_VER}.tar.gz
 
   # Check tool integrity
   echo "Verifying prebuilt toolchain integrity..."
