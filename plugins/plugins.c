@@ -15,7 +15,7 @@ call_plugin(
   switch(plugin_id) {
 #ifdef PLUGIN_ENABLE_MULTIMEM
     case PLUGIN_ID_MULTIMEM:
-      return do_sbi_multimem(plugin_id, call_id);
+      return do_sbi_multimem(id, call_id);
       break;
 #endif
     default:

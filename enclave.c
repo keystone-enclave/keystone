@@ -78,11 +78,13 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   clear_csr(mip, MIP_SEIP);
 
   // set PMP
-  int epm_idx = get_enclave_region_index(eid, REGION_EPM);
-  pmp_set(enclaves[eid].regions[epm_idx].pmp_rid, PMP_ALL_PERM);
   osm_pmp_set(PMP_NO_PERM);
-  int utm_idx = get_enclave_region_index(eid, REGION_UTM);
-  pmp_set(enclaves[eid].regions[utm_idx].pmp_rid, PMP_ALL_PERM);
+  int memid;
+  for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
+    if(enclaves[eid].regions[memid].type != REGION_INVALID) {
+      pmp_set(enclaves[eid].regions[memid].pmp_rid, PMP_ALL_PERM);
+    }
+  }
 
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
@@ -94,14 +96,17 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
     enclave_id eid){
 
   // set PMP
-  int epm_idx = get_enclave_region_index(eid, REGION_EPM);
-  pmp_set(enclaves[eid].regions[epm_idx].pmp_rid, PMP_NO_PERM);
+  int memid;
+  for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
+    if(enclaves[eid].regions[memid].type != REGION_INVALID) {
+      pmp_set(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
+    }
+  }
   osm_pmp_set(PMP_ALL_PERM);
 
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
-
 
   // enable timer interrupt
   set_csr(mie, MIP_MTIP);
@@ -206,7 +211,7 @@ uintptr_t get_enclave_region_size(enclave_id eid, int memid)
 uintptr_t get_enclave_region_base(enclave_id eid, int memid)
 {
   if (0 <= memid && memid < ENCLAVE_REGIONS_MAX)
-    return pmp_region_get_size(enclaves[eid].regions[memid].pmp_rid);
+    return pmp_region_get_addr(enclaves[eid].regions[memid].pmp_rid);
 
   return 0;
 }
