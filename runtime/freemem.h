@@ -16,6 +16,7 @@ struct pg_list
 
 void spa_init(uintptr_t base, size_t size);
 uintptr_t spa_get(void);
+uintptr_t spa_get_zero(void);
 void spa_put(uintptr_t page);
 unsigned int spa_available();
 #endif

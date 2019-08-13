@@ -19,7 +19,13 @@
 #define SBI_SM_RESUME_ENCLAVE    107
 #define SBI_SM_RANDOM            108
 #define SBI_SM_EXIT_ENCLAVE     1101
+#define SBI_SM_CALL_PLUGIN      1000
 #define SBI_SM_NOT_IMPLEMENTED  1111
+
+/* Plugin IDs and Call IDs */
+#define SM_MULTIMEM_PLUGIN_ID   0x01
+#define SM_MULTIMEM_CALL_GET_SIZE 0x01
+#define SM_MULTIMEM_CALL_GET_ADDR 0x02
 
 #define SBI_CALL(___which, ___arg0, ___arg1, ___arg2) ({			\
 	register uintptr_t a0 asm ("a0") = (uintptr_t)(___arg0);	\
@@ -55,5 +61,20 @@ static inline void sbi_stop_enclave(uint64_t request)
 static inline void sbi_exit_enclave(uint64_t retval)
 {
   SBI_CALL_1(SBI_SM_EXIT_ENCLAVE, retval);
+}
+
+static inline uintptr_t sbi_random()
+{
+  return SBI_CALL_0(SBI_SM_RANDOM);
+}
+
+static inline uintptr_t sbi_query_multimem()
+{
+  return SBI_CALL_2(SBI_SM_CALL_PLUGIN, SM_MULTIMEM_PLUGIN_ID, SM_MULTIMEM_CALL_GET_SIZE);
+}
+
+static inline uintptr_t sbi_query_multimem_addr()
+{
+  return SBI_CALL_2(SBI_SM_CALL_PLUGIN, SM_MULTIMEM_PLUGIN_ID, SM_MULTIMEM_CALL_GET_ADDR);
 }
 #endif

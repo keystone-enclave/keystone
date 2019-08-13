@@ -10,6 +10,8 @@ PLUGINS[untrusted_io_syscall]="-DIO_SYSCALL_WRAPPING "
 PLUGINS[linux_syscall]="-DLINUX_SYSCALL_WRAPPING "
 PLUGINS[env_setup]="-DENV_SETUP "
 PLUGINS[strace_debug]="-DINTERNAL_STRACE "
+PLUGINS[paging]="-DUSE_PAGING -DUSE_FREEMEM "
+PLUGINS[debug]="-DDEBUG "
 #PLUGINS[dynamic_resizing]="-DDYN_ALLOCATION "
 
 OPTIONS_FLAGS=

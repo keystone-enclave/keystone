@@ -18,14 +18,14 @@ size_t rt_util_getrandom(void* vaddr, size_t buflen){
   uintptr_t* next = (uintptr_t*)vaddr;
   // Get data
   while(remaining > sizeof(uintptr_t)){
-    rnd = SBI_CALL_0(SBI_SM_RANDOM);
+    rnd = sbi_random();
     ALLOW_USER_ACCESS( *next = rnd );
     remaining -= sizeof(uintptr_t);
     next++;
   }
   // Cleanup
   if( remaining > 0 ){
-    rnd = SBI_CALL_0(SBI_SM_RANDOM);
+    rnd = sbi_random();
     copy_to_user(next, &rnd, remaining);
   }
   size_t ret = buflen;
@@ -63,5 +63,13 @@ void rt_page_fault(struct encl_ctx* ctx)
 #endif
 
   sbi_exit_enclave(-1);
+
+  /* never reach here */
+  assert(false);
   return;
+}
+
+void tlb_flush(void)
+{
+  asm volatile ("fence.i\t\nsfence.vma\t\n");
 }

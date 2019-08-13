@@ -12,6 +12,7 @@
 //entry point to the runtime!
 .altmacro
 .macro SAVE_ALL_BUT_SP
+  addi sp, sp, -ENCL_CONTEXT_SIZE
   STORE ra, 1*REGBYTES(sp)
   STORE gp, 3*REGBYTES(sp)
   STORE tp, 4*REGBYTES(sp)
@@ -110,6 +111,7 @@
   LOAD t4, 29*REGBYTES(sp)
   LOAD t5, 30*REGBYTES(sp)
   LOAD t6, 31*REGBYTES(sp)
+  addi sp, sp, ENCL_CONTEXT_SIZE
 .endm
 
 _start:
@@ -132,14 +134,16 @@ encl_trap_handler:
 /* TODO we may want to explicitly disable the FPU here ala linux */
 
   csrrw sp, sscratch, sp
+  bnez sp, __save_context
+  /* if trap is from kernel, restore sp */
+  csrr sp, sscratch
 
-  addi sp, sp, -ENCL_CONTEXT_SIZE
-
-  /* save enclave context */
+__save_context:
+  /* save previous context */
   SAVE_ALL_BUT_SP
 
-  csrrw t0, sscratch, x0           # t0 <- user sp
-  STORE t0, 2*REGBYTES(sp)         # user sp
+  csrrw t0, sscratch, x0           # t0 <- previous sp
+  STORE t0, 2*REGBYTES(sp)         # previous sp
 
   csrr t0, sepc
   STORE t0, (sp)
@@ -197,8 +201,6 @@ return_to_encl:
 
   RESTORE_ALL_BUT_SP
 
-  addi sp, sp, ENCL_CONTEXT_SIZE
-
   csrrw sp, sscratch, sp
   sret
 
@@ -207,8 +209,9 @@ not_implemented:
   li a7, 1111
   ecall
 
-  .section ".rodata"
+  .section ".data"
 rt_trap_table:
+  .global rt_trap_table
   .align 6
   .dword not_implemented_fatal //0
   .dword not_implemented_fatal //1

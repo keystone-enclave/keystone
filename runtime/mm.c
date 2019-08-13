@@ -1,13 +1,8 @@
-
-
+#include "rt_util.h"
 #include "common.h"
 #include "syscall.h"
 #include "mm.h"
 #include "freemem.h"
-#include "vm.h"
-
-
-
 
 #ifdef USE_FREEMEM
 
@@ -29,7 +24,9 @@ void set_program_break(uintptr_t new_break){
 static pte*
 __continue_walk_create(pte* root, uintptr_t addr, pte* pte)
 {
-  uintptr_t new_page = spa_get();
+  uintptr_t new_page = spa_get_zero();
+  assert(new_page);
+
   unsigned long free_ppn = ppn(__pa(new_page));
   *pte = ptd_create(free_ppn);
   return __walk_create(root, addr);
@@ -120,6 +117,8 @@ alloc_page(uintptr_t vpn, int flags)
 
 	/* otherwise, allocate one from the freemem */
   page = spa_get();
+  assert(page);
+
   *pte = pte_create(ppn(__pa(page)), flags | PTE_V);
 
   return page;
@@ -195,10 +194,72 @@ translate(uintptr_t va)
 {
   pte* pte = __walk(root_page_table, va);
 
-  if(*pte & PTE_V)
+  if(pte && (*pte & PTE_V))
     return (pte_ppn(*pte) << RISCV_PAGE_BITS) | (RISCV_PAGE_OFFSET(va));
   else
     return 0;
+}
+
+/* try to retrieve PTE for a VA, return 0 if fail */
+pte*
+pte_of_va(uintptr_t va)
+{
+  pte* pte = __walk(root_page_table, va);
+  return pte;
+}
+
+void
+__map_with_reserved_page_table(uintptr_t dram_base,
+                               uintptr_t dram_size,
+                               uintptr_t ptr,
+                               pte* l2_pt,
+                               pte* l3_pt)
+{
+  uintptr_t offset = 0;
+  uintptr_t leaf_level = 3;
+  pte* leaf_pt = l3_pt;
+  /* use megapage if l3_pt is null */
+  if (!l3_pt) {
+    leaf_level = 2;
+    leaf_pt = l2_pt;
+  }
+
+  assert(dram_size <= RISCV_GET_LVL_PGSIZE(leaf_level - 1));
+  assert(IS_ALIGNED(dram_base, RISCV_GET_LVL_PGSIZE_BITS(leaf_level)));
+  assert(IS_ALIGNED(ptr, RISCV_GET_LVL_PGSIZE_BITS(leaf_level - 1)));
+
+  /* set root page table entry */
+  root_page_table[RISCV_GET_PT_INDEX(ptr, 1)] =
+    ptd_create(ppn(kernel_va_to_pa(l2_pt)));
+
+  /* set L2 if it's not leaf */
+  if (leaf_pt != l2_pt) {
+    l2_pt[RISCV_GET_PT_INDEX(ptr, 2)] =
+      ptd_create(ppn(kernel_va_to_pa(l3_pt)));
+  }
+
+  /* set leaf level */
+  for (offset = 0;
+       offset < dram_size;
+       offset += RISCV_GET_LVL_PGSIZE(leaf_level))
+  {
+    leaf_pt[RISCV_GET_PT_INDEX(ptr + offset, leaf_level)] =
+      pte_create(ppn(dram_base + offset),
+          PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+  }
+}
+
+void
+map_with_reserved_page_table(uintptr_t dram_base,
+                             uintptr_t dram_size,
+                             uintptr_t ptr,
+                             pte* l2_pt,
+                             pte* l3_pt)
+{
+  if (dram_size > RISCV_GET_LVL_PGSIZE(2))
+    __map_with_reserved_page_table(dram_base, dram_size, ptr, l2_pt, 0);
+  else
+    __map_with_reserved_page_table(dram_base, dram_size, ptr, l2_pt, l3_pt);
 }
 
 #endif /* USE_FREEMEM */
