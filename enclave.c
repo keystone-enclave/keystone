@@ -441,7 +441,9 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
 
   /* Platform create happens as the last thing before hashing/etc since
      it may modify the enclave struct */
-  platform_create_enclave(&enclaves[eid]);
+  ret = platform_create_enclave(&enclaves[eid]);
+  if(ret != ENCLAVE_SUCCESS)
+    goto free_shared_region;
 
   /* Validate memory, prepare hash and signature for attestation */
   spinlock_lock(&encl_lock);
@@ -450,13 +452,15 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   spinlock_unlock(&encl_lock);
 
   if(ret != ENCLAVE_SUCCESS)
-    goto free_shared_region;
+    goto free_platform;
 
   /* EIDs are unsigned int in size, copy via simple copy */
   copy_word_to_host((uintptr_t*)eidptr, (uintptr_t)eid);
 
   return ENCLAVE_SUCCESS;
 
+free_platform:
+  platform_destroy_enclave(&enclaves[eid]);
 free_shared_region:
   pmp_region_free_atomic(shared_region);
 free_region:

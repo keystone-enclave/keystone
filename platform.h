@@ -9,12 +9,12 @@
 void platform_init_enclave(struct enclave* enclave);
 
 /* This fires once GLOBALLY before any other platform init */
-void platform_init_global_once();
+enclave_ret_code platform_init_global_once();
 /* Fires once per-hart after global_once */
-void platform_init_global();
+enclave_ret_code platform_init_global();
 
 /* This fires once each time an enclave is created by the sm */
-void platform_create_enclave(struct enclave* enclave);
+enclave_ret_code platform_create_enclave(struct enclave* enclave);
 
 /* This fires once each time an enclave is destroyed by the sm */
 void platform_destroy_enclave(struct enclave* enclave);
@@ -34,4 +34,5 @@ void platform_switch_from_enclave(struct enclave* enclave);
    demand and never fail. If it would fail it may power off
    instead. */
 uint64_t platform_random();
+
 #endif /* _PLATFORM_H_ */

@@ -112,14 +112,16 @@ void sm_init(void)
     sm_init_done = 1;
 
 
-    platform_init_global_once();
+    if(platform_init_global_once() != ENCLAVE_SUCCESS)
+      die("[SM] platform global init fatal error");
   }
 
   pmp_set(sm_region_id, PMP_NO_PERM);
   pmp_set(os_region_id, PMP_ALL_PERM);
 
   /* Fire platform specific global init */
-  platform_init_global();
+  if(platform_init_global() != ENCLAVE_SUCCESS)
+    die("[SM] platform global init fatal error");
 
   // Copy the keypair from the root of trust
   sm_copy_key();

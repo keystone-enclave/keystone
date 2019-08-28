@@ -6,10 +6,12 @@
 #include <errno.h>
 #include "page.h"
 #include <string.h>
+#include "platform.h"
+#include "sm.h"
 
-void scratch_init(){
+enclave_ret_code scratch_init(){
   if(scratchpad_allocated_ways != 0){
-    return;
+    return ENCLAVE_SUCCESS;
   }
 
   /* TODO TMP way to try and get the scratchpad allocated */
@@ -62,16 +64,19 @@ void scratch_init(){
      and all scratchpad addresses have L2 lines */
 
   /* We try and check it now, any error SHOULD be immediately detectable. */
+  /* If there was a mistake, the scratchpad will never be safe to use
+     again... */
   for(addr = scratch_start; addr < scratch_stop; addr += L2_LINE_SIZE){
     if(*(uintptr_t*)addr != 64){
       printm("FATAL: Found a bad line %x\r\n", addr);
-      /* TODO Not fatal! */
+      return ENCLAVE_UNKNOWN_ERROR;
     }
   }
 
+  return ENCLAVE_SUCCESS;
 }
 
-void platform_init_global_once(){
+enclave_ret_code platform_init_global_once(){
 
   waymask_init();
   scratchpad_allocated_ways = 0;
@@ -81,22 +86,24 @@ void platform_init_global_once(){
                             CACHE_CONTROLLER_ADDR_END - CACHE_CONTROLLER_ADDR_START,
                             PMP_PRI_ANY, &l2_controller_rid, 1)){
     printm("FATAL CANNOT CREATE PMP FOR CONTROLLER\r\n");
-    //TODO: this isn't currently fatal!
+    return ENCLAVE_NO_FREE_RESOURCE;
   }
   /* Create PMP region for scratchpad */
   if(pmp_region_init_atomic(L2_SCRATCH_START,
                             L2_SCRATCH_STOP - L2_SCRATCH_START,
                             PMP_PRI_ANY, &scratch_rid, 1)){
     printm("FATAL CANNOT CREATE SCRATCH PMP\r\n");
-    //TODO: this isn't currently fatal!
+    return ENCLAVE_NO_FREE_RESOURCE;
   }
+  return ENCLAVE_SUCCESS;
 }
 
 
-void platform_init_global(){
+enclave_ret_code platform_init_global(){
   pmp_set(l2_controller_rid, PMP_NO_PERM);
   pmp_set(scratch_rid, PMP_NO_PERM);
 
+  return ENCLAVE_SUCCESS;
 }
 
 void platform_init_enclave(struct enclave* enclave){
@@ -104,18 +111,25 @@ void platform_init_enclave(struct enclave* enclave){
   //ped->num_ways = WM_NUM_WAYS/2;
   enclave->ped.saved_mask = 0;
   enclave->ped.use_scratch = 0;
+
 }
 
-void platform_create_enclave(struct enclave* enclave){
-  enclave->ped.use_scratch = 0;
+enclave_ret_code platform_create_enclave(struct enclave* enclave){
+  enclave->ped.use_scratch = 1;
   int i;
   if(enclave->ped.use_scratch){
-    scratch_init();
+
+    if(scratch_init() != ENCLAVE_SUCCESS){
+      return ENCLAVE_UNKNOWN_ERROR;
+    }
 
     /* Swap regions */
     int old_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
     int new_idx = get_enclave_region_index(enclave->eid, REGION_INVALID);
-    //TODO safety check
+    if(old_epm_idx < 0 || new_idx < 0){
+      return ENCLAVE_NO_FREE_RESOURCE;
+    }
+
     enclave->regions[new_idx].pmp_rid = scratch_rid;
     enclave->regions[new_idx].type = REGION_EPM;
     enclave->regions[old_epm_idx].type = REGION_OTHER;
@@ -126,12 +140,12 @@ void platform_create_enclave(struct enclave* enclave){
     size_t size = enclave->pa_params.free_base - old_epm_start;
     size_t scratch_size = 8*L2_WAY_SIZE;
 
-    //TODO need a check and failure mode here
     if(size > scratch_size){
       printm("FATAL: Enclave too big for scratchpad!\r\n");
+      return ENCLAVE_NO_FREE_RESOURCE;
     }
-    memcpy((void*)scratch_epm_start,
-           (void*)old_epm_start,
+    memcpy((enclave_ret_code*)scratch_epm_start,
+           (enclave_ret_code*)old_epm_start,
            size);
     printm("Performing copy from %llx to %llx\r\n", old_epm_start, scratch_epm_start);
     /* Change pa params to the new region */
@@ -156,7 +170,7 @@ void platform_create_enclave(struct enclave* enclave){
 
   }
 
-
+  return ENCLAVE_SUCCESS;
 
 }
 
