@@ -145,7 +145,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   set_program_break(EYRIE_ANON_REGION_START + (1024 * 1024 * 1024));
 
   #ifdef USE_PAGING
-  init_paging();
+  init_paging(user_paddr, free_paddr);
   #endif /* USE_PAGING */
 #endif /* USE_FREEMEM */
 

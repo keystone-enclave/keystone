@@ -1,4 +1,5 @@
 #ifdef USE_FREEMEM
+#include "string.h"
 #include "common.h"
 #include "vm.h"
 #include "freemem.h"
@@ -34,7 +35,7 @@ __spa_get(bool zero)
     else
 #endif
     {
-      warn("eyrie simple page allocator cannot evict and free pages: %lx", new_pa);
+      warn("eyrie simple page allocator cannot evict and free pages");
       return 0;
     }
   }

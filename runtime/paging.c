@@ -10,7 +10,20 @@ uintptr_t paging_backing_storage_addr;
 uintptr_t paging_backing_storage_size;
 uintptr_t paging_next_backing_page_offset;
 
+static uintptr_t paging_user_page_count = 0;
+
 extern uintptr_t rt_trap_table;
+
+void paging_inc_user_page(void)
+{
+  paging_user_page_count++;
+}
+
+void paging_dec_user_page(void)
+{
+  paging_user_page_count--;
+  assert(paging_user_page_count >= 0);
+}
 
 uintptr_t __alloc_backing_page()
 {
@@ -35,7 +48,8 @@ paging_remaining_pages()
 {
   return (paging_backing_storage_size - paging_next_backing_page_offset)/RISCV_PAGE_SIZE;
 }
-void init_paging()
+
+void init_paging(uintptr_t user_pa_start, uintptr_t user_pa_end)
 {
   uintptr_t addr;
   uintptr_t size;
@@ -75,6 +89,8 @@ void init_paging()
   trap_table[RISCV_EXCP_INST_PAGE_FAULT] = (uintptr_t) paging_handle_page_fault;
   trap_table[RISCV_EXCP_LOAD_PAGE_FAULT] = (uintptr_t) paging_handle_page_fault;
   trap_table[RISCV_EXCP_STORE_PAGE_FAULT] = (uintptr_t) paging_handle_page_fault;
+
+  paging_user_page_count = (user_pa_end - user_pa_start) >> RISCV_PAGE_BITS;
 
   return;
 }
@@ -116,7 +132,7 @@ __traverse_page_table_and_pick_internal(
     }
     else
     {
-      uintptr_t ret;
+      uintptr_t ret = 0;
 
       /* extending MSB */
       if(level == 3 && (i&0x100))
@@ -139,7 +155,7 @@ uintptr_t
 __traverse_page_table_and_pick(uintptr_t count)
 {
   uintptr_t next_count = count;
-  uintptr_t ret;
+  uintptr_t ret = 0;
   int try = 0;
   int max_retry = 3;
 
@@ -163,12 +179,10 @@ uintptr_t __pick_page()
 
   uintptr_t rnd;
   uintptr_t count;
-  uintptr_t frame_count = freemem_size >> RISCV_PAGE_BITS;
 
-  assert(frame_count > 0);
-
+  assert(paging_user_page_count > 0);
   rnd = sbi_random();
-  count = (rnd % frame_count) + 1;
+  count = (rnd % paging_user_page_count) + 1;
   target = __traverse_page_table_and_pick(count);
 
   return target;
@@ -233,7 +247,7 @@ uintptr_t paging_evict_and_free_one(uintptr_t swap_va)
 
   /* evict & load */
   target_pte = pte_of_va(target_va);
-  assert(target_pte);
+  assert(target_pte && (*target_pte & PTE_U));
 
   src_pa = pte_ppn(*target_pte) << RISCV_PAGE_BITS;
   __swap_epm_page(dest_va, __va(src_pa), swap_va, false);
@@ -241,6 +255,7 @@ uintptr_t paging_evict_and_free_one(uintptr_t swap_va)
   /* invalidate target PTE */
   *target_pte = pte_create_invalid(ppn(__paging_pa(dest_va)),
       *target_pte & PTE_FLAG_MASK);
+  paging_dec_user_page();
 
   tlb_flush();
 
@@ -283,8 +298,10 @@ void paging_handle_page_fault(struct encl_ctx* ctx)
   if (!frame)
     goto exit;
 
+  assert(*entry & PTE_U);
   /* validate the entry */
   *entry = pte_create(ppn(frame), *entry & PTE_FLAG_MASK);
+  paging_inc_user_page();
 
   return;
 exit:

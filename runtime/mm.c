@@ -3,6 +3,7 @@
 #include "syscall.h"
 #include "mm.h"
 #include "freemem.h"
+#include "paging.h"
 
 #ifdef USE_FREEMEM
 
@@ -66,38 +67,6 @@ __walk_create(pte* root, uintptr_t addr)
   return __walk_internal(root, addr, 1);
 }
 
-/* maps a physical address to the virtual address
- * and returns VA (returns 0 on error)
- * WARNING: the physical page must be accessible and usable */
-uintptr_t
-remap_physical_page(uintptr_t vpn, uintptr_t ppn, int flags)
-{
-  pte* pte =  __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
-
-  if (!pte)
-    return 0;
-
-  *pte = pte_create(ppn, flags);
-
-  return (vpn << RISCV_PAGE_BITS);
-}
-
-/* maps a physical address range to a virtual address range
- * and returns the number of pages mapped
- * WARNING: the physical page must be accessible and usable */
-size_t
-remap_physical_pages(uintptr_t vpn, uintptr_t ppn, size_t count, int flags)
-{
-  unsigned int i;
-
-  for (i = 0; i < count; i++) {
-    if(!remap_physical_page(vpn + i, ppn + i, flags))
-      break;
-  }
-
-  return i;
-}
-
 
 /* allocate a new page to a given vpn
  * returns VA of the page, (returns 0 if fails) */
@@ -106,6 +75,8 @@ alloc_page(uintptr_t vpn, int flags)
 {
   uintptr_t page;
   pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
+
+  assert(flags & PTE_U);
 
   if (!pte)
     return 0;
@@ -120,6 +91,9 @@ alloc_page(uintptr_t vpn, int flags)
   assert(page);
 
   *pte = pte_create(ppn(__pa(page)), flags | PTE_V);
+#ifdef USE_PAGING
+  paging_inc_user_page();
+#endif
 
   return page;
 }
@@ -133,11 +107,16 @@ free_page(uintptr_t vpn){
   if(!pte || !(*pte & PTE_V))
     return;
 
+  assert(*pte & PTE_U);
+
   uintptr_t ppn = pte_ppn(*pte);
   // Mark invalid
   // TODO maybe do more here
-  *pte = (*pte & (~PTE_V));
+  *pte = 0;
 
+#ifdef USE_PAGING
+  paging_dec_user_page();
+#endif
   // Return phys page
   spa_put(__va(ppn << RISCV_PAGE_BITS));
 
@@ -181,7 +160,7 @@ test_va_range(uintptr_t vpn, size_t count){
   for (i = 0; i < count; i++) {
     pte* pte = __walk_internal(root_page_table, (vpn+i) << RISCV_PAGE_BITS, 0);
     // If the page exists and is valid then we cannot use it
-    if(pte && (*pte & PTE_V)){
+    if(pte && *pte){
       break;
     }
   }
