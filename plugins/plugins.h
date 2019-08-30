@@ -1,15 +1,12 @@
 #ifndef __SM_PLUGINS_H__
 #define __SM_PLUGINS_H__
 
+#include "config.h"
 #include "sm.h"
 #include "enclave.h"
 
 /* PLUGIN IDs */
 #define PLUGIN_ID_MULTIMEM  0x1
-
-
-// TODO: move this to configure
-#define PLUGIN_ENABLE_MULTIMEM
 
 #ifdef PLUGIN_ENABLE_MULTIMEM
   #include "plugins/multimem.h"

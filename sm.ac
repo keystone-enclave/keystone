@@ -1,3 +1,6 @@
 AC_ARG_WITH([target_platform], AS_HELP_STRING([--with-target-platform], [Set a specific platform for the sm to build with]),
   [AC_SUBST([TARGET_PLATFORM], $with_target_platform, [Set a specific platform for the sm to build with])],
   [AC_SUBST([TARGET_PLATFORM], default, [Set a specific platform for the sm to build with])])
+
+AC_ARG_ENABLE([sm_multimem], AS_HELP_STRING([--enable-sm-multimem], [Specify sm plugins to include]),
+  AC_DEFINE([PLUGIN_ENABLE_MULTIMEM],[],[Enable multimem plugin]),[])
