@@ -176,12 +176,23 @@ enclave_ret_code platform_create_enclave(struct enclave* enclave){
 
 void platform_destroy_enclave(struct enclave* enclave){
   if(enclave->ped.use_scratch){
+    int scratch_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
     /* Clean out the region ourselves */
-    /* TODO wipe */
+
+    /* Should be safe to just write to the memory addresses we used to
+       initialize */
+    uintptr_t addr;
+    uintptr_t scratch_start = pmp_region_get_addr(enclave->regions[scratch_epm_idx].pmp_rid);
+    uintptr_t scratch_stop = scratch_start + pmp_region_get_size(enclave->regions[scratch_epm_idx].pmp_rid);
+    for( addr = scratch_start;
+         addr < scratch_stop;
+         addr += sizeof(uintptr_t)){
+      *(uintptr_t*)addr = 0;
+    }
 
     /* Fix the enclave region info to no longer know about
        scratchpad */
-    int scratch_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
+
     enclave->regions[scratch_epm_idx].type = REGION_INVALID;
 
     /* Free the scratchpad */
