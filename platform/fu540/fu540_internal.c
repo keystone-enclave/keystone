@@ -115,7 +115,7 @@ void platform_init_enclave(struct enclave* enclave){
 }
 
 enclave_ret_code platform_create_enclave(struct enclave* enclave){
-  enclave->ped.use_scratch = 1;
+  enclave->ped.use_scratch = 0;
   int i;
   if(enclave->ped.use_scratch){
 
