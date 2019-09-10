@@ -1,3 +1,4 @@
+#include <asm/csr.h>
 #define STORE sd
 #define LOAD ld
 #define LWU lwu
@@ -191,9 +192,6 @@ return_to_encl:
   LOAD t0, (sp)
   csrw sepc, t0
 
-  // Enable FPU
-  li   t0, 0x6000
-  csrs sstatus, t0
 
   // restore user stack
   LOAD t0, 2*REGBYTES(sp)
