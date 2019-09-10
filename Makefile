@@ -22,7 +22,7 @@ image:
 	$(MAKE) -C hifive-work/buildroot_initramfs
 	$(MAKE) -f hifive.mk
 
-run-tests: $(hifive)
+run-tests: hifive
 	./tests/tests/vault.sh
 	$(MAKE) -C hifive-work/buildroot_initramfs
 	$(MAKE) -f hifive.mk
