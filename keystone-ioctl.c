@@ -252,6 +252,11 @@ int keystone_release(struct inode *inode, struct file *file) {
 
   /* pr_info("Releasing enclave: %d\n", ueid); */
 
+  /* enclave has been already destroyed */
+  if (!ueid) {
+    return 0;
+  }
+
   /* We need to send destroy enclave just the eid to close. */
     struct enclave *enclave = get_enclave_by_id(ueid);
 
