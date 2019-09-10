@@ -507,9 +507,10 @@ keystone_status_t Keystone::run()
   run.eid = eid;
 
   ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
-  while (ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST) {
+
+  while (ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST || ret == KEYSTONE_ENCLAVE_INTERRUPTED) {
     /* enclave is stopped in the middle. */
-    if (oFuncDispatch != NULL) {
+    if(ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST && oFuncDispatch != NULL) {
       oFuncDispatch(getSharedBuffer());
     }
     ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
