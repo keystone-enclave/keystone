@@ -106,8 +106,8 @@ int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
       }
 
       /* If the vaddr is in UTM, the paddr must be in UTM */
-      if(va_start >= cargs->untrusted_ptr &&
-         va_start < (cargs->untrusted_ptr + cargs->untrusted_size) &&
+      if(va_start >= cargs->utm_paddr &&
+         va_start < (cargs->utm_paddr + cargs->untrusted_size) &&
          !map_in_utm){
         goto fatal_bail;
       }
@@ -133,7 +133,7 @@ int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
         // we checked this above, its OK
       }
       else{
-        //printm("BAD GENERIC MAP %x %x %x\n", in_runtime, in_user, map_in_utm);
+//        printf("BAD GENERIC MAP %x %x %x\n", in_runtime, in_user, map_in_utm);
         goto fatal_bail;
       }
 
@@ -156,14 +156,15 @@ int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
                                          user_max_seen,
                                          fd);
       if(contiguous == -1){
-        printf("BAD MAP: %lu->%lu epm %u %llu uer %u %llu\n",
-               va_start,phys_addr,
-                //in_runtime,
-               0,
-               cargs->runtime_paddr,
-               0,
-                //in_user,
-               cargs->user_paddr);
+        printf("BAD MAP: %p->%p epm %u %p uer %u %p\n",
+               (void *) va_start,
+               (void *) phys_addr,
+//                in_runtime,
+                0,
+               (void *) cargs->runtime_paddr,
+//                in_user,
+                0,
+               (void *) cargs->user_paddr);
         goto fatal_bail;
       }
     }

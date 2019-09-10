@@ -20,6 +20,8 @@
 #include "params.h"
 #include "sha3.h"
 #include "memory.h"
+#include "keystone_device.h"
+
 
 class Keystone;
 typedef void (*OcallFunc)(void*);
@@ -32,6 +34,7 @@ private:
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
   Memory* pMemory;
+  KeystoneDeviceInterface* kDevice;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
   vaddr_t enclave_stk_start;
@@ -62,6 +65,7 @@ private:
 public:
   Keystone();
   ~Keystone();
+  const char* getHash();
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   keystone_status_t registerOcallDispatch(OcallFunc func);

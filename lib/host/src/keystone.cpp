@@ -60,7 +60,6 @@ keystone_status_t Keystone::loadUntrusted() {
         if (allocPage(va_start, &utm_free_list, (vaddr_t) nullpage, UTM_FULL) == KEYSTONE_ERROR){
           PERROR("failed to add page - allocPage() failed");
         }
-
         va_start += PAGE_SIZE;
     }
     return KEYSTONE_SUCCESS;
@@ -272,19 +271,6 @@ bool Keystone::initFiles(const char* eapppath, const char* runtimepath)
   return true;
 }
 
-bool Keystone::initDevice()
-{
-  if (!params.isSimulated()) {
-    /* open device driver */
-    fd = open(KEYSTONE_DEV_PATH, O_RDWR);
-    if (fd < 0) {
-      PERROR("cannot open device file");
-      return false;
-    }
-  }
-  return true;
-}
-
 bool Keystone::prepareEnclave(struct keystone_ioctl_create_enclave* enclp,
                               uintptr_t alternate_phys_addr)
 {
@@ -316,7 +302,7 @@ bool Keystone::prepareEnclave(struct keystone_ioctl_create_enclave* enclp,
   /* Pass in pages to map to enclave here. */
 
   /* Call Keystone Driver */
-  int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, enclp);
+  int ret = kDevice->ioctl_ioc_create_enclave(enclp);
 
   if (ret) {
     ERROR("failed to create enclave - ioctl() failed: %d", ret);
@@ -346,24 +332,32 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
   return this->init(eapppath, runtimepath, _params, (uintptr_t)0);
 }
 
+const char* Keystone::getHash(){
+  return this->hash;
+}
+
 keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, Params _params, uintptr_t alternate_phys_addr)
 {
   params = _params;
 
   if (params.isSimulated()) {
     pMemory = new SimulatedEnclaveMemory();
+    kDevice = new MockKeystoneDevice();
   } else {
     pMemory = new PhysicalEnclaveMemory();
+    kDevice = new KeystoneDevice();
   }
 
   if(!initFiles(eapppath, runtimepath)) {
     return KEYSTONE_ERROR;
   }
 
-  if(!initDevice()) {
+  if(!kDevice->initDevice(params)) {
     destroy();
     return KEYSTONE_ERROR;
   }
+
+  fd = kDevice->getFD();
 
   struct keystone_ioctl_create_enclave enclp;
   if(!prepareEnclave(&enclp, alternate_phys_addr)) {
@@ -376,20 +370,20 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 
   uintptr_t data_start;
 
+  hash_enclave.runtime_paddr = epm_free_list;
   if(loadELF(runtimeFile, &data_start) != KEYSTONE_SUCCESS) {
     ERROR("failed to load runtime ELF");
     destroy();
     return KEYSTONE_ERROR;
   }
-  hash_enclave.runtime_paddr = epm_free_list;
   enclp.runtime_paddr = (data_start - start_addr) + enclp.pt_ptr;
 
+  hash_enclave.user_paddr = epm_free_list;
   if(loadELF(enclaveFile, &data_start) != KEYSTONE_SUCCESS) {
     ERROR("failed to load enclave ELF");
     destroy();
     return KEYSTONE_ERROR;
   }
-  hash_enclave.user_paddr = epm_free_list;
   enclp.user_paddr = (data_start - start_addr) + enclp.pt_ptr;
 
   /* initialize stack. If not using freemem */
@@ -402,11 +396,11 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
 #endif /* USE_FREEMEM */
   if(params.isSimulated()) {
     utm_free_list = pMemory->AllocMem(enclp.params.untrusted_size);
-    hash_enclave.free_paddr = (epm_free_list - start_addr) + enclp.pt_ptr;
+    hash_enclave.free_paddr = epm_free_list;
     hash_enclave.utm_paddr = utm_free_list;
   } else {
     int ret;
-    ret = ioctl(fd, KEYSTONE_IOC_UTM_INIT, &enclp);
+    ret = kDevice->ioctl_ioc_utm_init(&enclp);
     if (ret) {
       ERROR("failed to init untrusted memory - ioctl() failed: %d", ret);
       destroy();
@@ -425,10 +419,9 @@ keystone_status_t Keystone::init(const char *eapppath, const char *runtimepath, 
     hash_enclave.untrusted_size = enclp.params.untrusted_size;
 
     validate_and_hash_enclave(enclp.params, &hash_enclave);
-    printHash(hash);
   } else {
     int ret;
-    ret = ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &enclp);
+    ret = kDevice->ioctl_ioc_finalize_enclave(&enclp);
 
     if (ret) {
       ERROR("failed to finalize enclave - ioctl() failed: %d", ret);
@@ -475,7 +468,7 @@ keystone_status_t Keystone::destroy()
   {
     struct keystone_ioctl_create_enclave enclp;
     enclp.eid = eid;
-    int ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &enclp);
+    int ret = kDevice->ioctl_destroy_enclave(&enclp);
 
     if (ret) {
       ERROR("failed to destroy enclave - ioctl() failed: %d", ret);
@@ -506,13 +499,13 @@ keystone_status_t Keystone::run()
   struct keystone_ioctl_run_enclave run;
   run.eid = eid;
 
-  ret = ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, &run);
+  ret = kDevice->ioctl_run_enclave(&run);
   while (ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST) {
     /* enclave is stopped in the middle. */
     if (oFuncDispatch != NULL) {
       oFuncDispatch(getSharedBuffer());
     }
-    ret = ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, &run);
+    ret = kDevice->ioctl_resume_enclave(&run);
   }
 
   if (ret) {
