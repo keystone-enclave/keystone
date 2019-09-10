@@ -35,13 +35,6 @@ struct miscdevice keystone_dev = {
   .mode = 0666,
 };
 
-void keystone_handle_interrupts(void)
-{
-  uintptr_t old = csr_read(sstatus);
-  csr_set(sstatus, SR_SIE);
-  csr_write(sstatus, old);
-}
-
 int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
 {
   struct utm* utm;
