@@ -482,7 +482,6 @@ enclave_ret_code destroy_enclave(enclave_id eid)
 
   spinlock_lock(&encl_lock);
   destroyable = (ENCLAVE_EXISTS(eid)
-                 && enclaves[eid].state != RUNNING
                  && enclaves[eid].state != ALLOCATED);
   /* update the enclave state first so that
    * no SM can run the enclave any longer */
