@@ -45,6 +45,7 @@ make
 ## Test
 
 ```
+source source.sh
 make run-tests
 ```
 
