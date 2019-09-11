@@ -9,6 +9,7 @@ Simply running following command will build and run tests in QEMU.
 
 ::
 
+  source source.sh
   make run-tests
 
 If you wish to compile and run tests by your self, follow the following instructions.
