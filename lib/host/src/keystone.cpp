@@ -500,9 +500,9 @@ keystone_status_t Keystone::run()
   run.eid = eid;
 
   ret = kDevice->ioctl_run_enclave(&run);
-  while (ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST) {
+  while (ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST || ret == KEYSTONE_ENCLAVE_INTERRUPTED) {
     /* enclave is stopped in the middle. */
-    if (oFuncDispatch != NULL) {
+    if(ret == KEYSTONE_ENCLAVE_EDGE_CALL_HOST && oFuncDispatch != NULL) {
       oFuncDispatch(getSharedBuffer());
     }
     ret = kDevice->ioctl_resume_enclave(&run);
