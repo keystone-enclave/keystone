@@ -12,8 +12,9 @@
 #define TEST_EAPP "test_binary/stack.eapp_riscv"
 #define FAKE_EAPP "test_binary/fake_file.riscv"
 #define FAKE_RT "test_binary/fake-rt"
+#define MD_SIZE 64
 
-char const *ref_hash = "\xF\x7F\xED\xF5\xEB\x82\x8B\xD2\x11\xFBWv\xBE\xB4m\x80\xD2";
+char const *ref_hash = "\x10\xc7\xb0\x61\xb0\x0d\xcb\x90\x5d\x5a\xa0\x88\x92\xba\xbc\x1a\x0c\xcb\x13\xf4\xa1\x5f\xe4\xfc\x63\xf8\xd0\x26\xe3\xc4\xfa\xe1\x77\x9f\xc6\xff\x8a\x3f\x40\x1e\xd9\xef\xad\xeb\xf9\x30\x70\xf2\x31\x49\xa5\x38\x42\x93\xcf\x27\xcb\xc2\xa4\x7a\xce\xe4\xba\x8c";
 
 size_t untrusted_size = 2*1024*1024;
 size_t freemem_size = 48*1024*1024;
@@ -29,9 +30,9 @@ TEST(Keystone_Init, ValidMeasure) {
   params.setFreeMemSize(untrusted_size);
   params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
-
+  
   EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), KEYSTONE_SUCCESS);
-  ASSERT_STREQ(enclave.getHash(), ref_hash);
+  EXPECT_EQ(memcmp(enclave.getHash(), ref_hash, MD_SIZE), 0);
   EXPECT_EQ(enclave.destroy(), KEYSTONE_SUCCESS);
 }
 

@@ -11,7 +11,7 @@ git:
   depth: 1
 
 env:
-  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR
 
 addons:
   apt:
@@ -22,19 +22,24 @@ addons:
     - build-essential
     - gcc
     - git
+    - cmake
 
 branches:
   only:
-    - keystone
+    - travis
 
 before_install:
-  - ./tests/scripts/setup_test.sh
+  - sudo ./tests/scripts/setup_test.sh
+  - ./scripts/init.sh 
+  - ./fast-setup.sh
 
 jobs:
   include:
     - stage: build everything & test
-      script:
+      script: 
+        - make
         - cd tests
-	- make
-	- make test
-	- cd $TRAVIS_BUILD_DIR
+        - make
+        - make test
+        - cd $TRAVIS_BUILD_DIR
+
