@@ -1,4 +1,4 @@
-CC = g++
+CC = riscv64-unknown-linux-gnu-g++
 OBJCOPY = riscv64-unknown-linux-gnu-objcopy
 
 SDK_LIB_DIR =$(KEYSTONE_SDK_DIR)/lib
@@ -10,28 +10,23 @@ SDK_INCLUDE_HOST_DIR = $(SDK_LIB_DIR)/host/include
 SDK_INCLUDE_EDGE_DIR = $(SDK_LIB_DIR)/edge/include
 SDK_INCLUDE_VERIFIER_DIR = $(SDK_LIB_DIR)/verifier
 
-
-SRC_DIR = $(SDK_LIB_DIR)/host/src
-SRC = keystone.cpp elffile.cpp elf.cpp elf32.cpp elf64.cpp sha3.cpp memory.cpp keystone_device.cpp
-SRCS = $(addprefix $(SRC_DIR)/, $(SRC))
-
-SCRIPTS_DIR = scripts
-TEST_BIN_DIR = test_binary
-
+RUNTIME=eyrie-rt
+RUNNER=test-runner.riscv
 CCFLAGS = -I$(SDK_INCLUDE_HOST_DIR) -I$(SDK_INCLUDE_EDGE_DIR) -I$(SDK_INCLUDE_VERIFIER_DIR) -std=c++11
 LDFLAGS = -L$(SDK_LIB_DIR)
-GFLAGS = -lgtest
-TARGET = test_runner
+
+TESTS=stack
+
+SRCS = $(patsubst %.riscv, %.cpp, $(RUNNER))
+OBJS = $(patsubst %.riscv, %.o,$(RUNNER)) $(KEYSTONE_OBJ) edge_wrapper.o
 
 all: 
-	$(SCRIPTS_DIR)/setup_binary.sh
-	$(CC) $(CCFLAGS) $(LDFLAGS) keystone_test.cpp $(SRCS) -o $(TARGET) $(GFLAGS)
-
-test: 
-	./$(TARGET)
+	$(foreach test, $(TESTS),\
+		$(MAKE) -C $(test);\
+	)
 
 clean:
-	rm -rf $(TEST_BIN_DIR)
-	rm $(TARGET)
-	
-
+	rm -f *.o *.riscv test
+	$(foreach test, $(TESTS), \
+		$(MAKE) -C $(test) clean; \
+	)

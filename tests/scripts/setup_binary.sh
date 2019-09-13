@@ -7,7 +7,7 @@ NAME=tests
 VAULT_DIR=$(cd `dirname $0` && pwd)
 BUILD_COMMAND=make
 OUTPUT_DIR=$(pwd)
-TEST_DIR=../../tests/tests/
+TEST_DIR=tests
 EYRIE_DIR=../rts/eyrie
 EYRIE_PLUGINS="freemem"
 
@@ -24,6 +24,11 @@ mkdir -p $OUTPUT_FILES_DIR
 # build eyrie runtime
 $EYRIE_DIR/build.sh $EYRIE_PLUGINS
 
-cp $EYRIE_DIR/eyrie-rt $OUTPUT_FILES_DIR
+pushd $(pwd)
+cd $TEST_DIR
+make
+popd
+
 cp $TEST_DIR/stack/stack.eapp_riscv $OUTPUT_FILES_DIR
+cp $EYRIE_DIR/eyrie-rt $OUTPUT_FILES_DIR
 
