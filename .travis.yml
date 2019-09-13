@@ -1,0 +1,40 @@
+language: minimal
+dist: xenial
+cache:
+  apt: true
+  timeout: 1000 #In seconds
+  directories:
+    - $TRAVIS_BUILD_DIR/lib
+
+git:
+  submodules: false
+  depth: 1
+
+env:
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
+
+addons:
+  apt:
+    packages:
+    - autoconf
+    - automake
+    - autotools-dev
+    - build-essential
+    - gcc
+    - git
+
+branches:
+  only:
+    - keystone
+
+before_install:
+  - ./tests/scripts/setup_test.sh
+
+jobs:
+  include:
+    - stage: build everything & test
+      script:
+        - cd tests
+	- make
+	- make test
+	- cd $TRAVIS_BUILD_DIR
