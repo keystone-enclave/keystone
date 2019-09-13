@@ -26,7 +26,8 @@ addons:
 
 branches:
   only:
-    - travis
+    - master
+    - dev
 
 before_install:
   - sudo ./tests/scripts/setup_test.sh
