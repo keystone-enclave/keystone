@@ -17,7 +17,7 @@ else
 
   export RISCV=$(pwd)/riscv
   export PATH=$PATH:$RISCV/bin
-  wget https://github.com/keystone-enclave/firesim-riscv-tools-prebuilt/archive/${TOOL_VER}.tar.gz
+  wget https://keystone-enclave.eecs.berkeley.edu/files/${TOOL_VER}.tar.gz
 
   # Check tool integrity
   echo "Verifying prebuilt toolchain integrity..."
@@ -37,10 +37,18 @@ else
   echo "Toolchain has been installed in $RISCV"
 fi
 
+echo "Updating and cloning submodules, this may take a long time"
 git config submodule.riscv-gnu-toolchain.update none
+git config -f .gitmodules submodule.riscv-linux.shallow true
+git config -f .gitmodules submodule.riscv-qemu.shallow true
+git config -f .gitmodules submodule.buildroot.shallow true
+
 git submodule sync --recursive
 git submodule update --init --recursive
 
 # build tests in SDK
+export KEYSTONE_SDK_DIR=$(pwd)/sdk
 make -C sdk
 ./sdk/scripts/init.sh --runtime eyrie --force
+
+echo "Keystone is fully setup! You can build everything and run the tests with 'make run-tests'"

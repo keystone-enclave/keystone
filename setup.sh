@@ -13,4 +13,5 @@ cd ..
 
 # build tests in SDK
 make -C sdk
+export KEYSTONE_SDK_DIR=$(pwd)/sdk
 ./sdk/scripts/init.sh --runtime eyrie --force
