@@ -1,0 +1,46 @@
+language: minimal
+dist: xenial
+cache:
+  apt: true
+  timeout: 1000 #In seconds
+  directories:
+    - $TRAVIS_BUILD_DIR/lib
+
+git:
+  submodules: false
+  depth: 1
+
+env:
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR
+
+addons:
+  apt:
+    packages:
+    - autoconf
+    - automake
+    - autotools-dev
+    - build-essential
+    - gcc
+    - git
+    - cmake
+
+branches:
+  only:
+    - master
+    - dev
+
+before_install:
+  - sudo ./tests/scripts/setup_test.sh
+  - ./scripts/init.sh --runtime-version 87351c
+  - ./.fast-setup.sh
+
+jobs:
+  include:
+    - stage: build everything & test
+      script:
+        - make
+        - cd tests
+        - make
+        - make test
+        - cd $TRAVIS_BUILD_DIR
+

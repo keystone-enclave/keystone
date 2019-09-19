@@ -5,7 +5,7 @@ SRC_DIR = src
 OPTIONS_FLAGS ?=
 
 CCFLAGS = -Wall -Werror -I $(INCLUDE_DIR) $(OPTIONS_FLAGS)
-SRCS = keystone.cpp elffile.cpp elf.cpp elf32.cpp elf64.cpp sha3.cpp memory.cpp
+SRCS = keystone.cpp elffile.cpp elf.cpp elf32.cpp elf64.cpp sha3.cpp memory.cpp keystone_device.cpp
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 AR = riscv64-unknown-linux-gnu-ar
 ARFLAGS = rcs
