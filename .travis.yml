@@ -31,13 +31,13 @@ branches:
 
 before_install:
   - sudo ./tests/scripts/setup_test.sh
-  - ./scripts/init.sh 
-  - ./fast-setup.sh
+  - ./scripts/init.sh --runtime-version 87351c
+  - ./.fast-setup.sh
 
 jobs:
   include:
     - stage: build everything & test
-      script: 
+      script:
         - make
         - cd tests
         - make
