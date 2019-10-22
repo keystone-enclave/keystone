@@ -101,9 +101,9 @@ $ sudo apt install scala
 ### Toolchain
 
 To compile the bootloaders for VC707
-FPGA dev kits, the RISC-V software toolchain must be installed locally and
-set the $(RISCV) environment variable to point to the location of where the
-RISC-V toolchains are installed. You can build the toolchain from scratch
+FPGA dev kits, the RISC-V toolchain must be installed locally and
+set the ${RISCV} environment variable to point to the location of where the
+toolchains are installed. You can build the toolchain from scratch
 or download the tools `GNU Embedded Toolchain` here:
 [https://www.sifive.com/products/tools/](https://www.sifive.com/products/tools/)
 
