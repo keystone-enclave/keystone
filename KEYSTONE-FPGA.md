@@ -11,7 +11,7 @@ Refer section `Required Hardware` for preparing required hardware configuration 
 
 ### Install Vivado
 
-Download Vivado 2016.06 from xilinx website and install it. The file to download is `Vivado HLx 2016.4: WebPACK and Editions`.
+Download Vivado 2016.04 from xilinx website and install it. The file to download is `Vivado HLx 2016.4: WebPACK and Editions`.
 The newer version of Vivado was known to fail and we have not tested any later version than 2016.04.
 
 During the installation, select `Vivado HL Design Edition`.
