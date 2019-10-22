@@ -11,7 +11,7 @@ Refer section `Required Hardware` for preparing required hardware configuration 
 
 ### Install Vivado
 
-Download Vivado 2016.06 from xilinx website and install it. The file to download is `Vivado HLx 2016.4: WebPACK and Editions`.
+Download Vivado 2016.04 from xilinx website and install it. The file to download is `Vivado HLx 2016.4: WebPACK and Editions`.
 The newer version of Vivado was known to fail and we have not tested any later version than 2016.04.
 
 During the installation, select `Vivado HL Design Edition`.
@@ -101,9 +101,9 @@ $ sudo apt install scala
 ### Toolchain
 
 To compile the bootloaders for VC707
-FPGA dev kits, the RISC-V software toolchain must be installed locally and
-set the $(RISCV) environment variable to point to the location of where the
-RISC-V toolchains are installed. You can build the toolchain from scratch
+FPGA dev kits, the RISC-V toolchain must be installed locally and
+set the ${RISCV} environment variable to point to the location of where the
+toolchains are installed. You can build the toolchain from scratch
 or download the tools `GNU Embedded Toolchain` here:
 [https://www.sifive.com/products/tools/](https://www.sifive.com/products/tools/)
 
@@ -345,17 +345,17 @@ Zap all partitions.
 ```sh
 $ sudo ./sgdisk -Z ${dev-sd}
 ```
-Make partition 1 32M 5202(SiFive bootloader).
+Make partition 1 - 32M 5202(SiFive bootloader).
 ```sh
 $ sudo ./sgdisk --new=1:2048:67583   ${dev-sd}
 $ sudo ./sgdisk --typecode=1:5202    ${dev-sd}
 ```
-Make partition 4 128K 5201(SiFive FSBL).
+Make partition 4 - 128K 5201(SiFive FSBL).
 ```sh
 $ sudo ./sgdisk --new=4:67584:67839 ${dev-sd}
 $ sudo ./sgdisk --typecode=4:5201   ${dev-sd}
 ```
-Make partition 2 Linux 7.3G.
+Make partition 2 - Linux 7.3G.
 ```sh
 $ sudo ./sgdisk --new=2:264192:15500000 ${dev-sd}
 $ sudo ./sgdisk --typecode=2:8300   ${dev-sd}
@@ -384,7 +384,7 @@ It should show three partitions similar bellow.
 Move to your keystone folder.
 Write the bbl.bin to the 1st partition of the SD card, where the ${dev-sd-p1} is the 1st partition of the SD device.
 
-The ${dev-sd-p1} will be `/dev/sdb1` or `/dev/mmcblk0p1` if the location of the SD card were `/dev/sdb` or `/dev/mmcblk0`.
+The ${dev-sd-p1} will be `/dev/sdb1` or `/dev/mmcblk0p1` if the location of the SD card is `/dev/sdb` or `/dev/mmcblk0`.
 Be careful not to use `/dev/sdb` or `/dev/mmcblk0` instead of `/dev/sdb1` or `/dev/mmcblk0p1`.
 It will destroy the partitions created with above instructions in the SD card.
 
@@ -396,7 +396,7 @@ $ cd ..
 
 Write the FPGAfsbl.bin to the 4th partition of the SD card, where the ${dev-sd-p4} is the 4th partition of the SD device.
 
-The ${dev-sd-p4} will be `/dev/sdb4` or `/dev/mmcblk0p4` if the location of the SD card were `/dev/sdb` or `/dev/mmcblk0`.
+The ${dev-sd-p4} will be `/dev/sdb4` or `/dev/mmcblk0p4` if the location of the SD card is `/dev/sdb` or `/dev/mmcblk0`.
 Be careful not to use `/dev/sdb` or `/dev/mmcblk0` instead of `/dev/sdb4` or `/dev/mmcblk0p4`.
 
 ```sh
