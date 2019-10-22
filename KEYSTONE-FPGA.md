@@ -384,7 +384,7 @@ It should show three partitions similar bellow.
 Move to your keystone folder.
 Write the bbl.bin to the 1st partition of the SD card, where the ${dev-sd-p1} is the 1st partition of the SD device.
 
-The ${dev-sd-p1} will be `/dev/sdb1` or `/dev/mmcblk0p1` if the location of the SD card were `/dev/sdb` or `/dev/mmcblk0`.
+The ${dev-sd-p1} will be `/dev/sdb1` or `/dev/mmcblk0p1` if the location of the SD card is `/dev/sdb` or `/dev/mmcblk0`.
 Be careful not to use `/dev/sdb` or `/dev/mmcblk0` instead of `/dev/sdb1` or `/dev/mmcblk0p1`.
 It will destroy the partitions created with above instructions in the SD card.
 
@@ -396,7 +396,7 @@ $ cd ..
 
 Write the FPGAfsbl.bin to the 4th partition of the SD card, where the ${dev-sd-p4} is the 4th partition of the SD device.
 
-The ${dev-sd-p4} will be `/dev/sdb4` or `/dev/mmcblk0p4` if the location of the SD card were `/dev/sdb` or `/dev/mmcblk0`.
+The ${dev-sd-p4} will be `/dev/sdb4` or `/dev/mmcblk0p4` if the location of the SD card is `/dev/sdb` or `/dev/mmcblk0`.
 Be careful not to use `/dev/sdb` or `/dev/mmcblk0` instead of `/dev/sdb4` or `/dev/mmcblk0p4`.
 
 ```sh
