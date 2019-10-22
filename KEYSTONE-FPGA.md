@@ -345,17 +345,17 @@ Zap all partitions.
 ```sh
 $ sudo ./sgdisk -Z ${dev-sd}
 ```
-Make partition 1 32M 5202(SiFive bootloader).
+Make partition 1 - 32M 5202(SiFive bootloader).
 ```sh
 $ sudo ./sgdisk --new=1:2048:67583   ${dev-sd}
 $ sudo ./sgdisk --typecode=1:5202    ${dev-sd}
 ```
-Make partition 4 128K 5201(SiFive FSBL).
+Make partition 4 - 128K 5201(SiFive FSBL).
 ```sh
 $ sudo ./sgdisk --new=4:67584:67839 ${dev-sd}
 $ sudo ./sgdisk --typecode=4:5201   ${dev-sd}
 ```
-Make partition 2 Linux 7.3G.
+Make partition 2 - Linux 7.3G.
 ```sh
 $ sudo ./sgdisk --new=2:264192:15500000 ${dev-sd}
 $ sudo ./sgdisk --typecode=2:8300   ${dev-sd}
