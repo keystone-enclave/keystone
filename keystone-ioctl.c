@@ -6,7 +6,6 @@
 #include "keystone-sbi-arg.h"
 #include "keystone_user.h"
 #include <linux/uaccess.h>
-#include <keystone_user.h>
 
 int __keystone_destroy_enclave(unsigned int ueid);
 
