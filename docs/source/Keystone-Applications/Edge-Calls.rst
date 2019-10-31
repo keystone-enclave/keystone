@@ -75,3 +75,14 @@ resumes the enclave ocall wrapper code.
 
 Finally, the ocall wrapper code passes any return values to the
 function that first called ``ocall_print_value``.
+
+Automatic Wrapper for Edge Calls
+--------------------------------
+
+We are currently developing a tool to help with automatic generation
+of wrapper code for edge calls. It can be found here:
+`Keyedge <https://github.com/keystone-enclave/keyedge>`_. For further
+documentation, please check
+`Keyedge Documentation
+<https://github.com/keystone-enclave/keyedge/blob/master/documentation.rst>`_.
+
