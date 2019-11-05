@@ -1,6 +1,5 @@
 ifndef KEYSTONE_SDK_DIR
   $(error KEYSTONE_SDK_DIR is undefined)
-  exit 1
 endif
 
 CC = riscv64-unknown-linux-gnu-gcc
