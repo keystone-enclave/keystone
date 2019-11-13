@@ -10,11 +10,12 @@
 #include "edge_syscall.h"
 #include "vm.h"
 
-#define RUNTIME_SYSCALL_UNKNOWN         1000
-#define RUNTIME_SYSCALL_OCALL           1001
-#define RUNTIME_SYSCALL_SHAREDCOPY      1002
-#define RUNTIME_SYSCALL_ATTEST_ENCLAVE  1003
-#define RUNTIME_SYSCALL_EXIT            1101
+#define RUNTIME_SYSCALL_UNKNOWN             1000
+#define RUNTIME_SYSCALL_OCALL               1001
+#define RUNTIME_SYSCALL_SHAREDCOPY          1002
+#define RUNTIME_SYSCALL_ATTEST_ENCLAVE      1003
+#define RUNTIME_SYSCALL_GET_SEALING_KEY     1004
+#define RUNTIME_SYSCALL_EXIT                1101
 
 void handle_syscall(struct encl_ctx* ctx);
 void init_edge_internals(void);
