@@ -52,7 +52,7 @@ int epm_init(struct epm* epm, unsigned int min_pages)
     epm_vaddr = (vaddr_t) dma_alloc_coherent(keystone_dev.this_device,
       count << PAGE_SHIFT,
       &device_phys_addr,
-      GFP_KERNEL);
+      GFP_KERNEL | __GFP_DMA32);
 
     if(!device_phys_addr)
       epm_vaddr = 0;
