@@ -1,0 +1,59 @@
+From 7daa3ae5e552e48645b4cb18de763e7d488595b4 Mon Sep 17 00:00:00 2001
+From: Dayeol Lee <dayeol@berkeley.edu>
+Date: Mon, 7 Oct 2019 05:01:38 +0000
+Subject: [PATCH] target/riscv: PMP violation due to wrong size parameter
+
+riscv_cpu_tlb_fill() uses the `size` parameter to check PMP violation
+using pmp_hart_has_privs().
+However, if the size is unknown (=0), the ending address will be
+`addr - 1` as it is `addr + size - 1` in `pmp_hart_has_privs()`.
+This always causes a false PMP violation on the starting address of the
+range, as `addr - 1` is not in the range.
+
+In order to fix, we just assume that all bytes from addr to the end of
+the page will be accessed if the size is unknown.
+
+Signed-off-by: Dayeol Lee <dayeol@berkeley.edu>
+Reviewed-by: Richard Henderson <richard.henderson@linaro.org>
+---
+ target/riscv/pmp.c | 13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/target/riscv/pmp.c b/target/riscv/pmp.c
+index 958c7502a0..7a9fd415ba 100644
+--- a/target/riscv/pmp.c
++++ b/target/riscv/pmp.c
+@@ -232,6 +232,7 @@ bool pmp_hart_has_privs(CPURISCVState *env, target_ulong addr,
+ {
+     int i = 0;
+     int ret = -1;
++    int pmp_size = 0;
+     target_ulong s = 0;
+     target_ulong e = 0;
+     pmp_priv_t allowed_privs = 0;
+@@ -241,11 +242,21 @@ bool pmp_hart_has_privs(CPURISCVState *env, target_ulong addr,
+         return true;
+     }
+ 
++    /*
++     * if size is unknown (0), assume that all bytes
++     * from addr to the end of the page will be accessed.
++     */
++    if (size == 0) {
++        pmp_size = -(addr | TARGET_PAGE_MASK);
++    } else {
++        pmp_size = size;
++    }
++
+     /* 1.10 draft priv spec states there is an implicit order
+          from low to high */
+     for (i = 0; i < MAX_RISCV_PMPS; i++) {
+         s = pmp_is_in_range(env, i, addr);
+-        e = pmp_is_in_range(env, i, addr + size - 1);
++        e = pmp_is_in_range(env, i, addr + pmp_size - 1);
+ 
+         /* partially inside */
+         if ((s + e) == 1) {
+-- 
+2.23.0
+

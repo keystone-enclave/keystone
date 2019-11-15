@@ -1,15 +1,9 @@
 [submodule "riscv-gnu-toolchain"]
 	path = riscv-gnu-toolchain
 	url = https://github.com/riscv/riscv-gnu-toolchain
-[submodule "riscv-linux"]
-	path = riscv-linux
-	url = https://github.com/riscv/riscv-linux
 [submodule "riscv-pk"]
 	path = riscv-pk
 	url = https://github.com/keystone-enclave/riscv-pk
-[submodule "riscv-qemu"]
-	path = riscv-qemu
-	url = https://github.com/riscv/riscv-qemu
 [submodule "sdk"]
 	path = sdk
 	url = https://github.com/keystone-enclave/keystone-sdk
@@ -18,4 +12,12 @@
 	url = https://github.com/keystone-enclave/linux-keystone-driver
 [submodule "buildroot"]
 	path = buildroot
-	url = https://github.com/keystone-enclave/buildroot.git
+	url = https://github.com/buildroot/buildroot.git
+	shallow = true
+[submodule "linux"]
+	path = linux
+  url = https://github.com/torvalds/linux
+  shallow = true
+[submodule "qemu"]
+	path = qemu
+	url = https://github.com/qemu/qemu
