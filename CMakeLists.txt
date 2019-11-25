@@ -43,7 +43,7 @@ set(linux_defconfig ${confdir}/linux-v5.0-defconfig-rv${BITS})
 set(linux_vmlinux ${linux_wrkdir}/vmlinux)
 set(linux_vmlinux_stripped ${linux_wrkdir}/vmlinux-stripped)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
-set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystonBITSe-driver${BITS})
+set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver${BITS})
 set(tests_srcdir ${CMAKE_SOURCE_DIR}/tests)
 
 
@@ -52,8 +52,8 @@ add_custom_target("qemu" ALL COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS "qemu-con
 add_custom_target("qemu-config" DEPENDS ${qemu_srcdir}/ ${CMAKE_SOURCE_DIR}/patches/qemu/
   WORKING_DIRECTORY ${qemu_srcdir}
   COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-pmp-bug.patch || true
-  COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-secure-boot.patch || true 
-  COMMAND ./configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user 
+  COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-secure-boot.patch || true
+  COMMAND ./configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user
 )
 
 # buildroot
@@ -69,20 +69,20 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
   COMMAND mkdir -p ${buildroot_wrkdir}
   COMMAND cp ${buildroot_config} ${buildroot_wrkdir}/.config
   COMMAND sed \"s/^BR2_ROOTFS_OVERLAY=.*/BR2_ROOTFS_OVERLAY=\\\"${overlay_dir_stripped}\\\"/g\" -i ${buildroot_wrkdir}/.config
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} 
+  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH}
     O=${buildroot_wrkdir} CROSS_COMPILE=${cross_compile} olddefconfig
 )
 
 # boot ROM
 add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
-add_custom_target("bootrom" ALL 
+add_custom_target("bootrom" ALL
   COMMAND $(MAKE) -C ${bootrom_srcdir} O=${bootrom_wrkdir}
   DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir})
 
 # linux
 add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
 add_custom_target("linux" ALL DEPENDS ${linux_srcdir} ${linux_wrkdir}/.config
-  COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true 
+  COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
   COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
 )
@@ -105,7 +105,7 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_
 # bbl + sm
 add_custom_command(OUTPUT ${sm_wrkdir} COMMAND mkdir -p ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_stripped} WORKING_DIRECTORY ${sm_wrkdir}
-  COMMAND ${sm_srcdir}/configure --enable-sm --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped} 
+  COMMAND ${sm_srcdir}/configure --enable-sm --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
     --enable-logo --with-logo=${confdir}/sifive_logo.txt --with-target-platform=default
     CFLAGS=${CFLAGS}
   COMMAND env CFLAGS='-g -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
@@ -122,7 +122,7 @@ add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_w
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
 )
 
-# scripts 
+# scripts
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 add_custom_command(OUTPUT ${scripts}/run-qemu.sh
@@ -155,7 +155,7 @@ add_custom_target(
 
 add_custom_target(
   "run-tests"
-  DEPENDS "all-scripts" 
+  DEPENDS "all-scripts"
   COMMAND
-    ./scripts/travis.sh ${CMAKE_SOURCE_DIR}/tests 
+    ./scripts/travis.sh ${CMAKE_SOURCE_DIR}/tests
 )
