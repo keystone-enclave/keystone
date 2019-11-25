@@ -59,7 +59,8 @@ add_custom_target("qemu-config" DEPENDS ${qemu_srcdir}/ ${CMAKE_SOURCE_DIR}/patc
 # buildroot
 add_custom_command(OUTPUT ${overlay_root} COMMAND mkdir -p ${overlay_root})
 add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
-add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root}
+add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
+add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
 )
 
