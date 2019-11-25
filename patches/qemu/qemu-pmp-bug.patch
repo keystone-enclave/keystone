@@ -1,28 +1,7 @@
-From 7daa3ae5e552e48645b4cb18de763e7d488595b4 Mon Sep 17 00:00:00 2001
-From: Dayeol Lee <dayeol@berkeley.edu>
-Date: Mon, 7 Oct 2019 05:01:38 +0000
-Subject: [PATCH] target/riscv: PMP violation due to wrong size parameter
-
-riscv_cpu_tlb_fill() uses the `size` parameter to check PMP violation
-using pmp_hart_has_privs().
-However, if the size is unknown (=0), the ending address will be
-`addr - 1` as it is `addr + size - 1` in `pmp_hart_has_privs()`.
-This always causes a false PMP violation on the starting address of the
-range, as `addr - 1` is not in the range.
-
-In order to fix, we just assume that all bytes from addr to the end of
-the page will be accessed if the size is unknown.
-
-Signed-off-by: Dayeol Lee <dayeol@berkeley.edu>
-Reviewed-by: Richard Henderson <richard.henderson@linaro.org>
----
- target/riscv/pmp.c | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
-
-diff --git a/target/riscv/pmp.c b/target/riscv/pmp.c
+diff --git target/riscv/pmp.c target/riscv/pmp.c
 index 958c7502a0..7a9fd415ba 100644
---- a/target/riscv/pmp.c
-+++ b/target/riscv/pmp.c
+--- target/riscv/pmp.c
++++ target/riscv/pmp.c
 @@ -232,6 +232,7 @@ bool pmp_hart_has_privs(CPURISCVState *env, target_ulong addr,
  {
      int i = 0;

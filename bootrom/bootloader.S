@@ -13,7 +13,7 @@ reset:
   csrr t0, mhartid
   bnez t0, loop
   
-  sd a1, DTB(sp)
+  # sd a1, DTB(sp)
   
   /* secure boot */
   call bootloader
@@ -35,7 +35,8 @@ boot:
   
   # boot payload
 	csrr a0, mhartid
-  ld a1, DTB(sp)
+  la a1, _dtb
+	# ld a1, DTB(sp)
   li t0, DRAM_BASE
   jr t0
 
