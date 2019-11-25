@@ -155,7 +155,7 @@ add_custom_target(
 
 add_custom_target(
   "run-tests"
-  DEPENDS "all-scripts"
+  DEPENDS "all-scripts" "image"
   COMMAND
     ./scripts/travis.sh ${CMAKE_SOURCE_DIR}/tests
 )
