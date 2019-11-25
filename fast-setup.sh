@@ -39,8 +39,8 @@ fi
 
 echo "Updating and cloning submodules, this may take a long time"
 git config submodule.riscv-gnu-toolchain.update none
-git config -f .gitmodules submodule.riscv-linux.shallow true
-git config -f .gitmodules submodule.riscv-qemu.shallow true
+git config -f .gitmodules submodule.linux.shallow true
+git config -f .gitmodules submodule.qemu.shallow true
 git config -f .gitmodules submodule.buildroot.shallow true
 
 git submodule sync --recursive

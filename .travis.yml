@@ -6,8 +6,8 @@ cache:
   directories:
   # - $TRAVIS_BUILD_DIR/firesim-riscv-tools-prebuilt
   - $TRAVIS_BUILD_DIR/riscv
-  - $TRAVIS_BUILD_DIR/riscv-linux
-  - $TRAVIS_BUILD_DIR/riscv-qemu
+  - $TRAVIS_BUILD_DIR/linux
+  - $TRAVIS_BUILD_DIR/qemu
 
 git:
   submodules: false
@@ -62,15 +62,15 @@ branches:
 
 
 before_install:
-  - git submodule init -- riscv-linux
-  - git submodule init -- riscv-qemu
-  - if [ -d "riscv-linux/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-linux riscv-linux; fi
-  - if [ -d "riscv-qemu/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/riscv/riscv-qemu riscv-qemu; fi
-  - git submodule update --depth=1 -- riscv-linux
-  - git submodule update --depth=1 -- riscv-qemu
+  - git submodule init -- linux
+  - git submodule init -- qemu
+  - if [ -d "linux/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/torvalds/linux linux; fi
+  - if [ -d "qemu/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/qemu/qemu qemu; fi
+  - git submodule update --depth=1 -- linux
+  - git submodule update --depth=1 -- qemu
   - ./fast-setup.sh
-  - cp -r riscv-linux/.git riscv-linux-git
-  - cp -r riscv-qemu/.git riscv-qemu-git
+  - cp -r linux/.git linux-git
+  - cp -r qemu/.git qemu-git
 
 jobs:
   include:
@@ -79,10 +79,14 @@ jobs:
     - stage: build everything & test
       script:
         - source ./source.sh
-        - travis_wait 120 make -j2
+        - mkdir build
+        - cd build
+        - cmake ../
+        - travis_wait 120 make -j3
         - travis_wait 10 make run-tests
-        - cd riscv-qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-qemu-git  .git;cd ..
-        - cd riscv-linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../riscv-linux-git .git;cd ..
+        - cd ..
+        - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
+        - cd linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../linux-git .git;cd ..
       after_failure:
         - cat screenlog.0
         - cat output.log
