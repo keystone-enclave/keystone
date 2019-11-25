@@ -80,11 +80,12 @@ jobs:
       script:
         - source ./source.sh
         - mkdir build
-        - cd build; cmake ../
-        - travis_wait 120 make -j2 -C build
-        - travis_wait 10 make run-tests -C build
+        - cd build
+        - cmake ../
+        - travis_wait 120 make -j2
+        - travis_wait 10 make run-tests
         - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
         - cd linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../linux-git .git;cd ..
       after_failure:
-        - cat build/screenlog.0
-        - cat build/output.log
+        - cat screenlog.0
+        - cat output.log
