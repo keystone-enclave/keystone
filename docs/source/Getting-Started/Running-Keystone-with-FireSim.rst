@@ -25,7 +25,7 @@ Setting Up FireSim Manager Instance
 
 Before we start, you have to create a FireSim manager instance.
 See `FireSim Documentation <https://docs.fires.im/>`_ to setup a manager instance.
-Be sure to use 1.4.0 or later version of FireSim.
+Be sure to use 1.7.0 or later version of FireSim.
 
 Building Keystone Software
 ----------------------------------------
@@ -48,42 +48,75 @@ Checkout ``firesim-1.4.0-keystone`` branch and update submodules.
   git submodule update --init --recursive
 
 
-Build Boot Image
-########################
-
-First, we need to build the Linux kernel with built-in Keystone module, and the Berkeley Bootloader (bbl) containing the Keystone security monitor.
-This command will compile both ``riscv-pk`` and ``riscv-linux``, and create a bootable image. It also build ``buildroot`` to get a disk image.
-
-::
-   
-  ./sw-manager.py build
-
 Build Keystone SDK
 ##########################
 
-Now, you're ready for launching Keystone.
-We provide sample enclaves with Keystone SDK, so let's build the enclaves and copy them to the disk image.
+We provide sample enclaves with Keystone SDK, so let's build the enclaves and copy them to the buildroot.
 Build the Keystone SDK by running following commands:
 
 ::
 
   cd sdk
-  make
+  make all
+  export KEYSTONE_SDK_DIR=$(pwd)
+  
 
-Next, we will copy the binaries into the disk image from the previous part.
-Open ``Makefile`` with any text editor, and change ``DISK_IMAGE`` parameters to ``../images/br-disk.img``.
-
-::
-
-  DISK_IMAGE = ../images/br-disk.img
-
-Save the change, and run
+Next, we will copy the binaries into the disk image from the previous part. First, copy 
+tests from the top-level keystone directory:
 
 ::
 
-  make copy-tests
+  rm -rf test
+  cp -r KEYSTONE_DIR/tests .
 
-This command copies all of the test binaries and runtime into the disk image.
+We must modify the build file to copy the test binaries into the correct overlay directory.
+
+
+::
+
+  sed -i ’s+OUTPUT_DIR=$VAULT_DIR/../../buildroot_overlay/root/$NAME+OUTPUT_DIR=../../../workloads/br-base/overlay/root+g’ tests/tests/vault.sh
+
+Finally, build the tests:
+
+::
+
+  ./tests/tests/vault.sh
+
+
+Build Linux Keystone Driver
+##########################
+We must build and insert the keystone driver into the overlay directory. From the base directory:
+
+::
+
+  cd linux-keystone-driver
+  sed -i ‘s+OVERLAY_DIR=../buildroot_overlay+OVERLAY_DIR=../workloads/br-base/overlay/root+g’ Makefile
+  make 
+  make copy
+
+Apply Patches
+##########################
+We must apply patches to the Berkeley Boot Loader (BBL) and to Linux in order to ensure compatibility
+with Firesim:
+
+::
+
+  ./keystone-setup.sh
+
+Build Boot Image
+##########################
+Finally, we will use Firemarshal to build the Linux kernel with built-in Keystone module, 
+and the Berkeley Bootloader (bbl) containing the Keystone security monitor.
+
+::
+
+  cd <path/to/firesim>
+  source sourceme-f1-manager.sh
+  cd sw/firesim-software
+  ./marshal clean workloads/br-base.json
+  ./marshal build workloads/br-base.json
+
+Now, you should be ready to launch Firesim.
 
 Launching Simulation
 ------------------------------
