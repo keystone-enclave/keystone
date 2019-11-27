@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 project(keystone C)
 include(ProcessorCount)
 
@@ -26,30 +26,33 @@ set(confdir ${CMAKE_SOURCE_DIR}/conf)
 set(patchdir ${CMAKE_SOURCE_DIR}/patches)
 set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
-set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom${BITS})
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
+set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/riscv-pk)
-set(sm_wrkdir ${CMAKE_BINARY_DIR}/riscv-pk${BITS})
+set(sm_wrkdir ${CMAKE_BINARY_DIR}/riscv-pk.build)
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
-set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot${BITS})
+set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
 set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
-set(linux_wrkdir ${CMAKE_BINARY_DIR}/linux${BITS})
-set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 set(linux_defconfig ${confdir}/linux-v5.0-defconfig-rv${BITS})
+set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
+set(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
 set(linux_vmlinux ${linux_wrkdir}/vmlinux)
 set(linux_vmlinux_stripped ${linux_wrkdir}/vmlinux-stripped)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
-set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver${BITS})
+set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
 set(tests_srcdir ${CMAKE_SOURCE_DIR}/tests)
-
+set(final_image ${CMAKE_BINARY_DIR}/bbl.bin)
+set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 # QEMU
-add_custom_target("qemu" ALL COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS "qemu-config")
-add_custom_target("qemu-config" DEPENDS ${qemu_srcdir}/ ${CMAKE_SOURCE_DIR}/patches/qemu/
+set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
+add_custom_target("qemu" ALL DEPENDS ${qemu_system})
+add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS "qemu-config")
+add_custom_target("qemu-config" ALL DEPENDS ${qemu_srcdir} ${CMAKE_SOURCE_DIR}/patches/qemu
   WORKING_DIRECTORY ${qemu_srcdir}
   COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-pmp-bug.patch || true
   COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-secure-boot.patch || true
@@ -80,22 +83,44 @@ add_custom_target("bootrom" ALL
   DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir})
 
 # linux
-add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
-add_custom_target("linux" ALL DEPENDS ${linux_srcdir} ${linux_wrkdir}/.config
-  COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
-  COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
-)
-
 add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig}
   COMMAND mkdir -p ${linux_wrkdir}
   COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
 )
 
+if(initramfs)
+  # linux-initramfs
+  execute_process(COMMAND id -u OUTPUT_VARIABLE uid)
+  string(STRIP ${uid} uid)
+  execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
+  string(STRIP ${gid} gid)
+  add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
+  add_custom_target("sysroot" DEPENDS "buildroot" ${initramfs_sysroot}
+    COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
+    COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
+    )
+  add_custom_target("linux" ALL DEPENDS "sysroot" ${linux_srcdir} ${linux_wrkdir}/.config
+    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true
+    COMMAND $(MAKE) -C ${linux_srcdir}
+      O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
+      CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
+      CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
+      CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
+    COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+  )
+else()
+  add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
+  add_custom_target("linux" ALL DEPENDS ${linux_srcdir} ${linux_wrkdir}/.config
+    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true
+    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
+    COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+  )
+endif()
+
 # linux module
-add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_wrkdir}
-  COMMAND mkdir -p ${driver_wrkdir}
+add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
+add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_wrkdir} ${driver_wrkdir}
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
     M=${driver_srcdir} modules
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
@@ -120,6 +145,7 @@ add_custom_target("tests" DEPENDS "driver" ${overlay_root} ${tests_srcdir}
 
 add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root}
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
+  COMMAND ${cross_compile}objcopy -S -O binary --change-addresses -0x80000000 ${sm_wrkdir}/bbl ${final_image}
 )
 
 # scripts
@@ -128,7 +154,7 @@ add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 add_custom_command(OUTPUT ${scripts}/run-qemu.sh
   WORKING_DIRECTORY ${scripts}
   COMMAND echo "\
-    ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS}\
+    ${qemu_system} \
     -m 2G \
     -nographic \
     -machine virt \
