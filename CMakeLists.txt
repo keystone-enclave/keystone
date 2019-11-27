@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.5)
 project(keystone C)
 include(ProcessorCount)
 
@@ -51,7 +51,8 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 # QEMU
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
-add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS ${qemu_srcdir}/ ${CMAKE_SOURCE_DIR}/patches/qemu
+add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS "qemu-config")
+add_custom_target("qemu-config" ALL DEPENDS ${qemu_srcdir} ${CMAKE_SOURCE_DIR}/patches/qemu
   WORKING_DIRECTORY ${qemu_srcdir}
   COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-pmp-bug.patch || true
   COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-secure-boot.patch || true
