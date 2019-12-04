@@ -74,7 +74,7 @@ int keystone_finalize_enclave(unsigned long arg)
   create_args.params = enclp->params;
 
   // SM will write the eid to struct enclave.eid
-  create_args.eid_pptr = (unsigned int *) __pa(&enclave->eid);
+  create_args.eid_pptr = (uint64_t *)__pa(&enclave->eid);
 
   ret = SBI_CALL_1(SBI_SM_CREATE_ENCLAVE, __pa(&create_args));
   if (ret) {
