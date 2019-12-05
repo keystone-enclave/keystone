@@ -80,7 +80,7 @@ struct utm {
 
 struct enclave
 {
-  unsigned long eid;
+  uint64_t eid;
   int close_on_pexit;
   struct utm* utm;
   struct epm* epm;
