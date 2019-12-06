@@ -6,11 +6,10 @@ if(NOT DEFINED ENV{RISCV})
   message(FATAL_ERROR "set RISCV environment variable")
 endif()
 
-set(platform "default")
-if(DEFINED platform)
-  set(platform ${platform})
-  message(STATUS "platform=${platform}")
+if(NOT DEFINED platform)
+  set(platform "default")
 endif()
+message(STATUS "platform=${platform}")
 
 if(Debug)
   message(STATUS "debug")
@@ -157,24 +156,48 @@ add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_w
 # scripts
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
-add_custom_command(OUTPUT ${scripts}/run-qemu.sh
-  WORKING_DIRECTORY ${scripts}
-  COMMAND echo "\
-    ${qemu_system} \
-    -m 2G \
-    -nographic \
-    -machine virt \
-    -bios ${bootrom_wrkdir}/bootrom.bin \
-    -kernel ${sm_wrkdir}/bbl \
-    -append \"console=ttyS0 ro root=/dev/vda\" \
-    -drive file=${buildroot_wrkdir}/images/rootfs.ext2,format=raw,id=hd0 \
-    -device virtio-blk-device,drive=hd0 \
-    -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
-    -device virtio-net-device,netdev=net0" > run-qemu.sh
-    VERBATIM
-  COMMAND
-    chmod +x run-qemu.sh
+
+if(initramfs)
+  add_custom_command(OUTPUT ${scripts}/run-qemu.sh
+    WORKING_DIRECTORY ${scripts}
+    COMMAND echo "\
+      export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
+      echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
+      ${qemu_system} \
+      -m 2G \
+      -nographic \
+      -machine virt \
+      -bios ${bootrom_wrkdir}/bootrom.bin \
+      -kernel ${sm_wrkdir}/bbl \
+      -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
+      -device virtio-net-device,netdev=net0" > run-qemu.sh
+      VERBATIM
+      COMMAND
+      chmod +x run-qemu.sh
   )
+
+else()
+  add_custom_command(OUTPUT ${scripts}/run-qemu.sh
+    WORKING_DIRECTORY ${scripts}
+    COMMAND echo "\
+      export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
+      echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
+      ${qemu_system} \
+      -m 2G \
+      -nographic \
+      -machine virt \
+      -bios ${bootrom_wrkdir}/bootrom.bin \
+      -kernel ${sm_wrkdir}/bbl \
+      -append \"console=ttyS0 ro root=/dev/vda\" \
+      -drive file=${buildroot_wrkdir}/images/rootfs.ext2,format=raw,id=hd0 \
+      -device virtio-blk-device,drive=hd0 \
+      -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
+      -device virtio-net-device,netdev=net0" > run-qemu.sh
+      VERBATIM
+      COMMAND
+      chmod +x run-qemu.sh
+  )
+endif()
 add_custom_command(OUTPUT ${scripts}/test-qemu.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/test-qemu.sh ${scripts})
 add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts
