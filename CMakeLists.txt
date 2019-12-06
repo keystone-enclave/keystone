@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(keystone C)
 include(ProcessorCount)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(NOT DEFINED ENV{RISCV})
   message(FATAL_ERROR "set RISCV environment variable")
@@ -63,12 +64,13 @@ endif()
 # QEMU
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
-add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS "qemu-config")
+add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS "qemu-config" COMMENT "Building QEMU")
 add_custom_target("qemu-config" ALL DEPENDS ${qemu_srcdir} ${CMAKE_SOURCE_DIR}/patches/qemu
   WORKING_DIRECTORY ${qemu_srcdir}
   COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-pmp-bug.patch || true
   COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-secure-boot.patch || true
   COMMAND ./configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user
+  COMMENT "Configuring QEMU"
 )
 
 # buildroot
@@ -77,6 +79,7 @@ add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
+  COMMENT "Building buildroot"
 )
 
 string(REPLACE "/" "\\/" overlay_dir_stripped ${overlay_dir})
@@ -86,19 +89,23 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
   COMMAND sed \"s/^BR2_ROOTFS_OVERLAY=.*/BR2_ROOTFS_OVERLAY=\\\"${overlay_dir_stripped}\\\"/g\" -i ${buildroot_wrkdir}/.config
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH}
     O=${buildroot_wrkdir} CROSS_COMPILE=${cross_compile} olddefconfig
+  COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
 )
 
 # boot ROM
 add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
 add_custom_target("bootrom" ALL
   COMMAND $(MAKE) -C ${bootrom_srcdir} O=${bootrom_wrkdir}
-  DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir})
+  DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir}
+  COMMENT "Building bootrom"
+)
 
 # linux
 add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig}
   COMMAND mkdir -p ${linux_wrkdir}
   COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
+  COMMENT "Configuring linux"
 )
 
 if(initramfs)
@@ -120,6 +127,7 @@ if(initramfs)
       CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
       CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
     COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+    COMMENT "Building linux (initramfs)"
   )
 else()
   add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
@@ -127,6 +135,7 @@ else()
     COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true
     COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
     COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+    COMMENT "Building linux"
   )
 endif()
 
@@ -137,6 +146,7 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_
     M=${driver_srcdir} modules
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
     M=${driver_srcdir} modules_install INSTALL_MOD_PATH=${driver_wrkdir}
+  COMMENT "Building driver"
 )
 
 # bbl + sm
@@ -147,6 +157,7 @@ add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_str
     --enable-logo --with-logo=${confdir}/sifive_logo.txt --with-target-platform=${platform}
     CFLAGS=${CFLAGS}
   COMMAND env CFLAGS='-g -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
+  COMMENT "Building sm"
 )
 add_dependencies("sm" "linux")
 add_dependencies("driver" "linux")
@@ -154,11 +165,13 @@ add_dependencies("driver" "linux")
 add_custom_target("tests" DEPENDS "driver" ${overlay_root} ${tests_srcdir}
   COMMAND OUTPUT_DIR=${overlay_root} ${tests_srcdir}/tests/vault.sh
   COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
+  COMMENT "Building tests"
 )
 
 add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root}
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
   COMMAND ${cross_compile}objcopy -S -O binary --change-addresses -0x80000000 ${sm_wrkdir}/bbl ${final_image}
+  COMMENT "Generating image"
 )
 
 # scripts
@@ -180,7 +193,7 @@ if(initramfs)
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
       -device virtio-net-device,netdev=net0" > run-qemu.sh
       VERBATIM
-      COMMAND
+    COMMAND
       chmod +x run-qemu.sh
   )
 else()
@@ -201,7 +214,7 @@ else()
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
       -device virtio-net-device,netdev=net0" > run-qemu.sh
       VERBATIM
-      COMMAND
+    COMMAND
       chmod +x run-qemu.sh
   )
 endif()
@@ -211,8 +224,9 @@ add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scrip
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/travis.sh ${scripts})
 
 add_custom_target(
-  "all-scripts" ALL
+  "scripts" ALL
   DEPENDS ${scripts} ${scripts}/run-qemu.sh ${scripts}/test-qemu.sh ${scripts}/travis.sh
+  COMMENT "Generating scripts"
 )
 
 add_custom_target(
@@ -220,4 +234,5 @@ add_custom_target(
   DEPENDS "all-scripts" "image"
   COMMAND
     ./scripts/travis.sh ${CMAKE_SOURCE_DIR}/tests
+  COMMENT "Running tests"
 )
