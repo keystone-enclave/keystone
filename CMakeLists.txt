@@ -6,6 +6,12 @@ if(NOT DEFINED ENV{RISCV})
   message(FATAL_ERROR "set RISCV environment variable")
 endif()
 
+set(platform "default")
+if(DEFINED platform)
+  set(platform ${platform})
+  message(STATUS "platform=${platform}")
+endif()
+
 if(Debug)
   message(STATUS "debug")
   set(CFLAGS -g)
@@ -131,7 +137,7 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_
 add_custom_command(OUTPUT ${sm_wrkdir} COMMAND mkdir -p ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_stripped} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ${sm_srcdir}/configure --enable-sm --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
-    --enable-logo --with-logo=${confdir}/sifive_logo.txt --with-target-platform=default
+    --enable-logo --with-logo=${confdir}/sifive_logo.txt --with-target-platform=${platform}
     CFLAGS=${CFLAGS}
   COMMAND env CFLAGS='-g -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
 )
