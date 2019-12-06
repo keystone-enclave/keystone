@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 echo "Starting..."
 if ( $(command -v riscv64-unknown-linux-gnu-gcc > /dev/null) &&
   $(command -v riscv64-unknown-elf-gcc > /dev/null) )

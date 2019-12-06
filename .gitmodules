@@ -21,7 +21,4 @@
 [submodule "qemu"]
 	path = qemu
 	url = https://github.com/qemu/qemu
-[submodule "riscv-linux"]
-	shallow = true
-[submodule "riscv-qemu"]
 	shallow = true
