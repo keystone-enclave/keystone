@@ -48,6 +48,13 @@ set(tests_srcdir ${CMAKE_SOURCE_DIR}/tests)
 set(final_image ${CMAKE_BINARY_DIR}/bbl.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
+set(USE_RUST_SM FALSE CACHE BOOL "Use Rust version of the security monitor. WARNING: Applies globally.")
+if (${USE_RUST_SM})
+	set(enabled_sm sm_rs)
+else()
+	set(enabled_sm sm_c)
+endif()
+
 # QEMU
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
@@ -130,6 +137,7 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_
 # bbl + sm
 add_custom_command(OUTPUT ${sm_wrkdir} COMMAND mkdir -p ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_stripped} WORKING_DIRECTORY ${sm_wrkdir}
+  COMMAND ln -rsnf ${sm_srcdir}/${enabled_sm} ${sm_srcdir}/sm
   COMMAND ${sm_srcdir}/configure --enable-sm --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
     --enable-logo --with-logo=${confdir}/sifive_logo.txt --with-target-platform=default
     CFLAGS=${CFLAGS}
@@ -151,6 +159,7 @@ add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_w
 # scripts
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
+
 add_custom_command(OUTPUT ${scripts}/run-qemu.sh
   WORKING_DIRECTORY ${scripts}
   COMMAND echo "\
