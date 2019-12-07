@@ -224,14 +224,14 @@ add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scrip
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/travis.sh ${scripts})
 
 add_custom_target(
-  "all-scripts" ALL
+  "tools" ALL
   DEPENDS ${scripts} ${scripts}/run-qemu.sh ${scripts}/test-qemu.sh ${scripts}/travis.sh
-  COMMENT "Generating scripts"
+  COMMENT "Generating scripts and tools"
 )
 
 add_custom_target(
   "run-tests"
-  DEPENDS "all-scripts" "image"
+  DEPENDS "tools" "image"
   COMMAND
     ./scripts/travis.sh ${CMAKE_SOURCE_DIR}/tests
   COMMENT "Running tests"
