@@ -197,7 +197,7 @@ if(initramfs)
       chmod +x run-qemu.sh
   )
 else()
-  add_custom_command(OUTPUT ${scripts}/run-qemu.sh
+  add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
     WORKING_DIRECTORY ${scripts}
     COMMAND echo "\
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
@@ -218,9 +218,9 @@ else()
       chmod +x run-qemu.sh
   )
 endif()
-add_custom_command(OUTPUT ${scripts}/test-qemu.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts
+add_custom_command(OUTPUT ${scripts}/test-qemu.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/test-qemu.sh ${scripts})
-add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts
+add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/travis.sh ${scripts})
 
 add_custom_target(
