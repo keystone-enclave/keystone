@@ -179,7 +179,7 @@ set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
 if(initramfs)
-  add_custom_command(OUTPUT ${scripts}/run-qemu.sh
+  add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
     WORKING_DIRECTORY ${scripts}
     COMMAND echo "\
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
