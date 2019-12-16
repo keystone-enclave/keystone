@@ -2,20 +2,20 @@ diff --git arch/riscv/Kconfig arch/riscv/Kconfig
 index eb56c82d8a..43dd2680c6 100644
 --- arch/riscv/Kconfig
 +++ arch/riscv/Kconfig
-@@ -11,6 +11,7 @@ config 32BIT
- 
+@@ -11,6 +11,7 @@
+
  config RISCV
- 	def_bool y
-+	select ARCH_32BIT_OFF_T if !64BIT
- 	# even on 32-bit, physical (and DMA) addresses are > 32-bits
- 	select PHYS_ADDR_T_64BIT
- 	select OF
+     def_bool y
++    select ARCH_32BIT_OFF_T if !64BIT
+     # even on 32-bit, physical (and DMA) addresses are > 32-bits
+     select PHYS_ADDR_T_64BIT
+     select OF
 diff --git arch/riscv/include/uapi/asm/unistd.h arch/riscv/include/uapi/asm/unistd.h
 index 0e2eeeb1fd..486a288b45 100644
 --- arch/riscv/include/uapi/asm/unistd.h
 +++ arch/riscv/include/uapi/asm/unistd.h
 @@ -17,8 +17,11 @@
- 
+
  #ifdef __LP64__
  #define __ARCH_WANT_NEW_STAT
 -#define __ARCH_WANT_SET_GET_RLIMIT
@@ -24,15 +24,15 @@ index 0e2eeeb1fd..486a288b45 100644
 +#ifndef __LP64__
 +#define __ARCH_WANT_TIME32_SYSCALLS
 +#endif
- 
+
  #include <asm-generic/unistd.h>
- 
+
 diff --git arch/riscv/kernel/vdso/Makefile arch/riscv/kernel/vdso/Makefile
 index fec62b24df..eed1c137f6 100644
 --- arch/riscv/kernel/vdso/Makefile
 +++ arch/riscv/kernel/vdso/Makefile
 @@ -2,11 +2,9 @@
- 
+
  # Symbols present in the vdso
  vdso-syms  = rt_sigreturn
 -ifdef CONFIG_64BIT
@@ -42,24 +42,25 @@ index fec62b24df..eed1c137f6 100644
 -endif
  vdso-syms += getcpu
  vdso-syms += flush_icache
- 
+
 diff --git arch/riscv/mm/init.c arch/riscv/mm/init.c
-index bc7b77e34d..092e5f2395 100644
+index 573463d..be1f2c4 100644
 --- arch/riscv/mm/init.c
 +++ arch/riscv/mm/init.c
-@@ -18,6 +18,7 @@
- #include <linux/swap.h>
- #include <linux/sizes.h>
- #include <linux/of_fdt.h>
+@@ -19,6 +19,8 @@
+ #include <asm/pgtable.h>
+ #include <asm/io.h>
+ 
 +#include <linux/dma-contiguous.h>
++
+ #include "../kernel/head.h"
  
- #include <asm/fixmap.h>
- #include <asm/tlbflush.h>
-@@ -52,6 +53,7 @@ void __init paging_init(void)
+ unsigned long empty_zero_page[PAGE_SIZE / sizeof(unsigned long)]
+@@ -457,6 +459,7 @@ void __init paging_init(void)
+ 	sparse_init();
  	setup_zero_page();
- 	local_flush_tlb_all();
  	zone_sizes_init();
-+  dma_contiguous_reserve(memblock_end_of_DRAM());
++	dma_contiguous_reserve(memblock_end_of_DRAM());
  }
- 
- void __init mem_init(void)
+
+ #ifdef CONFIG_SPARSEMEM_VMEMMAP

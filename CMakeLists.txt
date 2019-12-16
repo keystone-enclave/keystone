@@ -115,12 +115,12 @@ if(initramfs)
   execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
   string(STRIP ${gid} gid)
   add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
-  add_custom_target("sysroot" DEPENDS "buildroot" ${initramfs_sysroot}
+  add_custom_target("sysroot" DEPENDS "buildroot" ${initramfs_sysroot} ${overlay_dir}
     COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
     COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
     )
   add_custom_target("linux" ALL DEPENDS "sysroot" ${linux_srcdir} ${linux_wrkdir}/.config
-    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true
+    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux${BITS}.patch || true
     COMMAND $(MAKE) -C ${linux_srcdir}
       O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
       CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
@@ -132,7 +132,7 @@ if(initramfs)
 else()
   add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
   add_custom_target("linux" ALL DEPENDS ${linux_srcdir} ${linux_wrkdir}/.config
-    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux.patch || true
+    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux${BITS}.patch || true
     COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
     COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
     COMMENT "Building linux"
@@ -153,10 +153,9 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_
 add_custom_command(OUTPUT ${sm_wrkdir} COMMAND mkdir -p ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_stripped} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ln -rsnf ${sm_srcdir}/${enabled_sm} ${sm_srcdir}/sm
-  COMMAND ${sm_srcdir}/configure --enable-sm --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
-    --enable-logo --with-logo=${confdir}/sifive_logo.txt --with-target-platform=${platform}
-    CFLAGS=${CFLAGS}
-  COMMAND env CFLAGS='-g -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
+  COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
+    --enable-logo --with-logo=${confdir}/sifive_logo.txt --enable-sm --with-target-platform=${platform}
+  COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
   COMMENT "Building sm"
 )
 add_dependencies("sm" "linux")
@@ -179,7 +178,7 @@ set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
 if(initramfs)
-  add_custom_command(OUTPUT ${scripts}/run-qemu.sh
+  add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
     WORKING_DIRECTORY ${scripts}
     COMMAND echo "\
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
