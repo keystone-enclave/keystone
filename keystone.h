@@ -35,26 +35,30 @@ extern struct miscdevice keystone_dev;
 /* error codes: need to add more */
 #define ENCLAVE_INTERRUPTED     2
 
+#define SBI_KEYSTONE_SM 0x08000000
+
 /* don't want to taint asm/sbi.h, so just copied SBI_CALL and increased # args */
-#define _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5) ({			\
+#define SM_SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5) ({			\
 	register uintptr_t a0 asm ("a0") = (uintptr_t)(arg0);	\
 	register uintptr_t a1 asm ("a1") = (uintptr_t)(arg1);	\
 	register uintptr_t a2 asm ("a2") = (uintptr_t)(arg2);	\
 	register uintptr_t a3 asm ("a3") = (uintptr_t)(arg3);	\
 	register uintptr_t a4 asm ("a4") = (uintptr_t)(arg4);	\
 	register uintptr_t a5 asm ("a5") = (uintptr_t)(arg5);	\
-	register uintptr_t a7 asm ("a7") = (uintptr_t)(which);	\
+	register uintptr_t a6 asm ("a6") = (uintptr_t)(which);	\
+        register uintptr_t a7 asm ("a7") = (uintptr_t)(SBI_KEYSTONE_SM);  \
 	asm volatile ("ecall"					\
-		      : "+r" (a0)				\
-		      : "r" (a1), "r" (a2), "r" (a3), "r" (a4), "r"(a5), "r" (a7)		\
+		      : "+r" (a1)				\
+		      : "r" (a0), "r" (a2), "r" (a3), "r" (a4), "r" (a5), "r" (a6), "r" (a7) \
 		      : "memory");				\
-	a0;							\
+	a1;							\
 })
-
-#define SBI_CALL_3(which, arg0, arg1, arg2) SBI_CALL(which,arg0, arg1, arg2)
-#define SBI_CALL_4(which, arg0, arg1, arg2, arg3) _SBI_CALL(which, arg0, arg1, arg2, arg3, 0, 0)
-#define SBI_CALL_5(which, arg0, arg1, arg2, arg3, arg4) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, 0)
-#define SBI_CALL_6(which, arg0, arg1, arg2, arg3, arg4, arg5) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5)
+#define SM_SBI_CALL_1(which, arg0) SM_SBI_CALL(which,arg0, 0, 0, 0, 0, 0)
+#define SM_SBI_CALL_2(which, arg0, arg1) SM_SBI_CALL(which,arg0, arg1, 0, 0, 0, 0)
+#define SM_SBI_CALL_3(which, arg0, arg1, arg2) SM_SBI_CALL(which,arg0, arg1, arg2, 0, 0, 0)
+#define SM_SBI_CALL_4(which, arg0, arg1, arg2, arg3) SM_SBI_CALL(which, arg0, arg1, arg2, arg3, 0, 0)
+#define SM_SBI_CALL_5(which, arg0, arg1, arg2, arg3, arg4) SM_SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, 0)
+#define SM_SBI_CALL_6(which, arg0, arg1, arg2, arg3, arg4, arg5) SM_SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5)
 
 long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
 int keystone_release(struct inode *inode, struct file *file);

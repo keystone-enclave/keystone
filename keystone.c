@@ -15,7 +15,7 @@
 #include <linux/miscdevice.h>
 #include "keystone_user.h"
 #define   DRV_DESCRIPTION   "keystone enclave"
-#define   DRV_VERSION       "0.2"
+#define   DRV_VERSION       "0.3"
 
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Dayeol Lee <dayeol@berkeley.edu>");

@@ -75,7 +75,7 @@ int keystone_finalize_enclave(unsigned long arg)
   // SM will write the eid to struct enclave.eid
   create_args.eid_pptr = (uint64_t *)__pa(&enclave->eid);
 
-  ret = SBI_CALL_1(SBI_SM_CREATE_ENCLAVE, __pa(&create_args));
+  ret = SM_SBI_CALL_1(SBI_SM_CREATE_ENCLAVE, __pa(&create_args));
   if (ret) {
     keystone_err("keystone_create_enclave: SBI call failed\n");
     goto error_destroy_enclave;
@@ -106,7 +106,7 @@ int keystone_run_enclave(unsigned long arg)
     return -EINVAL;
   }
 
-  ret = SBI_CALL_1(SBI_SM_RUN_ENCLAVE, enclave->eid);
+  ret = SM_SBI_CALL_1(SBI_SM_RUN_ENCLAVE, enclave->eid);
 
   return ret;
 }
@@ -166,7 +166,7 @@ int __keystone_destroy_enclave(unsigned int ueid)
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
-  ret = SBI_CALL_1(SBI_SM_DESTROY_ENCLAVE, enclave->eid);
+  ret = SM_SBI_CALL_1(SBI_SM_DESTROY_ENCLAVE, enclave->eid);
   if (ret) {
     keystone_err("fatal: cannot destroy enclave: SBI failed\n");
     return ret;
@@ -192,7 +192,7 @@ int keystone_resume_enclave(unsigned long arg)
     return -EINVAL;
   }
 
-  ret = SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
+  ret = SM_SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
 
   return ret;
 }
