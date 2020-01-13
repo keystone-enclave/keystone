@@ -12,4 +12,8 @@ log_file -noappend  output.log
 expect "# " { send "insmod keystone-driver.ko\r" }
 expect "# " { send "./tests.ke\r" }
 expect "# " { send "poweroff\r" }
+
+# stop logging
+log_file
+
 expect eof
