@@ -14,7 +14,7 @@
 #define ENCL_TIME_SLICE 100000
 
 struct enclave enclaves[ENCL_MAX];
-#define ENCLAVE_EXISTS(eid) (enclaves[eid].state >= 0)
+#define ENCLAVE_EXISTS(eid) (eid >= 0 && eid < ENCL_MAX && enclaves[eid].state >= 0)
 
 static spinlock_t encl_lock = SPINLOCK_INIT;
 
@@ -69,12 +69,12 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
     write_csr(satp, enclaves[eid].encl_satp);
   }
 
-  switch_vector_enclave(); 
-  
-  hls_t* hls = HLS(); 
-  *hls->timecmp = getRTC() + ENCL_TIME_SLICE; 
- 
-  clear_csr(mip, MIP_MTIP); 
+  switch_vector_enclave();
+
+  hls_t* hls = HLS();
+  *hls->timecmp = getRTC() + ENCL_TIME_SLICE;
+
+  clear_csr(mip, MIP_MTIP);
   clear_csr(mip, MIP_STIP);
   clear_csr(mip, MIP_SSIP);
   clear_csr(mip, MIP_SEIP);
@@ -116,14 +116,14 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
   swap_prev_state(&enclaves[eid].threads[0], encl_regs);
   swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
 
-  switch_vector_host(); 
+  switch_vector_host();
 
   uintptr_t interrupts = MIP_SSIP | MIP_STIP | MIP_SEIP;
   write_csr(mideleg, interrupts);
 
   // enable timer interrupt
-  clear_csr(mip, MIP_STIP); 
-  clear_csr(mip, MIP_MTIP); 
+  clear_csr(mip, MIP_STIP);
+  clear_csr(mip, MIP_MTIP);
 
   // Reconfigure platform specific defenses
   platform_switch_from_enclave(&(enclaves[eid]));
