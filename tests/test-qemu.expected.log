@@ -16,6 +16,4 @@ Enclave said value: 13
 Enclave said value: 20
 testing attestation
 Attestation report SIGNATURE is valid
-# poweroff
-# Connection to localhost closed by remote host.
-Connection to localhost closed.
+# 
