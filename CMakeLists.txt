@@ -43,7 +43,11 @@ set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
 set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
-set(linux_defconfig ${confdir}/linux-v5.0-defconfig-rv${BITS})
+
+if(NOT DEFINED linux_defconfig)
+	set(linux_defconfig ${confdir}/linux${BITS}-defconfig)
+endif()
+
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 set(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
 set(linux_vmlinux ${linux_wrkdir}/vmlinux)
@@ -140,12 +144,12 @@ else()
 endif()
 
 # linux module
-add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
-add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_wrkdir} ${driver_wrkdir}
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    M=${driver_srcdir} modules
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    M=${driver_srcdir} modules_install INSTALL_MOD_PATH=${driver_wrkdir}
+add_custom_target("driver-sync" DEPENDS ${driver_srcdir} 
+	COMMAND mkdir -p ${driver_wrkdir}
+	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
+add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux" "driver-sync"
+  COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
+    M=${driver_wrkdir} modules
   COMMENT "Building driver"
 )
 
