@@ -1,15 +1,15 @@
 # riscv-pk 
-echo "[riscv-pk] cherry-picking changes required for FireSim"
-git submodule update --init -- riscv-pk
-cd riscv-pk
-if ! git remote | grep firesim_cherry_pick > /dev/null; then
-	echo "adding remote ..."
-	git remote add firesim_cherry_pick https://github.com/firesim/riscv-pk/
-fi
-git fetch firesim_cherry_pick
-git cherry-pick -n e5846a2bc707eaa58dc8ab6a8d20a090c6ee8570..cad3deb357d25773a22e2c346ef464d3d66dd37c
-echo "done"
-cd ..
+#echo "[riscv-pk] cherry-picking changes required for FireSim"
+#git submodule update --init -- riscv-pk
+#cd riscv-pk
+#if ! git remote | grep firesim_cherry_pick > /dev/null; then
+#	echo "adding remote ..."
+#	git remote add firesim_cherry_pick https://github.com/firesim/riscv-pk/
+#fi
+#git fetch firesim_cherry_pick
+#git cherry-pick -n e5846a2bc707eaa58dc8ab6a8d20a090c6ee8570..cad3deb357d25773a22e2c346ef464d3d66dd37c
+#echo "done"
+#cd ..
 
 # linux v5.3
 echo "[linux] cherry-picking changes required for FireSim"

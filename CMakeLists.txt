@@ -4,7 +4,7 @@ include(ProcessorCount)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(NOT DEFINED ENV{RISCV})
-  message(FATAL_ERROR "set RISCV environment variable")
+	message(FATAL_ERROR "set RISCV environment variable. \n Try `source ${CMAKE_SOURCE_DIR}/source.sh`")
 endif()
 
 if(NOT DEFINED platform)
