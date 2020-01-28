@@ -1,5 +1,3 @@
-#!/bin/bash
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
-export RISCV=$SCRIPTPATH/riscv
+export RISCV=$(pwd)/riscv
 export PATH=$RISCV/bin:$PATH
-export KEYSTONE_SDK_DIR=$SCRIPTPATH/sdk
+export KEYSTONE_SDK_DIR=$(pwd)/sdk
