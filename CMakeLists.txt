@@ -4,7 +4,7 @@ include(ProcessorCount)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(NOT DEFINED ENV{RISCV})
-  message(FATAL_ERROR "set RISCV environment variable")
+	message(FATAL_ERROR "set RISCV environment variable. \n Try `cd ${CMAKE_SOURCE_DIR}; source source.sh`")
 endif()
 
 if(NOT DEFINED platform)
@@ -43,7 +43,23 @@ set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
 set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
-set(linux_defconfig ${confdir}/linux-v5.0-defconfig-rv${BITS})
+
+if(firesim)
+  message(STATUS "FireSim configs and patches. Forcing initramfs=y")
+	set(linux_defconfig ${confdir}/linux64-firesim-defconfig)
+  message(STATUS "Using Linux defconfig: ${linux_defconfig}")
+	set(initramfs true)
+elseif(sifive)
+  message(STATUS "SiFive Unleashed configs and patches. Forcing initramfs=y")
+	set(linux_defconfig ${confdir}/linux64-sifive-defconfig)
+  message(STATUS "Using Linux defconfig: ${linux_defconfig}")
+	set(initramfs true)
+endif()
+
+if(NOT DEFINED linux_defconfig)
+	set(linux_defconfig ${confdir}/linux${BITS}-defconfig)
+endif()
+
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 set(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
 set(linux_vmlinux ${linux_wrkdir}/vmlinux)
@@ -56,22 +72,30 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 set(USE_RUST_SM FALSE CACHE BOOL "Use Rust version of the security monitor. WARNING: Applies globally.")
 if (${USE_RUST_SM})
-	set(enabled_sm sm_rs)
+  set(enabled_sm sm_rs)
 else()
-	set(enabled_sm sm_c)
+  set(enabled_sm sm_c)
 endif()
+
+# add patch macro
+macro(add_patch submodule patch working_directory depend_by)
+  add_custom_target(${patch} WORKING_DIRECTORY ${working_directory}
+    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch} || true 
+    COMMENT "Applying ${patch}")
+  add_dependencies(${depend_by} ${patch})
+endmacro()
 
 # QEMU
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
-add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS "qemu-config" COMMENT "Building QEMU")
-add_custom_target("qemu-config" ALL DEPENDS ${qemu_srcdir} ${CMAKE_SOURCE_DIR}/patches/qemu
+add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS ${qemu_wrkdir}/config-host.mak COMMENT "Building QEMU")
+add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak DEPENDS ${qemu_srcdir}
   WORKING_DIRECTORY ${qemu_srcdir}
-  COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-pmp-bug.patch || true
-  COMMAND patch --forward -p0 < ${patchdir}/qemu/qemu-secure-boot.patch || true
   COMMAND ./configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user
   COMMENT "Configuring QEMU"
 )
+add_patch("qemu" "qemu-pmp-bug.patch" ${qemu_srcdir} "qemu")
+add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} "qemu")
 
 # buildroot
 add_custom_command(OUTPUT ${overlay_root} COMMAND mkdir -p ${overlay_root})
@@ -120,7 +144,6 @@ if(initramfs)
     COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
     )
   add_custom_target("linux" ALL DEPENDS "sysroot" ${linux_srcdir} ${linux_wrkdir}/.config
-    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux${BITS}.patch || true
     COMMAND $(MAKE) -C ${linux_srcdir}
       O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
       CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
@@ -132,20 +155,28 @@ if(initramfs)
 else()
   add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
   add_custom_target("linux" ALL DEPENDS ${linux_srcdir} ${linux_wrkdir}/.config
-    COMMAND cd ${linux_srcdir} \; patch --forward -p0 < ${patchdir}/linux/linux${BITS}.patch || true
     COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
     COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
     COMMENT "Building linux"
   )
 endif()
 
+if(firesim)  
+  add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} "linux")
+elseif(sifive)
+  add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} "linux")
+else()
+  add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} "linux")
+endif()
+
+
 # linux module
-add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
-add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} ${linux_wrkdir} ${driver_wrkdir}
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    M=${driver_srcdir} modules
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    M=${driver_srcdir} modules_install INSTALL_MOD_PATH=${driver_wrkdir}
+add_custom_target("driver-sync" DEPENDS ${driver_srcdir} 
+	COMMAND mkdir -p ${driver_wrkdir}
+	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
+add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux" "driver-sync"
+  COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
+    M=${driver_wrkdir} modules
   COMMENT "Building driver"
 )
 
@@ -158,6 +189,13 @@ add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_str
   COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
   COMMENT "Building sm"
 )
+
+if(firesim)
+  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} "sm") 
+elseif(sifive)
+  add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} "sm")
+endif()
+
 add_dependencies("sm" "linux")
 add_dependencies("driver" "linux")
 

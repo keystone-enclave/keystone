@@ -5,19 +5,41 @@ Currently we only support the SiFive HiFive Unleashed development
 board (referred to as HiFive for the rest of this document) with an
 FU540 chip.
 
-With some reconfiguration of ``riscv-pk`` and ``buildroot`` it should be
-possible to build and run Keystone on other Linux-booting RISC-V
-platforms.
 
+Building Keystone 
+----------------------------------------
 
-Building for HiFive
--------------------
+Building for the HiFive is straight-forward.
+First, clone the Keystone repository in the **manager instance**.
 
-Building for the HiFive is straight-forward, run ``make``. The default
-build will work on the board.
+::
+  
+  git clone https://github.com/keystone-enclave/keystone
 
-This will build a new copy of the kernel, driver, and generate a full
-buildroot Linux image.
+Follow :doc:`QEMU-Setup-Repository` to setup the repository.
+
+After you setup the repository, you can run the following commands to build Keystone.
+
+::
+  
+  mkdir <build directory>
+  cd <build directory>
+  cmake .. -Dsifive=y
+  make
+  make image
+
+CMake with the flag ``-Dsifive=y`` will automatically generate Makefiles to build
+SiFive-compatible Linux and SM.
+This includes some patches for DTB compatibility.
+Also, the build will forcibly use initramfs for a simpler deployment.
+
+Once you have built the image, you will see ``riscv-pk.build/bbl`` under your
+build directory.
+
+Separately, ``make image`` will also generate ``bbl.bin`` under your build directory.
+This is the file that you want to reflash the SD card with.
+
+You can also boot QEMU machine with the image using ``./scripts/run-qemu.sh``.
 
 Setting up the HiFive
 ---------------------
@@ -41,7 +63,7 @@ Load Linux Image
 ################
 
 The hifive build process generates a bbl.bin in
-``hifive-work/bbl.bin``. Flash this to the Linux partition on the
+``<build directory>/bbl.bin``. Flash this to the Linux partition on the
 card. (Note that this is a relocated version of the bbl binary used
 for QEMU)
 
@@ -103,14 +125,14 @@ bootloader itself. (Likely never)
 Running on the HiFive
 ---------------------
 
-The needed driver, bins, etc are included in the base image.
+The needed driver, bins, etc are included in the buildroot image.
+You can always use buildroot overlay to add more files to the base image.
 
-If you need to add files or change them we suggest ``scp`` ing them to
-the board after boot.
+Generally, we also suggest ``scp`` ing the files to the board after boot.
 
 
 Setup network
-#############
+##########################
 
 Attach to the serial console on the HiFive board.
 
@@ -120,27 +142,9 @@ Once booted, setup the network such that you can connect to it from
 your development machine. (Either a local network or a simple
 unmanaged switch is suggested)
 
-Copy Files
-##########
-
-All tests are automatically built by ``make run-tests`` and added to the hifive image by ``make
-run-tests``. 
-If you wish to update them after modifying the sdk or tests themselves
-only the modfied components need to be sent to the board. Modifiying
-the security monitor will require a complete reflash of the image.
-
-Example of copying the runtime, driver, and test binaries to the board after booting and configuring to 10.0.0.3
-
-::
-
-  mkdir hifive-bins
-  cp keystone/keystone/sdk/runtime/eyrie-rt keystone/keystone/hifive-work/linux-keystone-driver/*.ko keystone/keystone/sdk/bin/* hifive-bins/
-
-  scp -o "UserKnownHostsFile /dev/null" hifive-bins/* root@10.0.0.3:
-
 
 Run binaries
-############
+#########################
 
 Insert the Keystone driver, and run whatever test binaries you wish.
 

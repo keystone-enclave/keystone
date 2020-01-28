@@ -76,6 +76,9 @@ jobs:
   include:
     - stage: cache warmup
       script: true
+      after_failure:
+        - ls -al
+        - cat firesim-riscv-tools-prebuilt-*/riscv-tools-install.log
     - stage: build everything & test
       script:
         - source ./source.sh
