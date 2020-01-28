@@ -1,0 +1,21 @@
+diff --git bbl/bbl.c bbl/bbl.c
+index 1b96a9d..98fcf50 100644
+--- bbl/bbl.c
++++ bbl/bbl.c
+@@ -14,7 +14,7 @@ static uintptr_t dtb_output()
+ {
+   extern char _payload_end;
+   uintptr_t end = (uintptr_t) &_payload_end;
+-  return (end + MEGAPAGE_SIZE - 1) / MEGAPAGE_SIZE * MEGAPAGE_SIZE;
++  return (((end + MEGAPAGE_SIZE - 1) / MEGAPAGE_SIZE) + 16) * MEGAPAGE_SIZE;
+ }
+ 
+ static void filter_dtb(uintptr_t source)
+@@ -22,6 +22,7 @@ static void filter_dtb(uintptr_t source)
+   uintptr_t dest = dtb_output();
+   uint32_t size = fdt_size(source);
+   memcpy((void*)dest, (void*)source, size);
++  printm("Relocated DTB from %lx to %lx\n", source, dest);
+ 
+   // Remove information from the chained FDT
+   filter_harts(dest, &disabled_hart_mask);
