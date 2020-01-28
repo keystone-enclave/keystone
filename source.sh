@@ -1,5 +1,5 @@
-SCRIPT=`realpath $0`
-CURDIR=`dirname $SCRIPT`
-export RISCV=$CURDIR/riscv
+#!/bin/bash
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+export RISCV=$SCRIPTPATH/riscv
 export PATH=$RISCV/bin:$PATH
-export KEYSTONE_SDK_DIR=$CURDIR/sdk
+export KEYSTONE_SDK_DIR=$SCRIPTPATH/sdk
