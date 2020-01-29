@@ -5,68 +5,12 @@
 
 Visit [Project Website](https://keystone-enclave.org) for more information.
 
-The ``dev`` branch is more up-to-date than ``master`` always. Until
-there are stable releases we suggest only using ``dev``.
-
-# Quick Start
-
-```bash
-git clone https://github.com/keystone-enclave/keystone
-cd keystone
-```
-
-Install Dependencies (Ubuntu)
-
-```
-sudo apt update
-sudo apt install autoconf automake autotools-dev bc \
-bison build-essential curl expat libexpat1-dev flex gawk gcc git \
-gperf libgmp-dev libmpc-dev libmpfr-dev libtool texinfo tmux \
-patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python \
-pkg-config libglib2.0-dev libpixman-1-dev libssl-dev screen \
-device-tree-compiler expect makeself unzip cpio rsync
-```
-
-Checkout branch (optional)
-```
-git checkout dev
-```
-
-Setup Tools and Submodules
-```
-./fast-setup.sh
-```
-
-Build All
-```
-make
-```
-
-## Test
-
-```
-source source.sh
-make run-tests
-```
-
-## Rebuilding
-
-Any modifications in a submodule should be built with the top-level
-`make` in Keystone.
-
-## Adding Files
-
-Any additional files/binaries to be included in the image should be
-placed in `keystone/buildroot_overlay/root/`.
-
-The top-level `make image` will rebuild the image to contain any new files
-added.
+`master` branch is for public releases.
+`dev` branch is for development use (up-to-date but may not fully documented until merged into `master`).
 
 # Documentation
 
-See [docs](http://docs.keystone-enclave.org) for detailed
-documentation. You may wish to switch to the dev version of the docs,
-rather than 'latest'.
+See [docs](http://docs.keystone-enclave.org) for getting started.
 
 # Contributing
 

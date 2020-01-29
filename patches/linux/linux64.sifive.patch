@@ -1,0 +1,55 @@
+diff --git arch/riscv/kernel/setup.c arch/riscv/kernel/setup.c
+index a990a6cb184f..1980b9c939f1 100644
+--- arch/riscv/kernel/setup.c
++++ arch/riscv/kernel/setup.c
+@@ -41,10 +41,9 @@ unsigned long boot_cpu_hartid;
+ 
+ void __init parse_dtb(void)
+ {
+-	if (early_init_dt_scan(dtb_early_va))
+-		return;
++	if (!early_init_dt_scan(dtb_early_va))
++    pr_err("No DTB passed to the kernel\n");
+ 
+-	pr_err("No DTB passed to the kernel\n");
+ #ifdef CONFIG_CMDLINE_FORCE
+ 	strlcpy(boot_command_line, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
+ 	pr_info("Forcing kernel command line to: %s\n", boot_command_line);
+diff --git arch/riscv/kernel/time.c arch/riscv/kernel/time.c
+index 541a2b885814..0ef98b363041 100644
+--- arch/riscv/kernel/time.c
++++ arch/riscv/kernel/time.c
+@@ -16,8 +16,12 @@ void __init time_init(void)
+ 	u32 prop;
+ 
+ 	cpu = of_find_node_by_path("/cpus");
+-	if (!cpu || of_property_read_u32(cpu, "timebase-frequency", &prop))
+-		panic(KERN_WARNING "RISC-V system with no 'timebase-frequency' in DTS\n");
++	if (!cpu || of_property_read_u32(cpu, "timebase-frequency", &prop)) {
++		cpu = of_find_node_by_path("/cpus/cpu@0");
++		if (!cpu || of_property_read_u32(cpu, "timebase-frequency", &prop)) {
++			panic(KERN_WARNING "RISC-V system with no 'timebase-frequency' in DTS\n");
++		}
++	}
+ 	of_node_put(cpu);
+ 	riscv_timebase = prop;
+ 
+diff --git arch/riscv/mm/init.c arch/riscv/mm/init.c
+index 42bf939693d3..928d5d80f103 100644
+--- arch/riscv/mm/init.c
++++ arch/riscv/mm/init.c
+@@ -18,6 +18,8 @@
+ #include <asm/pgtable.h>
+ #include <asm/io.h>
+ 
++#include <linux/dma-contiguous.h>
++
+ unsigned long empty_zero_page[PAGE_SIZE / sizeof(unsigned long)]
+ 							__page_aligned_bss;
+ EXPORT_SYMBOL(empty_zero_page);
+@@ -444,4 +446,5 @@ void __init paging_init(void)
+ 	setup_vm_final();
+ 	setup_zero_page();
+ 	zone_sizes_init();
++	dma_contiguous_reserve(memblock_end_of_DRAM());
+ }

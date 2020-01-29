@@ -7,7 +7,7 @@ set -e
 NAME=tests
 VAULT_DIR=$(cd `dirname $0` && pwd)
 BUILD_COMMAND=make
-OUTPUT_DIR=$VAULT_DIR/../../buildroot_overlay/root/$NAME
+OUTPUT_DIR=${OUTPUT_DIR:=$VAULT_DIR/../../buildroot_overlay/root/$NAME}
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
 EYRIE_PLUGINS="freemem"
 PACKAGE_FILES="stack/stack.eapp_riscv \
