@@ -11,7 +11,7 @@ You can either quickly setup everything (:ref:`QEMUSetupQuick`) or manually setu
 Quick Setup
 ########################
 
-You can quickly setup everything by running ``./fast-setup.sh``
+You can quickly setup everything by running ``./fast-setup.sh``. This script requires Git >= 2.11.0.
 
 ::
 

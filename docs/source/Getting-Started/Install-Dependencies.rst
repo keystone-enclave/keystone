@@ -14,4 +14,9 @@ Ubuntu
   gperf libgmp-dev libmpc-dev libmpfr-dev libtool texinfo tmux \
   patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python \
   pkg-config libglib2.0-dev libpixman-1-dev libssl-dev screen \
-  device-tree-compiler expect makeself unzip cpio rsync cmake
+  device-tree-compiler expect makeself unzip cpio rsync cmakev
+
+.. note::
+  You need Git version >= 2.11.0 to use ``./fast-setup.sh``, because the script uses
+  ``--shallow-clone`` for faster submodule initializtion.
+
