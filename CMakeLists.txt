@@ -80,7 +80,7 @@ endif()
 # add patch macro
 macro(add_patch submodule patch working_directory depend_by)
   add_custom_target(${patch} WORKING_DIRECTORY ${working_directory}
-    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch} || true 
+    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch} || true
     COMMENT "Applying ${patch}")
   add_dependencies(${depend_by} ${patch})
 endmacro()
@@ -125,12 +125,13 @@ add_custom_target("bootrom" ALL
 )
 
 # linux
-add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig}
-  COMMAND mkdir -p ${linux_wrkdir}
+add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
+add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir}
   COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
   COMMENT "Configuring linux"
 )
+
 
 if(initramfs)
   # linux-initramfs
@@ -153,7 +154,6 @@ if(initramfs)
     COMMENT "Building linux (initramfs)"
   )
 else()
-  add_custom_command(OUTPUT ${linux_wrkdir} COMMAND mkdir -p ${linux_wrkdir})
   add_custom_target("linux" ALL DEPENDS ${linux_srcdir} ${linux_wrkdir}/.config
     COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
     COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
@@ -161,7 +161,7 @@ else()
   )
 endif()
 
-if(firesim)  
+if(firesim)
   add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} "linux")
 elseif(sifive)
   add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} "linux")
@@ -171,8 +171,8 @@ endif()
 
 
 # linux module
-add_custom_target("driver-sync" DEPENDS ${driver_srcdir} 
-	COMMAND mkdir -p ${driver_wrkdir}
+add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
+add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
 	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
 add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux" "driver-sync"
   COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
@@ -191,7 +191,7 @@ add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_str
 )
 
 if(firesim)
-  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} "sm") 
+  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} "sm")
 elseif(sifive)
   add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} "sm")
 endif()
