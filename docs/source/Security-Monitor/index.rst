@@ -188,3 +188,8 @@ Side-Channel Defense
 -------------------------------------
 
 The :doc:`FU540<FU540>` module supports cache side-channel defenses.
+
+Current Enclave Lifecycle
+-------------------------------------
+
+.. graphviz:: enclave_lifecycle.dot
