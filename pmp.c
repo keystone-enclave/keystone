@@ -233,6 +233,11 @@ static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type, uint8_t pe
   }
 }
 
+/*
+ * Checks if there is an update in the core's ipi mailbox.
+ * If there is (the pending bit is not false), then we update the state of PMP entries.
+ * Otherwise, we do nothing.
+ */
 void pmp_ipi_update() {
   if (ipi_mailbox[read_csr(mhartid)].pending) {
     if(ipi_type == IPI_PMP_SET) {
@@ -246,10 +251,21 @@ void pmp_ipi_update() {
   }
 }
 
+/* 
+ * Attempt to acquire the pmp ipi lock. If it fails, it means another core is broadcasting,
+ * this means we may need to update our pmp state and then try to get the lock again.
+ */
 void pmp_ipi_acquire_lock() {
   while(spinlock_trylock(&pmp_ipi_global_lock)) {
     pmp_ipi_update();
   }
+}
+
+/*
+ * Releases the pmp_ipi_global_lock.
+ */
+void pmp_ipi_release_lock() {
+  spinlock_unlock(&pmp_ipi_global_lock);
 }
 
 /*********************************
@@ -268,7 +284,7 @@ int pmp_unset_global(int region_idx)
 #ifdef __riscv_atomic
   pmp_ipi_acquire_lock();
   send_and_sync_pmp_ipi(region_idx, IPI_PMP_UNSET, PMP_NO_PERM);
-  spinlock_unlock(&pmp_ipi_global_lock);
+  pmp_ipi_release_lock();
 #endif
   /* unset PMP of itself */
   pmp_unset(region_idx);
@@ -287,7 +303,7 @@ int pmp_set_global(int region_idx, uint8_t perm)
 #ifdef __riscv_atomic
   pmp_ipi_acquire_lock();
   send_and_sync_pmp_ipi(region_idx, IPI_PMP_SET, perm);
-  spinlock_unlock(&pmp_ipi_global_lock);
+  pmp_ipi_release_lock();
 #endif
   /* set PMP of itself */
   pmp_set(region_idx, perm);
