@@ -163,7 +163,7 @@ static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
 
   for(eid=0; eid<ENCL_MAX; eid++)
   {
-    if(enclaves[eid].state < 0){
+    if(enclaves[eid].state == INVALID){
       break;
     }
   }
@@ -184,7 +184,7 @@ static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
 static enclave_ret_code encl_free_eid(enclave_id eid)
 {
   spinlock_lock(&encl_lock);
-  enclaves[eid].state = DESTROYED;
+  enclaves[eid].state = INVALID;
   spinlock_unlock(&encl_lock);
   return ENCLAVE_SUCCESS;
 }
@@ -446,9 +446,11 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
     goto free_shared_region;
 
   /* Validate memory, prepare hash and signature for attestation */
-  spinlock_lock(&encl_lock);
-  enclaves[eid].state = FRESH;
+  spinlock_lock(&encl_lock); // FIXME This should error for second enter.
   ret = validate_and_hash_enclave(&enclaves[eid]);
+  /* The enclave is fresh if it has been validated and hashed but not run yet. */
+  if(ret == ENCLAVE_SUCCESS)
+    enclaves[eid].state = FRESH;
   spinlock_unlock(&encl_lock);
 
   if(ret != ENCLAVE_SUCCESS)
@@ -482,9 +484,11 @@ enclave_ret_code destroy_enclave(enclave_id eid)
 
   spinlock_lock(&encl_lock);
   destroyable = (ENCLAVE_EXISTS(eid)
-                 && enclaves[eid].state != ALLOCATED);
+                 && enclaves[eid].state <= STOPPED);
   /* update the enclave state first so that
    * no SM can run the enclave any longer */
+  if(destroyable)
+    enclaves[eid].state = DESTROYING;
   spinlock_unlock(&encl_lock);
 
   if(!destroyable)
@@ -542,7 +546,7 @@ enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid)
 
   spinlock_lock(&encl_lock);
   runable = (ENCLAVE_EXISTS(eid)
-             && enclaves[eid].n_thread < MAX_ENCL_THREADS);
+            && enclaves[eid].state == FRESH);
   if(runable) {
     enclaves[eid].state = RUNNING;
     enclaves[eid].n_thread++;
@@ -550,7 +554,7 @@ enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid)
   spinlock_unlock(&encl_lock);
 
   if(!runable) {
-    return ENCLAVE_NOT_RUNNABLE;
+    return ENCLAVE_NOT_FRESH;
   }
 
   // Enclave is OK to run, context switch to it
@@ -563,19 +567,17 @@ enclave_ret_code exit_enclave(uintptr_t* encl_regs, unsigned long retval, enclav
 
   spinlock_lock(&encl_lock);
   exitable = enclaves[eid].state == RUNNING;
+  if (exitable) {
+    enclaves[eid].n_thread--;
+    if(enclaves[eid].n_thread == 0)
+      enclaves[eid].state = STOPPED;
+  }
   spinlock_unlock(&encl_lock);
 
   if(!exitable)
     return ENCLAVE_NOT_RUNNING;
 
   context_switch_to_host(encl_regs, eid);
-
-  // update enclave state
-  spinlock_lock(&encl_lock);
-  enclaves[eid].n_thread--;
-  if(enclaves[eid].n_thread == 0)
-    enclaves[eid].state = INITIALIZED;
-  spinlock_unlock(&encl_lock);
 
   return ENCLAVE_SUCCESS;
 }
@@ -586,6 +588,11 @@ enclave_ret_code stop_enclave(uintptr_t* encl_regs, uint64_t request, enclave_id
 
   spinlock_lock(&encl_lock);
   stoppable = enclaves[eid].state == RUNNING;
+  if (stoppable) {
+    enclaves[eid].n_thread--;
+    if(enclaves[eid].n_thread == 0)
+      enclaves[eid].state = STOPPED;
+  }
   spinlock_unlock(&encl_lock);
 
   if(!stoppable)
@@ -609,13 +616,16 @@ enclave_ret_code resume_enclave(uintptr_t* host_regs, enclave_id eid)
 
   spinlock_lock(&encl_lock);
   resumable = (ENCLAVE_EXISTS(eid)
-               && (enclaves[eid].state == RUNNING) // not necessary
-               && enclaves[eid].n_thread > 0); // not necessary
-  spinlock_unlock(&encl_lock);
-
+               && (enclaves[eid].state == RUNNING || enclaves[eid].state == STOPPED)
+               && enclaves[eid].n_thread < MAX_ENCL_THREADS);
   if(!resumable) {
+    spinlock_unlock(&encl_lock);
     return ENCLAVE_NOT_RESUMABLE;
+  } else {
+    enclaves[eid].n_thread++;
+    enclaves[eid].state = RUNNING;
   }
+  spinlock_unlock(&encl_lock);
 
   // Enclave is OK to resume, context switch to it
   return context_switch_to_enclave(host_regs, eid, 0);
@@ -632,7 +642,7 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
 
   spinlock_lock(&encl_lock);
   attestable = (ENCLAVE_EXISTS(eid)
-                && (enclaves[eid].state >= INITIALIZED));
+                && (enclaves[eid].state >= FRESH));
   spinlock_unlock(&encl_lock);
 
   if(!attestable)

@@ -25,12 +25,12 @@
 #define MAX_ENCL_THREADS 1
 
 typedef enum {
-  DESTROYED = -2,
   INVALID = -1,
-  FRESH = 0,
-  INITIALIZED,
-  RUNNING,
+  DESTROYING = 0,
   ALLOCATED,
+  FRESH,
+  STOPPED,
+  RUNNING,
 } enclave_state;
 
 /* Enclave stop reasons requested */
