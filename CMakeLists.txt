@@ -215,46 +215,38 @@ add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_w
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
+# if initramfs is false, we need to tell qemu where to find the block device
 if(initramfs)
-  add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
-    WORKING_DIRECTORY ${scripts}
-    COMMAND echo "\
-      export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
-      echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
-      ${qemu_system} \
-      -m 2G \
-      -nographic \
-      -machine virt \
-      -bios ${bootrom_wrkdir}/bootrom.bin \
-      -kernel ${sm_wrkdir}/bbl \
-      -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
-      -device virtio-net-device,netdev=net0" > run-qemu.sh
-      VERBATIM
-    COMMAND
-      chmod +x run-qemu.sh
-  )
+  set(extra_qemu_options "")
 else()
-  add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
-    WORKING_DIRECTORY ${scripts}
-    COMMAND echo "\
-      export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
-      echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
-      ${qemu_system} \
-      -m 2G \
-      -nographic \
-      -machine virt \
-      -bios ${bootrom_wrkdir}/bootrom.bin \
-      -kernel ${sm_wrkdir}/bbl \
+  set(extra_qemu_options "\
       -append \"console=ttyS0 ro root=/dev/vda\" \
       -drive file=${buildroot_wrkdir}/images/rootfs.ext2,format=raw,id=hd0 \
       -device virtio-blk-device,drive=hd0 \
+  ")
+endif()
+
+# generate the qemu runscript, using the above options
+add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
+    WORKING_DIRECTORY ${scripts}
+    COMMAND echo "\
+      export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
+      echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
+      DEBUG=\"\" \\n while [ \"$1\" != \"\" ]; do \\n if [ \"$1\" = \"-debug\" ]; then \\n DEBUG=\"-s -S -d in_asm -D debug.log\" \\n shift \\n fi \\n done \\n \
+      ${qemu_system} \
+      \$DEBUG \
+      -m 2G \
+      -nographic \
+      -machine virt \
+      -bios ${bootrom_wrkdir}/bootrom.bin \
+      -kernel ${sm_wrkdir}/bbl \
+      ${extra_qemu_options} \
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
       -device virtio-net-device,netdev=net0" > run-qemu.sh
       VERBATIM
     COMMAND
       chmod +x run-qemu.sh
   )
-endif()
 add_custom_command(OUTPUT ${scripts}/test-qemu.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/test-qemu.sh ${scripts})
 add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
