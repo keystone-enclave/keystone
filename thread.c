@@ -5,6 +5,35 @@
 #include "thread.h"
 #include "mtrap.h"
 
+
+void switch_vector_enclave(){
+  extern void trap_vector_enclave();
+  write_csr(mtvec, &trap_vector_enclave);
+}
+
+void switch_vector_host(){
+  extern void trap_vector();
+  write_csr(mtvec, &trap_vector);
+}
+
+uint64_t getRTC(){
+	return *mtime; 
+}
+
+void swap_prev_mpp(struct thread_state* thread, uintptr_t* regs){
+  //Time interrupts can occur in either user mode or supervisor mode
+
+  int curr_mstatus = read_csr(mstatus);
+  int old_mpp = thread->prev_mpp;
+  if(old_mpp < 0){
+   //Old MPP bit isn't initialized!
+   old_mpp = curr_mstatus & 0x800;    
+  }
+  thread->prev_mpp = curr_mstatus & 0x800;
+  int new_mstatus = (curr_mstatus & ~0x800) | old_mpp;
+  write_csr(mstatus, new_mstatus); 
+}
+
 /* Swaps the entire s-mode visible state, general registers and then csrs */
 void swap_prev_state(struct thread_state* thread, uintptr_t* regs)
 {
@@ -71,6 +100,7 @@ void clean_state(struct thread_state* state){
     prev[i] = 0;
   }
 
+  state->prev_mpp = -1; // 0x800;   
   clean_smode_csrs(state);
 }
 

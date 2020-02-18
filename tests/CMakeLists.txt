@@ -3,6 +3,7 @@ project(keystone_test C)
 
 SET(CMAKE_C_COMPILER riscv64-unknown-linux-gnu-gcc)
 SET(CMAKE_C_FLAGS -static)
+
 include_directories(
     ${CMAKE_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -54,8 +55,11 @@ set_target_properties(test_enclave
         COMPILE_FLAGS -DTARGET_PLATFORM_HEADER=\\"..\/platform\/default\/default.h\\"
         LINK_FLAGS
           "-Wl,--wrap=printm \
-          -Wl,--wrap=poweroff \
-          -Wl,--wrap=disabled_hart_mask \
+  -Wl,--wrap=mtime   \
+          -Wl,--wrap=trap_vector \
+          -Wl,--wrap=trap_vector_enclave \
+	  -Wl,--wrap=poweroff \
+	  -Wl,--wrap=disabled_hart_mask \
           -Wl,--wrap=hart_mask \
           -Wl,--wrap=sanctum_sm_hash \
           -Wl,--wrap=sanctum_sm_signature \

@@ -20,7 +20,8 @@ sm_c_srcs = \
   platform/@TARGET_PLATFORM@/@TARGET_PLATFORM@.c \
 	plugins/plugins.c \
 
-sm_asm_srcs =
+sm_asm_srcs = \
+   trap.S \
 
 sm_test_srcs =
 
