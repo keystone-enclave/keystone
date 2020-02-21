@@ -43,6 +43,7 @@
 #define ENCLAVE_NO_FREE_RESOURCE            (enclave_ret_code)13
 #define ENCLAVE_SBI_PROHIBITED              (enclave_ret_code)14
 #define ENCLAVE_ILLEGAL_PTE                 (enclave_ret_code)15
+#define ENCLAVE_NOT_FRESH                   (enclave_ret_code)16
 
 #define PMP_UNKNOWN_ERROR                   -1U
 #define PMP_SUCCESS                         0
