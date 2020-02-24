@@ -215,6 +215,20 @@ add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_w
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
+set(QEMU_DEBUG 0 CACHE BOOL "Enable QEMU debugging arguments")
+set(QEMU_DEBUG_ARGS "-s -S -d in_asm -D debug.log" CACHE STRING "QEMU debug arguments")
+
+if (QEMU_DEBUG)
+  set(qemu_debug ${QEMU_DEBUG_ARGS})
+else()
+  set(qemu_debug "")
+endif()
+
+function(on_qemu_debug_change)
+  file(REMOVE ${scripts}/run-qemu.sh)
+endfunction()
+variable_watch(qemu_debug on_qemu_debug_change)
+
 if(initramfs)
   add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
     WORKING_DIRECTORY ${scripts}
@@ -222,6 +236,7 @@ if(initramfs)
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
       echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
       ${qemu_system} \
+      ${qemu_debug} \
       -m 2G \
       -nographic \
       -machine virt \
@@ -240,6 +255,7 @@ else()
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
       echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
       ${qemu_system} \
+      ${qemu_debug} \
       -m 2G \
       -nographic \
       -machine virt \
