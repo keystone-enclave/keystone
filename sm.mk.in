@@ -21,7 +21,7 @@ sm_c_srcs = \
 	plugins/plugins.c \
 
 sm_asm_srcs = \
-   trap.S \
+  trap.S \
 
 sm_test_srcs =
 
