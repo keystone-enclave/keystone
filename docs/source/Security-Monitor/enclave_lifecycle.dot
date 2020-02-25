@@ -1,0 +1,15 @@
+digraph G {
+    node [color=gray]
+    Invalid -> Allocated [color=blue,label="allocate_eid\n(create_enclave)"];
+    node [color=orange]
+    Allocated -> Fresh [color=orange,label="create_enclave\nafter\nvalidate and hash"];
+    node [color=red]
+    Allocated -> Destroying [color=red,label="destory_enclave\n(first step)"];
+    node [color=green]
+    Fresh -> Running [color=green,label="run_enclave"];
+    Fresh -> Destroying [color=red,label="destory_enclave\n(first step)"];
+    Running -> Stopped [color=yellow1,label="exit/stop_enclave"];
+    Stopped -> Running [color=green,label="resume_enclave"];
+    Stopped -> Destroying [color=red,label="destory_enclave\n(first step)"];
+    Destroying -> Invalid [color=gray,label="free_eid\n(destory_enclave\nlast step)"];
+}

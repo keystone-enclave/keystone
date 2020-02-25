@@ -5,6 +5,8 @@
 We use QEMU+GDB to debug the security monitor or the kernel.
 QEMU is an effective way to debug them.
 
+From your `build` directory where you ran `make`, use:
+
 ```bash
 ./scripts/run-qemu.sh -debug
 ```
