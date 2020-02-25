@@ -70,12 +70,13 @@ set(tests_srcdir ${CMAKE_SOURCE_DIR}/tests)
 set(final_image ${CMAKE_BINARY_DIR}/bbl.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
-set(USE_RUST_SM FALSE CACHE BOOL "Use Rust version of the security monitor. WARNING: Applies globally.")
+set(USE_RUST_SM FALSE CACHE BOOL "Use Rust version of the security monitor.")
 if (${USE_RUST_SM})
-  set(enabled_sm sm_rs)
+  set(enabled_sm --enable-sm_rs)
 else()
-  set(enabled_sm sm_c)
+  set(enabled_sm --enable-sm)
 endif()
+set(SM_CONFIGURE_ARGS --enable-opt=2 CACHE STRING "Security Monitor configure script arguments")
 
 # add patch macro
 macro(add_patch submodule patch working_directory depend_by)
@@ -183,9 +184,9 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux" 
 # bbl + sm
 add_custom_command(OUTPUT ${sm_wrkdir} COMMAND mkdir -p ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_stripped} WORKING_DIRECTORY ${sm_wrkdir}
-  COMMAND ln -rsnf ${sm_srcdir}/${enabled_sm} ${sm_srcdir}/sm
   COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
-    --enable-logo --with-logo=${confdir}/sifive_logo.txt --enable-sm --enable-opt=2 --with-target-platform=${platform}
+    --enable-logo --with-logo=${confdir}/sifive_logo.txt --with-target-platform=${platform}
+    --enable-logo --with-logo=${confdir}/sifive_logo.txt ${enabled_sm} ${SM_CONFIGURE_ARGS} --with-target-platform=${platform}
   COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
   COMMENT "Building sm"
 )
