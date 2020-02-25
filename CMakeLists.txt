@@ -89,7 +89,7 @@ endmacro()
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
 add_custom_command(OUTPUT ${qemu_system} COMMAND $(MAKE) -C ${qemu_srcdir} DEPENDS ${qemu_wrkdir}/config-host.mak COMMENT "Building QEMU")
-add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak DEPENDS ${qemu_srcdir}
+add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
   WORKING_DIRECTORY ${qemu_srcdir}
   COMMAND ./configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user
   COMMENT "Configuring QEMU"
@@ -185,7 +185,7 @@ add_custom_command(OUTPUT ${sm_wrkdir} COMMAND mkdir -p ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS ${sm_srcdir} ${sm_wrkdir} ${linux_vmlinux_stripped} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ln -rsnf ${sm_srcdir}/${enabled_sm} ${sm_srcdir}/sm
   COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
-    --enable-logo --with-logo=${confdir}/sifive_logo.txt --enable-sm --with-target-platform=${platform}
+    --enable-logo --with-logo=${confdir}/sifive_logo.txt --enable-sm --enable-opt=2 --with-target-platform=${platform}
   COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
   COMMENT "Building sm"
 )
