@@ -31,6 +31,8 @@ If you want to use ``initramfs``, use the following flag when running ``cmake``
 
   cmake .. -Dinitramfs=y
 
+If you want to use the Rust port of the Security Monitor, run ``cmake`` with ``-DUSE_RUST_SM=y``.
+
 Please refer to the following sections if you want to learn how to build each individual component.
 Otherwise, skip to :ref:`LaunchQEMU`.
 

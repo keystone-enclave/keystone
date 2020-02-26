@@ -35,7 +35,11 @@ Configure and build ``bbl``. The SM can be built by additional flags ``--enable-
 
 	make
 
-This will generate the boot image ``bbl`` in the build directory. Use it to boot the machine.
+The Keystone Security Monitor also has an experimental port to the `Rust programming language <https://rust-lang.org>`_. If you would like to try this version of the SM, specify ``--enale-sm_rs`` instead of using ``--enable-sm``.
+
+You may also wish to compile the SM with optimizations enabled. To do this, use the configure flag ``--enable-opt=2``.
+
+Running ``make`` witll generate the boot image ``bbl`` in the build directory. Use it to boot the machine.
 
 Now, we will customize the SM for a FU540 chip on HiFive Unleashed board.
 Currently, we only have one experimental platform configuration for FU540.
