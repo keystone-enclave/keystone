@@ -20,9 +20,10 @@ Ubuntu
   You need Git version >= 2.11.0 to use ``./fast-setup.sh``, because the script uses
   ``--shallow-clone`` for faster submodule initializtion.
 
-In order to use the Rust version of the security monitor, you will also need to install `rustup <https://rustup.rs>_` and `llvm-9 <https://apt.llvm.org/>_` (available in Ubuntu repositories in versions 18.04 and above). Then, run the following commands:
+In order to use the Rust version of the security monitor, you will also need to install `rustup <https://rustup.rs>`_ and `llvm-9 <https://apt.llvm.org/>`_ (available in Ubuntu repositories in versions 18.04 and above). Then, run the following commands:
 
 ::
+  
   rustup toolchain install nightly
   rustup +nightly component add rust-src
   rustup +nightly target add riscv64gc-unknown-none-elf
