@@ -166,7 +166,7 @@ static int detect_region_overlap(uintptr_t addr, uintptr_t size)
 
   // Safety check the addr+size
   uintptr_t input_end;
-  if( __checked_uaddl(addr, size, &input_end)){
+  if(checked_add_uintptr(addr, size, &input_end)){
     return 1;
   }
 
@@ -251,7 +251,7 @@ void pmp_ipi_update() {
   }
 }
 
-/* 
+/*
  * Attempt to acquire the pmp ipi lock. If it fails, it means another core is broadcasting,
  * this means we may need to update our pmp state and then try to get the lock again.
  */
