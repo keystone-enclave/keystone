@@ -1,10 +1,9 @@
 APP = untrusted
 APP_C_SRCS= untrusted.c edge_wrapper.c
-
-CC = riscv64-unknown-linux-gnu-gcc
+CC = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -Werror
-LINK = riscv64-unknown-linux-gnu-ld
-AS = riscv64-unknown-linux-gnu-as
+LINK = $(CROSS_COMPILE)ld
+AS = $(CROSS_COMPILE)as
 
 SDK_LIB_DIR = $(KEYSTONE_SDK_DIR)/lib
 SDK_APP_LIB = $(SDK_LIB_DIR)/libkeystone-eapp.a

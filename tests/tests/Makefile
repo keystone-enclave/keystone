@@ -1,5 +1,6 @@
-CC = riscv64-unknown-linux-gnu-g++
-OBJCOPY = riscv64-unknown-linux-gnu-objcopy
+CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
+CC = $(CROSS_COMPILE)g++
+OBJCOPY = $(CROSS_COMPILE)objcopy
 
 SDK_LIB_DIR =$(KEYSTONE_SDK_DIR)/lib
 SDK_HOST_LIB = $(SDK_LIB_DIR)/libkeystone-host.a

@@ -1,12 +1,17 @@
 #!/bin/bash
 
 set -e
+
+if [[ $CROSS_COMPILE = "" ]]; then
+  CROSS_COMPILE=riscv64-unknown-linux-gnu-
+fi
+
 ################################################################
 #                   Replace the variables                      #
 ################################################################
 NAME=tests
 VAULT_DIR=$(cd `dirname $0` && pwd)
-BUILD_COMMAND=make
+BUILD_COMMAND=CROSS_COMPILE=$CROSS_COMPILE make
 OUTPUT_DIR=${OUTPUT_DIR:=$VAULT_DIR/../../buildroot_overlay/root/$NAME}
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
 EYRIE_PLUGINS="freemem"
@@ -40,10 +45,8 @@ fi
 
 # check if riscv tools are in PATH
 if ! (
-  $(command -v riscv64-unknown-elf-g++ > /dev/null) &&
-  $(command -v riscv64-unknown-linux-gnu-g++ > /dev/null) &&
-  $(command -v riscv64-unknown-elf-gcc > /dev/null) &&
-  $(command -v riscv64-unknown-linux-gnu-gcc > /dev/null)
+  $(command -v ${CROSS_COMPILE}g++ > /dev/null) &&
+  $(command -v ${CROSS_COMPILE}gcc > /dev/null)
   ); then
   echo "riscv tools are not in PATH"
   exit 1
