@@ -243,7 +243,8 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
       -kernel ${sm_wrkdir}/bbl \
       ${extra_qemu_options} \
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
-      -device virtio-net-device,netdev=net0" > run-qemu.sh
+      -device virtio-net-device,netdev=net0 \
+      -device virtio-rng-pci" > run-qemu.sh
       VERBATIM
     COMMAND
       chmod +x run-qemu.sh
