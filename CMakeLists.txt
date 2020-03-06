@@ -233,7 +233,7 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
     COMMAND echo "\
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
       echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
-      DEBUG=\"\" \\n while [ \"$1\" != \"\" ]; do \\n if [ \"$1\" = \"-debug\" ]; then \\n DEBUG=\"-s -S -d in_asm -D debug.log\" \\n shift \\n fi \\n done \\n \
+      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then DEBUG=\"-s -S -d in_asm -D debug.log\"; fi; shift; done; \
       ${qemu_system} \
       \$DEBUG \
       -m 2G \
