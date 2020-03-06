@@ -233,7 +233,8 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
     COMMAND echo "\
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
       echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
-      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; shift; done; \
+      export SMP=1; \
+      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
       ${qemu_system} \
       \$DEBUG \
       -m 2G \
@@ -244,7 +245,8 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
       ${extra_qemu_options} \
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
       -device virtio-net-device,netdev=net0 \
-      -device virtio-rng-pci" > run-qemu.sh
+      -device virtio-rng-pci \
+      -smp $SMP" > run-qemu.sh
       VERBATIM
     COMMAND
       chmod +x run-qemu.sh
