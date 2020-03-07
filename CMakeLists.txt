@@ -233,7 +233,8 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
     COMMAND echo "\
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
       echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
-      DEBUG=\"\" \\n while [ \"$1\" != \"\" ]; do \\n if [ \"$1\" = \"-debug\" ]; then \\n DEBUG=\"-s -S -d in_asm -D debug.log\" \\n shift \\n fi \\n done \\n \
+      export SMP=1; \
+      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
       ${qemu_system} \
       \$DEBUG \
       -m 2G \
@@ -244,7 +245,8 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
       ${extra_qemu_options} \
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
       -device virtio-net-device,netdev=net0 \
-      -device virtio-rng-pci" > run-qemu.sh
+      -device virtio-rng-pci \
+      -smp $SMP" > run-qemu.sh
       VERBATIM
     COMMAND
       chmod +x run-qemu.sh
@@ -253,10 +255,12 @@ add_custom_command(OUTPUT ${scripts}/test-qemu.sh DEPENDS ${CMAKE_SOURCE_DIR}/sc
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/test-qemu.sh ${scripts})
 add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/travis.sh ${scripts})
+add_custom_command(OUTPUT ${scripts}/gdb.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
+  COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/gdb.sh ${scripts})
 
 add_custom_target(
   "tools" ALL
-  DEPENDS ${scripts} ${scripts}/run-qemu.sh ${scripts}/test-qemu.sh ${scripts}/travis.sh
+  DEPENDS ${scripts} ${scripts}/run-qemu.sh ${scripts}/test-qemu.sh ${scripts}/travis.sh ${scripts}/gdb.sh
   COMMENT "Generating scripts and tools"
 )
 
