@@ -46,7 +46,7 @@ All signed by the device root key.
 
 Enclave report contains:
  - A hash of the enclave at initialization
- - A data block from the enclave of up-to 2KB in size
+ - A data block from the enclave of up-to 1KB in size
 
 All signed by the attestation public key.
 
