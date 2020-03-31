@@ -29,7 +29,6 @@ all:  $(OBJS) $(SDK_HOST_LIB) $(SDK_EDGE_LIB) $(SDK_VERIFIER_LIB)
 	$(foreach test, $(TESTS), \
 		echo "echo 'testing $(test)'" >> test;\
 		echo "./$(RUNNER) $(test).eapp_riscv $(RUNTIME)" >> test; \
-		echo '[ $$? -eq 0 ] || echo "... ERROR"' >> test; \
 	)
 	chmod +x test
 

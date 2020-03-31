@@ -133,9 +133,8 @@ int main(int argc, char** argv)
     asm volatile ("rdcycle %0" : "=r" (cycles3));
   }
 
-  int retcode = 0;
   if( !load_only )
-    retcode = enclave.run();
+    enclave.run();
 
   if( self_timing ){
     asm volatile ("rdcycle %0" : "=r" (cycles4));
@@ -143,5 +142,5 @@ int main(int argc, char** argv)
     printf("[keystone-test] Runtime: %lu cycles\r\n", cycles4-cycles3);
   }
 
-  return retcode;
+  return 0;
 }
