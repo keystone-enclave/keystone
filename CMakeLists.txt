@@ -7,16 +7,17 @@ if(NOT DEFINED ENV{RISCV})
 	message(FATAL_ERROR "set RISCV environment variable. \n Try `cd ${CMAKE_SOURCE_DIR}; source source.sh`")
 endif()
 
-if(NOT DEFINED platform)
-  set(platform "default")
-endif()
+set(SM_PLATFORM "default" CACHE STRING "Board name for SM hardware-specific functions")
+set(platform ${SM_PLATFORM})
 message(STATUS "platform=${platform}")
 
+set (Debug (${CMAKE_BUILD_TYPE} == "Debug"))
 if(Debug)
   message(STATUS "debug")
   set(CFLAGS -g)
 endif()
 
+set(RISCV32 OFF CACHE BOOL "Build in 32-bit mode")
 if(RISCV32)
   message(STATUS "riscv32")
   set(BITS 32)
@@ -67,6 +68,7 @@ set(linux_vmlinux_stripped ${linux_wrkdir}/vmlinux-stripped)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
 set(tests_srcdir ${CMAKE_SOURCE_DIR}/tests)
+set(tests_wrkdir ${CMAKE_BINARY_DIR}/tests.build)
 set(final_image ${CMAKE_BINARY_DIR}/bbl.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
@@ -200,14 +202,14 @@ endif()
 add_dependencies("sm" "linux")
 add_dependencies("driver" "linux")
 
-add_custom_target("tests" DEPENDS "driver" ${overlay_root} ${tests_srcdir}
-  COMMAND OUTPUT_DIR=${overlay_root} ${tests_srcdir}/tests/vault.sh
+add_custom_command(OUTPUT ${tests_wrkdir} COMMAND mkdir -p ${tests_wrkdir})
+add_custom_target("tests" DEPENDS "driver" ${overlay_root} ${tests_srcdir} ${tests_wrkdir}
+  COMMAND OUTPUT_DIR=${overlay_root} ARTIFACTS_DIR=${tests_wrkdir} ${tests_srcdir}/tests/vault.sh
   COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
   COMMENT "Building tests"
 )
 
-add_custom_target("image" DEPENDS "sm" "tests" ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root}
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
+add_custom_target("image" DEPENDS "sm" "tests" "buildroot"
   COMMAND ${cross_compile}objcopy -S -O binary --change-addresses -0x80000000 ${sm_wrkdir}/bbl ${final_image}
   COMMENT "Generating image"
 )
