@@ -1,0 +1,43 @@
+language: c
+
+dist: xenial
+cache:
+  apt: true
+  timeout: 1000 #In seconds
+  directories:
+    - $TRAVIS_BUILD_DIR/riscv
+
+git:
+  submodules: false
+  depth: 1
+
+env:
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR/keystone-sdk
+
+addons:
+  apt:
+    packages:
+    - autoconf
+    - automake
+    - autotools-dev
+    - build-essential
+    - gcc
+    - git
+
+before_install:
+  - ./.fast-setup.sh
+  - git clone "https://github.com/keystone-enclave/keystone-sdk"
+  - cd keystone-sdk
+  - make
+
+jobs:
+  include:
+    - stage: default build
+      script:
+        - make
+    - stage: USE_FREEMEM
+      script:
+        - OPTIONS_FLAGS="-DUSE_FREEMEM" make
+    - stage: USE_PAGING
+      script:
+        - OPTIONS_FLAGS="-DUSE_FREEMEM -DUSE_PAGING" make
