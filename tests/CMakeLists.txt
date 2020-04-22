@@ -40,6 +40,8 @@ add_executable(test_enclave
                 ../ed25519/sc.c
                 ../ed25519/sign.c
                 ../ed25519/keypair.c
+                ../hkdf_sha3_512/hkdf_sha3_512.c
+                ../hmac_sha3/hmac_sha3.c
                 ../pmp.c
                 ../attest.c
                 ../cpu.c

@@ -29,3 +29,11 @@ void sign(void* sign, const void* data, size_t len, const unsigned char* public_
 {
   ed25519_sign(sign, data, len, public_key, private_key);
 }
+
+int kdf(const unsigned char* salt, size_t salt_len,
+        const unsigned char* ikm, size_t ikm_len,
+        const unsigned char* info, size_t info_len,
+        unsigned char* okm, size_t okm_len)
+{
+  return hkdf_sha3_512(salt, salt_len, ikm, ikm_len, info, info_len, okm, okm_len);
+}

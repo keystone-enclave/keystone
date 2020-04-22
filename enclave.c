@@ -699,3 +699,23 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
 
   return ENCLAVE_SUCCESS;
 }
+
+enclave_ret_code get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
+                                 size_t key_ident_size, enclave_id eid)
+{
+  struct sealing_key *key_struct = (struct sealing_key *)sealing_key;
+  int ret;
+
+  /* derive key */
+  ret = sm_derive_sealing_key((unsigned char *)key_struct->key,
+                              (const unsigned char *)key_ident, key_ident_size,
+                              (const unsigned char *)enclaves[eid].hash);
+  if (ret)
+    return ENCLAVE_UNKNOWN_ERROR;
+
+  /* sign derived key */
+  sm_sign((void *)key_struct->signature, (void *)key_struct->key,
+          SEALING_KEY_SIZE);
+
+  return ENCLAVE_SUCCESS;
+}

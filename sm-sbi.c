@@ -107,6 +107,18 @@ uintptr_t mcall_sm_attest_enclave(uintptr_t report, uintptr_t data, uintptr_t si
   return ret;
 }
 
+uintptr_t mcall_sm_get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
+                                   size_t key_ident_size)
+{
+  /* only an enclave itself can call this SBI */
+  if (!cpu_is_enclave_context()) {
+    return ENCLAVE_SBI_PROHIBITED;
+  }
+
+  return get_sealing_key(sealing_key, key_ident, key_ident_size,
+                         cpu_get_enclave_id());
+}
+
 uintptr_t mcall_sm_random()
 {
   /* Anyone may call this interface. */

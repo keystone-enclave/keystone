@@ -107,6 +107,14 @@ struct report
   byte dev_public_key[PUBLIC_KEY_SIZE];
 };
 
+/* sealing key structure */
+#define SEALING_KEY_SIZE 128
+struct sealing_key
+{
+  uint8_t key[SEALING_KEY_SIZE];
+  uint8_t signature[SIGNATURE_SIZE];
+};
+
 /*** SBI functions & external functions ***/
 // callables from the host
 enclave_ret_code create_enclave(struct keystone_sbi_create create_args);
@@ -125,4 +133,5 @@ enclave_ret_code copy_from_host(void* source, void* dest, size_t size);
 int get_enclave_region_index(enclave_id eid, enum enclave_region_type type);
 uintptr_t get_enclave_region_base(enclave_id eid, int memid);
 uintptr_t get_enclave_region_size(enclave_id eid, int memid);
+enclave_ret_code get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid);
 #endif
