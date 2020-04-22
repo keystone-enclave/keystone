@@ -18,6 +18,7 @@ PACKAGE_FILES="stack/stack.eapp_riscv \
                fib-bench/fib-bench.eapp_riscv \
                untrusted/untrusted.eapp_riscv \
                attestation/attestation.eapp_riscv \
+               data-sealing/data-sealing.eapp_riscv \
                test-runner.riscv \
                test \
                $EYRIE_DIR/eyrie-rt"
