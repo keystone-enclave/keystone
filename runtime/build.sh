@@ -17,7 +17,7 @@ PLUGINS[debug]="-DDEBUG "
 
 OPTIONS_FLAGS=
 
-rm -f $OPTIONS_LOG
+echo > $OPTIONS_LOG
 
 for plugin in $REQ_PLUGINS; do
     if [[ ! ${PLUGINS[$plugin]+_} ]]; then

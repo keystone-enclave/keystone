@@ -27,17 +27,18 @@ addons:
 before_install:
   - ./.fast-setup.sh
   - git clone "https://github.com/keystone-enclave/keystone-sdk"
-  - cd keystone-sdk
+  - pushd keystone-sdk
   - make
+  - popd
 
 jobs:
   include:
     - stage: default build
       script:
-        - make
+        - ./build.sh 
     - stage: USE_FREEMEM
       script:
-        - OPTIONS_FLAGS="-DUSE_FREEMEM" make
+        - ./build.sh freemem
     - stage: USE_PAGING
       script:
-        - OPTIONS_FLAGS="-DUSE_FREEMEM -DUSE_PAGING" make
+        - ./build.sh paging
