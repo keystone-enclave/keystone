@@ -16,6 +16,7 @@
 #define SBI_SM_CREATE_ENCLAVE    101
 #define SBI_SM_DESTROY_ENCLAVE   102
 #define SBI_SM_ATTEST_ENCLAVE    103
+#define SBI_SM_GET_SEALING_KEY   104
 #define SBI_SM_RUN_ENCLAVE       105
 #define SBI_SM_STOP_ENCLAVE      106
 #define SBI_SM_RESUME_ENCLAVE    107
@@ -61,6 +62,10 @@ void sm_init(void);
 #define ATTESTATION_KEY_LENGTH  64
 void sm_retrieve_pubkey(void* dest);
 void sm_sign(void* sign, const void* data, size_t len);
+int sm_derive_sealing_key(unsigned char *key,
+                          const unsigned char *key_ident,
+                          size_t key_ident_size,
+                          const unsigned char *enclave_hash);
 
 /* creation parameters */
 struct keystone_sbi_pregion
