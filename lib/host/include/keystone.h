@@ -71,7 +71,6 @@ public:
   keystone_status_t registerOcallDispatch(OcallFunc func);
   keystone_status_t init(const char* filepath, const char* runtime, Params parameters);
   keystone_status_t init(const char *eapppath, const char *runtimepath, Params _params, uintptr_t alternate_phys_addr);
-  keystone_status_t measure(const char* filepath, const char* runtime, Params parameters);
   keystone_status_t destroy();
   keystone_status_t run();
 
