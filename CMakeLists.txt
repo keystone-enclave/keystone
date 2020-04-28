@@ -11,6 +11,10 @@ set(SM_PLATFORM "default" CACHE STRING "Board name for SM hardware-specific func
 set(platform ${SM_PLATFORM})
 message(STATUS "platform=${platform}")
 
+set(LINUX_SIFIVE FALSE CACHE BOOL "Build linux for sifive")
+set(sifive ${LINUX_SIFIVE})
+message(STATUS "sifive=${sifive}")
+
 set (Debug (${CMAKE_BUILD_TYPE} == "Debug"))
 if(Debug)
   message(STATUS "debug")

@@ -100,7 +100,7 @@ Optionally, you can specify the target platform when you run ``cmake``.
 ::
 
   # in your <build directory>
-  cmake .. -Dplatform=fu540
+  cmake .. -DSM_PLATFORM=fu540
   make sm
 
 The default platform is "default", which does not have any platform-specific features.

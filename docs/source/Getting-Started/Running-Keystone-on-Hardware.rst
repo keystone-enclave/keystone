@@ -24,7 +24,7 @@ After you setup the repository, you can run the following commands to build Keys
   
   mkdir <build directory>
   cd <build directory>
-  cmake .. -Dsifive=y
+  cmake .. -DLINUX_SIFIVE=y
   make
   make image
 
