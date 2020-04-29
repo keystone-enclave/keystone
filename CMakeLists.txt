@@ -203,20 +203,22 @@ elseif(sifive)
   add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} "sm")
 endif()
 
-add_dependencies("sm" "linux")
 add_dependencies("driver" "linux")
 
 add_custom_command(OUTPUT ${tests_wrkdir} COMMAND mkdir -p ${tests_wrkdir})
-add_custom_target("tests" DEPENDS "driver" ${overlay_root} ${tests_srcdir} ${tests_wrkdir}
+add_custom_target("tests" DEPENDS ${tests_srcdir} ${tests_wrkdir}
   COMMAND OUTPUT_DIR=${overlay_root} ARTIFACTS_DIR=${tests_wrkdir} ${tests_srcdir}/tests/vault.sh
-  COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
   COMMENT "Building tests"
 )
 
-add_custom_target("image" DEPENDS "sm" "tests" "buildroot"
+add_custom_target("image-deps" DEPENDS "sm" "tests" "driver"
+  COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
+)
+add_custom_target("image" DEPENDS "buildroot"
   COMMAND ${cross_compile}objcopy -S -O binary --change-addresses -0x80000000 ${sm_wrkdir}/bbl ${final_image}
   COMMENT "Generating image"
 )
+add_dependencies("buildroot" "image-deps")
 
 # scripts
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
