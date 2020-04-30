@@ -257,7 +257,8 @@ int keystone_release(struct inode *inode, struct file *file) {
   }
 
   /* We need to send destroy enclave just the eid to close. */
-    struct enclave *enclave = get_enclave_by_id(ueid);
+  struct enclave *enclave;
+  enclave = get_enclave_by_id(ueid);
 
   if (!enclave) {
     /* If eid is set to the invalid id, then we do not do anything. */
