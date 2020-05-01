@@ -6,7 +6,8 @@ set -e
 ################################################################
 NAME=tests
 VAULT_DIR=$(cd `dirname $0` && pwd)
-BUILD_COMMAND=make
+ARTIFACTS_DIR=${ARTIFACTS_DIR:=.}
+BUILD_COMMAND="make -C \"$VAULT_DIR\" O=\"$ARTIFACTS_DIR\""
 OUTPUT_DIR=${OUTPUT_DIR:=$VAULT_DIR/../../buildroot_overlay/root/$NAME}
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
 EYRIE_PLUGINS="freemem"
@@ -73,8 +74,8 @@ mkdir -p $OUTPUT_FILES_DIR
 $EYRIE_DIR/build.sh $EYRIE_PLUGINS
 
 # build the app
-pushd $VAULT_DIR
-$BUILD_COMMAND
+pushd $ARTIFACTS_DIR
+eval "$BUILD_COMMAND"
 for output in $PACKAGE_FILES; do
   cp $output $OUTPUT_FILES_DIR
 done
