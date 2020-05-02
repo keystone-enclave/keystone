@@ -461,7 +461,7 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
      it may modify the enclave struct */
   ret = platform_create_enclave(&enclaves[eid]);
   if(ret != ENCLAVE_SUCCESS)
-    goto free_shared_region;
+    goto unset_region;
 
   /* Validate memory, prepare hash and signature for attestation */
   spinlock_lock(&encl_lock); // FIXME This should error for second enter.
@@ -481,6 +481,8 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
 
 free_platform:
   platform_destroy_enclave(&enclaves[eid]);
+unset_region:
+  pmp_unset_global(region);
 free_shared_region:
   pmp_region_free_atomic(shared_region);
 free_region:

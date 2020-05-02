@@ -31,7 +31,14 @@ void platform_switch_from_enclave(struct enclave* enclave){
 
 uint64_t platform_random(){
 #pragma message("Platform has no entropy source, this is unsafe. TEST ONLY")
+  static uint64_t w = 0, s = 0xb5ad4eceda1ce2a9;
+
   unsigned long cycles;
   asm volatile ("rdcycle %0" : "=r" (cycles));
-  return cycles;
+  
+  // from Middle Square Weyl Sequence algorithm
+  uint64_t x = cycles;
+  x *= x; 
+  x += (w += s); 
+  return (x>>32) | (x<<32);
 }
