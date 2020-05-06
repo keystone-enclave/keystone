@@ -21,3 +21,13 @@ int attest_enclave(void* report, void* data, size_t size)
 {
   return SYSCALL_3(SYSCALL_ATTEST_ENCLAVE, report, data, size);
 }
+
+/* returns sealing key */
+int get_sealing_key(struct sealing_key *sealing_key_struct,
+                    size_t sealing_key_struct_size,
+                    void *key_ident, size_t key_ident_size)
+{
+  return SYSCALL_4(SYSCALL_GET_SEALING_KEY, sealing_key_struct,
+                   sealing_key_struct_size,
+                   key_ident, key_ident_size);
+}
