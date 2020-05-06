@@ -28,6 +28,7 @@ Welcome to Keystone Enclave's documentation!
    Keystone-Applications/Compiling-Applications
    Keystone-Applications/Edge-Calls
    Keystone-Applications/Attestation
+   Keystone-Applications/Data-Sealing
 
 .. toctree::
    :maxdepth: 1
