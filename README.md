@@ -18,3 +18,12 @@ In order to run the test framework, do the following:
 1) Run `make` in the tests directory in the SDK. This will generate a `test-runner` executable to run the test framework.
 2) Run `./test-runner`. This will execute all tests. 
 
+## Build SDK
+
+```bash
+mkdir build
+cmake .. -DOUTPUT_DIR=$(pwd)/../lib
+make
+make install
+```
+

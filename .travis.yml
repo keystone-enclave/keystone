@@ -28,6 +28,7 @@ branches:
   only:
     - master
     - dev
+    - travis
 
 before_install:
   - sudo ./tests/scripts/setup_test.sh
@@ -38,8 +39,12 @@ jobs:
   include:
     - stage: build everything & test
       script:
+        - mkdir build
+        - cd build
+        - cmake -DOUTPUT_DIR=$PWD/../lib ..
         - make
-        - cd tests
+        - make install
+        - cd ../tests
         - make
         - make test
         - cd $TRAVIS_BUILD_DIR
