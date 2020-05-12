@@ -28,7 +28,7 @@ struct keystone_sbi_create_t
   struct runtime_params_t params;
 
   // Outputs from the creation process
-  uint64_t* eid_pptr;
+  uint64_t* eid_vptr;
 };
 
 #endif
