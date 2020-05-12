@@ -66,7 +66,12 @@ Install the Keystone SDK and prepare Eyrie runtime source code.
 
 ::
 
-  make -C sdk
+   cd sdk
+   mkdir build
+   cd build
+   cmake .. -DOUTPUT_DIR=$(pwd)/../lib
+   make
+   make install
 
 Initialize the runtime (i.e., Eyrie) source code.
 
