@@ -32,6 +32,7 @@ set_target_properties(test_pmp
 add_executable(test_enclave
                 test_enclave.c
                 mock/machine.c
+                mock/mprv.c
                 mock/secure_boot.c
                 ../platform/default/default.c
                 ../sha3/sha3.c
@@ -67,5 +68,11 @@ set_target_properties(test_enclave
           -Wl,--wrap=sanctum_sm_signature \
           -Wl,--wrap=sanctum_sm_public_key \
           -Wl,--wrap=sanctum_sm_secret_key \
-          -Wl,--wrap=sanctum_dev_public_key"
+          -Wl,--wrap=sanctum_dev_public_key \
+          -Wl,--wrap=copy1_to_sm \
+          -Wl,--wrap=copy8_to_sm \
+          -Wl,--wrap=copy64_to_sm \
+          -Wl,--wrap=copy1_from_sm \
+          -Wl,--wrap=copy8_from_sm \
+          -Wl,--wrap=copy64_from_sm"
          )
