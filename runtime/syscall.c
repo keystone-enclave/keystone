@@ -170,12 +170,9 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = handle_copy_from_shared((void*)arg0, arg1, arg2);
     break;
   case(RUNTIME_SYSCALL_ATTEST_ENCLAVE):;
-    uintptr_t copy_buffer_1_pa = kernel_va_to_pa(rt_copy_buffer_1);
-    uintptr_t copy_buffer_2_pa = kernel_va_to_pa(rt_copy_buffer_2);
-
     copy_from_user((void*)rt_copy_buffer_2, (void*)arg1, arg2);
 
-    ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, copy_buffer_1_pa, copy_buffer_2_pa, arg2);
+    ret = SBI_CALL_3(SBI_SM_ATTEST_ENCLAVE, rt_copy_buffer_1, rt_copy_buffer_2, arg2);
 
     /* TODO we consistently don't have report size when we need it */
     copy_to_user((void*)arg0, (void*)rt_copy_buffer_1, 2048);
