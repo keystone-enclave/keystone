@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "enclave.h"
+#include "mprv.h"
 #include "pmp.h"
 #include "page.h"
 #include "cpu.h"
@@ -236,20 +237,16 @@ uintptr_t get_enclave_region_base(enclave_id eid, int memid)
 
 /* Ensures that dest ptr is in host, not in enclave regions
  */
-static enclave_ret_code copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
+static enclave_ret_code copy_word_to_host(uintptr_t dest_ptr, uintptr_t value)
 {
-  int region_overlap = 0;
-  spinlock_lock(&encl_lock);
-  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t)dest_ptr,
-                                                sizeof(uintptr_t));
-  if(!region_overlap)
-    *dest_ptr = value;
-  spinlock_unlock(&encl_lock);
+  enclave_ret_code ret = ENCLAVE_REGION_OVERLAPS;
 
-  if(region_overlap)
-    return ENCLAVE_REGION_OVERLAPS;
-  else
-    return ENCLAVE_SUCCESS;
+  int err = copy8_from_sm(dest_ptr, (uint64_t *)&value);
+  if (!err) {
+    ret = ENCLAVE_SUCCESS;
+  }
+
+  return ret;
 }
 
 // TODO: This function is externally used by sm-sbi.c.
@@ -258,17 +255,11 @@ static enclave_ret_code copy_word_to_host(uintptr_t* dest_ptr, uintptr_t value)
  * Does NOT do verification of dest, assumes caller knows what that is.
  * Dest should be inside the SM memory.
  */
-enclave_ret_code copy_from_host(void* source, void* dest, size_t size){
+enclave_ret_code copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest){
 
-  int region_overlap = 0;
-  spinlock_lock(&encl_lock);
-  region_overlap = pmp_detect_region_overlap_atomic((uintptr_t) source, size);
-  // TODO: Validate that dest is inside the SM.
-  if(!region_overlap)
-    memcpy(dest, source, size);
-  spinlock_unlock(&encl_lock);
+  int region_overlap = copy_to_sm(dest, src, sizeof(struct keystone_sbi_create));
 
-  if(region_overlap)
+  if (region_overlap)
     return ENCLAVE_REGION_OVERLAPS;
   else
     return ENCLAVE_SUCCESS;
@@ -295,33 +286,24 @@ static int buffer_in_enclave_region(struct enclave* enclave,
 }
 
 /* copies data from enclave, source must be inside EPM */
-static enclave_ret_code copy_from_enclave(struct enclave* enclave,
-                                          void* dest, void* source, size_t size) {
+static enclave_ret_code copy_enclave_data(struct enclave* enclave,
+                                          void* dest, uintptr_t source, size_t size) {
 
-  spinlock_lock(&encl_lock);
-  int legal = buffer_in_enclave_region(enclave, source, size);
+  int illegal = copy_to_sm(dest, source, size);
 
-  if(legal)
-    memcpy(dest, source, size);
-  spinlock_unlock(&encl_lock);
-
-  if(!legal)
+  if(illegal)
     return ENCLAVE_ILLEGAL_ARGUMENT;
   else
     return ENCLAVE_SUCCESS;
 }
 
 /* copies data into enclave, destination must be inside EPM */
-static enclave_ret_code copy_to_enclave(struct enclave* enclave,
-                                        void* dest, void* source, size_t size) {
-  spinlock_lock(&encl_lock);
-  int legal = buffer_in_enclave_region(enclave, dest, size);
+static enclave_ret_code copy_enclave_report(struct enclave* enclave,
+                                            uintptr_t dest, struct report* source) {
 
-  if(legal)
-    memcpy(dest, source, size);
-  spinlock_unlock(&encl_lock);
+  int illegal = copy_from_sm(dest, source, sizeof(struct report));
 
-  if(!legal)
+  if(illegal)
     return ENCLAVE_ILLEGAL_ARGUMENT;
   else
     return ENCLAVE_SUCCESS;
@@ -467,18 +449,23 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   spinlock_lock(&encl_lock); // FIXME This should error for second enter.
   ret = validate_and_hash_enclave(&enclaves[eid]);
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
-  if(ret == ENCLAVE_SUCCESS)
-    enclaves[eid].state = FRESH;
-  spinlock_unlock(&encl_lock);
-
   if(ret != ENCLAVE_SUCCESS)
-    goto free_platform;
+    goto unlock;
 
+  enclaves[eid].state = FRESH;
   /* EIDs are unsigned int in size, copy via simple copy */
-  copy_word_to_host((uintptr_t*)eidptr, (uintptr_t)eid);
 
+  ret = copy_word_to_host((uintptr_t)eidptr, (uintptr_t)eid);
+  if (ret) {
+    ret = ENCLAVE_ILLEGAL_ARGUMENT;
+    goto unlock;
+  }
+
+  spinlock_unlock(&encl_lock);
   return ENCLAVE_SUCCESS;
 
+unlock:
+  spinlock_unlock(&encl_lock);
 free_platform:
   platform_destroy_enclave(&enclaves[eid]);
 unset_region:
@@ -663,21 +650,23 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
   spinlock_lock(&encl_lock);
   attestable = (ENCLAVE_EXISTS(eid)
                 && (enclaves[eid].state >= FRESH));
-  spinlock_unlock(&encl_lock);
 
-  if(!attestable)
-    return ENCLAVE_NOT_INITIALIZED;
+  if(!attestable) {
+    ret = ENCLAVE_NOT_INITIALIZED;
+    goto err_unlock;
+  }
 
   /* copy data to be signed */
-  ret = copy_from_enclave(&enclaves[eid],
-      report.enclave.data,
-      (void*)data,
-      size);
+  ret = copy_enclave_data(&enclaves[eid], report.enclave.data,
+      data, size);
   report.enclave.data_len = size;
 
   if (ret) {
-    return ret;
+    ret = ENCLAVE_NOT_ACCESSIBLE;
+    goto err_unlock;
   }
+
+  spinlock_unlock(&encl_lock); // Don't need to wait while signing, which might take some time
 
   memcpy(report.dev_public_key, dev_public_key, PUBLIC_KEY_SIZE);
   memcpy(report.sm.hash, sm_hash, MDSIZE);
@@ -690,16 +679,23 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
       - SIGNATURE_SIZE
       - ATTEST_DATA_MAXLEN + size);
 
+  spinlock_lock(&encl_lock);
+
   /* copy report to the enclave */
-  ret = copy_to_enclave(&enclaves[eid],
-      (void*)report_ptr,
-      &report,
-      sizeof(struct report));
+  ret = copy_enclave_report(&enclaves[eid],
+      report_ptr,
+      &report);
+      
   if (ret) {
-    return ret;
+    ret = ENCLAVE_ILLEGAL_ARGUMENT;
+    goto err_unlock;
   }
 
-  return ENCLAVE_SUCCESS;
+  ret = ENCLAVE_SUCCESS;
+
+err_unlock:
+  spinlock_unlock(&encl_lock);
+  return ret;
 }
 
 enclave_ret_code get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,

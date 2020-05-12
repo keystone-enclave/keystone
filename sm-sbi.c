@@ -21,9 +21,8 @@ uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  ret = copy_from_host((struct keystone_sbi_create*)create_args,
-                       &create_args_local,
-                       sizeof(struct keystone_sbi_create));
+  ret = copy_enclave_create_args(create_args,
+                       &create_args_local);
 
   if( ret != ENCLAVE_SUCCESS )
     return ret;
