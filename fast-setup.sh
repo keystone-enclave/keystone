@@ -58,7 +58,13 @@ git submodule update --init --recursive
 
 # build tests in SDK
 export KEYSTONE_SDK_DIR=$(pwd)/sdk
-make -C sdk
+cd sdk
+mkdir build
+cd build
+cmake .. -DOUTPUT_DIR=$(pwd)/../lib
+make
+make install
+cd ../..
 ./sdk/scripts/init.sh --runtime eyrie --force
 
 echo "Keystone is fully setup! You can build everything and run the tests with 'make run-tests'"

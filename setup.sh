@@ -12,6 +12,12 @@ make && make linux
 cd ..
 
 # build tests in SDK
-make -C sdk
 export KEYSTONE_SDK_DIR=$(pwd)/sdk
+cd sdk
+mkdir build
+cd build
+cmake .. -DOUTPUT_DIR=$(pwd)/../lib
+make
+make install
+cd ../..
 ./sdk/scripts/init.sh --runtime eyrie --force
