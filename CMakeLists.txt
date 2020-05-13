@@ -97,6 +97,7 @@ endif()
 
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 mkdir(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
+set(linux_symvers ${linux_wrkdir}/Modules.symvers)
 set(linux_vmlinux ${linux_wrkdir}/vmlinux)
 set(linux_vmlinux_stripped ${linux_wrkdir}/vmlinux-stripped)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
@@ -172,6 +173,7 @@ add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${l
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
   COMMENT "Configuring linux"
 )
+add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
 
 if(firesim)
   add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
@@ -193,7 +195,7 @@ if(initramfs)
     COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
     COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
     )
-  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS "sysroot" ${linux_srcdir} ${linux_wrkdir}/.config ${linux_patches}
+  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS "sysroot" ${linux_srcdir} "linux-symvers"
     COMMAND $(MAKE) -C ${linux_srcdir}
       O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
       CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
@@ -203,14 +205,20 @@ if(initramfs)
     COMMENT "Building linux (initramfs)"
   )
 else()
-  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${linux_srcdir} ${linux_wrkdir}/.config ${linux_patches}
+  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${linux_srcdir} "linux-symvers"
     COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
     COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
     COMMENT "Building linux"
   )
 endif()
 
+add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config" ${linux_patches}
+  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv modules
+  COMMENT "Building linux symvers"
+)
+add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
 add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux})
+
 
 ###############################################################################
 ## COMPONENT: linux driver
@@ -219,7 +227,7 @@ add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux}
 add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
 add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
 	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
-add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux" "driver-sync"
+add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync"
   COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
     M=${driver_wrkdir} modules
   COMMENT "Building driver"
@@ -237,12 +245,12 @@ else()
 endif()
 
 add_custom_command(OUTPUT ${sm_wrkdir}/Makefile WORKING_DIRECTORY ${sm_wrkdir}
-  DEPENDS ${sm_wrkdir_exists} "linux"
+  DEPENDS ${sm_wrkdir_exists}
   COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
     --enable-logo --with-logo=${confdir}/sifive_logo.txt ${enabled_sm} ${SM_CONFIGURE_ARGS} --with-target-platform=${platform}
   COMMENT "Configuring sm"
 )
-add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile WORKING_DIRECTORY ${sm_wrkdir}
+add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile "linux" WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
   COMMENT "Building sm"
 )
@@ -269,10 +277,10 @@ add_custom_target("tests" DEPENDS ${tests_srcdir} ${tests_wrkdir}
 ## COMPONENT: image
 ###############################################################################
 
-add_custom_target("image-deps" DEPENDS "sm" "tests" "driver"
+add_custom_target("image-deps" DEPENDS "tests" "driver"
   COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
 )
-add_custom_target("image" DEPENDS "buildroot"
+add_custom_target("image" DEPENDS "buildroot" "sm"
   COMMAND ${cross_compile}objcopy -S -O binary --change-addresses -0x80000000 ${sm_wrkdir}/bbl ${final_image}
   COMMENT "Generating image"
 )
@@ -283,7 +291,6 @@ add_dependencies("buildroot" "image-deps")
 ## QEMU scripts
 ###############################################################################
 
-# scripts
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
