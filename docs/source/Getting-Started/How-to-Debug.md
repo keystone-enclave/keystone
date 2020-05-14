@@ -29,10 +29,10 @@ If you want to debug with the kernel's debug information
 riscv64-unknown-linux-gnu-gdb ./riscv-linux/vmlinux
 ```
 
-Then, attach to QEMU:
+Then, attach to QEMU on the port printed by the starting qemu script:
 
 ```bash
-(gdb) target remote localhost:1234
+(gdb) target remote localhost:$PORT
 ```
 
 Now, you can start debugging the SM (bbl) or the kernel.

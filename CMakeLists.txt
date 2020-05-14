@@ -165,7 +165,7 @@ add_custom_target("bootrom" ALL
 
 
 ###############################################################################
-## COMPONENT: linux kernel 
+## COMPONENT: linux kernel
 ###############################################################################
 
 add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
@@ -312,7 +312,7 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
       export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
       echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
       export SMP=1; \
-      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
+      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then echo \"**** GDB port \$((HOST_PORT + 1)) ****\"; DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
       ${qemu_system} \
       \$DEBUG \
       -m 2G \
