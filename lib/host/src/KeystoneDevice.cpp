@@ -2,7 +2,7 @@
 // Created by Alex Thomas on 8/17/19.
 //
 
-#include "keystone_device.h"
+#include "KeystoneDevice.h"
 
 int KeystoneDevice::ioctl_ioc_create_enclave(struct keystone_ioctl_create_enclave *enclp)
 {

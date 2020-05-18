@@ -16,11 +16,11 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "common.h"
-#include "elffile.h"
-#include "params.h"
+#include "ELFFile.h"
+#include "Params.h"
 #include "sha3.h"
-#include "memory.h"
-#include "keystone_device.h"
+#include "Memory.h"
+#include "KeystoneDevice.h"
 #include "KeystoneError.h"
 
 class Keystone;

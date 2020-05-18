@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <keystone_user.h>
-#include "memory.h"
+#include "Memory.h"
 
 void SimulatedEnclaveMemory::init(int fd=0, vaddr_t phys_addr=0)
 {

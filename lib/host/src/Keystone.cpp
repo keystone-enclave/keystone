@@ -6,7 +6,7 @@
 #include <sys/mman.h>
 #include <keystone_user.h>
 #include "Keystone.h"
-#include "elffile.h"
+#include "ELFFile.h"
 #include "keystone_user.h"
 #include "page.h"
 #include "hash_util.h"

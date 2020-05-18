@@ -7,10 +7,10 @@ set(SOURCE_FILES
         src/elf.cpp
         src/elf32.cpp
         src/elf64.cpp
-        src/elffile.cpp
-        src/keystone_device.cpp
+        src/ELFFile.cpp
+        src/KeystoneDevice.cpp
         src/Keystone.cpp
-        src/memory.cpp
+        src/Memory.cpp
         src/sha3.cpp
     )
 
