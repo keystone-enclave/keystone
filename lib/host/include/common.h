@@ -27,11 +27,5 @@
 typedef uintptr_t vaddr_t;
 typedef uintptr_t paddr_t;
 
-typedef enum {
-  KEYSTONE_ERROR=-1,
-  KEYSTONE_SUCCESS,
-  KEYSTONE_NOT_IMPLEMENTED,
-} keystone_status_t;
-
 
 #endif

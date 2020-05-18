@@ -3,17 +3,17 @@ project(keystone-host CXX)
 set(CFLAGS      "-Wall -Werror")
 set(LDFLAGS     "-static")
 
-set(SOURCE_FILES 
+set(SOURCE_FILES
         src/elf.cpp
         src/elf32.cpp
         src/elf64.cpp
         src/elffile.cpp
         src/keystone_device.cpp
-        src/keystone.cpp
+        src/Keystone.cpp
         src/memory.cpp
         src/sha3.cpp
     )
-    
+
 set(INCLUDE_DIRS include)
 
 set(CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} ${CFLAGS}")
