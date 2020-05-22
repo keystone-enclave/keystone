@@ -1,3 +1,6 @@
+#ifndef __KEYSTONE_DEVICE_H__
+#define __KEYSTONE_DEVICE_H__
+
 #include <stddef.h>
 #include <cerrno>
 #include <sys/ioctl.h>
@@ -12,55 +15,34 @@
 #include "keystone_user.h"
 #include "Params.h"
 
-
-
-class KeystoneDeviceInterface
-{
-private:
-    int fd;
-public:
-    KeystoneDeviceInterface() {};
-    ~KeystoneDeviceInterface() {};
-    virtual bool initDevice(Params params) = 0;
-    virtual int ioctl_ioc_create_enclave(struct keystone_ioctl_create_enclave *enclp) = 0;
-    virtual int ioctl_ioc_utm_init(struct keystone_ioctl_create_enclave *enclp) = 0;
-    virtual int ioctl_ioc_finalize_enclave(struct keystone_ioctl_create_enclave *enclp) = 0;
-    virtual int ioctl_destroy_enclave(struct keystone_ioctl_create_enclave *enclp) = 0;
-    virtual int ioctl_run_enclave(struct keystone_ioctl_run_enclave *enclp) = 0;
-    virtual int ioctl_resume_enclave(struct keystone_ioctl_run_enclave *enclp) = 0;
-    virtual int getFD() = 0;
-};
-
-class KeystoneDevice: public KeystoneDeviceInterface{
-private:
-    int fd;
+class KeystoneDevice {
+protected:
+  int fd;
 public:
     KeystoneDevice() {};
     ~KeystoneDevice() {};
     bool initDevice(Params params);
-    int ioctl_ioc_create_enclave(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_ioc_utm_init(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_ioc_finalize_enclave(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_destroy_enclave(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_run_enclave(struct keystone_ioctl_run_enclave *enclp);
-    int ioctl_resume_enclave(struct keystone_ioctl_run_enclave *enclp);
-    int getFD();
-
+    int create(struct keystone_ioctl_create_enclave *enclp);
+    int initUTM(struct keystone_ioctl_create_enclave *enclp);
+    int finalize(struct keystone_ioctl_create_enclave *enclp);
+    int destroy(struct keystone_ioctl_create_enclave *enclp);
+    int run(struct keystone_ioctl_run_enclave *enclp);
+    int resume(struct keystone_ioctl_run_enclave *enclp);
+    vaddr_t map(vaddr_t addr, size_t size);
 };
 
-class MockKeystoneDevice: public KeystoneDeviceInterface{
-private:
-    int fd;
+class MockKeystoneDevice: public KeystoneDevice {
 public:
     MockKeystoneDevice() {};
     ~MockKeystoneDevice() {};
     bool initDevice(Params params);
-    int ioctl_ioc_create_enclave(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_ioc_utm_init(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_ioc_finalize_enclave(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_destroy_enclave(struct keystone_ioctl_create_enclave *enclp);
-    int ioctl_run_enclave(struct keystone_ioctl_run_enclave *enclp);
-    int ioctl_resume_enclave(struct keystone_ioctl_run_enclave *enclp);
-    int getFD();
+    int create(struct keystone_ioctl_create_enclave *enclp);
+    int initUTM(struct keystone_ioctl_create_enclave *enclp);
+    int finalize(struct keystone_ioctl_create_enclave *enclp);
+    int destroy(struct keystone_ioctl_create_enclave *enclp);
+    int run(struct keystone_ioctl_run_enclave *enclp);
+    int resume(struct keystone_ioctl_run_enclave *enclp);
+    vaddr_t map(vaddr_t addr, size_t size);
 };
 
+#endif

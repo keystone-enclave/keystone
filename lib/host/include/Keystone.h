@@ -34,7 +34,7 @@ private:
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
   Memory* pMemory;
-  KeystoneDeviceInterface* kDevice;
+  KeystoneDevice* kDevice;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
   vaddr_t enclave_stk_start;
@@ -47,7 +47,6 @@ private:
   vaddr_t utm_free_list;
   vaddr_t start_addr;
   int eid;
-  int fd;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;

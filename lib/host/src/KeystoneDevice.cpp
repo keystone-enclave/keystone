@@ -3,40 +3,49 @@
 //
 
 #include "KeystoneDevice.h"
+#include <sys/mman.h>
 
-int KeystoneDevice::ioctl_ioc_create_enclave(struct keystone_ioctl_create_enclave *enclp)
+int KeystoneDevice::create(struct keystone_ioctl_create_enclave *enclp)
 {
   return ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, enclp);
 }
 
-int KeystoneDevice::ioctl_ioc_utm_init(struct keystone_ioctl_create_enclave *enclp)
+int KeystoneDevice::initUTM(struct keystone_ioctl_create_enclave *enclp)
 {
   return ioctl(fd, KEYSTONE_IOC_UTM_INIT, enclp);
 
 }
 
-int KeystoneDevice::ioctl_ioc_finalize_enclave(struct keystone_ioctl_create_enclave *enclp)
+int KeystoneDevice::finalize(struct keystone_ioctl_create_enclave *enclp)
 {
   return ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, enclp);
 }
 
-int KeystoneDevice::ioctl_destroy_enclave(struct keystone_ioctl_create_enclave *enclp)
+int KeystoneDevice::destroy(struct keystone_ioctl_create_enclave *enclp)
 {
   return ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, enclp);
 }
 
-int KeystoneDevice::ioctl_run_enclave(struct keystone_ioctl_run_enclave *enclp)
+int KeystoneDevice::run(struct keystone_ioctl_run_enclave *enclp)
 {
   return ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, enclp);
 }
 
-int KeystoneDevice::ioctl_resume_enclave(struct keystone_ioctl_run_enclave *enclp)
+int KeystoneDevice::resume(struct keystone_ioctl_run_enclave *enclp)
 {
   return ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, enclp);
 }
 
-int KeystoneDevice::getFD(){
-  return fd;
+vaddr_t KeystoneDevice::map(vaddr_t addr, size_t size)
+{
+  assert(fd >= 0);
+  return (vaddr_t)
+    mmap(NULL,
+         size,
+         PROT_READ | PROT_WRITE,
+         MAP_SHARED,
+         fd,
+         addr);
 }
 
 bool KeystoneDevice::initDevice(Params params)
@@ -50,39 +59,35 @@ bool KeystoneDevice::initDevice(Params params)
   return true;
 }
 
-int MockKeystoneDevice::ioctl_ioc_create_enclave(struct keystone_ioctl_create_enclave *enclp)
+int MockKeystoneDevice::create(struct keystone_ioctl_create_enclave *enclp)
 {
   return 0;
 }
 
-int MockKeystoneDevice::ioctl_ioc_utm_init(struct keystone_ioctl_create_enclave *enclp)
+int MockKeystoneDevice::initUTM(struct keystone_ioctl_create_enclave *enclp)
 {
   return 0;
 
 }
 
-int MockKeystoneDevice::ioctl_ioc_finalize_enclave(struct keystone_ioctl_create_enclave *enclp)
+int MockKeystoneDevice::finalize(struct keystone_ioctl_create_enclave *enclp)
 {
   return 0;
 }
 
-int MockKeystoneDevice::ioctl_destroy_enclave(struct keystone_ioctl_create_enclave *enclp)
+int MockKeystoneDevice::destroy(struct keystone_ioctl_create_enclave *enclp)
 {
   return 0;
 }
 
-int MockKeystoneDevice::ioctl_run_enclave(struct keystone_ioctl_run_enclave *enclp)
+int MockKeystoneDevice::run(struct keystone_ioctl_run_enclave *enclp)
 {
   return 0;
 }
 
-int MockKeystoneDevice::ioctl_resume_enclave(struct keystone_ioctl_run_enclave *enclp)
+int MockKeystoneDevice::resume(struct keystone_ioctl_run_enclave *enclp)
 {
   return 0;
-}
-
-int MockKeystoneDevice::getFD(){
-  return 5;
 }
 
 bool MockKeystoneDevice::initDevice(Params params)

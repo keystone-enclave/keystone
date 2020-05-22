@@ -36,8 +36,7 @@ int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
                           pte_t* tb, uintptr_t vaddr, int contiguous,
                           struct keystone_hash_enclave* cargs,
                           uintptr_t* runtime_max_seen,
-                          uintptr_t* user_max_seen,
-                          int fd)
+                          uintptr_t* user_max_seen)
 {
   pte_t* walk;
   int i;
@@ -153,8 +152,8 @@ int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
                                          contiguous,
                                          cargs,
                                          runtime_max_seen,
-                                         user_max_seen,
-                                         fd);
+                                         user_max_seen
+                                         );
       if(contiguous == -1){
         printf("BAD MAP: %p->%p epm %u %p uer %u %p\n",
                (void *) va_start,

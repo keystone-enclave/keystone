@@ -3,18 +3,18 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <keystone_user.h>
 #include "Memory.h"
 
-void SimulatedEnclaveMemory::init(int fd=0, vaddr_t phys_addr=0)
+void SimulatedEnclaveMemory::init(KeystoneDevice* dev=nullptr, vaddr_t phys_addr=0)
 {
+  pDevice = dev;
 }
 
-void PhysicalEnclaveMemory::init(int fd, vaddr_t phys_addr)
+void PhysicalEnclaveMemory::init(KeystoneDevice* dev, vaddr_t phys_addr)
 {
   start_phys_addr = phys_addr;
-  keystone_fd = fd;
+  pDevice = dev;
 }
 
 void * SimulatedEnclaveMemory::allocateAligned(size_t size, size_t alignment)
@@ -26,7 +26,10 @@ void * SimulatedEnclaveMemory::allocateAligned(size_t size, size_t alignment)
 
 vaddr_t PhysicalEnclaveMemory::AllocMem(size_t size){
   vaddr_t ret;
-  ret = (vaddr_t) mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, keystone_fd, 0);
+
+  assert(pDevice);
+
+  ret = pDevice->map(0, PAGE_SIZE);
   return ret;
 }
 
@@ -38,7 +41,10 @@ vaddr_t SimulatedEnclaveMemory::AllocMem(size_t size){
 
 vaddr_t PhysicalEnclaveMemory::ReadMem(vaddr_t src, size_t size){
   vaddr_t ret;
-  ret  = (vaddr_t) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, keystone_fd, src - start_phys_addr);
+
+  assert(pDevice);
+
+  ret = pDevice->map(src - start_phys_addr, size);
   return ret;
 }
 
@@ -46,8 +52,11 @@ vaddr_t SimulatedEnclaveMemory::ReadMem(vaddr_t src, size_t size) {
   return src;
 }
 
-void PhysicalEnclaveMemory::WriteMem(vaddr_t src, vaddr_t dst, size_t size){
-  vaddr_t va_dst = (vaddr_t) mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, keystone_fd, dst - start_phys_addr);
+void PhysicalEnclaveMemory::WriteMem(vaddr_t src, vaddr_t dst, size_t size) {
+
+  assert(pDevice);
+
+  vaddr_t va_dst = pDevice->map(dst - start_phys_addr, size);
   memcpy((void *) va_dst, (void *) src, size);
 }
 
