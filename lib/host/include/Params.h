@@ -41,6 +41,7 @@ class Params
     bool isSimulated() { return simulated; }
     uint64_t getUntrustedMem() { return untrusted; }
     uint64_t getUntrustedSize() { return untrusted_size; }
+    uint64_t getUntrustedEnd() { return untrusted + untrusted_size; }
     uint64_t getFreeMemSize() { return freemem_size; }
   private:
     bool simulated;

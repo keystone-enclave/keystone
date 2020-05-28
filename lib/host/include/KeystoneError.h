@@ -11,11 +11,19 @@ enum class KeystoneError {
   FileInitFailure,
   DeviceInitFailure,
   DeviceError,
+  IoctlErrorCreate,
+  IoctlErrorDestroy,
+  IoctlErrorFinalize,
+  IoctlErrorRun,
+  IoctlErrorResume,
+  IoctlErrorUTMInit,
   DeviceMemoryMapError,
   ELFLoadFailure,
   InvalidEnclave,
   VSpaceAllocationFailure,
-  PageAllocationFailure
+  PageAllocationFailure,
+  EdgeCallHost,
+  EnclaveInterrupted,
 };
 /*
 

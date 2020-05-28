@@ -14,20 +14,27 @@
 #include "common.h"
 #include "keystone_user.h"
 #include "Params.h"
+#include "KeystoneError.h"
 
 class KeystoneDevice {
 protected:
-  int fd;
+    int fd;
+    int eid;
+    unsigned long physAddr;
+private:
+    KeystoneError __run(bool resume);
 public:
-    KeystoneDevice() {};
+    unsigned long getPhysAddr() { return physAddr; }
+
+    KeystoneDevice();
     ~KeystoneDevice() {};
     bool initDevice(Params params);
-    int create(struct keystone_ioctl_create_enclave *enclp);
-    int initUTM(struct keystone_ioctl_create_enclave *enclp);
-    int finalize(struct keystone_ioctl_create_enclave *enclp);
-    int destroy(struct keystone_ioctl_create_enclave *enclp);
-    int run(struct keystone_ioctl_run_enclave *enclp);
-    int resume(struct keystone_ioctl_run_enclave *enclp);
+    KeystoneError create(unsigned long minPages);
+    vaddr_t initUTM(size_t size);
+    KeystoneError finalize(uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr, struct runtime_params_t params);
+    KeystoneError destroy();
+    KeystoneError run();
+    KeystoneError resume();
     vaddr_t map(vaddr_t addr, size_t size);
 };
 
@@ -36,12 +43,12 @@ public:
     MockKeystoneDevice() {};
     ~MockKeystoneDevice() {};
     bool initDevice(Params params);
-    int create(struct keystone_ioctl_create_enclave *enclp);
-    int initUTM(struct keystone_ioctl_create_enclave *enclp);
-    int finalize(struct keystone_ioctl_create_enclave *enclp);
-    int destroy(struct keystone_ioctl_create_enclave *enclp);
-    int run(struct keystone_ioctl_run_enclave *enclp);
-    int resume(struct keystone_ioctl_run_enclave *enclp);
+    KeystoneError create(unsigned long minPages);
+    vaddr_t initUTM(size_t size);
+    KeystoneError finalize(uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr, struct runtime_params_t params);
+    KeystoneError destroy();
+    KeystoneError run();
+    KeystoneError resume();
     vaddr_t map(vaddr_t addr, size_t size);
 };
 

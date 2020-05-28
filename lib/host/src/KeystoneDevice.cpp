@@ -5,35 +5,133 @@
 #include "KeystoneDevice.h"
 #include <sys/mman.h>
 
-int KeystoneDevice::create(struct keystone_ioctl_create_enclave *enclp)
+KeystoneDevice::KeystoneDevice()
 {
-  return ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, enclp);
+  eid = -1;
 }
 
-int KeystoneDevice::initUTM(struct keystone_ioctl_create_enclave *enclp)
+KeystoneError KeystoneDevice::create(unsigned long minPages)
 {
-  return ioctl(fd, KEYSTONE_IOC_UTM_INIT, enclp);
+  struct keystone_ioctl_create_enclave encl;
+  encl.min_pages = minPages;
 
+  int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &encl);
+  if (ret)
+  {
+    perror("ioctl error");
+    eid = -1;
+    return KeystoneError::IoctlErrorCreate;
+  }
+
+  eid = encl.eid;
+  physAddr = encl.pt_ptr;
+
+  return KeystoneError::Success;
 }
 
-int KeystoneDevice::finalize(struct keystone_ioctl_create_enclave *enclp)
+vaddr_t KeystoneDevice::initUTM(size_t size)
 {
-  return ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, enclp);
+  struct keystone_ioctl_create_enclave encl;
+  encl.eid = eid;
+  encl.params.untrusted_size = size;
+  int ret;
+  if (ret = ioctl(fd, KEYSTONE_IOC_UTM_INIT, &encl))
+  {
+    return 0;
+  }
+
+  return encl.utm_free_ptr;
 }
 
-int KeystoneDevice::destroy(struct keystone_ioctl_create_enclave *enclp)
+KeystoneError
+KeystoneDevice::finalize(
+    uintptr_t runtimePhysAddr,
+    uintptr_t eappPhysAddr,
+    uintptr_t freePhysAddr,
+    struct runtime_params_t params)
 {
-  return ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, enclp);
+  struct keystone_ioctl_create_enclave encl;
+  encl.eid = eid;
+  encl.runtime_paddr = runtimePhysAddr;
+  encl.user_paddr = eappPhysAddr;
+  encl.free_paddr = freePhysAddr;
+  encl.params = params;
+
+  int ret;
+  if(ret = ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl))
+  {
+    perror("ioctl error");
+    return KeystoneError::IoctlErrorFinalize;
+  }
+  return KeystoneError::Success;
 }
 
-int KeystoneDevice::run(struct keystone_ioctl_run_enclave *enclp)
+KeystoneError
+KeystoneDevice::destroy()
 {
-  return ioctl(fd, KEYSTONE_IOC_RUN_ENCLAVE, enclp);
+  struct keystone_ioctl_create_enclave encl;
+  encl.eid = eid;
+
+  /* if the enclave has never created */
+  if (eid < 0)
+  {
+    return KeystoneError::Success;
+  }
+
+  int ret;
+  if(ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &encl))
+  {
+    perror("ioctl error");
+    return KeystoneError::IoctlErrorDestroy;
+  }
+
+  return KeystoneError::Success;
 }
 
-int KeystoneDevice::resume(struct keystone_ioctl_run_enclave *enclp)
+KeystoneError
+KeystoneDevice::__run(bool resume)
 {
-  return ioctl(fd, KEYSTONE_IOC_RESUME_ENCLAVE, enclp);
+  struct keystone_ioctl_run_enclave encl;
+  encl.eid = eid;
+
+  KeystoneError error;
+  unsigned long request;
+
+  if (resume) {
+    error = KeystoneError::IoctlErrorResume;
+    request = KEYSTONE_IOC_RESUME_ENCLAVE;
+  } else {
+    error = KeystoneError::IoctlErrorRun;
+    request = KEYSTONE_IOC_RUN_ENCLAVE;
+  }
+
+  int ret;
+  ret = ioctl(fd, request, &encl);
+
+  switch(ret)
+  {
+    case KEYSTONE_ENCLAVE_EDGE_CALL_HOST:
+      return KeystoneError::EdgeCallHost;
+    case KEYSTONE_ENCLAVE_INTERRUPTED:
+      return KeystoneError::EnclaveInterrupted;
+    case KEYSTONE_ENCLAVE_DONE:
+      return KeystoneError::Success;
+    default:
+      perror("ioctl error");
+      return error;
+  }
+}
+
+KeystoneError
+KeystoneDevice::run()
+{
+  return __run(false);
+}
+
+KeystoneError
+KeystoneDevice::resume()
+{
+  return __run(true);
 }
 
 vaddr_t KeystoneDevice::map(vaddr_t addr, size_t size)
@@ -59,35 +157,38 @@ bool KeystoneDevice::initDevice(Params params)
   return true;
 }
 
-int MockKeystoneDevice::create(struct keystone_ioctl_create_enclave *enclp)
+KeystoneError MockKeystoneDevice::create(unsigned long minPages)
+{
+  eid = -1;
+  return KeystoneError::Success;
+}
+
+vaddr_t MockKeystoneDevice::initUTM(size_t size)
 {
   return 0;
 }
 
-int MockKeystoneDevice::initUTM(struct keystone_ioctl_create_enclave *enclp)
+KeystoneError MockKeystoneDevice::finalize(uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr, struct runtime_params_t params)
 {
-  return 0;
-
+  return KeystoneError::Success;
 }
 
-int MockKeystoneDevice::finalize(struct keystone_ioctl_create_enclave *enclp)
+KeystoneError
+MockKeystoneDevice::destroy()
 {
-  return 0;
+  return KeystoneError::Success;
 }
 
-int MockKeystoneDevice::destroy(struct keystone_ioctl_create_enclave *enclp)
+KeystoneError
+MockKeystoneDevice::run()
 {
-  return 0;
+  return KeystoneError::Success;
 }
 
-int MockKeystoneDevice::run(struct keystone_ioctl_run_enclave *enclp)
+KeystoneError
+MockKeystoneDevice::resume()
 {
-  return 0;
-}
-
-int MockKeystoneDevice::resume(struct keystone_ioctl_run_enclave *enclp)
-{
-  return 0;
+  return KeystoneError::Success;
 }
 
 bool MockKeystoneDevice::initDevice(Params params)

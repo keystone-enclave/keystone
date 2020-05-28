@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cstdio>
 #include "gtest/gtest.h"
-#include "keystone.h"
+#include "Keystone.h"
 
 #define EYRIE_RT "test_binary/eyrie-rt"
 #define TEST_EAPP "test_binary/stack.eapp_riscv"
@@ -30,10 +30,10 @@ TEST(Keystone_Init, ValidMeasure) {
   params.setFreeMemSize(untrusted_size);
   params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
-  
-  EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), KEYSTONE_SUCCESS);
+
+  EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), KeystoneError::Success);
   EXPECT_EQ(memcmp(enclave.getHash(), ref_hash, MD_SIZE), 0);
-  EXPECT_EQ(enclave.destroy(), KEYSTONE_SUCCESS);
+  EXPECT_EQ(enclave.destroy(), KeystoneError::Success);
 }
 
 TEST(Keystone_Init, InvalidRT) {
@@ -47,7 +47,7 @@ TEST(Keystone_Init, InvalidRT) {
   params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
 
-  EXPECT_EQ(enclave.init(TEST_EAPP, FAKE_RT, params), KEYSTONE_ERROR);
+  EXPECT_EQ(enclave.init(TEST_EAPP, FAKE_RT, params), KeystoneError::FileInitFailure);
 }
 
 TEST(Keystone_Init, InvalidEAPP) {
@@ -61,7 +61,7 @@ TEST(Keystone_Init, InvalidEAPP) {
   params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
 
-  EXPECT_EQ(enclave.init(FAKE_EAPP, EYRIE_RT, params), KEYSTONE_ERROR);
+  EXPECT_EQ(enclave.init(FAKE_EAPP, EYRIE_RT, params), KeystoneError::FileInitFailure);
 }
 
 TEST(Keystone_Run, RunTest) {
@@ -75,8 +75,8 @@ TEST(Keystone_Run, RunTest) {
   params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
 
-  EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), KEYSTONE_SUCCESS);
-  EXPECT_EQ(enclave.run(), KEYSTONE_SUCCESS);
+  EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), KeystoneError::Success);
+  EXPECT_EQ(enclave.run(), KeystoneError::Success);
 }
 
 

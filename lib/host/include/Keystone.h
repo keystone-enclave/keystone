@@ -7,7 +7,6 @@
 
 #include <stddef.h>
 #include <cerrno>
-#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -34,24 +33,15 @@ private:
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
   Memory* pMemory;
-  KeystoneDevice* kDevice;
+  KeystoneDevice* pDevice;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
-  vaddr_t enclave_stk_start;
-  vaddr_t enclave_stk_sz;
   vaddr_t runtime_stk_sz;
-  vaddr_t untrusted_size;
-  vaddr_t untrusted_start;
-  vaddr_t epm_free_list;
-  vaddr_t root_page_table;
-  vaddr_t utm_free_list;
-  vaddr_t start_addr;
-  int eid;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   bool mapUntrusted(size_t size);
-  bool allocPage(vaddr_t va, vaddr_t *free_list, vaddr_t src, unsigned int mode);
+  bool allocPage(vaddr_t va, vaddr_t src, unsigned int mode);
   bool initStack(vaddr_t start, size_t size, bool is_rt);
   KeystoneError loadUntrusted();
   KeystoneError loadELF(ELFFile* file, uintptr_t* data_start);
@@ -59,7 +49,7 @@ private:
 
   bool initFiles(const char*, const char*);
   bool initDevice();
-  bool prepareEnclave(struct keystone_ioctl_create_enclave*, uintptr_t alternate_phys_addr);
+  bool prepareEnclave(uintptr_t alternatePhysAddr);
   bool initMemory();
 public:
   Keystone();
@@ -69,7 +59,7 @@ public:
   size_t getSharedBufferSize();
   KeystoneError registerOcallDispatch(OcallFunc func);
   KeystoneError init(const char* filepath, const char* runtime, Params parameters);
-  KeystoneError init(const char *eapppath, const char *runtimepath, Params _params, uintptr_t alternate_phys_addr);
+  KeystoneError init(const char *eapppath, const char *runtimepath, Params _params, uintptr_t alternatePhysAddr);
   KeystoneError destroy();
   KeystoneError run();
 

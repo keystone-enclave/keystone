@@ -1,3 +1,6 @@
+#ifndef __HASH_UTIL_H__
+#define __HASH_UTIL_H__
+
 //
 // Created by Alex Thomas on 7/7/19.
 //
@@ -174,3 +177,5 @@ int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
   fatal_bail:
   return -1;
 }
+
+#endif

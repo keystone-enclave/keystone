@@ -12,7 +12,7 @@ SDK_INCLUDE_VERIFIER_DIR = $(SDK_LIB_DIR)/verifier
 
 
 SRC_DIR = $(SDK_LIB_DIR)/host/src
-SRC = keystone.cpp elffile.cpp elf.cpp elf32.cpp elf64.cpp sha3.cpp memory.cpp keystone_device.cpp
+SRC = Keystone.cpp ELFFile.cpp elf.cpp elf32.cpp elf64.cpp sha3.cpp Memory.cpp KeystoneDevice.cpp
 SRCS = $(addprefix $(SRC_DIR)/, $(SRC))
 
 SCRIPTS_DIR = scripts
@@ -23,15 +23,15 @@ LDFLAGS = -L$(SDK_LIB_DIR)
 GFLAGS = -lgtest
 TARGET = test_runner
 
-all: 
+all:
 	$(SCRIPTS_DIR)/setup_binary.sh
 	$(CC) $(CCFLAGS) $(LDFLAGS) keystone_test.cpp $(SRCS) -o $(TARGET) $(GFLAGS)
 
-test: 
+test:
 	./$(TARGET)
 
 clean:
 	rm -rf $(TEST_BIN_DIR)
 	rm $(TARGET)
-	
+
 

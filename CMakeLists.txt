@@ -46,7 +46,7 @@ execute_process(
     COMMAND which ${cross_compile}gcc
     OUTPUT_VARIABLE CROSSCOMPILE
     RESULT_VARIABLE ERROR)
-    
+
 if (NOT "${ERROR}" STREQUAL 0)
     message(FATAL_ERROR "RISCV Toochain is not found")
 endif()
@@ -62,7 +62,7 @@ set(LD              ${CROSSCOMPILE}ld)
 set(AR              ${CROSSCOMPILE}ar)
 set(OBJCOPY         ${CROSSCOMPILE}objcopy)
 set(OBJDUMP         ${CROSSCOMPILE}objdump)
-set(CFLAGS          "-Wall -Werror")
+set(CFLAGS          "-g -Wall -Werror")
 
 global_set(CMAKE_C_COMPILER        ${CC}${EXT})
 global_set(CMAKE_CXX_COMPILER      ${CXX}${EXT})
