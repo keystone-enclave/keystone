@@ -6,7 +6,7 @@
 #define _EDGE_WRAPPER_H_
 
 #include "edge_call.h"
-#include "keystone.h"
+#include "Keystone.hpp"
 
 typedef struct packaged_str{
   unsigned long str_offset;
