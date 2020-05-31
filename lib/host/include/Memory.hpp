@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "common.h"
-#include "KeystoneDevice.h"
+#include "KeystoneDevice.hpp"
 
 /*
  * Generic page.h implementation, for NOMMU architectures.

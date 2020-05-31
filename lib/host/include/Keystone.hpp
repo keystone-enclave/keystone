@@ -15,12 +15,14 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "common.h"
-#include "ELFFile.h"
-#include "Params.h"
-#include "sha3.h"
-#include "Memory.h"
-#include "KeystoneDevice.h"
-#include "KeystoneError.h"
+extern "C" {
+  #include "sha3.h"
+}
+#include "ELFFile.hpp"
+#include "Params.hpp"
+#include "Memory.hpp"
+#include "KeystoneDevice.hpp"
+#include "KeystoneError.hpp"
 
 class Keystone;
 typedef void (*OcallFunc)(void*);

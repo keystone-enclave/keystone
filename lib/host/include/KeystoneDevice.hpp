@@ -13,8 +13,8 @@
 #include <assert.h>
 #include "common.h"
 #include "keystone_user.h"
-#include "Params.h"
-#include "KeystoneError.h"
+#include "Params.hpp"
+#include "KeystoneError.hpp"
 
 class KeystoneDevice {
 protected:
@@ -35,7 +35,7 @@ public:
     KeystoneError destroy();
     KeystoneError run();
     KeystoneError resume();
-    vaddr_t map(vaddr_t addr, size_t size);
+    void* map(vaddr_t addr, size_t size);
 };
 
 class MockKeystoneDevice: public KeystoneDevice {
@@ -49,7 +49,7 @@ public:
     KeystoneError destroy();
     KeystoneError run();
     KeystoneError resume();
-    vaddr_t map(vaddr_t addr, size_t size);
+    void* map(vaddr_t addr, size_t size);
 };
 
 #endif

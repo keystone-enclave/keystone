@@ -10,8 +10,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "common.h"
-#include "elf.h"
 #include "keystone_user.h"
+
+extern "C" {
+  #include "elf.h"
+}
 
 class ELFFile
 {
