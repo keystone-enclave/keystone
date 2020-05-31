@@ -83,6 +83,12 @@ global_set(CMAKE_SYSTEM_NAME    "Linux")
 ################################################################################
 # BUILD PROJECTS
 ################################################################################
+file(GLOB_RECURSE
+  COMMON_SOURCE_FILES
+  ${CMAKE_SOURCE_DIR}/common/src/*.[c|cpp])
+file(GLOB
+  COMMON_INCLUDE_DIRS
+  ${CMAKE_SOURCE_DIR}/common/include)
 
 add_subdirectory(lib)
 

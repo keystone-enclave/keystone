@@ -20,12 +20,17 @@ file(GLOB_RECURSE
 file(GLOB
   HOST_LIB_INCLUDE
   ../lib/host/include)
+file(GLOB_RECURSE
+  COMMON_SOURCES
+  ../common/src/*)
+file(GLOB
+  COMMON_INCLUDE
+  ../common/include)
 
-message(STATUS ${HOST_LIB_SOURCES})
-include_directories(${PROJECT_NAME} PUBLIC ${HOST_LIB_INCLUDE})
+include_directories(${PROJECT_NAME} PUBLIC ${HOST_LIB_INCLUDE} ${COMMON_INCLUDE})
 add_executable(TestKeystone
   ${SOURCES}
-  ${HOST_LIB_SOURCES})
+  ${HOST_LIB_SOURCES} ${COMMON_SOURCES})
 
 message(STATUS ${GTEST_FOUND})
 target_link_libraries(TestKeystone ${GTEST_LIBRARIES})

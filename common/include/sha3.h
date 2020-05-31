@@ -1,8 +1,9 @@
+// sha3.h
 // 19-Nov-11  Markku-Juhani O. Saarinen <mjos@iki.fi>
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifndef KECCAKF_ROUNDS
 #define KECCAKF_ROUNDS 24

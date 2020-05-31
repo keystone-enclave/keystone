@@ -6,7 +6,7 @@
 #define _REPORT_H__
 
 #include <iostream>
-#include "sha3/sha3.h"
+#include "sha3.h"
 #include "ed25519/ed25519.h"
 #include "json11.h"
 #include "keys.h"

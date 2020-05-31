@@ -1,5 +1,5 @@
 #include "ed25519.h"
-#include "sha3/sha3.h"
+#include "./sha3.h"
 #include "ge.h"
 #include "sc.h"
 
@@ -64,7 +64,7 @@ int ed25519_verify(const unsigned char *signature, const unsigned char *message,
     sha3_update(&hash, public_key, 32);
     sha3_update(&hash, message, message_len);
     sha3_final(h, &hash);
-    
+
     sc_reduce(h);
     ge_double_scalarmult_vartime(&R, h, &A, signature + 32);
     ge_tobytes(checker, &R);

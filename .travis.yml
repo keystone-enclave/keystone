@@ -2,9 +2,6 @@ language: minimal
 dist: xenial
 cache:
   apt: true
-  timeout: 1000 #In seconds
-  directories:
-    - $TRAVIS_BUILD_DIR/lib
 
 git:
   submodules: false
@@ -46,6 +43,7 @@ jobs:
         - make install
         - cd ..
         - mkdir build.test
+        - cd build.test
         - cmake ../tests
         - make
         - make check

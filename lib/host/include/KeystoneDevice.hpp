@@ -47,9 +47,12 @@ class KeystoneDevice {
 };
 
 class MockKeystoneDevice : public KeystoneDevice {
+ private:
+  /* allocated buffer with map() */
+  void* sharedBuffer;
  public:
   MockKeystoneDevice() {}
-  ~MockKeystoneDevice() {}
+  ~MockKeystoneDevice();
   bool initDevice(Params params);
   KeystoneError create(uint64_t minPages);
   vaddr_t initUTM(size_t size);

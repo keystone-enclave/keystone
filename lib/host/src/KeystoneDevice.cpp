@@ -172,3 +172,13 @@ bool
 MockKeystoneDevice::initDevice(Params params) {
   return true;
 }
+
+void*
+MockKeystoneDevice::map(vaddr_t addr, size_t size) {
+  return malloc(size);
+}
+
+MockKeystoneDevice::~MockKeystoneDevice() {
+  if (sharedBuffer)
+    free(sharedBuffer);
+}
