@@ -2,35 +2,33 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#ifndef _KEYSTONE_H_
-#define _KEYSTONE_H_
+#pragma once
 
+#include <assert.h>
+#include <fcntl.h>
+#include <stdarg.h>
 #include <stddef.h>
-#include <cerrno>
 #include <sys/types.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <iostream>
+#include <cerrno>
 #include <cstring>
-#include <stdarg.h>
-#include <assert.h>
-#include "common.h"
+#include <iostream>
+#include "./common.h"
 extern "C" {
-  #include "sha3.h"
+#include "./sha3.h"
 }
 #include "ELFFile.hpp"
-#include "Params.hpp"
-#include "Memory.hpp"
 #include "KeystoneDevice.hpp"
 #include "KeystoneError.hpp"
+#include "Memory.hpp"
+#include "Params.hpp"
 
 class Keystone;
 typedef void (*OcallFunc)(void*);
 typedef sha3_ctx_t hash_ctx_t;
 
-class Keystone
-{
-private:
+class Keystone {
+ private:
   Params params;
   ELFFile* runtimeFile;
   ELFFile* enclaveFile;
@@ -47,30 +45,31 @@ private:
   bool initStack(vaddr_t start, size_t size, bool is_rt);
   KeystoneError loadUntrusted();
   KeystoneError loadELF(ELFFile* file, uintptr_t* data_start);
-  KeystoneError validate_and_hash_enclave(struct runtime_params_t args, struct keystone_hash_enclave* cargs);
+  KeystoneError validate_and_hash_enclave(
+      struct runtime_params_t args, struct keystone_hash_enclave* cargs);
 
   bool initFiles(const char*, const char*);
   bool initDevice();
   bool prepareEnclave(uintptr_t alternatePhysAddr);
   bool initMemory();
-public:
+
+ public:
   Keystone();
   ~Keystone();
   const char* getHash();
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   KeystoneError registerOcallDispatch(OcallFunc func);
-  KeystoneError init(const char* filepath, const char* runtime, Params parameters);
-  KeystoneError init(const char *eapppath, const char *runtimepath, Params _params, uintptr_t alternatePhysAddr);
+  KeystoneError init(
+      const char* filepath, const char* runtime, Params parameters);
+  KeystoneError init(
+      const char* eapppath, const char* runtimepath, Params _params,
+      uintptr_t alternatePhysAddr);
   KeystoneError destroy();
   KeystoneError run();
-
 };
 
-unsigned long calculate_required_pages(
-        unsigned long eapp_sz,
-        unsigned long eapp_stack_sz,
-        unsigned long rt_sz,
-        unsigned long rt_stack_sz);
-
-#endif
+uint64_t
+calculate_required_pages(
+    uint64_t eapp_sz, uint64_t eapp_stack_sz, uint64_t rt_sz,
+    uint64_t rt_stack_sz);

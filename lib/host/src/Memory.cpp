@@ -7,35 +7,35 @@
 #include <sys/stat.h>
 
 Memory::Memory() {
-  epmFreeList = 0;
-  utmFreeList = 0;
+  epmFreeList   = 0;
+  utmFreeList   = 0;
   rootPageTable = 0;
-  startAddr = 0;
+  startAddr     = 0;
 }
 
 void
 SimulatedEnclaveMemory::init(
     KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
-  pDevice = dev;
+  pDevice     = dev;
   epmFreeList = phys_addr + PAGE_SIZE;
 
   rootPageTable = AllocMem(PAGE_SIZE * min_pages);
-  startAddr = rootPageTable;
+  startAddr     = rootPageTable;
 }
 
 void
 PhysicalEnclaveMemory::init(
     KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
   start_phys_addr = phys_addr;
-  pDevice = dev;
-  rootPageTable = AllocMem(PAGE_SIZE);
-  epmFreeList = phys_addr + PAGE_SIZE;
-  startAddr = phys_addr;
+  pDevice         = dev;
+  rootPageTable   = AllocMem(PAGE_SIZE);
+  epmFreeList     = phys_addr + PAGE_SIZE;
+  startAddr       = phys_addr;
 }
 
 void*
 SimulatedEnclaveMemory::allocateAligned(size_t size, size_t alignment) {
-  const size_t mask = alignment - 1;
+  const size_t mask   = alignment - 1;
   const uintptr_t mem = (uintptr_t)calloc(size + alignment, sizeof(char));
   return reinterpret_cast<void*>((mem + mask) & ~mask);
 }
@@ -152,7 +152,7 @@ Memory::allocPage(vaddr_t va, vaddr_t src, unsigned int mode) {
 pte_t*
 Memory::__ept_continue_walk_create(vaddr_t addr, pte_t* pte) {
   uint64_t free_ppn = ppn(epmFreeList);
-  *pte = ptd_create(free_ppn);
+  *pte              = ptd_create(free_ppn);
   epmFreeList += PAGE_SIZE;
   return __ept_walk_create(addr);
 }

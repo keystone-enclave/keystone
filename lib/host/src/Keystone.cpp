@@ -43,7 +43,7 @@ calculate_required_pages(uint64_t eapp_sz, uint64_t rt_sz) {
 KeystoneError
 Keystone::loadUntrusted() {
   vaddr_t va_start = ROUND_DOWN(params.getUntrustedMem(), PAGE_BITS);
-  vaddr_t va_end = ROUND_UP(params.getUntrustedEnd(), PAGE_BITS);
+  vaddr_t va_end   = ROUND_UP(params.getUntrustedEnd(), PAGE_BITS);
   static char nullpage[PAGE_SIZE] = {
       0,
   };
@@ -63,9 +63,9 @@ Keystone::initStack(vaddr_t start, size_t size, bool is_rt) {
   static char nullpage[PAGE_SIZE] = {
       0,
   };
-  vaddr_t high_addr = ROUND_UP(start, PAGE_BITS);
+  vaddr_t high_addr    = ROUND_UP(start, PAGE_BITS);
   vaddr_t va_start_stk = ROUND_DOWN((high_addr - size), PAGE_BITS);
-  int stk_pages = (high_addr - va_start_stk) / PAGE_SIZE;
+  int stk_pages        = (high_addr - va_start_stk) / PAGE_SIZE;
 
   for (int i = 0; i < stk_pages; i++) {
     if (!pMemory->allocPage(
@@ -79,7 +79,7 @@ Keystone::initStack(vaddr_t start, size_t size, bool is_rt) {
 }
 
 KeystoneError
-Keystone::loadELF(ELFFile *elf, uintptr_t *data_start) {
+Keystone::loadELF(ELFFile* elf, uintptr_t* data_start) {
   static char nullpage[PAGE_SIZE] = {
       0,
   };
@@ -100,11 +100,11 @@ Keystone::loadELF(ELFFile *elf, uintptr_t *data_start) {
       continue;
     }
 
-    vaddr_t start = elf->getProgramHeaderVaddr(i);
-    vaddr_t file_end = start + elf->getProgramHeaderFileSize(i);
+    vaddr_t start      = elf->getProgramHeaderVaddr(i);
+    vaddr_t file_end   = start + elf->getProgramHeaderFileSize(i);
     vaddr_t memory_end = start + elf->getProgramHeaderMemorySize(i);
-    char *src = reinterpret_cast<char *>(elf->getProgramSegment(i));
-    va = start;
+    char* src          = reinterpret_cast<char*>(elf->getProgramSegment(i));
+    va                 = start;
 
     /* FIXME: This is a temporary fix for loading iozone binary
      * which has a page-misaligned program header. */
@@ -113,7 +113,7 @@ Keystone::loadELF(ELFFile *elf, uintptr_t *data_start) {
       size_t length = PAGE_UP(va) - va;
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
-      memcpy(page + offset, (const void *)src, length);
+      memcpy(page + offset, (const void*)src, length);
       if (!pMemory->allocPage(PAGE_DOWN(va), (vaddr_t)page, mode))
         return KeystoneError::PageAllocationFailure;
       va += length;
@@ -134,7 +134,7 @@ Keystone::loadELF(ELFFile *elf, uintptr_t *data_start) {
     if (va < file_end) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
-      memcpy(page, (const void *)src, (size_t)(file_end - va));
+      memcpy(page, (const void*)src, (size_t)(file_end - va));
       if (!pMemory->allocPage(va, (vaddr_t)page, mode))
         return KeystoneError::PageAllocationFailure;
       va += PAGE_SIZE;
@@ -153,7 +153,7 @@ Keystone::loadELF(ELFFile *elf, uintptr_t *data_start) {
 
 KeystoneError
 Keystone::validate_and_hash_enclave(
-    struct runtime_params_t args, struct keystone_hash_enclave *cargs) {
+    struct runtime_params_t args, struct keystone_hash_enclave* cargs) {
   hash_ctx_t hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
 
@@ -163,13 +163,12 @@ Keystone::validate_and_hash_enclave(
   hash_extend(&hash_ctx, &args, sizeof(struct runtime_params_t));
 
   uintptr_t runtime_max_seen = 0;
-  uintptr_t user_max_seen = 0;
+  uintptr_t user_max_seen    = 0;
 
   // hash the epm contents including the virtual addresses
   int valid = validate_and_hash_epm(
-      &hash_ctx, ptlevel,
-      reinterpret_cast<pte_t *>(pMemory->getRootPageTable()), 0, 0, cargs,
-      &runtime_max_seen, &user_max_seen);
+      &hash_ctx, ptlevel, reinterpret_cast<pte_t*>(pMemory->getRootPageTable()),
+      0, 0, cargs, &runtime_max_seen, &user_max_seen);
 
   if (valid == -1) {
     return KeystoneError::InvalidEnclave;
@@ -181,7 +180,7 @@ Keystone::validate_and_hash_enclave(
 }
 
 bool
-Keystone::initFiles(const char *eapppath, const char *runtimepath) {
+Keystone::initFiles(const char* eapppath, const char* runtimepath) {
   if (runtimeFile || enclaveFile) {
     ERROR("ELF files already initialized");
     return false;
@@ -248,18 +247,18 @@ Keystone::prepareEnclave(uintptr_t alternatePhysAddr) {
 }
 
 KeystoneError
-Keystone::init(const char *eapppath, const char *runtimepath, Params _params) {
+Keystone::init(const char* eapppath, const char* runtimepath, Params _params) {
   return this->init(eapppath, runtimepath, _params, (uintptr_t)0);
 }
 
-const char *
+const char*
 Keystone::getHash() {
   return this->hash;
 }
 
 KeystoneError
 Keystone::init(
-    const char *eapppath, const char *runtimepath, Params _params,
+    const char* eapppath, const char* runtimepath, Params _params,
     uintptr_t alternatePhysAddr) {
   params = _params;
 
@@ -320,9 +319,9 @@ Keystone::init(
 #endif /* USE_FREEMEM */
   if (params.isSimulated()) {
     vaddr_t utm_free;
-    utm_free = pMemory->allocUTM(params.getUntrustedSize());
+    utm_free                = pMemory->allocUTM(params.getUntrustedSize());
     hash_enclave.free_paddr = pMemory->getCurrentEPMAddress();
-    hash_enclave.utm_paddr = utm_free;
+    hash_enclave.utm_paddr  = utm_free;
   } else {
     vaddr_t utm_free;
     utm_free = pMemory->allocUTM(params.getUntrustedSize());
@@ -437,7 +436,7 @@ Keystone::run() {
   return KeystoneError::Success;
 }
 
-void *
+void*
 Keystone::getSharedBuffer() {
   return shared_buffer;
 }

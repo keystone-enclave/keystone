@@ -3,11 +3,10 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 
-#ifndef __KEYSTONE_ERROR_H__
-#define __KEYSTONE_ERROR_H__
+#pragma once
 
 enum class KeystoneError {
-  Success=0,
+  Success = 0,
   FileInitFailure,
   DeviceInitFailure,
   DeviceError,
@@ -58,4 +57,3 @@ enum class KeystoneError {
     }
 };
 */
-#endif

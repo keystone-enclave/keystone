@@ -1,14 +1,14 @@
-//
-// Created by Alex Thomas on 8/17/19.
-//
-
+//******************************************************************************
+// Copyright (c) 2020, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #include "KeystoneDevice.hpp"
 #include <sys/mman.h>
 
 KeystoneDevice::KeystoneDevice() { eid = -1; }
 
 KeystoneError
-KeystoneDevice::create(unsigned long minPages) {
+KeystoneDevice::create(uint64_t minPages) {
   struct keystone_ioctl_create_enclave encl;
   encl.min_pages = minPages;
 
@@ -19,7 +19,7 @@ KeystoneDevice::create(unsigned long minPages) {
     return KeystoneError::IoctlErrorCreate;
   }
 
-  eid = encl.eid;
+  eid      = encl.eid;
   physAddr = encl.pt_ptr;
 
   return KeystoneError::Success;
@@ -28,7 +28,7 @@ KeystoneDevice::create(unsigned long minPages) {
 vaddr_t
 KeystoneDevice::initUTM(size_t size) {
   struct keystone_ioctl_create_enclave encl;
-  encl.eid = eid;
+  encl.eid                   = eid;
   encl.params.untrusted_size = size;
   int ret;
   if (ret = ioctl(fd, KEYSTONE_IOC_UTM_INIT, &encl)) {
@@ -43,11 +43,11 @@ KeystoneDevice::finalize(
     uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
     struct runtime_params_t params) {
   struct keystone_ioctl_create_enclave encl;
-  encl.eid = eid;
+  encl.eid           = eid;
   encl.runtime_paddr = runtimePhysAddr;
-  encl.user_paddr = eappPhysAddr;
-  encl.free_paddr = freePhysAddr;
-  encl.params = params;
+  encl.user_paddr    = eappPhysAddr;
+  encl.free_paddr    = freePhysAddr;
+  encl.params        = params;
 
   int ret;
   if (ret = ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl)) {
@@ -82,13 +82,13 @@ KeystoneDevice::__run(bool resume) {
   encl.eid = eid;
 
   KeystoneError error;
-  unsigned long request;
+  uint64_t request;
 
   if (resume) {
-    error = KeystoneError::IoctlErrorResume;
+    error   = KeystoneError::IoctlErrorResume;
     request = KEYSTONE_IOC_RESUME_ENCLAVE;
   } else {
-    error = KeystoneError::IoctlErrorRun;
+    error   = KeystoneError::IoctlErrorRun;
     request = KEYSTONE_IOC_RUN_ENCLAVE;
   }
 
@@ -136,7 +136,7 @@ KeystoneDevice::initDevice(Params params) {
 }
 
 KeystoneError
-MockKeystoneDevice::create(unsigned long minPages) {
+MockKeystoneDevice::create(uint64_t minPages) {
   eid = -1;
   return KeystoneError::Success;
 }

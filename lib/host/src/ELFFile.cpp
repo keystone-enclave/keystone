@@ -6,7 +6,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <cstdio>
-#include "common.h"
 
 static size_t
 fstatFileSize(int filep) {
@@ -18,8 +17,8 @@ fstatFileSize(int filep) {
 
 ELFFile::ELFFile(std::string filename) {
   fileSize = 0;
-  ptr = NULL;
-  filep = open(filename.c_str(), O_RDONLY);
+  ptr      = NULL;
+  filep    = open(filename.c_str(), O_RDONLY);
 
   if (filep < 0) {
     ERROR("file does not exist - %s", filename.c_str());
