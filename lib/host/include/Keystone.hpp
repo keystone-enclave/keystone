@@ -43,9 +43,9 @@ class Keystone {
   bool allocPage(vaddr_t va, vaddr_t src, unsigned int mode);
   bool initStack(vaddr_t start, size_t size, bool is_rt);
   KeystoneError loadUntrusted();
-  KeystoneError loadELF(ELFFile* file, uintptr_t* data_start);
-  KeystoneError validate_and_hash_enclave(
-      struct runtime_params_t args, struct keystone_hash_enclave* cargs);
+  bool mapElf(ELFFile* file);
+  KeystoneError loadElf(ELFFile* file);
+  KeystoneError validate_and_hash_enclave(struct runtime_params_t args);
 
   bool initFiles(const char*, const char*);
   bool initDevice();

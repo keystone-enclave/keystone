@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cstdio>
 #include "gtest/gtest.h"
-#include "Keystone.h"
+#include "Keystone.hpp"
 
 #define EYRIE_RT "test_binary/eyrie-rt"
 #define TEST_EAPP "test_binary/stack.eapp_riscv"
@@ -31,9 +31,9 @@ TEST(Keystone_Init, ValidMeasure) {
   params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
 
-  EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), KeystoneError::Success);
-  EXPECT_EQ(memcmp(enclave.getHash(), ref_hash, MD_SIZE), 0);
-  EXPECT_EQ(enclave.destroy(), KeystoneError::Success);
+  EXPECT_EQ(KeystoneError::Success, enclave.init(TEST_EAPP, EYRIE_RT, params));
+  EXPECT_EQ(0, memcmp(enclave.getHash(), ref_hash, MD_SIZE));
+  EXPECT_EQ(KeystoneError::Success, enclave.destroy());
 }
 
 TEST(Keystone_Init, InvalidRT) {

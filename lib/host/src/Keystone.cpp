@@ -81,13 +81,11 @@ Keystone::initStack(vaddr_t start, size_t size, bool is_rt) {
   return true;
 }
 
-KeystoneError
-Keystone::loadELF(ELFFile* elf, uintptr_t* data_start) {
-  static char nullpage[PAGE_SIZE] = {
-      0,
-  };
-  unsigned int mode = elf->getPageMode();
+bool
+Keystone::mapElf(ELFFile* elf) {
   vaddr_t va;
+
+  assert(elf);
 
   size_t num_pages =
       ROUND_DOWN(elf->getTotalMemorySize(), PAGE_BITS) / PAGE_SIZE;
@@ -95,9 +93,19 @@ Keystone::loadELF(ELFFile* elf, uintptr_t* data_start) {
 
   if (pMemory->epm_alloc_vspace(va, num_pages) != num_pages) {
     ERROR("failed to allocate vspace\n");
-    return KeystoneError::VSpaceAllocationFailure;
+    return false;
   }
-  *data_start = pMemory->getCurrentEPMAddress();
+
+  return true;
+}
+
+KeystoneError
+Keystone::loadElf(ELFFile* elf) {
+  static char nullpage[PAGE_SIZE] = {
+      0,
+  };
+
+  unsigned int mode = elf->getPageMode();
   for (unsigned int i = 0; i < elf->getNumProgramHeaders(); i++) {
     if (elf->getProgramHeaderType(i) != PT_LOAD) {
       continue;
@@ -107,7 +115,7 @@ Keystone::loadELF(ELFFile* elf, uintptr_t* data_start) {
     vaddr_t file_end   = start + elf->getProgramHeaderFileSize(i);
     vaddr_t memory_end = start + elf->getProgramHeaderMemorySize(i);
     char* src          = reinterpret_cast<char*>(elf->getProgramSegment(i));
-    va                 = start;
+    vaddr_t va         = start;
 
     /* FIXME: This is a temporary fix for loading iozone binary
      * which has a page-misaligned program header. */
@@ -156,7 +164,7 @@ Keystone::loadELF(ELFFile* elf, uintptr_t* data_start) {
 
 KeystoneError
 Keystone::validate_and_hash_enclave(
-    struct runtime_params_t args, struct keystone_hash_enclave* cargs) {
+    struct runtime_params_t args) {
   hash_ctx_t hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
 
@@ -171,7 +179,7 @@ Keystone::validate_and_hash_enclave(
   // hash the epm contents including the virtual addresses
   int valid = pMemory->validate_and_hash_epm(
       &hash_ctx, ptlevel, reinterpret_cast<pte_t*>(pMemory->getRootPageTable()),
-      0, 0, cargs, &runtime_max_seen, &user_max_seen);
+      0, 0, &runtime_max_seen, &user_max_seen);
 
   if (valid == -1) {
     return KeystoneError::InvalidEnclave;
@@ -287,30 +295,31 @@ Keystone::init(
     return KeystoneError::DeviceError;
   }
 
-  // Map root page table to user space
-  struct keystone_hash_enclave hash_enclave;
+  if (!mapElf(runtimeFile)) {
+    destroy();
+    return KeystoneError::VSpaceAllocationFailure;
+  }
 
-  uintptr_t data_start;
-  uintptr_t runtimePhysAddr;
-  uintptr_t eappPhysAddr;
+  pMemory->startRuntimeMem();
 
-  hash_enclave.runtime_paddr = pMemory->getCurrentEPMAddress();
-  if (loadELF(runtimeFile, &data_start) != KeystoneError::Success) {
+  if (loadElf(runtimeFile) != KeystoneError::Success) {
     ERROR("failed to load runtime ELF");
     destroy();
     return KeystoneError::ELFLoadFailure;
   }
-  runtimePhysAddr =
-      (data_start - pMemory->getStartAddr()) + pDevice->getPhysAddr();
 
-  hash_enclave.user_paddr = pMemory->getCurrentEPMAddress();
-  if (loadELF(enclaveFile, &data_start) != KeystoneError::Success) {
+  if (!mapElf(enclaveFile)) {
+    destroy();
+    return KeystoneError::VSpaceAllocationFailure;
+  }
+
+  pMemory->startEappMem();
+
+  if (loadElf(enclaveFile) != KeystoneError::Success) {
     ERROR("failed to load enclave ELF");
     destroy();
     return KeystoneError::ELFLoadFailure;
   }
-  eappPhysAddr =
-      (data_start - pMemory->getStartAddr()) + pDevice->getPhysAddr();
 
 /* initialize stack. If not using freemem */
 #ifndef USE_FREEMEM
@@ -320,47 +329,42 @@ Keystone::init(
     return KeystoneError::PageAllocationFailure;
   }
 #endif /* USE_FREEMEM */
-  if (params.isSimulated()) {
-    vaddr_t utm_free;
-    utm_free                = pMemory->allocUTM(params.getUntrustedSize());
-    hash_enclave.free_paddr = pMemory->getCurrentEPMAddress();
-    hash_enclave.utm_paddr  = utm_free;
-  } else {
-    vaddr_t utm_free;
-    utm_free = pMemory->allocUTM(params.getUntrustedSize());
-    if (!utm_free) {
-      ERROR("failed to init untrusted memory - ioctl() failed");
-      destroy();
-      return KeystoneError::DeviceError;
-    }
+
+  vaddr_t utm_free;
+  utm_free = pMemory->allocUTM(params.getUntrustedSize());
+
+  if (!utm_free) {
+    ERROR("failed to init untrusted memory - ioctl() failed");
+    destroy();
+    return KeystoneError::DeviceError;
   }
 
   if (loadUntrusted() != KeystoneError::Success) {
     ERROR("failed to load untrusted");
   }
-  // if(params.isSimulated()) {
-  // hash_enclave.utm_size = params.getUntrustedSize();
-  // hash_enclave.epm_size = PAGE_SIZE * enclp.min_pages;
-  // hash_enclave.epm_paddr = pMemory->getRootPageTable();
-  // hash_enclave.untrusted_ptr = enclp.params.untrusted_ptr;
-  // hash_enclave.untrusted_size = enclp.params.untrusted_size;
 
-  // validate_and_hash_enclave(enclp.params, &hash_enclave);
-  //} else {
   struct runtime_params_t runtimeParams;
   runtimeParams.runtime_entry =
-      reinterpret_cast<uintptr_t>(runtimeFile->getEntryPoint());
+    reinterpret_cast<uintptr_t>(runtimeFile->getEntryPoint());
   runtimeParams.user_entry =
-      reinterpret_cast<uintptr_t>(enclaveFile->getEntryPoint());
+    reinterpret_cast<uintptr_t>(enclaveFile->getEntryPoint());
   runtimeParams.untrusted_ptr =
-      reinterpret_cast<uintptr_t>(params.getUntrustedMem());
+    reinterpret_cast<uintptr_t>(params.getUntrustedMem());
   runtimeParams.untrusted_size =
-      reinterpret_cast<uintptr_t>(params.getUntrustedSize());
+    reinterpret_cast<uintptr_t>(params.getUntrustedSize());
 
-  uintptr_t freePhysAddr = pMemory->getCurrentEPMAddress() -
-                           pMemory->getStartAddr() + pDevice->getPhysAddr();
+  pMemory->startFreeMem();
+
+  /* TODO: This should be invoked with some other function e.g., measure() */
+  if (params.isSimulated()) {
+    validate_and_hash_enclave(runtimeParams);
+  }
+
   if (pDevice->finalize(
-          runtimePhysAddr, eappPhysAddr, freePhysAddr, runtimeParams) !=
+        pMemory->getRuntimePhysAddr(),
+        pMemory->getEappPhysAddr(),
+        pMemory->getFreePhysAddr(),
+        runtimeParams) !=
       KeystoneError::Success) {
     destroy();
     return KeystoneError::DeviceError;

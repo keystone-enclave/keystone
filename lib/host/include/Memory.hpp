@@ -109,10 +109,16 @@ class Memory {
 
   int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
                           pte_t* tb, uintptr_t vaddr, int contiguous,
-                          struct keystone_hash_enclave* cargs,
                           uintptr_t* runtime_max_seen,
                           uintptr_t* user_max_seen);
 
+  void startRuntimeMem();
+  void startEappMem();
+  void startFreeMem();
+
+  uintptr_t getRuntimePhysAddr() { return runtimePhysAddr; }
+  uintptr_t getEappPhysAddr() { return eappPhysAddr; }
+  uintptr_t getFreePhysAddr() { return freePhysAddr; }
 
  protected:
   pte_t* __ept_walk_create(vaddr_t addr);
@@ -122,16 +128,22 @@ class Memory {
   vaddr_t epm_va_to_pa(vaddr_t addr);
 
   KeystoneDevice* pDevice;
+  size_t epmSize;
   vaddr_t epmFreeList;
   vaddr_t utmFreeList;
   vaddr_t rootPageTable;
   vaddr_t startAddr;
+
+  // for hash calculation
+  uintptr_t runtimePhysAddr;
+  uintptr_t eappPhysAddr;
+  uintptr_t freePhysAddr;
+  uintptr_t utmPhysAddr;
+  uintptr_t untrustedPtr;
+  uintptr_t untrustedSize;
 };
 
 class PhysicalEnclaveMemory : public Memory {
- private:
-  vaddr_t start_phys_addr;
-
  public:
   PhysicalEnclaveMemory() {}
   ~PhysicalEnclaveMemory() {}

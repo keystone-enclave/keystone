@@ -44,8 +44,9 @@ jobs:
         - cmake -DOUTPUT_DIR=$PWD/../lib ..
         - make
         - make install
-        - cd ../tests
+        - cd ..
+        - mkdir build.test
+        - cmake ../tests
         - make
-        - make test
+        - make check
         - cd $TRAVIS_BUILD_DIR
-

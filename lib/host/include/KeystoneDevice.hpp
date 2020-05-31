@@ -22,27 +22,27 @@
 
 class KeystoneDevice {
  protected:
-  int fd;
   int eid;
   uintptr_t physAddr;
 
  private:
+  int fd;
   KeystoneError __run(bool resume);
 
  public:
-  uintptr_t getPhysAddr() { return physAddr; }
+  virtual uintptr_t getPhysAddr() { return physAddr; }
 
   KeystoneDevice();
-  ~KeystoneDevice() {}
-  bool initDevice(Params params);
-  KeystoneError create(uint64_t minPages);
-  vaddr_t initUTM(size_t size);
-  KeystoneError finalize(
+  virtual ~KeystoneDevice() {}
+  virtual bool initDevice(Params params);
+  virtual KeystoneError create(uint64_t minPages);
+  virtual vaddr_t initUTM(size_t size);
+  virtual KeystoneError finalize(
       uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
       struct runtime_params_t params);
-  KeystoneError destroy();
-  KeystoneError run();
-  KeystoneError resume();
+  virtual KeystoneError destroy();
+  virtual KeystoneError run();
+  virtual KeystoneError resume();
   void* map(vaddr_t addr, size_t size);
 };
 

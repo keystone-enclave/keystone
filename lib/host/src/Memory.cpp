@@ -13,22 +13,34 @@ Memory::Memory() {
   startAddr     = 0;
 }
 
+void Memory::startRuntimeMem() {
+  runtimePhysAddr = getCurrentEPMAddress();
+}
+
+void Memory::startEappMem() {
+  eappPhysAddr = getCurrentEPMAddress();
+}
+
+void Memory::startFreeMem() {
+  freePhysAddr = getCurrentEPMAddress();
+}
 
 void
 SimulatedEnclaveMemory::init(
     KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
   pDevice     = dev;
-  epmFreeList = phys_addr + PAGE_SIZE;
-
+  epmSize = PAGE_SIZE * min_pages;
   rootPageTable = AllocMem(PAGE_SIZE * min_pages);
   startAddr     = rootPageTable;
+  epmFreeList = startAddr + PAGE_SIZE;
 }
 
 void
 PhysicalEnclaveMemory::init(
     KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
-  start_phys_addr = phys_addr;
   pDevice         = dev;
+  // TODO: need to set actual EPM size
+  epmSize = PAGE_SIZE * min_pages;
   rootPageTable   = AllocMem(PAGE_SIZE);
   epmFreeList     = phys_addr + PAGE_SIZE;
   startAddr       = phys_addr;
@@ -45,6 +57,8 @@ vaddr_t
 PhysicalEnclaveMemory::allocUTM(size_t size) {
   vaddr_t ret = pDevice->initUTM(size);
   utmFreeList = ret;
+  untrustedSize = size;
+  utmPhysAddr = ret;
   return ret;
 }
 
@@ -61,13 +75,15 @@ PhysicalEnclaveMemory::AllocMem(size_t size) {
 vaddr_t
 SimulatedEnclaveMemory::AllocMem(size_t size) {
   vaddr_t ret;
-  ret = (vaddr_t)allocateAligned(size, PAGE_SIZE);
+  ret = (vaddr_t) allocateAligned(size, PAGE_SIZE);
   return ret;
 }
 
 vaddr_t
 SimulatedEnclaveMemory::allocUTM(size_t size) {
   utmFreeList = AllocMem(size);
+  untrustedSize = size;
+  utmPhysAddr = utmFreeList;
   return utmFreeList;
 }
 
@@ -77,7 +93,7 @@ PhysicalEnclaveMemory::ReadMem(vaddr_t src, size_t size) {
 
   assert(pDevice);
 
-  ret = reinterpret_cast<vaddr_t>(pDevice->map(src - start_phys_addr, size));
+  ret = reinterpret_cast<vaddr_t>(pDevice->map(src - startAddr, size));
   return ret;
 }
 
@@ -89,7 +105,7 @@ SimulatedEnclaveMemory::ReadMem(vaddr_t src, size_t size) {
 void
 PhysicalEnclaveMemory::WriteMem(vaddr_t src, vaddr_t dst, size_t size) {
   assert(pDevice);
-  void* va_dst = pDevice->map(dst - start_phys_addr, size);
+  void* va_dst = pDevice->map(dst - startAddr, size);
   memcpy(va_dst, reinterpret_cast<void*>(src), size);
 }
 
@@ -214,7 +230,6 @@ Memory::epm_alloc_vspace(vaddr_t addr, size_t num_pages) {
    linear at-most-once paddr mappings, and then hashing valid pages */
 int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
                           pte_t* tb, uintptr_t vaddr, int contiguous,
-                          struct keystone_hash_enclave* cargs,
                           uintptr_t* runtime_max_seen,
                           uintptr_t* user_max_seen)
 {
@@ -231,13 +246,15 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
     uintptr_t vpn;
     uintptr_t phys_addr = (pte_val(*walk) >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
     /* Check for blatently invalid mappings */
-    int map_in_epm = (phys_addr >= cargs->epm_paddr &&
-                      phys_addr < cargs->epm_paddr + cargs->epm_size);
-    int map_in_utm = (phys_addr >= cargs->utm_paddr &&
-                      phys_addr < cargs->utm_paddr + cargs->utm_size);
+    int map_in_epm = (phys_addr >= startAddr &&
+                      phys_addr < startAddr + epmSize);
+    int map_in_utm = (phys_addr >= utmPhysAddr &&
+                      phys_addr < utmPhysAddr + untrustedSize);
+
 
     /* EPM may map anything, UTM may not map pgtables */
     if(!map_in_epm && (!map_in_utm || level != 1)){
+      printf("1\n");
       goto fatal_bail;
     }
 
@@ -274,10 +291,10 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
        *
        * We also validate that all utm vaddrs -> utm paddrs
        */
-      int in_runtime = ((phys_addr >= cargs->runtime_paddr) &&
-                        (phys_addr < (cargs->user_paddr)));
-      int in_user = ((phys_addr >= cargs->user_paddr) &&
-                     (phys_addr < (cargs->free_paddr)));
+      int in_runtime = ((phys_addr >= runtimePhysAddr) &&
+                        (phys_addr < eappPhysAddr));
+      int in_user = ((phys_addr >= eappPhysAddr) &&
+                     (phys_addr < freePhysAddr));
 
       /* Validate U bit */
       if(in_user && !(pte_val(*walk) & PTE_U)){
@@ -285,8 +302,8 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
       }
 
       /* If the vaddr is in UTM, the paddr must be in UTM */
-      if(va_start >= cargs->utm_paddr &&
-         va_start < (cargs->utm_paddr + cargs->untrusted_size) &&
+      if(va_start >= utmPhysAddr &&
+         va_start < (utmPhysAddr + untrustedSize) &&
          !map_in_utm){
         goto fatal_bail;
       }
@@ -330,7 +347,6 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
                                          (pte_t*) phys_addr,
                                          vpn,
                                          contiguous,
-                                         cargs,
                                          runtime_max_seen,
                                          user_max_seen
                                          );
@@ -340,10 +356,10 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
                (void *) phys_addr,
 //                in_runtime,
                 0,
-               (void *) cargs->runtime_paddr,
+               (void *) runtimePhysAddr,
 //                in_user,
                 0,
-               (void *) cargs->user_paddr);
+               (void *) eappPhysAddr);
         goto fatal_bail;
       }
     }
