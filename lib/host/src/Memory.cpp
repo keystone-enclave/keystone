@@ -13,37 +13,65 @@ Memory::Memory() {
   startAddr     = 0;
 }
 
-void Memory::startRuntimeMem() {
+void
+Memory::startRuntimeMem() {
   runtimePhysAddr = getCurrentEPMAddress();
 }
 
-void Memory::startEappMem() {
+void
+Memory::startEappMem() {
   eappPhysAddr = getCurrentEPMAddress();
 }
 
-void Memory::startFreeMem() {
+void
+Memory::startFreeMem() {
   freePhysAddr = getCurrentEPMAddress();
 }
 
+inline pte_t
+Memory::pte_create(uintptr_t ppn, int type) {
+  return __pte((ppn << PTE_PPN_SHIFT) | PTE_V | type);
+}
+
+inline pte_t
+Memory::ptd_create(uintptr_t ppn) {
+  return pte_create(ppn, PTE_V);
+}
+
+paddr_t
+Memory::pte_ppn(pte_t pte) {
+  return pte_val(pte) >> PTE_PPN_SHIFT;
+}
+
+paddr_t
+Memory::ppn(vaddr_t addr) {
+  return __pa(addr) >> RISCV_PGSHIFT;
+}
+
+size_t
+Memory::pt_idx(vaddr_t addr, int level) {
+  size_t idx = addr >> (RISCV_PGLEVEL_BITS * level + RISCV_PGSHIFT);
+  return idx & ((1 << RISCV_PGLEVEL_BITS) - 1);
+}
 void
 SimulatedEnclaveMemory::init(
     KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
-  pDevice     = dev;
-  epmSize = PAGE_SIZE * min_pages;
+  pDevice       = dev;
+  epmSize       = PAGE_SIZE * min_pages;
   rootPageTable = AllocMem(PAGE_SIZE * min_pages);
   startAddr     = rootPageTable;
-  epmFreeList = startAddr + PAGE_SIZE;
+  epmFreeList   = startAddr + PAGE_SIZE;
 }
 
 void
 PhysicalEnclaveMemory::init(
     KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
-  pDevice         = dev;
-  // TODO: need to set actual EPM size
-  epmSize = PAGE_SIZE * min_pages;
-  rootPageTable   = AllocMem(PAGE_SIZE);
-  epmFreeList     = phys_addr + PAGE_SIZE;
-  startAddr       = phys_addr;
+  pDevice = dev;
+  // TODO(dayeol): need to set actual EPM size
+  epmSize       = PAGE_SIZE * min_pages;
+  rootPageTable = AllocMem(PAGE_SIZE);
+  epmFreeList   = phys_addr + PAGE_SIZE;
+  startAddr     = phys_addr;
 }
 
 void*
@@ -55,10 +83,10 @@ SimulatedEnclaveMemory::allocateAligned(size_t size, size_t alignment) {
 
 vaddr_t
 PhysicalEnclaveMemory::allocUTM(size_t size) {
-  vaddr_t ret = pDevice->initUTM(size);
-  utmFreeList = ret;
+  vaddr_t ret   = pDevice->initUTM(size);
+  utmFreeList   = ret;
   untrustedSize = size;
-  utmPhysAddr = ret;
+  utmPhysAddr   = ret;
   return ret;
 }
 
@@ -75,15 +103,15 @@ PhysicalEnclaveMemory::AllocMem(size_t size) {
 vaddr_t
 SimulatedEnclaveMemory::AllocMem(size_t size) {
   vaddr_t ret;
-  ret = (vaddr_t) allocateAligned(size, PAGE_SIZE);
+  ret = (vaddr_t)allocateAligned(size, PAGE_SIZE);
   return ret;
 }
 
 vaddr_t
 SimulatedEnclaveMemory::allocUTM(size_t size) {
-  utmFreeList = AllocMem(size);
+  utmFreeList   = AllocMem(size);
   untrustedSize = size;
-  utmPhysAddr = utmFreeList;
+  utmPhysAddr   = utmFreeList;
   return utmFreeList;
 }
 
@@ -228,17 +256,16 @@ Memory::epm_alloc_vspace(vaddr_t addr, size_t num_pages) {
 
 /* This will walk the entire vaddr space in the enclave, validating
    linear at-most-once paddr mappings, and then hashing valid pages */
-int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
-                          pte_t* tb, uintptr_t vaddr, int contiguous,
-                          uintptr_t* runtime_max_seen,
-                          uintptr_t* user_max_seen)
-{
+int
+Memory::validate_and_hash_epm(
+    hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr, int contiguous,
+    uintptr_t* runtime_max_seen, uintptr_t* user_max_seen) {
   pte_t* walk;
   int i;
 
   /* iterate over PTEs */
-  for (walk=tb, i=0; walk < tb + (RISCV_PGSIZE/sizeof(pte_t)); walk += 1,i++)
-  {
+  for (walk = tb, i = 0; walk < tb + (RISCV_PGSIZE / sizeof(pte_t));
+       walk += 1, i++) {
     if (pte_val(*walk) == 0) {
       contiguous = 0;
       continue;
@@ -246,20 +273,19 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
     uintptr_t vpn;
     uintptr_t phys_addr = (pte_val(*walk) >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
     /* Check for blatently invalid mappings */
-    int map_in_epm = (phys_addr >= startAddr &&
-                      phys_addr < startAddr + epmSize);
-    int map_in_utm = (phys_addr >= utmPhysAddr &&
-                      phys_addr < utmPhysAddr + untrustedSize);
-
+    int map_in_epm =
+        (phys_addr >= startAddr && phys_addr < startAddr + epmSize);
+    int map_in_utm =
+        (phys_addr >= utmPhysAddr && phys_addr < utmPhysAddr + untrustedSize);
 
     /* EPM may map anything, UTM may not map pgtables */
-    if(!map_in_epm && (!map_in_utm || level != 1)){
+    if (!map_in_epm && (!map_in_utm || level != 1)) {
       printf("1\n");
       goto fatal_bail;
     }
 
     /* propagate the highest bit of the VA */
-    if ( level == RISCV_PGLEVEL_TOP && i & RISCV_PGTABLE_HIGHEST_BIT )
+    if (level == RISCV_PGLEVEL_TOP && i & RISCV_PGTABLE_HIGHEST_BIT)
       vpn = ((-1UL << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
     else
       vpn = ((vaddr << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
@@ -267,17 +293,13 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
     uintptr_t va_start = vpn << RISCV_PGSHIFT;
 
     /* include the first virtual address of a contiguous range */
-    if (level == 1 && !contiguous)
-    {
-
+    if (level == 1 && !contiguous) {
       hash_extend(hash_ctx, &va_start, sizeof(uintptr_t));
-//      printf("user VA hashed: 0x%lx\n", va_start);
+      //      printf("user VA hashed: 0x%lx\n", va_start);
       contiguous = 1;
     }
 
-    if (level == 1)
-    {
-
+    if (level == 1) {
       /*
        * This is where we enforce the at-most-one-mapping property.
        * To make our lives easier, we also require a 'linear' mapping
@@ -291,75 +313,62 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
        *
        * We also validate that all utm vaddrs -> utm paddrs
        */
-      int in_runtime = ((phys_addr >= runtimePhysAddr) &&
-                        (phys_addr < eappPhysAddr));
-      int in_user = ((phys_addr >= eappPhysAddr) &&
-                     (phys_addr < freePhysAddr));
+      int in_runtime =
+          ((phys_addr >= runtimePhysAddr) && (phys_addr < eappPhysAddr));
+      int in_user = ((phys_addr >= eappPhysAddr) && (phys_addr < freePhysAddr));
 
       /* Validate U bit */
-      if(in_user && !(pte_val(*walk) & PTE_U)){
+      if (in_user && !(pte_val(*walk) & PTE_U)) {
         goto fatal_bail;
       }
 
       /* If the vaddr is in UTM, the paddr must be in UTM */
-      if(va_start >= utmPhysAddr &&
-         va_start < (utmPhysAddr + untrustedSize) &&
-         !map_in_utm){
+      if (va_start >= utmPhysAddr && va_start < (utmPhysAddr + untrustedSize) &&
+          !map_in_utm) {
         goto fatal_bail;
       }
 
       /* Do linear mapping validation */
-      if(in_runtime){
-        if(phys_addr <= *runtime_max_seen){
+      if (in_runtime) {
+        if (phys_addr <= *runtime_max_seen) {
           goto fatal_bail;
-        }
-        else{
+        } else {
           *runtime_max_seen = phys_addr;
         }
-      }
-      else if(in_user){
-        if(phys_addr <= *user_max_seen){
+      } else if (in_user) {
+        if (phys_addr <= *user_max_seen) {
           goto fatal_bail;
-        }
-        else{
+        } else {
           *user_max_seen = phys_addr;
         }
-      }
-      else if(map_in_utm){
+      } else if (map_in_utm) {
         // we checked this above, its OK
-      }
-      else{
-//        printf("BAD GENERIC MAP %x %x %x\n", in_runtime, in_user, map_in_utm);
+      } else {
+        //        printf("BAD GENERIC MAP %x %x %x\n", in_runtime, in_user,
+        //        map_in_utm);
         goto fatal_bail;
       }
 
       /* Page is valid, add it to the hash */
 
       /* if PTE is leaf, extend hash for the page */
-      hash_extend_page(hash_ctx, (void*)phys_addr);
-//      printf("user PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn << RISCV_PGSHIFT, phys_addr);
-    }
-    else
-    {
+      hash_extend_page(hash_ctx, reinterpret_cast<void*>(phys_addr));
+      //      printf("user PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn <<
+      //      RISCV_PGSHIFT, phys_addr);
+    } else {
       /* otherwise, recurse on a lower level */
-      contiguous = validate_and_hash_epm(hash_ctx,
-                                         level - 1,
-                                         (pte_t*) phys_addr,
-                                         vpn,
-                                         contiguous,
-                                         runtime_max_seen,
-                                         user_max_seen
-                                         );
-      if(contiguous == -1){
-        printf("BAD MAP: %p->%p epm %u %p uer %u %p\n",
-               (void *) va_start,
-               (void *) phys_addr,
-//                in_runtime,
-                0,
-               (void *) runtimePhysAddr,
-//                in_user,
-                0,
-               (void *) eappPhysAddr);
+      contiguous = validate_and_hash_epm(
+          hash_ctx, level - 1, reinterpret_cast<pte_t*>(phys_addr), vpn,
+          contiguous, runtime_max_seen, user_max_seen);
+      if (contiguous == -1) {
+        printf(
+            "BAD MAP: %p->%p epm %u %p uer %u %p\n",
+            reinterpret_cast<void*>(va_start),
+            reinterpret_cast<void*>(phys_addr),
+            //                in_runtime,
+            0, reinterpret_cast<void*>(runtimePhysAddr),
+            //                in_user,
+            0, reinterpret_cast<void*>(eappPhysAddr));
         goto fatal_bail;
       }
     }
@@ -367,7 +376,6 @@ int Memory::validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
 
   return contiguous;
 
-  fatal_bail:
+fatal_bail:
   return -1;
 }
-

@@ -63,32 +63,6 @@ typedef struct { uintptr_t pte; } pte_t;
 
 #define RISCV_PGLEVEL_TOP ((VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS)
 
-static inline pte_t
-pte_create(uintptr_t ppn, int type) {
-  return __pte((ppn << PTE_PPN_SHIFT) | PTE_V | type);
-}
-
-static inline pte_t
-ptd_create(uintptr_t ppn) {
-  return pte_create(ppn, PTE_V);
-}
-
-static paddr_t
-pte_ppn(pte_t pte) {
-  return pte_val(pte) >> PTE_PPN_SHIFT;
-}
-
-static paddr_t
-ppn(vaddr_t addr) {
-  return __pa(addr) >> RISCV_PGSHIFT;
-}
-
-static size_t
-pt_idx(vaddr_t addr, int level) {
-  size_t idx = addr >> (RISCV_PGLEVEL_BITS * level + RISCV_PGSHIFT);
-  return idx & ((1 << RISCV_PGLEVEL_BITS) - 1);
-}
-
 class Memory {
  public:
   Memory();
@@ -107,10 +81,9 @@ class Memory {
   vaddr_t getCurrentEPMAddress() { return epmFreeList; }
   vaddr_t getRootPageTable() { return rootPageTable; }
 
-  int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
-                          pte_t* tb, uintptr_t vaddr, int contiguous,
-                          uintptr_t* runtime_max_seen,
-                          uintptr_t* user_max_seen);
+  int validate_and_hash_epm(
+      hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr,
+      int contiguous, uintptr_t* runtime_max_seen, uintptr_t* user_max_seen);
 
   void startRuntimeMem();
   void startEappMem();
@@ -141,6 +114,13 @@ class Memory {
   uintptr_t utmPhysAddr;
   uintptr_t untrustedPtr;
   uintptr_t untrustedSize;
+
+ private:
+  pte_t pte_create(uintptr_t, int);
+  pte_t ptd_create(uintptr_t);
+  paddr_t pte_ppn(pte_t);
+  paddr_t ppn(vaddr_t);
+  size_t pt_idx(vaddr_t, int);
 };
 
 class PhysicalEnclaveMemory : public Memory {

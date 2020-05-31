@@ -7,11 +7,11 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 extern "C" {
-#include "./sha3.h"
 #include "./keystone_user.h"
+#include "./sha3.h"
 }
-#include "hash_util.hpp"
 #include "ELFFile.hpp"
+#include "hash_util.hpp"
 
 Keystone::Keystone() {
   runtimeFile = NULL;
@@ -163,8 +163,7 @@ Keystone::loadElf(ELFFile* elf) {
 }
 
 KeystoneError
-Keystone::validate_and_hash_enclave(
-    struct runtime_params_t args) {
+Keystone::validate_and_hash_enclave(struct runtime_params_t args) {
   hash_ctx_t hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
 
@@ -345,13 +344,13 @@ Keystone::init(
 
   struct runtime_params_t runtimeParams;
   runtimeParams.runtime_entry =
-    reinterpret_cast<uintptr_t>(runtimeFile->getEntryPoint());
+      reinterpret_cast<uintptr_t>(runtimeFile->getEntryPoint());
   runtimeParams.user_entry =
-    reinterpret_cast<uintptr_t>(enclaveFile->getEntryPoint());
+      reinterpret_cast<uintptr_t>(enclaveFile->getEntryPoint());
   runtimeParams.untrusted_ptr =
-    reinterpret_cast<uintptr_t>(params.getUntrustedMem());
+      reinterpret_cast<uintptr_t>(params.getUntrustedMem());
   runtimeParams.untrusted_size =
-    reinterpret_cast<uintptr_t>(params.getUntrustedSize());
+      reinterpret_cast<uintptr_t>(params.getUntrustedSize());
 
   pMemory->startFreeMem();
 
@@ -361,11 +360,9 @@ Keystone::init(
   }
 
   if (pDevice->finalize(
-        pMemory->getRuntimePhysAddr(),
-        pMemory->getEappPhysAddr(),
-        pMemory->getFreePhysAddr(),
-        runtimeParams) !=
-      KeystoneError::Success) {
+          pMemory->getRuntimePhysAddr(), pMemory->getEappPhysAddr(),
+          pMemory->getFreePhysAddr(),
+          runtimeParams) != KeystoneError::Success) {
     destroy();
     return KeystoneError::DeviceError;
   }
