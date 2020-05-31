@@ -25,7 +25,6 @@ extern "C" {
 
 class Keystone;
 typedef void (*OcallFunc)(void*);
-typedef sha3_ctx_t hash_ctx_t;
 
 class Keystone {
  private:

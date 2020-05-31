@@ -1,6 +1,13 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#define RT_NOEXEC 0
+#define USER_NOEXEC 1
+#define RT_FULL 2
+#define USER_FULL 3
+#define UTM_FULL 4
+
+
 #define PAGE_BITS 12
 #define PAGE_SIZE (1UL<<PAGE_BITS)
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))

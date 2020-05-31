@@ -16,11 +16,7 @@
 #include <iostream>
 #include "./common.h"
 #include "KeystoneDevice.hpp"
-
-/*
- * Generic page.h implementation, for NOMMU architectures.
- * This provides the dummy definitions for the memory management.
- */
+#include "hash_util.hpp"
 
 /*
  * These are used to make use of C type-checking..
@@ -110,6 +106,13 @@ class Memory {
   vaddr_t getStartAddr() { return startAddr; }
   vaddr_t getCurrentEPMAddress() { return epmFreeList; }
   vaddr_t getRootPageTable() { return rootPageTable; }
+
+  int validate_and_hash_epm(hash_ctx_t* hash_ctx, int level,
+                          pte_t* tb, uintptr_t vaddr, int contiguous,
+                          struct keystone_hash_enclave* cargs,
+                          uintptr_t* runtime_max_seen,
+                          uintptr_t* user_max_seen);
+
 
  protected:
   pte_t* __ept_walk_create(vaddr_t addr);

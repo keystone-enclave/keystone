@@ -6,8 +6,11 @@
 #include <math.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include "./hash_util.h"
+extern "C" {
+#include "./sha3.h"
 #include "./keystone_user.h"
+}
+#include "hash_util.hpp"
 #include "ELFFile.hpp"
 
 Keystone::Keystone() {
@@ -166,7 +169,7 @@ Keystone::validate_and_hash_enclave(
   uintptr_t user_max_seen    = 0;
 
   // hash the epm contents including the virtual addresses
-  int valid = validate_and_hash_epm(
+  int valid = pMemory->validate_and_hash_epm(
       &hash_ctx, ptlevel, reinterpret_cast<pte_t*>(pMemory->getRootPageTable()),
       0, 0, cargs, &runtime_max_seen, &user_max_seen);
 
@@ -428,7 +431,7 @@ Keystone::run() {
   }
 
   if (ret != KeystoneError::Success) {
-    ERROR("failed to run enclave - ioctl() failed: %d", ret);
+    ERROR("failed to run enclave - ioctl() failed");
     destroy();
     return KeystoneError::DeviceError;
   }
