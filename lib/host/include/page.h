@@ -48,9 +48,14 @@ typedef struct page *pgtable_t;
 
 #define PTE_PPN_SHIFT 10
 
+#if __riscv_xlen == 64
 #define VA_BITS 39
-
 #define RISCV_PGLEVEL_BITS 9
+#else
+#define VA_BITS 32
+#define RISCV_PGLEVEL_BITS 10
+#endif
+
 #define RISCV_PGSHIFT 12
 #define RISCV_PGSIZE (1 << RISCV_PGSHIFT)
 

@@ -4,9 +4,19 @@ cmake_minimum_required(VERSION 3.10)
 # BASIC SETUP
 #-------------------------------------------------------------------------------
 
+if(RISCV32)
+  message(STATUS "riscv32")
+  set(BITS 32)
+else()
+  message(STATUS "riscv64")
+  set(BITS 64)
+endif()
+
 set(prog_name    keystone-sdk)
 set(src_dir      ${CMAKE_CURRENT_LIST_DIR})
 set(scripts_dir  ${src_dir}/scripts)
+set(cross_compile riscv${BITS}-unknown-linux-gnu-)
+
 
 if (OUTPUT_DIR)
     set(out_dir      ${OUTPUT_DIR})
@@ -33,7 +43,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 execute_process(
-    COMMAND which riscv64-unknown-linux-gnu-gcc
+    COMMAND which ${cross_compile}gcc
     OUTPUT_VARIABLE CROSSCOMPILE
     RESULT_VARIABLE ERROR)
     
