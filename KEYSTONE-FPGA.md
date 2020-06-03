@@ -138,7 +138,7 @@ Git clone and checkout the SiFive freedom:
 ```sh
 $ git clone https://github.com/sifive/freedom.git
 $ cd freedom/
-$ git checkout 37207f100227f4c34994db067b5fea3e383299ce0
+$ git checkout 37207f100227f4c34994db067b5fea3e383299ce
 $ git submodule update --init --recursive
 ```
 
@@ -184,7 +184,7 @@ $ export PATH=${PATH}:/opt/Xilinx/Vivado/2016.4/bin:${RISCV}/bin
 
 From the top folder of freedom:
 
-This is for generate the verilog file:	
+This is for generate the verilog file:
 ```sh
 $ make BOOTROM_DIR=`pwd`/bootrom/freedom-u540-c000-bootloader -f Makefile.vc707-u500devkit verilog -j`nproc`
 ```
