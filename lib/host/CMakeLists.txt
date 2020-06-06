@@ -12,6 +12,8 @@ set(SOURCE_FILES
         src/KeystoneDevice.cpp
         src/Enclave.cpp
         src/Memory.cpp
+        src/PhysicalEnclaveMemory.cpp
+        src/SimulatedEnclaveMemory.cpp
     )
 
 set(INCLUDE_DIRS include)
