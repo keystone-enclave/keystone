@@ -31,9 +31,4 @@
 #define KEYSTONE_ENCLAVE_INTERRUPTED  2
 #define KEYSTONE_ENCLAVE_EDGE_CALL_HOST  11
 
-/* Types */
-typedef uintptr_t vaddr_t;
-typedef uintptr_t paddr_t;
-
-
 #endif

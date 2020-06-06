@@ -5,7 +5,9 @@
 
 #pragma once
 
-enum class KeystoneError {
+namespace Keystone {
+
+enum class Error {
   Success = 0,
   FileInitFailure,
   DeviceInitFailure,
@@ -24,6 +26,8 @@ enum class KeystoneError {
   EdgeCallHost,
   EnclaveInterrupted,
 };
+
+}  // namespace Keystone
 /*
 
 {

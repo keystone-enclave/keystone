@@ -5,9 +5,11 @@
 #include "KeystoneDevice.hpp"
 #include <sys/mman.h>
 
+namespace Keystone {
+
 KeystoneDevice::KeystoneDevice() { eid = -1; }
 
-KeystoneError
+Error
 KeystoneDevice::create(uint64_t minPages) {
   struct keystone_ioctl_create_enclave encl;
   encl.min_pages = minPages;
@@ -16,16 +18,16 @@ KeystoneDevice::create(uint64_t minPages) {
   if (ret) {
     perror("ioctl error");
     eid = -1;
-    return KeystoneError::IoctlErrorCreate;
+    return Error::IoctlErrorCreate;
   }
 
   eid      = encl.eid;
   physAddr = encl.pt_ptr;
 
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
-vaddr_t
+uintptr_t
 KeystoneDevice::initUTM(size_t size) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid                   = eid;
@@ -38,7 +40,7 @@ KeystoneDevice::initUTM(size_t size) {
   return encl.utm_free_ptr;
 }
 
-KeystoneError
+Error
 KeystoneDevice::finalize(
     uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
     struct runtime_params_t params) {
@@ -52,43 +54,43 @@ KeystoneDevice::finalize(
   int ret;
   if (ret = ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl)) {
     perror("ioctl error");
-    return KeystoneError::IoctlErrorFinalize;
+    return Error::IoctlErrorFinalize;
   }
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
-KeystoneError
+Error
 KeystoneDevice::destroy() {
   struct keystone_ioctl_create_enclave encl;
   encl.eid = eid;
 
   /* if the enclave has never created */
   if (eid < 0) {
-    return KeystoneError::Success;
+    return Error::Success;
   }
 
   int ret;
   if (ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &encl)) {
     perror("ioctl error");
-    return KeystoneError::IoctlErrorDestroy;
+    return Error::IoctlErrorDestroy;
   }
 
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
-KeystoneError
+Error
 KeystoneDevice::__run(bool resume) {
   struct keystone_ioctl_run_enclave encl;
   encl.eid = eid;
 
-  KeystoneError error;
+  Error error;
   uint64_t request;
 
   if (resume) {
-    error   = KeystoneError::IoctlErrorResume;
+    error   = Error::IoctlErrorResume;
     request = KEYSTONE_IOC_RESUME_ENCLAVE;
   } else {
-    error   = KeystoneError::IoctlErrorRun;
+    error   = Error::IoctlErrorRun;
     request = KEYSTONE_IOC_RUN_ENCLAVE;
   }
 
@@ -97,29 +99,29 @@ KeystoneDevice::__run(bool resume) {
 
   switch (ret) {
     case KEYSTONE_ENCLAVE_EDGE_CALL_HOST:
-      return KeystoneError::EdgeCallHost;
+      return Error::EdgeCallHost;
     case KEYSTONE_ENCLAVE_INTERRUPTED:
-      return KeystoneError::EnclaveInterrupted;
+      return Error::EnclaveInterrupted;
     case KEYSTONE_ENCLAVE_DONE:
-      return KeystoneError::Success;
+      return Error::Success;
     default:
       perror("ioctl error");
       return error;
   }
 }
 
-KeystoneError
+Error
 KeystoneDevice::run() {
   return __run(false);
 }
 
-KeystoneError
+Error
 KeystoneDevice::resume() {
   return __run(true);
 }
 
 void*
-KeystoneDevice::map(vaddr_t addr, size_t size) {
+KeystoneDevice::map(uintptr_t addr, size_t size) {
   assert(fd >= 0);
   return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
 }
@@ -135,37 +137,37 @@ KeystoneDevice::initDevice(Params params) {
   return true;
 }
 
-KeystoneError
+Error
 MockKeystoneDevice::create(uint64_t minPages) {
   eid = -1;
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
-vaddr_t
+uintptr_t
 MockKeystoneDevice::initUTM(size_t size) {
   return 0;
 }
 
-KeystoneError
+Error
 MockKeystoneDevice::finalize(
     uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
     struct runtime_params_t params) {
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
-KeystoneError
+Error
 MockKeystoneDevice::destroy() {
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
-KeystoneError
+Error
 MockKeystoneDevice::run() {
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
-KeystoneError
+Error
 MockKeystoneDevice::resume() {
-  return KeystoneError::Success;
+  return Error::Success;
 }
 
 bool
@@ -174,7 +176,7 @@ MockKeystoneDevice::initDevice(Params params) {
 }
 
 void*
-MockKeystoneDevice::map(vaddr_t addr, size_t size) {
+MockKeystoneDevice::map(uintptr_t addr, size_t size) {
   sharedBuffer = malloc(size);
   return sharedBuffer;
 }
@@ -182,3 +184,5 @@ MockKeystoneDevice::map(vaddr_t addr, size_t size) {
 MockKeystoneDevice::~MockKeystoneDevice() {
   if (sharedBuffer) free(sharedBuffer);
 }
+
+}  // namespace Keystone

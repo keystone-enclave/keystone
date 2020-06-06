@@ -15,14 +15,16 @@ extern "C" {
 #include "./elf.h"
 }
 
-class ELFFile {
+namespace Keystone {
+
+class ElfFile {
  public:
-  explicit ELFFile(std::string filename);
-  ~ELFFile();
+  explicit ElfFile(std::string filename);
+  ~ElfFile();
   size_t getFileSize() { return fileSize; }
   bool isValid();
 
-  vaddr_t getMinVaddr() { return minVaddr; }
+  uintptr_t getMinVaddr() { return minVaddr; }
   size_t getTotalMemorySize() { return maxVaddr - minVaddr; }
   bool initialize(bool isRuntime);
 
@@ -33,16 +35,16 @@ class ELFFile {
   size_t getProgramHeaderType(size_t ph);
   size_t getProgramHeaderFileSize(size_t ph);
   size_t getProgramHeaderMemorySize(size_t ph);
-  vaddr_t getProgramHeaderVaddr(size_t ph);
-  vaddr_t getEntryPoint();
+  uintptr_t getProgramHeaderVaddr(size_t ph);
+  uintptr_t getEntryPoint();
   void* getProgramSegment(size_t ph);
 
  private:
   int filep;
 
   /* virtual addresses */
-  vaddr_t minVaddr;
-  vaddr_t maxVaddr;
+  uintptr_t minVaddr;
+  uintptr_t maxVaddr;
 
   void* ptr;
   size_t fileSize;
@@ -53,3 +55,5 @@ class ELFFile {
   /* libelf structure */
   elf_t elf;
 };
+
+}  // namespace Keystone

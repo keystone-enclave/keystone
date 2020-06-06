@@ -8,9 +8,9 @@ set(SOURCE_FILES
         src/elf32.c
         src/elf64.c
         src/hash_util.cpp
-        src/ELFFile.cpp
+        src/ElfFile.cpp
         src/KeystoneDevice.cpp
-        src/Keystone.cpp
+        src/Enclave.cpp
         src/Memory.cpp
     )
 

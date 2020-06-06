@@ -21,6 +21,8 @@
 #define DEFAULT_UNTRUSTED_SIZE 8192  // 8 KB
 
 /* parameters for enclave creation */
+namespace Keystone {
+
 class Params {
  public:
   Params() {
@@ -53,3 +55,5 @@ class Params {
   uint64_t untrusted_size;
   uint64_t freemem_size;
 };
+
+}  // namespace Keystone

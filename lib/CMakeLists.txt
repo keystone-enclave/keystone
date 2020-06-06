@@ -28,13 +28,4 @@ if(CLANG_FORMAT AND CPPLINT)
     ${CHECK_CXX_SOURCE_FILES}
     COMMENT "Auto-formatting"
   )
-  ADD_CUSTOM_TARGET(
-    check-format
-    COMMAND
-    ${CLANG_FORMAT}
-    -style=file
-    -output-replacements-xml
-    ${CHECK_CXX_SOURCE_FILES}
-    COMMENT "Format checking"
-  )
 endif()

@@ -6,6 +6,8 @@
 #include <keystone_user.h>
 #include <sys/stat.h>
 
+namespace Keystone {
+
 Memory::Memory() {
   epmFreeList   = 0;
   utmFreeList   = 0;
@@ -28,48 +30,48 @@ Memory::startFreeMem() {
   freePhysAddr = getCurrentEPMAddress();
 }
 
-inline pte_t
+inline pte
 Memory::pte_create(uintptr_t ppn, int type) {
   return __pte((ppn << PTE_PPN_SHIFT) | PTE_V | type);
 }
 
-inline pte_t
+inline pte
 Memory::ptd_create(uintptr_t ppn) {
   return pte_create(ppn, PTE_V);
 }
 
-paddr_t
-Memory::pte_ppn(pte_t pte) {
+uintptr_t
+Memory::pte_ppn(pte pte) {
   return pte_val(pte) >> PTE_PPN_SHIFT;
 }
 
-paddr_t
-Memory::ppn(vaddr_t addr) {
+uintptr_t
+Memory::ppn(uintptr_t addr) {
   return __pa(addr) >> RISCV_PGSHIFT;
 }
 
 size_t
-Memory::pt_idx(vaddr_t addr, int level) {
+Memory::pt_idx(uintptr_t addr, int level) {
   size_t idx = addr >> (RISCV_PGLEVEL_BITS * level + RISCV_PGSHIFT);
   return idx & ((1 << RISCV_PGLEVEL_BITS) - 1);
 }
 void
 SimulatedEnclaveMemory::init(
-    KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
+    KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages) {
   pDevice       = dev;
   epmSize       = PAGE_SIZE * min_pages;
-  rootPageTable = AllocMem(PAGE_SIZE * min_pages);
+  rootPageTable = allocMem(PAGE_SIZE * min_pages);
   startAddr     = rootPageTable;
   epmFreeList   = startAddr + PAGE_SIZE;
 }
 
 void
 PhysicalEnclaveMemory::init(
-    KeystoneDevice* dev, vaddr_t phys_addr, size_t min_pages) {
+    KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages) {
   pDevice = dev;
   // TODO(dayeol): need to set actual EPM size
   epmSize       = PAGE_SIZE * min_pages;
-  rootPageTable = AllocMem(PAGE_SIZE);
+  rootPageTable = allocMem(PAGE_SIZE);
   epmFreeList   = phys_addr + PAGE_SIZE;
   startAddr     = phys_addr;
 }
@@ -81,73 +83,73 @@ SimulatedEnclaveMemory::allocateAligned(size_t size, size_t alignment) {
   return reinterpret_cast<void*>((mem + mask) & ~mask);
 }
 
-vaddr_t
-PhysicalEnclaveMemory::allocUTM(size_t size) {
-  vaddr_t ret   = pDevice->initUTM(size);
+uintptr_t
+PhysicalEnclaveMemory::allocUtm(size_t size) {
+  uintptr_t ret = pDevice->initUTM(size);
   utmFreeList   = ret;
   untrustedSize = size;
   utmPhysAddr   = ret;
   return ret;
 }
 
-vaddr_t
-PhysicalEnclaveMemory::AllocMem(size_t size) {
-  vaddr_t ret;
+uintptr_t
+PhysicalEnclaveMemory::allocMem(size_t size) {
+  uintptr_t ret;
 
   assert(pDevice);
 
-  ret = reinterpret_cast<vaddr_t>(pDevice->map(0, PAGE_SIZE));
+  ret = reinterpret_cast<uintptr_t>(pDevice->map(0, PAGE_SIZE));
   return ret;
 }
 
-vaddr_t
-SimulatedEnclaveMemory::AllocMem(size_t size) {
-  vaddr_t ret;
-  ret = (vaddr_t)allocateAligned(size, PAGE_SIZE);
+uintptr_t
+SimulatedEnclaveMemory::allocMem(size_t size) {
+  uintptr_t ret;
+  ret = (uintptr_t)allocateAligned(size, PAGE_SIZE);
   return ret;
 }
 
-vaddr_t
-SimulatedEnclaveMemory::allocUTM(size_t size) {
-  utmFreeList   = AllocMem(size);
+uintptr_t
+SimulatedEnclaveMemory::allocUtm(size_t size) {
+  utmFreeList   = allocMem(size);
   untrustedSize = size;
   utmPhysAddr   = utmFreeList;
   return utmFreeList;
 }
 
-vaddr_t
-PhysicalEnclaveMemory::ReadMem(vaddr_t src, size_t size) {
-  vaddr_t ret;
+uintptr_t
+PhysicalEnclaveMemory::readMem(uintptr_t src, size_t size) {
+  uintptr_t ret;
 
   assert(pDevice);
 
-  ret = reinterpret_cast<vaddr_t>(pDevice->map(src - startAddr, size));
+  ret = reinterpret_cast<uintptr_t>(pDevice->map(src - startAddr, size));
   return ret;
 }
 
-vaddr_t
-SimulatedEnclaveMemory::ReadMem(vaddr_t src, size_t size) {
+uintptr_t
+SimulatedEnclaveMemory::readMem(uintptr_t src, size_t size) {
   return src;
 }
 
 void
-PhysicalEnclaveMemory::WriteMem(vaddr_t src, vaddr_t dst, size_t size) {
+PhysicalEnclaveMemory::writeMem(uintptr_t src, uintptr_t dst, size_t size) {
   assert(pDevice);
   void* va_dst = pDevice->map(dst - startAddr, size);
   memcpy(va_dst, reinterpret_cast<void*>(src), size);
 }
 
 void
-SimulatedEnclaveMemory::WriteMem(vaddr_t src, vaddr_t dst, size_t size) {
+SimulatedEnclaveMemory::writeMem(uintptr_t src, uintptr_t dst, size_t size) {
   memcpy(reinterpret_cast<void*>(dst), reinterpret_cast<void*>(src), size);
 }
 
 bool
-Memory::allocPage(vaddr_t va, vaddr_t src, unsigned int mode) {
-  vaddr_t page_addr;
-  vaddr_t* pFreeList = (mode == UTM_FULL ? &utmFreeList : &epmFreeList);
+Memory::allocPage(uintptr_t va, uintptr_t src, unsigned int mode) {
+  uintptr_t page_addr;
+  uintptr_t* pFreeList = (mode == UTM_FULL ? &utmFreeList : &epmFreeList);
 
-  pte_t* pte = __ept_walk_create(va);
+  pte* pte = __ept_walk_create(va);
 
   /* if the page has been already allocated, return the page */
   if (pte_val(*pte) & PTE_V) {
@@ -171,18 +173,18 @@ Memory::allocPage(vaddr_t va, vaddr_t src, unsigned int mode) {
     case RT_FULL: {
       *pte =
           pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
-      WriteMem(src, (vaddr_t)page_addr << PAGE_BITS, PAGE_SIZE);
+      writeMem(src, (uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     case USER_FULL: {
       *pte = pte_create(
           page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_U | PTE_V);
-      WriteMem(src, (vaddr_t)page_addr << PAGE_BITS, PAGE_SIZE);
+      writeMem(src, (uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     case UTM_FULL: {
       *pte = pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_V);
-      WriteMem(src, (vaddr_t)page_addr << PAGE_BITS, PAGE_SIZE);
+      writeMem(src, (uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     default: {
@@ -194,17 +196,17 @@ Memory::allocPage(vaddr_t va, vaddr_t src, unsigned int mode) {
   return true;
 }
 
-pte_t*
-Memory::__ept_continue_walk_create(vaddr_t addr, pte_t* pte) {
+pte*
+Memory::__ept_continue_walk_create(uintptr_t addr, pte* pte) {
   uint64_t free_ppn = ppn(epmFreeList);
   *pte              = ptd_create(free_ppn);
   epmFreeList += PAGE_SIZE;
   return __ept_walk_create(addr);
 }
 
-pte_t*
-Memory::__ept_walk_internal(vaddr_t addr, int create) {
-  pte_t* t = reinterpret_cast<pte_t*>(rootPageTable);
+pte*
+Memory::__ept_walk_internal(uintptr_t addr, int create) {
+  pte* t = reinterpret_cast<pte*>(rootPageTable);
 
   int i;
   for (i = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS - 1; i > 0; i--) {
@@ -213,27 +215,27 @@ Memory::__ept_walk_internal(vaddr_t addr, int create) {
       return create ? __ept_continue_walk_create(addr, &t[idx]) : 0;
     }
 
-    t = reinterpret_cast<pte_t*>(
-        ReadMem(
-            reinterpret_cast<vaddr_t>(pte_ppn(t[idx]) << RISCV_PGSHIFT),
+    t = reinterpret_cast<pte*>(
+        readMem(
+            reinterpret_cast<uintptr_t>(pte_ppn(t[idx]) << RISCV_PGSHIFT),
             PAGE_SIZE));
   }
   return &t[pt_idx(addr, 0)];
 }
 
-pte_t*
-Memory::__ept_walk_create(vaddr_t addr) {
+pte*
+Memory::__ept_walk_create(uintptr_t addr) {
   return __ept_walk_internal(addr, 1);
 }
 
-pte_t*
-Memory::__ept_walk(vaddr_t addr) {
+pte*
+Memory::__ept_walk(uintptr_t addr) {
   return __ept_walk_internal(addr, 0);
 }
 
-vaddr_t
-Memory::epm_va_to_pa(vaddr_t addr) {
-  pte_t* pte = __ept_walk(addr);
+uintptr_t
+Memory::epm_va_to_pa(uintptr_t addr) {
+  pte* pte = __ept_walk(addr);
   if (pte)
     return pte_ppn(*pte) << RISCV_PGSHIFT;
   else
@@ -243,11 +245,11 @@ Memory::epm_va_to_pa(vaddr_t addr) {
 /* This function pre-allocates the required page tables so that
  * the virtual addresses are linearly mapped to the physical memory */
 size_t
-Memory::epm_alloc_vspace(vaddr_t addr, size_t num_pages) {
+Memory::epmAllocVspace(uintptr_t addr, size_t num_pages) {
   size_t count;
 
   for (count = 0; count < num_pages; count++, addr += PAGE_SIZE) {
-    pte_t* pte = __ept_walk_create(addr);
+    pte* pte = __ept_walk_create(addr);
     if (!pte) break;
   }
 
@@ -257,14 +259,14 @@ Memory::epm_alloc_vspace(vaddr_t addr, size_t num_pages) {
 /* This will walk the entire vaddr space in the enclave, validating
    linear at-most-once paddr mappings, and then hashing valid pages */
 int
-Memory::validate_and_hash_epm(
-    hash_ctx_t* hash_ctx, int level, pte_t* tb, uintptr_t vaddr, int contiguous,
+Memory::validateAndHashEpm(
+    hash_ctx_t* hash_ctx, int level, pte* tb, uintptr_t vaddr, int contiguous,
     uintptr_t* runtime_max_seen, uintptr_t* user_max_seen) {
-  pte_t* walk;
+  pte* walk;
   int i;
 
   /* iterate over PTEs */
-  for (walk = tb, i = 0; walk < tb + (RISCV_PGSIZE / sizeof(pte_t));
+  for (walk = tb, i = 0; walk < tb + (RISCV_PGSIZE / sizeof(pte));
        walk += 1, i++) {
     if (pte_val(*walk) == 0) {
       contiguous = 0;
@@ -357,8 +359,8 @@ Memory::validate_and_hash_epm(
       //      RISCV_PGSHIFT, phys_addr);
     } else {
       /* otherwise, recurse on a lower level */
-      contiguous = validate_and_hash_epm(
-          hash_ctx, level - 1, reinterpret_cast<pte_t*>(phys_addr), vpn,
+      contiguous = validateAndHashEpm(
+          hash_ctx, level - 1, reinterpret_cast<pte*>(phys_addr), vpn,
           contiguous, runtime_max_seen, user_max_seen);
       if (contiguous == -1) {
         printf(
@@ -379,3 +381,5 @@ Memory::validate_and_hash_epm(
 fatal_bail:
   return -1;
 }
+
+}  // namespace Keystone

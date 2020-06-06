@@ -40,6 +40,7 @@ endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DDEBUG=1)
+    set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -g)
 endif()
 
 execute_process(
@@ -62,7 +63,7 @@ set(LD              ${CROSSCOMPILE}ld)
 set(AR              ${CROSSCOMPILE}ar)
 set(OBJCOPY         ${CROSSCOMPILE}objcopy)
 set(OBJDUMP         ${CROSSCOMPILE}objdump)
-set(CFLAGS          "-g -Wall -Werror")
+set(CFLAGS          "-Wall -Werror")
 
 global_set(CMAKE_C_COMPILER        ${CC}${EXT})
 global_set(CMAKE_CXX_COMPILER      ${CXX}${EXT})

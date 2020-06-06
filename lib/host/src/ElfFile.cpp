@@ -2,10 +2,12 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "ELFFile.hpp"
+#include "ElfFile.hpp"
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <cstdio>
+
+namespace Keystone {
 
 static size_t
 fstatFileSize(int filep) {
@@ -15,7 +17,7 @@ fstatFileSize(int filep) {
   return (rc == 0 ? stat_buf.st_size : 0);
 }
 
-ELFFile::ELFFile(std::string filename) {
+ElfFile::ElfFile(std::string filename) {
   fileSize = 0;
   ptr      = NULL;
   filep    = open(filename.c_str(), O_RDONLY);
@@ -37,18 +39,18 @@ ELFFile::ELFFile(std::string filename) {
   }
 }
 
-ELFFile::~ELFFile() {
+ElfFile::~ElfFile() {
   close(filep);
   munmap(ptr, fileSize);
 }
 
 bool
-ELFFile::isValid() {
+ElfFile::isValid() {
   return (filep > 0 && fileSize > 0 && ptr != NULL);
 }
 
 bool
-ELFFile::initialize(bool _isRuntime) {
+ElfFile::initialize(bool _isRuntime) {
   if (!isValid()) return false;
 
   /* preparation for libelf */
@@ -72,36 +74,37 @@ ELFFile::initialize(bool _isRuntime) {
 
 /* Functions below are wrappers for libelf */
 size_t
-ELFFile::getNumProgramHeaders(void) {
+ElfFile::getNumProgramHeaders(void) {
   return elf_getNumProgramHeaders(&elf);
 }
 
 size_t
-ELFFile::getProgramHeaderType(size_t ph) {
+ElfFile::getProgramHeaderType(size_t ph) {
   return elf_getProgramHeaderType(&elf, ph);
 }
 
 size_t
-ELFFile::getProgramHeaderFileSize(size_t ph) {
+ElfFile::getProgramHeaderFileSize(size_t ph) {
   return elf_getProgramHeaderFileSize(&elf, ph);
 }
 
 size_t
-ELFFile::getProgramHeaderMemorySize(size_t ph) {
+ElfFile::getProgramHeaderMemorySize(size_t ph) {
   return elf_getProgramHeaderMemorySize(&elf, ph);
 }
 
-vaddr_t
-ELFFile::getProgramHeaderVaddr(size_t ph) {
+uintptr_t
+ElfFile::getProgramHeaderVaddr(size_t ph) {
   return elf_getProgramHeaderVaddr(&elf, ph);
 }
 
-vaddr_t
-ELFFile::getEntryPoint() {
+uintptr_t
+ElfFile::getEntryPoint() {
   return elf_getEntryPoint(&elf);
 }
 
 void*
-ELFFile::getProgramSegment(size_t ph) {
+ElfFile::getProgramSegment(size_t ph) {
   return elf_getProgramSegment(&elf, ph);
 }
+}  // namespace Keystone

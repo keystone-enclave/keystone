@@ -17,35 +17,37 @@
 extern "C" {
 #include "./sha3.h"
 }
-#include "ELFFile.hpp"
+#include "ElfFile.hpp"
+#include "Error.hpp"
 #include "KeystoneDevice.hpp"
-#include "KeystoneError.hpp"
 #include "Memory.hpp"
 #include "Params.hpp"
 
-class Keystone;
+namespace Keystone {
+
+class Enclave;
 typedef void (*OcallFunc)(void*);
 
-class Keystone {
+class Enclave {
  private:
   Params params;
-  ELFFile* runtimeFile;
-  ELFFile* enclaveFile;
+  ElfFile* runtimeFile;
+  ElfFile* enclaveFile;
   Memory* pMemory;
   KeystoneDevice* pDevice;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
-  vaddr_t runtime_stk_sz;
+  uintptr_t runtime_stk_sz;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   bool mapUntrusted(size_t size);
-  bool allocPage(vaddr_t va, vaddr_t src, unsigned int mode);
-  bool initStack(vaddr_t start, size_t size, bool is_rt);
-  KeystoneError loadUntrusted();
-  bool mapElf(ELFFile* file);
-  KeystoneError loadElf(ELFFile* file);
-  KeystoneError validate_and_hash_enclave(struct runtime_params_t args);
+  bool allocPage(uintptr_t va, uintptr_t src, unsigned int mode);
+  bool initStack(uintptr_t start, size_t size, bool is_rt);
+  Error loadUntrusted();
+  bool mapElf(ElfFile* file);
+  Error loadElf(ElfFile* file);
+  Error validate_and_hash_enclave(struct runtime_params_t args);
 
   bool initFiles(const char*, const char*);
   bool initDevice();
@@ -53,22 +55,23 @@ class Keystone {
   bool initMemory();
 
  public:
-  Keystone();
-  ~Keystone();
+  Enclave();
+  ~Enclave();
   const char* getHash();
   void* getSharedBuffer();
   size_t getSharedBufferSize();
-  KeystoneError registerOcallDispatch(OcallFunc func);
-  KeystoneError init(
-      const char* filepath, const char* runtime, Params parameters);
-  KeystoneError init(
+  Error registerOcallDispatch(OcallFunc func);
+  Error init(const char* filepath, const char* runtime, Params parameters);
+  Error init(
       const char* eapppath, const char* runtimepath, Params _params,
       uintptr_t alternatePhysAddr);
-  KeystoneError destroy();
-  KeystoneError run();
+  Error destroy();
+  Error run();
 };
 
 uint64_t
 calculate_required_pages(
     uint64_t eapp_sz, uint64_t eapp_stack_sz, uint64_t rt_sz,
     uint64_t rt_stack_sz);
+
+}  // namespace Keystone
