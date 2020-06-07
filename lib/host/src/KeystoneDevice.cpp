@@ -14,8 +14,7 @@ KeystoneDevice::create(uint64_t minPages) {
   struct keystone_ioctl_create_enclave encl;
   encl.min_pages = minPages;
 
-  int ret = ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &encl);
-  if (ret) {
+  if (ioctl(fd, KEYSTONE_IOC_CREATE_ENCLAVE, &encl)) {
     perror("ioctl error");
     eid = -1;
     return Error::IoctlErrorCreate;
@@ -32,8 +31,7 @@ KeystoneDevice::initUTM(size_t size) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid                   = eid;
   encl.params.untrusted_size = size;
-  int ret;
-  if (ret = ioctl(fd, KEYSTONE_IOC_UTM_INIT, &encl)) {
+  if (ioctl(fd, KEYSTONE_IOC_UTM_INIT, &encl)) {
     return 0;
   }
 
@@ -51,8 +49,7 @@ KeystoneDevice::finalize(
   encl.free_paddr    = freePhysAddr;
   encl.params        = params;
 
-  int ret;
-  if (ret = ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl)) {
+  if (ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl)) {
     perror("ioctl error");
     return Error::IoctlErrorFinalize;
   }
@@ -69,8 +66,7 @@ KeystoneDevice::destroy() {
     return Error::Success;
   }
 
-  int ret;
-  if (ret = ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &encl)) {
+  if (ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &encl)) {
     perror("ioctl error");
     return Error::IoctlErrorDestroy;
   }
