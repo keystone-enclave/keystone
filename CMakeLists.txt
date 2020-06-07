@@ -40,13 +40,14 @@ endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DDEBUG=1)
+    set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -g)
 endif()
 
 execute_process(
     COMMAND which ${cross_compile}gcc
     OUTPUT_VARIABLE CROSSCOMPILE
     RESULT_VARIABLE ERROR)
-    
+
 if (NOT "${ERROR}" STREQUAL 0)
     message(FATAL_ERROR "RISCV Toochain is not found")
 endif()
@@ -83,6 +84,12 @@ global_set(CMAKE_SYSTEM_NAME    "Linux")
 ################################################################################
 # BUILD PROJECTS
 ################################################################################
+file(GLOB_RECURSE
+  COMMON_SOURCE_FILES
+  ${CMAKE_SOURCE_DIR}/common/src/*.[c|cpp])
+file(GLOB
+  COMMON_INCLUDE_DIRS
+  ${CMAKE_SOURCE_DIR}/common/include)
 
 add_subdirectory(lib)
 

@@ -1,6 +1,13 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#define RT_NOEXEC 0
+#define USER_NOEXEC 1
+#define RT_FULL 2
+#define USER_FULL 3
+#define UTM_FULL 4
+
+
 #define PAGE_BITS 12
 #define PAGE_SIZE (1UL<<PAGE_BITS)
 #define ROUND_UP(n, b) (((((n) - 1ul) >> (b)) + 1ul) << (b))
@@ -20,18 +27,8 @@
 
 /* Currently we have only one command avaiable from the enclave.
  * We need to move it out to other header file (e.g., keystone-sm.h) */
+#define KEYSTONE_ENCLAVE_DONE      0
 #define KEYSTONE_ENCLAVE_INTERRUPTED  2
 #define KEYSTONE_ENCLAVE_EDGE_CALL_HOST  11
-
-/* Types */
-typedef uintptr_t vaddr_t;
-typedef uintptr_t paddr_t;
-
-typedef enum {
-  KEYSTONE_ERROR=-1,
-  KEYSTONE_SUCCESS,
-  KEYSTONE_NOT_IMPLEMENTED,
-} keystone_status_t;
-
 
 #endif

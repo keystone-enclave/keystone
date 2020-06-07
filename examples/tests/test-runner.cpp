@@ -5,7 +5,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <cstdio>
-#include "keystone.h"
+#include "Keystone.hpp"
 #include "edge_wrapper.h"
 #include "report.h"
 #include "test_dev_key.h"

@@ -1,10 +1,9 @@
+// sha3.h
 // 19-Nov-11  Markku-Juhani O. Saarinen <mjos@iki.fi>
+#pragma once
 
-#ifndef SHA3_H
-#define SHA3_H
-
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifndef KECCAKF_ROUNDS
 #define KECCAKF_ROUNDS 24
@@ -13,6 +12,8 @@
 #ifndef ROTL64
 #define ROTL64(x, y) (((x) << (y)) | ((x) >> (64 - (y))))
 #endif
+
+#define MDSIZE 64
 
 // state context
 typedef struct {
@@ -33,5 +34,3 @@ int sha3_final(void *md, sha3_ctx_t *c);    // digest goes to md
 
 // compute a sha3 hash (md) of given byte length from "in"
 void *sha3(const void *in, size_t inlen, void *md, int mdlen);
-
-#endif
