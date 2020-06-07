@@ -44,12 +44,12 @@ typedef struct { uintptr_t pte; } pte;
 
 #define PTE_PPN_SHIFT 10
 
-#if __riscv_xlen == 64
-#define VA_BITS 39
-#define RISCV_PGLEVEL_BITS 9
-#else  // __riscv_xlen == 32
+#if __riscv_xlen == 32
 #define VA_BITS 32
 #define RISCV_PGLEVEL_BITS 10
+#else  // __riscv_xlen == 64 or x86 test
+#define VA_BITS 39
+#define RISCV_PGLEVEL_BITS 9
 #endif
 
 #define RISCV_PGSHIFT 12
