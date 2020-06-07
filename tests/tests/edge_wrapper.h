@@ -15,7 +15,7 @@ typedef struct packaged_str{
 
 typedef unsigned char byte;
 
-int edge_init(Keystone* enclave);
+int edge_init(Keystone::Enclave* enclave);
 
 void print_buffer_wrapper(void* buffer);
 unsigned long print_buffer(char* str);
