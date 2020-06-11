@@ -241,7 +241,7 @@ static enclave_ret_code copy_word_to_host(uintptr_t dest_ptr, uintptr_t value)
 {
   enclave_ret_code ret = ENCLAVE_REGION_OVERLAPS;
 
-  int err = copy8_from_sm(dest_ptr, (uint64_t *)&value);
+  int err = copy_word_from_sm(dest_ptr, (uintptr_t *)&value);
   if (!err) {
     ret = ENCLAVE_SUCCESS;
   }

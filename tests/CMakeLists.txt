@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 3.12)
 project(keystone_test C)
 
-SET(CMAKE_C_COMPILER riscv64-unknown-linux-gnu-gcc)
+if (RISCV32)
+  SET(CMAKE_C_COMPILER riscv32-unknown-linux-gnu-gcc)
+  SET(QEMU qemu-riscv32)
+  SET(LIBCMOCKA ../cmocka/libcmocka-static-32.a)
+else ()
+  SET(CMAKE_C_COMPILER riscv64-unknown-linux-gnu-gcc)
+  SET(QEMU qemu-riscv64)
+  SET(LIBCMOCKA ../cmocka/libcmocka-static.a)
+endif()
+
 SET(CMAKE_C_FLAGS -static)
 
 include_directories(
@@ -14,7 +23,7 @@ include_directories(
     ../
 )
 enable_testing()
-SET(CMOCKA_LIBRARY ../cmocka/libcmocka-static.a)
+SET(CMOCKA_LIBRARY ${LIBCMOCKA})
 add_library(cmocka STATIC IMPORTED)
 SET_TARGET_PROPERTIES(cmocka PROPERTIES IMPORTED_LOCATION ${CMOCKA_LIBRARY})
 
@@ -22,7 +31,7 @@ SET_TARGET_PROPERTIES(cmocka PROPERTIES IMPORTED_LOCATION ${CMOCKA_LIBRARY})
 add_executable(test_pmp test_pmp.c mock/machine.c)
 target_link_libraries(test_pmp cmocka)
 add_test(test_pmp
-        qemu-riscv64 ${CMAKE_CURRENT_BINARY_DIR}/test_pmp)
+        ${QEMU} ${CMAKE_CURRENT_BINARY_DIR}/test_pmp)
 set_target_properties(test_pmp
         PROPERTIES
         LINK_FLAGS  "-Wl,--wrap=printm -Wl,--wrap=poweroff -Wl,--wrap=disabled_hart_mask -Wl,--wrap=hart_mask"
@@ -52,7 +61,7 @@ add_executable(test_enclave
                 )
 target_link_libraries(test_enclave cmocka)
 add_test(test_enclave
-        qemu-riscv64 ${CMAKE_CURRENT_BINARY_DIR}/test_enclave)
+        ${QEMU} ${CMAKE_CURRENT_BINARY_DIR}/test_enclave)
 set_target_properties(test_enclave
         PROPERTIES
         COMPILE_FLAGS -DTARGET_PLATFORM_HEADER=\\"..\/platform\/default\/default.h\\"
@@ -70,9 +79,9 @@ set_target_properties(test_enclave
           -Wl,--wrap=sanctum_sm_secret_key \
           -Wl,--wrap=sanctum_dev_public_key \
           -Wl,--wrap=copy1_to_sm \
-          -Wl,--wrap=copy8_to_sm \
-          -Wl,--wrap=copy64_to_sm \
+          -Wl,--wrap=copy_word_to_sm \
+          -Wl,--wrap=copy_block_to_sm \
           -Wl,--wrap=copy1_from_sm \
-          -Wl,--wrap=copy8_from_sm \
-          -Wl,--wrap=copy64_from_sm"
+          -Wl,--wrap=copy_word_from_sm \
+          -Wl,--wrap=copy_block_from_sm"
          )
