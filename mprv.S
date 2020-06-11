@@ -1,3 +1,15 @@
+#if __riscv_xlen == 64
+# define STORE    sd
+# define LOAD     ld
+# define LOG_REGBYTES 3
+#elif __riscv_xlen == 32
+# define STORE    sw
+# define LOAD     lw
+# define LOG_REGBYTES 2
+#endif
+
+#define REGBYTES (1 << LOG_REGBYTES)
+
 .text
 
 #define TRY(tryname, r_mtvec, r_mepc, r_mcause, r_mstatus) \
@@ -37,8 +49,8 @@
 
 
 
-.global copy64_to_sm
-copy64_to_sm:
+.global copy_block_to_sm
+copy_block_to_sm:
     # Arguments:
     # a0: dst
     # a1: src
@@ -47,47 +59,47 @@ copy64_to_sm:
     # a3: mepc
     # a4: mcause
     # a5: mstatus
-TRY(copy64in_check, a2, a3, a4, a5)
+TRY(copy_block_in_check, a2, a3, a4, a5)
     SET_MPRV(t0)
-    ld t0, 0x00(a1)
-    ld t1, 0x08(a1)
-    ld t2, 0x10(a1)
-    ld t3, 0x18(a1)
-    ld t4, 0x20(a1)
-    ld t5, 0x28(a1)
-    ld t6, 0x30(a1)
-    ld a6, 0x38(a1)
+    LOAD t0, 0*REGBYTES(a1)
+    LOAD t1, 1*REGBYTES(a1)
+    LOAD t2, 2*REGBYTES(a1)
+    LOAD t3, 3*REGBYTES(a1)
+    LOAD t4, 4*REGBYTES(a1)
+    LOAD t5, 5*REGBYTES(a1)
+    LOAD t6, 6*REGBYTES(a1)
+    LOAD a6, 7*REGBYTES(a1)
     UNSET_MPRV(a1)
-    sd t0, 0x00(a0)
-    sd t1, 0x08(a0)
-    sd t2, 0x10(a0)
-    sd t3, 0x18(a0)
-    sd t4, 0x20(a0)
-    sd t5, 0x28(a0)
-    sd t6, 0x30(a0)
-    sd a6, 0x38(a0)
+    STORE t0, 0*REGBYTES(a0)
+    STORE t1, 1*REGBYTES(a0)
+    STORE t2, 2*REGBYTES(a0)
+    STORE t3, 3*REGBYTES(a0)
+    STORE t4, 4*REGBYTES(a0)
+    STORE t5, 5*REGBYTES(a0)
+    STORE t6, 6*REGBYTES(a0)
+    STORE a6, 7*REGBYTES(a0)
     li a0, 0
-CATCH_ERR(copy64in_check, a1)
+CATCH_ERR(copy_block_in_check, a1)
     li a0, -1
-TRY_END(copy64in_check, a2, a3, a4, a5)
+TRY_END(copy_block_in_check, a2, a3, a4, a5)
 
     UNSET_MPRV(t0)
     ret
 
 
-.global copy8_to_sm
-copy8_to_sm:
+.global copy_word_to_sm
+copy_word_to_sm:
     # a0: dst
     # a1: src
-TRY(copy8in_check, t1, t2, t3, t4)
+TRY(copy_word_in_check, t1, t2, t3, t4)
     SET_MPRV(t5)
-    ld t0, 0x00(a1)
+    LOAD t0, 0x00(a1)
     UNSET_MPRV(t5)
-    sd t0, 0x00(a0)
+    STORE t0, 0x00(a0)
     li a0, 0
-CATCH_ERR(copy8in_check, t5)
+CATCH_ERR(copy_word_in_check, t5)
     li a0, -1
-TRY_END(copy8in_check, t1, t2, t3, t4)
+TRY_END(copy_word_in_check, t1, t2, t3, t4)
 
     UNSET_MPRV(t5)
     ret
@@ -111,8 +123,8 @@ TRY_END(copy1in_check, t1, t2, t3, t4)
     ret
 
 
-.global copy64_from_sm
-copy64_from_sm:
+.global copy_block_from_sm
+copy_block_from_sm:
     # Arguments:
     # a0: dst
     # a1: src
@@ -121,46 +133,46 @@ copy64_from_sm:
     # a3: mepc
     # a4: mcause
     # a5: mstatus
-TRY(copy64out_check, a2, a3, a4, a5)
-    ld t0, 0x00(a1)
-    ld t1, 0x08(a1)
-    ld t2, 0x10(a1)
-    ld t3, 0x18(a1)
-    ld t4, 0x20(a1)
-    ld t5, 0x28(a1)
-    ld t6, 0x30(a1)
-    ld a6, 0x38(a1)
+TRY(copy_block_out_check, a2, a3, a4, a5)
+    LOAD t0, 0*REGBYTES(a1)
+    LOAD t1, 1*REGBYTES(a1)
+    LOAD t2, 2*REGBYTES(a1)
+    LOAD t3, 3*REGBYTES(a1)
+    LOAD t4, 4*REGBYTES(a1)
+    LOAD t5, 5*REGBYTES(a1)
+    LOAD t6, 6*REGBYTES(a1)
+    LOAD a6, 7*REGBYTES(a1)
     SET_MPRV(a1)
-    sd t0, 0x00(a0)
-    sd t1, 0x08(a0)
-    sd t2, 0x10(a0)
-    sd t3, 0x18(a0)
-    sd t4, 0x20(a0)
-    sd t5, 0x28(a0)
-    sd t6, 0x30(a0)
-    sd a6, 0x38(a0)
+    STORE t0, 0*REGBYTES(a0)
+    STORE t1, 1*REGBYTES(a0)
+    STORE t2, 2*REGBYTES(a0)
+    STORE t3, 3*REGBYTES(a0)
+    STORE t4, 4*REGBYTES(a0)
+    STORE t5, 5*REGBYTES(a0)
+    STORE t6, 6*REGBYTES(a0)
+    STORE a6, 7*REGBYTES(a0)
     UNSET_MPRV(a1)
     li a0, 0
-CATCH_ERR(copy64out_check, a1)
+CATCH_ERR(copy_block_out_check, a1)
     li a0, -1
-TRY_END(copy64out_check, a2, a3, a4, a5)
+TRY_END(copy_block_out_check, a2, a3, a4, a5)
 
     UNSET_MPRV(a1)
     ret
 
 
-.global copy8_from_sm
-copy8_from_sm:
+.global copy_word_from_sm
+copy_word_from_sm:
     # a0: dst
     # a1: src
-TRY(copy8out_check, t1, t2, t3, t4)
-    ld t0, 0x00(a1)
+TRY(copy_word_out_check, t1, t2, t3, t4)
+    LOAD t0, 0x00(a1)
     SET_MPRV(t5)
-    sd t0, 0x00(a0)
+    STORE t0, 0x00(a0)
     li a0, 0
-CATCH_ERR(copy8out_check, t5)
+CATCH_ERR(copy_word_out_check, t5)
     li a0, -1
-TRY_END(copy8out_check, t1, t2, t3, t4)
+TRY_END(copy_word_out_check, t1, t2, t3, t4)
 
     UNSET_MPRV(t5)
     ret
