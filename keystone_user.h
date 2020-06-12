@@ -30,47 +30,46 @@
 #define USER_FULL 3
 #define UTM_FULL 4
 
-
 struct runtime_params_t {
-  __u64 runtime_entry;
-  __u64 user_entry;
-  __u64 untrusted_ptr;
-  __u64 untrusted_size;
+  uintptr_t runtime_entry;
+  uintptr_t user_entry;
+  uintptr_t untrusted_ptr;
+  uintptr_t  untrusted_size;
 };
 
 struct keystone_ioctl_create_enclave {
-  __u64 eid;
+  uintptr_t eid;
 
   //Min pages required
-  __u64 min_pages;
+  uintptr_t min_pages;
 
   // virtual addresses
-  __u64 runtime_vaddr;
-  __u64 user_vaddr;
+  uintptr_t runtime_vaddr;
+  uintptr_t user_vaddr;
 
-  __u64 pt_ptr;
-  __u64 utm_free_ptr;
+  uintptr_t pt_ptr;
+  uintptr_t utm_free_ptr;
 
   //Used for hash
-  __u64 epm_paddr;
-  __u64 utm_paddr;
-  __u64 runtime_paddr;
-  __u64 user_paddr;
-  __u64 free_paddr;
+  uintptr_t epm_paddr;
+  uintptr_t utm_paddr;
+  uintptr_t runtime_paddr;
+  uintptr_t user_paddr;
+  uintptr_t free_paddr;
 
-  __u64 epm_size;
-  __u64 utm_size;
+  uintptr_t epm_size;
+  uintptr_t utm_size;
 
   // Runtime Parameters
   struct runtime_params_t params;
 };
 
 struct keystone_ioctl_run_enclave {
-  __u64 eid;
-  __u64 entry;
-  __u64 args_ptr;
-  __u64 args_size;
-  __u64 ret;
+  uintptr_t eid;
+  uintptr_t entry;
+  uintptr_t args_ptr;
+  uintptr_t args_size;
+  uintptr_t ret;
 };
 
 #endif
