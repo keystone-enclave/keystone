@@ -108,7 +108,7 @@ Following code initializes the enclave memory with the eapp/runtime.
 	enclave.init(<eapp binary>, <runtime binary>, params);
 
 
-``Params`` class is defined in ``sdk/lib/host/include/params.h``, and contains enclave paraeters
+``Params`` class is defined in ``sdk/lib/host/include/params.h``, and contains enclave parameters
 such as the size of free memory and the address/size of the untrusted shared buffer.
 These parameters can be configured by following lines:
 
