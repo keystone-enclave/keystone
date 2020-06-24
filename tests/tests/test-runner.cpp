@@ -109,8 +109,8 @@ int main(int argc, char** argv)
     }
   }
 
-  Keystone enclave;
-  Params params;
+  Keystone::Enclave enclave;
+  Keystone::Params params;
   unsigned long cycles1,cycles2,cycles3,cycles4;
 
   params.setFreeMemSize(freemem_size);
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     asm volatile ("rdcycle %0" : "=r" (cycles3));
   }
 
-  int retcode = 0;
+  Keystone::Error retcode = Keystone::Error::Success;
   if( !load_only )
     retcode = enclave.run();
 
@@ -143,5 +143,10 @@ int main(int argc, char** argv)
     printf("[keystone-test] Runtime: %lu cycles\r\n", cycles4-cycles3);
   }
 
-  return retcode;
+  if (retcode != Keystone::Error::Success)
+  {
+    printf("Test Failed\n");
+  }
+
+  return 0;
 }
