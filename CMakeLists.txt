@@ -244,23 +244,22 @@ else()
   set(enabled_sm --enable-sm)
 endif()
 
+if(firesim)
+  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} sm_patches)
+elseif(sifive)
+  add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} sm_patches)
+endif()
+
 add_custom_command(OUTPUT ${sm_wrkdir}/Makefile WORKING_DIRECTORY ${sm_wrkdir}
   DEPENDS ${sm_wrkdir_exists}
   COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
     --enable-logo --with-logo=${confdir}/sifive_logo.txt ${enabled_sm} ${SM_CONFIGURE_ARGS} --with-target-platform=${platform}
   COMMENT "Configuring sm"
 )
-add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile "linux" WORKING_DIRECTORY ${sm_wrkdir}
+add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile "linux" ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
   COMMENT "Building sm"
 )
-
-if(firesim)
-  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} "sm")
-elseif(sifive)
-  add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} "sm")
-endif()
-
 
 ###############################################################################
 ## COMPONENT: tests
