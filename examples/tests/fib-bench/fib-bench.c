@@ -2,7 +2,7 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "eapp_utils.h"
+#include "app/eapp_utils.h"
 
 unsigned long read_cycles(void)
 {
@@ -21,7 +21,7 @@ unsigned long fibonacci_rec(unsigned long in){
 // Returns the number of cycles for a given fibonacci execution
 unsigned long fib_eapp(unsigned long in) {
   unsigned long start = read_cycles();
-  fibonacci_rec(in); 
+  fibonacci_rec(in);
   unsigned long end = read_cycles();
   return end - start;
 }

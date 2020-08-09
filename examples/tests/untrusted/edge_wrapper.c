@@ -2,11 +2,10 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "eapp_utils.h"
-#include "string.h"
-#include "syscall.h"
+#include "app/eapp_utils.h"
+#include "app/string.h"
+#include "app/syscall.h"
 #include "edge_wrapper.h"
-#include "edge_call.h"
 
 void edge_init(){
   /* Nothing for now, will probably register buffers/callsites

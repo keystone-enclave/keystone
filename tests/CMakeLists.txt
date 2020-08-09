@@ -16,18 +16,18 @@ find_package(GTest REQUIRED)
 
 file(GLOB_RECURSE
   HOST_LIB_SOURCES
-  ../lib/host/src/*)
+  ../src/host/*)
 file(GLOB
   HOST_LIB_INCLUDE
-  ../lib/host/include)
+  ../include/host)
 file(GLOB_RECURSE
   COMMON_SOURCES
-  ../common/src/*)
+  ../src/common/*)
 file(GLOB
   COMMON_INCLUDE
-  ../common/include)
+  ../include/common)
 
-include_directories(${PROJECT_NAME} PUBLIC ${HOST_LIB_INCLUDE} ${COMMON_INCLUDE})
+include_directories(${CMAKE_SOURCE_DIR}/../include ${HOST_LIB_INCLUDE} ${COMMON_INCLUDE})
 add_executable(TestKeystone
   ${SOURCES}
   ${HOST_LIB_SOURCES} ${COMMON_SOURCES})

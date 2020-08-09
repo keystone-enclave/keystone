@@ -2,10 +2,10 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "eapp_utils.h"
-#include "string.h"
-#include "syscall.h"
-#include "malloc.h"
+#include "app/eapp_utils.h"
+#include "app/string.h"
+#include "app/syscall.h"
+#include "app/malloc.h"
 #include "edge_wrapper.h"
 
 void EAPP_ENTRY eapp_entry(){

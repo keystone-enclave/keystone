@@ -8,7 +8,7 @@ git:
   depth: 1
 
 env:
-  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR/build
 
 addons:
   apt:
@@ -20,6 +20,7 @@ addons:
     - gcc
     - git
     - cmake
+    - clang-format
 
 branches:
   only:
@@ -29,20 +30,21 @@ branches:
 
 before_install:
   - sudo ./tests/scripts/setup_test.sh
-  - ./scripts/init.sh --runtime-version 87351c
   - ./.fast-setup.sh
+  - pip install --user cpplint
 
 jobs:
   include:
     - stage: build everything & test
       script:
-        - mkdir build
+        - mkdir -p build
         - cd build
-        - cmake -DOUTPUT_DIR=$PWD/../lib ..
+        - cmake ..
         - make
         - make install
+        - make format
         - cd ..
-        - mkdir build.test
+        - mkdir -p build.test
         - cd build.test
         - cmake ../tests
         - make

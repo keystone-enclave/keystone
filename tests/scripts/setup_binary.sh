@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+
 ################################################################
 #                   Replace the variables                      #
 ################################################################
@@ -8,8 +9,15 @@ VAULT_DIR=$(cd `dirname $0` && pwd)
 BUILD_COMMAND=make
 OUTPUT_DIR=$(pwd)
 TEST_DIR=$CMAKE_SOURCE_DIR/test_binary/tests
-EYRIE_DIR=$CMAKE_SOURCE_DIR/../rts/eyrie
+EYRIE_DIR=$CMAKE_BINARY_DIR/eyrie
 EYRIE_PLUGINS="freemem"
+
+# Download Eyrie Runtime
+if [ ! -d $EYRIE_DIR ]
+then
+  git clone https://github.com/keystone-enclave/keystone-runtime $EYRIE_DIR
+fi
+cd $EYRIE_DIR; git checkout 3130f20; cd ..
 
 ################################################################
 #                       Build Enclave                          #
@@ -20,7 +28,6 @@ mkdir -p $OUTPUT_FILES_DIR
 
 # build eyrie runtime
 $EYRIE_DIR/build.sh $EYRIE_PLUGINS
-
 
 make -C $TEST_DIR
 

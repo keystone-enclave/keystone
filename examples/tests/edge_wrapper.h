@@ -5,8 +5,8 @@
 #ifndef _EDGE_WRAPPER_H_
 #define _EDGE_WRAPPER_H_
 
-#include "edge_call.h"
-#include "Keystone.hpp"
+#include "edge/edge_call.h"
+#include "host/keystone.h"
 
 typedef struct packaged_str{
   unsigned long str_offset;
@@ -15,7 +15,7 @@ typedef struct packaged_str{
 
 typedef unsigned char byte;
 
-int edge_init(Keystone* enclave);
+int edge_init(Keystone::Enclave* enclave);
 
 void print_buffer_wrapper(void* buffer);
 unsigned long print_buffer(char* str);
