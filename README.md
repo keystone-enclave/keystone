@@ -6,7 +6,9 @@ If not specified, the install directory will be the same as the build directory.
 
 ```bash
 mkdir build
-cmake .. -DOUTPUT_DIR=<install directory>
+cd build
+export KEYSTONE_SDK_DIR=<install_directory>
+cmake ..
 make
 make install
 ```
@@ -16,7 +18,7 @@ To uninstall,
 make uninstall
 ```
 
-Run the following command to complete the installation. Ideally, you may need to add it to your shell rcfile (e.g., .bashrc)
+Ideally, you may need to add the following to your shell rcfile (e.g., .bashrc)
 
 ```bash
 export KEYSTONE_SDK_DIR=<install directory>

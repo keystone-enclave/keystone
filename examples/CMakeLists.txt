@@ -1,5 +1,18 @@
+enable_language(C CXX ASM)
+
+include(../macros.cmake)
 include(ExternalProject)
 find_package(Git REQUIRED)
+
+if(RISCV32)
+  message(STATUS "riscv32")
+  set(BITS 32)
+else()
+  message(STATUS "riscv64")
+  set(BITS 64)
+endif()
+
+use_riscv_toolchain(${BITS})
 
 # check if SDK has been built and KEYSTONE_SDK_DIR environment variable exists
 if (NOT DEFINED ENV{KEYSTONE_SDK_DIR})

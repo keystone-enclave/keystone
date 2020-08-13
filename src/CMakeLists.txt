@@ -12,8 +12,7 @@ foreach(module ${enabled_libmodules})
     add_subdirectory(${module})
 endforeach()
 
-
-install(DIRECTORY ${COMMON_INCLUDE_DIRS}
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/common
   DESTINATION ${out_dir}/include)
 
 

@@ -1,3 +1,5 @@
+include(macros.cmake)
+
 cmake_minimum_required(VERSION 3.10)
 enable_language(C CXX ASM)
 #-------------------------------------------------------------------------------
@@ -15,16 +17,17 @@ endif()
 set(prog_name    keystone-sdk)
 set(src_dir      ${CMAKE_CURRENT_LIST_DIR})
 set(scripts_dir  ${src_dir}/scripts)
-set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
-
-if (OUTPUT_DIR)
-  if (NOT IS_ABSOLUTE ${OUTPUT_DIR})
-    message(FATAL_ERROR "OUTPUT_DIR needs to be absolute path")
+if (DEFINED ENV{KEYSTONE_SDK_DIR})
+  set(KEYSTONE_SDK_DIR $ENV{KEYSTONE_SDK_DIR})
+  if (NOT IS_ABSOLUTE ${KEYSTONE_SDK_DIR})
+    message(FATAL_ERROR "KEYSTONE_SDK_DIR needs to be absolute path")
   endif()
-  get_filename_component(OUTPUT_DIR ${OUTPUT_DIR} ABSOLUTE)
-  set(out_dir    ${OUTPUT_DIR})
+  get_filename_component(KEYSTONE_SDK_DIR ${KEYSTONE_SDK_DIR} ABSOLUTE)
+  set(out_dir    ${KEYSTONE_SDK_DIR})
 else()
+  message(FATAL_ERROR " * Set KEYSTONE_SDK_DIR to the path you want to install the SDK.\n"
+    " * Try `export KEYSTONE_SDK_DIR=<path/to/SDK>`")
   set(out_dir    ${CMAKE_BINARY_DIR})
 endif()
 
@@ -38,7 +41,6 @@ message(" *** Install path: ${out_dir}")
 # Program and flags
 #-------------------------------------------------------------------------------
 
-include(macros.cmake)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE    "Debug")
@@ -53,45 +55,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -g)
 endif()
 
-execute_process(
-    COMMAND which ${cross_compile}gcc
-    OUTPUT_VARIABLE CROSSCOMPILE
-    RESULT_VARIABLE ERROR)
-
-if (NOT "${ERROR}" STREQUAL 0)
-    message(FATAL_ERROR "RISCV Toochain is not found")
-endif()
-
-string(STRIP ${CROSSCOMPILE} CROSSCOMPILE)
-string(REPLACE "gcc" "" CROSSCOMPILE ${CROSSCOMPILE})
-
-message(STATUS "Tagret tripplet: ${CROSSCOMPILE}")
-
-set(CC              ${CROSSCOMPILE}gcc)
-set(CXX             ${CROSSCOMPILE}g++)
-set(LD              ${CROSSCOMPILE}ld)
-set(AR              ${CROSSCOMPILE}ar)
-set(OBJCOPY         ${CROSSCOMPILE}objcopy)
-set(OBJDUMP         ${CROSSCOMPILE}objdump)
-set(CFLAGS          "-Wall -Werror")
-
-global_set(CMAKE_C_COMPILER        ${CC}${EXT})
-global_set(CMAKE_ASM_COMPILER        ${CC}${EXT})
-global_set(CMAKE_CXX_COMPILER      ${CXX}${EXT})
-global_set(CMAKE_LINKER            ${LD}${EXT})
-global_set(CMAKE_AR                ${AR}${EXT})
-global_set(CMAKE_OBJCOPY           ${OBJCOPY}${EXT})
-global_set(CMAKE_OBJDUMP           ${OBJDUMP}${EXT})
-global_set(CMAKE_C_FLAGS           ${CMAKE_C_FLAGS} ${CFLAGS})
-
-check_compiler(${CMAKE_C_COMPILER})
-check_compiler(${CMAKE_CXX_COMPILER})
-
-global_set(CMAKE_C_COMPILER_WORKS      1)
-global_set(CMAKE_CXX_COMPILER_WORKS    1)
-
-global_set(CMAKE_SYSTEM_NAME    "Linux")
-
+use_riscv_toolchain(${BITS})
 ################################################################################
 # BUILD PROJECTS
 ################################################################################
