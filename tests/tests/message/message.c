@@ -8,7 +8,7 @@ void EAPP_ENTRY eapp_entry(){
    char *msg3 = "MESSAGE 3!\n"; 
 
    char buf[13]; 
-   int uid = 0; 
+   int uid = get_uid(); 
    edge_init(); 
 
    send_msg(uid, msg1, 13);
