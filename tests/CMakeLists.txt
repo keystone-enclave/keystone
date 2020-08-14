@@ -14,7 +14,7 @@ set(CMAKE_CXX_FLAGS "-Wall -std=c++11")
 set(CMAKE_CXX_COMPILER  g++)
 set(CMAKE_C_FLAGS "-Wall")
 
-find_package(GTest REQUIRED)
+find_package(GTest)
 
 file(GLOB_RECURSE
   HOST_LIB_SOURCES
