@@ -8,10 +8,10 @@
 #include <iostream>
 #include "gtest/gtest.h"
 
-#define EYRIE_RT "test_binary/eyrie-rt"
-#define TEST_EAPP "test_binary/stack.eapp_riscv"
-#define FAKE_EAPP "test_binary/fake_file.riscv"
-#define FAKE_RT "test_binary/fake-rt"
+#define EYRIE_RT "eyrie-rt"
+#define TEST_EAPP "stack.eapp_riscv"
+#define FAKE_EAPP "fake_file.riscv"
+#define FAKE_RT "fake-rt"
 #define MD_SIZE 64
 
 const uint8_t ref_hash[MD_SIZE] = {

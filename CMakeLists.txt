@@ -110,5 +110,6 @@ add_custom_target("uninstall"
   rm -rf ${out_dir}/include)
 
 add_subdirectory(examples EXCLUDE_FROM_ALL)
+add_subdirectory(tests EXCLUDE_FROM_ALL)
 
 add_subdirectory(.post-install)

@@ -54,15 +54,10 @@ The Keystone SDK uses GoogleTest as a framework to run various tests. The test f
 Before you can run the tests, you must install the GoogleTest libaries.
 There is a setup script under `tests/scripts/setup_test.sh` which installs the GoogleTest source code and builds the library.
 
-You'll be compiling the tests with a separate `CMakeLists.txt` located at `tests` directory
 The unit tests will be running on your host machine (not RISC-V QEMU).
 
-In order to run the unit tests, do the following (in the sdk source directory)
+In order to run the unit tests, do the following:
 
 ```
-mkdir build.test
-cmake ../tests
-make
 make check
 ```
-

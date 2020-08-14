@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+include(../macros.cmake)
+
 project(keystone-sdk-test C CXX)
 
 set(SOURCES
@@ -27,7 +29,7 @@ file(GLOB
   COMMON_INCLUDE
   ../include/common)
 
-include_directories(${CMAKE_SOURCE_DIR}/../include ${HOST_LIB_INCLUDE} ${COMMON_INCLUDE})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include ${HOST_LIB_INCLUDE} ${COMMON_INCLUDE})
 add_executable(TestKeystone
   ${SOURCES}
   ${HOST_LIB_SOURCES} ${COMMON_SOURCES})
@@ -38,11 +40,15 @@ target_link_libraries(TestKeystone ${GTEST_LIBRARIES})
 add_test(NAME TestKeystone
   COMMAND ./TestKeystone)
 
-add_custom_target(check
+add_custom_target(check DEPENDS binaries
   COMMAND env CTEST_OUTPUT_ON_FAILURE=1 GTEST_COLOR=1
   ${CMAKE_CTEST_COMMAND}
   DEPENDS TestKeystone)
 
 enable_testing()
 
-add_subdirectory(test_binary)
+add_custom_target(binaries ALL
+  COMMAND
+  env CMAKE_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/ CMAKE_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/
+  ${CMAKE_CURRENT_SOURCE_DIR}/scripts/setup_binary.sh
+)
