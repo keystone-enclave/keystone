@@ -64,7 +64,7 @@ then
   cd sdk
   mkdir -p build
   cd build
-  cmake .. -DOUTPUT_DIR=$(pwd)
+  cmake ..
   make
   make install
   cd ../..
