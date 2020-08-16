@@ -24,36 +24,29 @@ outlined in :doc:`Quick Start <../Running-Keystone-with-QEMU>`.
 Set ``PATH`` to include RISC-V tools and ``KEYSTONE_SDK_DIR`` to point the
 absolute path to ``sdk`` directory.
 
-::
-
-	export PATH=$PATH:<path to RISC-V tools>
-	export KEYSTONE_SDK_DIR=<path to SDK>
-
-
-
 First Build
 -----------
 
 All code and build tools for this tutorial are found in
 ``sdk/examples/hello-native``.
 
-We will be using our standard example build script, ``vault.sh`` for
-this tutorial build to emit a self-extracting archive with all
-binaries needed for the enclave to run.
+You can build the enclave package by running the following command in the build directory
 
-You can read more about this tool in
-:doc:`vault.sh</Building-Components/Vault>`.
+::
 
-For now, you don't need to modify ``vault.sh`` at all. Just run
-``./vault.sh``, and it should build ``hello-native.ke`` and put a copy
-in the buildroot overlay.
+  make hello-native-package
 
-Now, running ``make image`` at the top-level of the Keystone project will
+Copy this into the buildroot overlay directory
+
+::
+
+  cp examples/hello-native/hello-native.ke overlay
+
+Now, running ``make image`` will
 rebuild the qemu image to include our ``hello-native`` packaged binary.
 
 Once booted, insert the kernel module and run ``./hello-native.ke``,
 it should exit with success, but print nothing.
-
 
 Internals
 ---------
@@ -64,10 +57,8 @@ The enclave package consists of three parts:
  - an eapp
 
 In this case, the host code is in ``sdk/examples/hello-native/host/``,
-the runtime is our modular Eyrie runtime (in ``sdk/rts/eyrie/`` if you
-followed the previous guides), and the eapp is in
+the runtime is our modular Eyrie runtime, and the eapp is in
 ``sdk/examples/hello-native/eapp/``.
-
 
 The host contains untrusted code that will ask for an enclave to be
 provisioned, use the SDK to load the runtime and eapp into the enclave
@@ -110,8 +101,8 @@ Modifying the eapp print
 ------------------------
 
 To update the printed message, update the message in
-``eapp_native.c``, re-run the vault.sh to rebuild the packaged
-enclave, then rebuild the top-level qemu image in ``keystone/`` with
+``eapp_native.c``, re-run ``make hello-native-package`` to rebuild the packaged
+enclave, copy the package into the overlay directory, and then do
 ``make image``. If you restart qemu, you'll now have the updated
 ``hello_native.ke`` pacakged enclave application.
 
@@ -136,12 +127,12 @@ Deploy the enclave
 ::
 
 	# [inside QEMU]
-	./hello_native/hello_native.ke
+	./hello_native.ke
 
 You'll see the enclave running!
 
 ::
 
 	Verifying archive integrity... All good.
-	Uncompressing Keystone vault archive  100%
+	Uncompressing Keystone Enclave Package
 	Hello, world!

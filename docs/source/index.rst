@@ -36,7 +36,6 @@ Welcome to Keystone Enclave's documentation!
    :numbered:
 
    Building-Components/Security-Monitor-Platform-Build
-   Building-Components/Vault
    Building-Components/Eyrie
 
 
@@ -47,14 +46,14 @@ Welcome to Keystone Enclave's documentation!
 
    Runtimes/Eyrie
    Runtimes/seL4
-   
+
 .. toctree::
    :maxdepth: 1
    :caption: Keystone Security Monitor:
    :numbered:
 
    Security-Monitor/index
-   
+
 
 .. toctree::
    :maxdepth: 1

@@ -5,7 +5,6 @@ Building a host and enclave application using the SDK is
 straight-forward. See Keystone-Demo and the
 :doc:`Tutorials</Getting-Started/Tutorials/index>` as examples.
 
-
 Toolchain
 ---------
 
@@ -27,5 +26,5 @@ eapps may be a standard unmodified statically linked binary. This
 requires most options for the `eyrie` runtime to be enabled.
 
 Otherwise, eapps need to be linked in a specific way. As this may
-change, please see the ``app.lds`` linker script in the ``tests/tests``
+change, please see the ``app.lds`` linker script in the ``sdk/examples/tests``
 directory to see the most up to date linking requirements.

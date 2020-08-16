@@ -18,16 +18,16 @@ If you wish to compile and run tests by your self, follow the following instruct
 Build Test Binaries
 #############################
 
-Simple tests live under ``tests/tests``.
-You can build the tests by executing ``tests/tests/vault.sh`` (See :doc:`../Building-Components/Vault`).
-Note that ``KEYSTONE_SDK_DIR`` must be set to a built SDK path.
+Test enclaves are a part of Keysonte SDK's examples.
+You can build the tests by executing ``make tests``.
+Note that ``KEYSTONE_SDK_DIR`` must be set to the install path of the SDK.
 
 ::
 
-  ./tests/tests/vault.sh
+  make tests
 
-This command will generate the enclave package named ``tests.ke`` in
-``<build directory>/overlay`` directory.
+This command will build the enclave package named ``tests.ke``
+and copy it into ``<build directory>/overlay`` directory.
 
 Build Disk Image
 #############################
@@ -82,10 +82,10 @@ You can run the test enclaves by using a self-extracting keystone archive called
 
   ./tests.ke
 
-In order to extract the package, run
+In order to extract the package without execution, run
 
 ::
 
-  ./tests.ke --target <dst>
+  ./tests.ke --noexec --target <dst>
 
 Run ``./tests.ke --help`` for more information.

@@ -73,4 +73,4 @@ fi
 # update source.sh
 sed "s|KEYSTONE_SDK_DIR=.*|KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR|" -i source.sh
 
-echo "Keystone is fully setup! You can build everything and run the tests with 'make run-tests'"
+echo "RISC-V toolchain and Keystone SDK have been fully setup"

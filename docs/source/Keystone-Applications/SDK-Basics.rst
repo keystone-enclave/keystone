@@ -10,23 +10,20 @@ The Keystone SDK provides the tools required to build basic enclave
 hosting applications (`hosts`) and enclave applications (`eapps`).
 
 The SDK consists of 4 main components, and examples.
-
- - Host libraries (`lib/host`)
- - Enclave Application libraries (`lib/app`)
- - Edge libraries (`lib/edge`)
- - Runtimes (`rts/`)
-
-
+ - Host libraries (``src/host``)
+ - Enclave application libraries (``src/app``)
+ - Edge libraries (``src/edge``)
+ - Attestation libraries (``src/verifier``)
 
 Host Libraries
 --------------
 
 The host libraries provide an interface for managing enclave
-applications via the `Keystone` class. Most of this library will work
+applications via the ``Enclave`` class. Most of this library will work
 regardless of the runtime, but is tied directly to the kernel driver
 provided in the `riscv-linux` repository branches.
 
-eapp Libraries
+Eapp Libraries
 --------------
 
 The eapp libraries provide both simple enclave tools (EXIT, etc) as
@@ -42,23 +39,14 @@ enclave->host. You can emulate host->enclave calls via polling on this
 interface. The edge libraries are used in many places, including the
 runtime and both host and eapp libraries.
 
-
-Runtime
---------------
-
-The runtime is the system level code that runs in the enclave. It
-handles the enclave entry point and basic system calls for the
-userland enclave, as well as all edgecall data transfers.
-
 Writing A Simple Application
 ============================
 
 The best way to see how to write a simple application is to look a the
-`untrusted` test eapp, and the `keystone-demo` repository.
+``untrusted`` test eapp, and the ``keystone-demo`` repository.
 
 A full system for using a Keystone enclave consists of possibly
 writing 3 things:
-
  - Host (userspace, outside enclave, untrusted)
  - Runtime (system level, inside enclave, trusted) - most users will not modify this
  - Enclave app (userspace, inside enclave, trusted)
@@ -76,11 +64,11 @@ automatically.
 Writing a host
 --------------
 
-Most host functionality is contained in the `Keystone` C++ class in
+Most host functionality is contained in the ``Keystone::Enclave`` C++ class in
 the host library. To start an enclave application, first create one::
 
-  Keystone enclave;
-  Params params;
+  Keystone::Enclave enclave;
+  Keystone::Params params;
 
   [... Optional params settings ...]
 
@@ -89,7 +77,7 @@ the host library. To start an enclave application, first create one::
   edge_init(&enclave);
 
 You can also set other enclave options via the params object,
-including stack size and shared memory size. `edge_init` is an edge
+including stack size and shared memory size. ``edge_init`` is an edge
 wrapper function that registers edge call endpoints in the Keystone
 driver.
 
