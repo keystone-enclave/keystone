@@ -12,7 +12,10 @@ git:
   depth: 1
 
 env:
-  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR/keystone-sdk
+  - RISCV=$TRAVIS_BUILD_DIR/riscv
+    PATH=$PATH:$RISCV/bin
+    KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR/keystone-sdk/build
+    SDK_MIN_REVISION=$(cat SDK_MIN_REVISION)
 
 addons:
   apt:
@@ -28,7 +31,12 @@ before_install:
   - ./.fast-setup.sh
   - git clone "https://github.com/keystone-enclave/keystone-sdk"
   - pushd keystone-sdk
+  - git checkout $SDK_MIN_REVISION
+  - mkdir build
+  - cd build
+  - cmake ..
   - make
+  - make install
   - popd
 
 jobs:

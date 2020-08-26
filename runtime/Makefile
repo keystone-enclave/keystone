@@ -12,7 +12,7 @@ LINK = riscv64-unknown-linux-gnu-ld
 LDFLAGS = -static -nostdlib
 
 SDK_LIB_DIR = $(KEYSTONE_SDK_DIR)/lib
-SDK_INCLUDE_EDGE_DIR = $(SDK_LIB_DIR)/edge/include
+SDK_INCLUDE_EDGE_DIR = $(KEYSTONE_SDK_DIR)/include/edge
 SDK_EDGE_LIB = $(SDK_LIB_DIR)/libkeystone-edge.a
 
 LDFLAGS += -L$(SDK_LIB_DIR)
