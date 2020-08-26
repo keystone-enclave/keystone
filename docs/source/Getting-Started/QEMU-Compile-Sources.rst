@@ -7,7 +7,7 @@ Build All Components (RV64)
 We use `CMake <https://cmake.org/>`_ as a build system. It lets you generate the Makefile for a
 given configuration.
 
-``PATH`` must include the RISC-V tool path.
+``PATH`` must include the RISC-V toolchain.
 
 ::
 
@@ -64,7 +64,7 @@ Thus, rebuilding QEMU may require ``make clean`` in ``qemu``.
 Keystone requires patches for QEMU (1) to emulate the secure boot via on-chip bootrom and (2) to
 apply not-yet-upstreamed bug fixes. All patches are located at ``patches/qemu/``
 
-The following command will configure and build QEMU after applying the patches: 
+The following command will configure and build QEMU after applying the patches:
 
 ::
 
@@ -75,7 +75,7 @@ Build Linux Kernel
 ##############################################################
 
 Kernel config files are located at ``conf/``. RV64 linux will use ``conf/linux-v5.0-defconfig-rv64``.
-The following command will build the linux 
+The following command will build the linux
 
 Keystone requires patches for the Linux kernel to reserve CMA region at boot.
 The patch is located at ``patches/linux/``
@@ -104,25 +104,25 @@ Optionally, you can specify the target platform when you run ``cmake``.
   make sm
 
 The default platform is "default", which does not have any platform-specific features.
-See ``riscv-pk/sm/platform/`` for available platforms. 
+See ``riscv-pk/sm/platform/`` for available platforms.
 See :doc:`../Building-Components/Security-Monitor-Platform-Build` for details.
 
 Build Root-of-Trust Boot ROM
 ##############################################################
 
 This is used for secure boot. With our patch for QEMU, compiled boot code will be copied to the boot
-ROM in QEMU. 
+ROM in QEMU.
 
 ::
 
   # in your <build directory>
   make bootrom
 
-Build Keystone Driver (in-tree)
+Build Keystone Driver
 ##############################################################
 
-Linux module does not support in-tree build. Rebuilding the driver may require ``make clean`` in
-``linux-keystone-driver``.
+Linux module does not support in-tree build.
+Thus, we ``rsync`` the entire source code directory with a build directory and build the driver there.
 
 The following command will build the linux driver for Keystone.
 
@@ -131,24 +131,23 @@ The following command will build the linux driver for Keystone.
   # in your <build directory>
   make driver
 
-Build Tests (in-tree)
+Build Tests
 ##############################################################
 
-The tests will be built in-tree. We will make it out-of-tree soon.
-Rebuilding the tests may require ``make clean`` in ``tests/tests``.
+The tests are a part of Keystone SDK's example enclaves.
+Thus, we build them using ``sdk/examples/CMakeLists.txt``.
 
-The following command will build the tests
+The following command will build the tests and copy the package into the buildroot overlay directory.
 
 ::
 
   # in your <build directory>
   make tests
 
-
 Updating Images
 ##############################################################
 
-Once you have built every component, you may need to update the final images by running
+Once you have built every component, you may need to update the final buildroot image by running
 
 ::
 

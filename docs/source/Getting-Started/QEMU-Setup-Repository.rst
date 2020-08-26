@@ -24,15 +24,30 @@ If you want to compile RISC-V tools from source code, run
 ``./setup.sh`` instead. This may be necessary on some platforms due to
 library issues.
 
-To keep environment variables, add following lines to your ``.bashrc``.
+The script also installs Keystone SDK if ``KEYSTONE_SDK_DIR`` environment variable is not set.
+The default install directory of Keystone SDK is ``$(pwd)/sdk/build``.
+If you want to change the install directory,
+please follow `SDK's README <https://github.com/keystone-enclave/keystone-sdk/blob/master/README.md>`_
+before running ``fast-setup.sh``.
+
+If everything went well, you should see the following message:
 
 ::
 
-  export RISCV=<path/to/keystone>/riscv
-  export PATH=$PATH:$RISCV/bin
-  export KEYSTONE_SDK_DIR=<path/to/keystone>/sdk
+  RISC-V toolchain and Keystone SDK have been fully setup
 
-You can also manually run ``source source.sh`` to set the environment variables.
+After you run ``fast-setup.sh``, run the following command to set relevant environment variables:
+
+::
+
+  source source.sh
+
+To keep the environment variables, add the lines in ``source.sh`` to your shell's startup file.
+For example, if you're using bash, then try:
+
+::
+
+  cat source.sh >> $HOME/.bashrc
 
 .. _QEMUSetupManual:
 
@@ -62,27 +77,16 @@ See `riscv-gnu-toolchain <https://github.com/riscv/riscv-gnu-toolchain>`_ for de
   ./configure --prefix=$(pwd)/../riscv
   make; make linux
 
-Install the Keystone SDK and prepare Eyrie runtime source code.
+Install the Keystone SDK by following
+`SDK's README <https://github.com/keystone-enclave/keystone-sdk/blob/master/README.md>`_.
 
 ::
 
-   cd sdk
-   mkdir build
    cd build
-   cmake .. -DOUTPUT_DIR=$(pwd)/../lib
+   export KEYSTONE_SDK_DIR=<keystone/sdk/install/directory>
+   cmake ..
    make
    make install
-
-Initialize the runtime (i.e., Eyrie) source code.
-
-::
-
-  ./sdk/scripts/init.sh
-
-This initializes the runtime source code at ``./sdk/rts`` based on the version specified in
-``./sdk/rts/eyrie.version``.
-
-For more usage of the script, try the script with ``--help`` flag.
 
 To keep environment variables, add following lines to your ``.bashrc``.
 
@@ -90,6 +94,6 @@ To keep environment variables, add following lines to your ``.bashrc``.
 
   export RISCV=<path/to/keystone>/riscv
   export PATH=$PATH:$RISCV/bin
-  export KEYSTONE_SDK_DIR=<path/to/keystone>/sdk
+  export KEYSTONE_SDK_DIR=<keystone/sdk/install/directory>
 
 You can also manually run ``source source.sh`` to set the environment variables.

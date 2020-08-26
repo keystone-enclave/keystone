@@ -102,8 +102,6 @@ set(linux_vmlinux ${linux_wrkdir}/vmlinux)
 set(linux_vmlinux_stripped ${linux_wrkdir}/vmlinux-stripped)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
-set(tests_srcdir ${CMAKE_SOURCE_DIR}/tests)
-set(tests_wrkdir ${CMAKE_BINARY_DIR}/tests.build)
 set(final_image ${CMAKE_BINARY_DIR}/bbl.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
@@ -261,16 +259,23 @@ add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile "linux" ${sm_patches} W
   COMMENT "Building sm"
 )
 
+if(firesim)
+  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} "sm")
+elseif(sifive)
+  add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} "sm")
+endif()
+
 ###############################################################################
 ## COMPONENT: tests
 ###############################################################################
+set(example_wrkdir examples)
+add_subdirectory(sdk/examples ${example_wrkdir})
+set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 
-add_custom_command(OUTPUT ${tests_wrkdir} COMMAND mkdir -p ${tests_wrkdir})
-add_custom_target("tests" DEPENDS ${tests_srcdir} ${tests_wrkdir}
-  COMMAND OUTPUT_DIR=${overlay_root} ARTIFACTS_DIR=${tests_wrkdir} ${tests_srcdir}/tests/vault.sh
-  COMMENT "Building tests"
-)
-
+add_custom_target("tests" DEPENDS examples ${overlay_root}
+  COMMAND find ${example_wrkdir} -name "tests.ke" | xargs -I{} rsync {} ${overlay_root}
+  COMMENT "Copying example enclave packages"
+  )
 
 ###############################################################################
 ## COMPONENT: image

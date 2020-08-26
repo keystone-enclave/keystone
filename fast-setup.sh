@@ -56,15 +56,21 @@ fi
 git submodule sync --recursive
 git submodule update --init --recursive
 
-# build tests in SDK
-export KEYSTONE_SDK_DIR=$(pwd)/sdk
-cd sdk
-mkdir build
-cd build
-cmake .. -DOUTPUT_DIR=$(pwd)/../lib
-make
-make install
-cd ../..
-./sdk/scripts/init.sh --runtime eyrie --force
+# build SDK if not present
+if [ -z $KEYSTONE_SDK_DIR ]
+then
+  echo "KEYSTONE_SDK_DIR is not set. Installing from $(pwd)/sdk"
+  export KEYSTONE_SDK_DIR=$(pwd)/sdk/build
+  cd sdk
+  mkdir -p build
+  cd build
+  cmake ..
+  make
+  make install
+  cd ../..
+fi
 
-echo "Keystone is fully setup! You can build everything and run the tests with 'make run-tests'"
+# update source.sh
+sed "s|KEYSTONE_SDK_DIR=.*|KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR|" -i source.sh
+
+echo "RISC-V toolchain and Keystone SDK have been fully setup"

@@ -9,7 +9,6 @@ Thus, each enclave source tree contains at least the host and eapp.
 Before jumping into the tutorial, please complete :doc:`Quick Start
 <../Running-Keystone-with-QEMU>`.
 
-
 Prerequisite
 ------------------------------
 
@@ -19,12 +18,7 @@ libc, and will then support a few standard functions such as
 demos and benchmarking.
 
 Set ``PATH`` to include RISC-V tools and ``KEYSTONE_SDK_DIR`` to point the
-absolute path to ``sdk`` directory.
-
-::
-
-	export PATH=$PATH:<path to RISC-V tools>
-	export KEYSTONE_SDK_DIR=<path to SDK>
+absolute path of the installed SDK.
 
 Let's take a look at the example provided in `Keystone SDK
 <https://github.com/keystone-enclave/keystone-sdk>`_.
@@ -33,22 +27,7 @@ Let's take a look at the example provided in `Keystone SDK
 
 	ls sdk/examples/hello
 
-You can find two directories and a build script called ``vault.sh``
-
-vault.sh
-------------------------------
-
-``vault.sh`` is a sample script that builds the enclave. See full
-documentation at :doc:`vault.sh</Building-Components/Vault>`.
-
-
-::
-
-	sdk/examples/hello/vault.sh
-
-To build the enclave application package, run::
-
-  ./vault.sh
+You can find two directories and ``CMakeLists.txt``.
 
 Enclave Application: hello.c
 ------------------------------
@@ -79,8 +58,8 @@ Open ``host.cpp`` in ``sdk/examples/hello/host/``. This is the source code of th
 	#include "edge_call.h"
 	int main(int argc, char** argv)
 	{
-	  Keystone enclave;
-	  Params params;
+	  Keystone::Enclave enclave;
+	  Keystone::Params params;
 
 	  params.setFreeMemSize(1024*1024);
 	  params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 1024*1024);
@@ -96,19 +75,18 @@ Open ``host.cpp`` in ``sdk/examples/hello/host/``. This is the source code of th
 	  return 0;
 	}
 
-``keystone.h`` contains ``Keystone`` class which has several member functions to control the
+``keystone.h`` contains ``Keystone::Enclave`` class which has several member functions to control the
 enclave.
 
 Following code initializes the enclave memory with the eapp/runtime.
 
 .. code-block:: cpp
 
-	Keystone enclave;
-	Params params;
+	Keystone::Enclave enclave;
+	Keystone::Params params;
 	enclave.init(<eapp binary>, <runtime binary>, params);
 
-
-``Params`` class is defined in ``sdk/lib/host/include/params.h``, and contains enclave parameters
+``Keystone::Params`` class is defined in ``sdk/include/host/params.h``, and contains enclave parameters
 such as the size of free memory and the address/size of the untrusted shared buffer.
 These parameters can be configured by following lines:
 
@@ -135,16 +113,27 @@ Finally, the host launches the enclave by
 Enclave Package
 ------------------------------
 
-``vault.sh`` also contains packaging commands using ``makeself``.
+``CMakeLists.txt`` contains packaging commands using ``makeself``.
 ``makeself`` generates a self-extracting archive with a start-up command.
-All files included in ``$PACKAGE_FILES`` are copied into a directory and archived with ``makeself``.
-The final output is ``hello.ke`` which is an executable file for our enclave.
 
-Since we set ``$OUTPUT_DIR`` to buildroot overlay
-directory ``$KEYSTONE_SDK_DIR/../buildroot_overlay/root/$NAME``,
-running ``make image`` in the top-level directory (``keystone``) will generate the buildroot disk
-image
-containing the outputs.
+In order to build the example, try the following in the build directory:
+
+::
+
+  make hello-package
+
+This will generate an enclave package named ``hello.ke`` under ``<build directory>/examples/hello``.
+``hello.ke`` is an self-extracting archive file for the enclave.
+
+Next, copy the package into the buildroot overlay directory.
+
+::
+
+  # in the build directory
+  cp examples/hello/hello.ke ./overlay
+
+Running ``make image`` in the top-level directory (``keystone``) will generate the buildroot disk
+image containing the copied package.
 
 ::
 
@@ -179,5 +168,5 @@ You'll see the enclave running!
 ::
 
 	Verifying archive integrity... All good.
-	Uncompressing Keystone vault archive  100%
+	Uncompressing Keystone Enclave Package
 	hello, world!
