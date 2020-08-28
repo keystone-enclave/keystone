@@ -20,7 +20,7 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE})
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(${eapp_bin}-eyrie
-  "origin/dev-new-sdk"
+  "origin/master"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 

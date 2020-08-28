@@ -31,7 +31,7 @@ target_include_directories(${host_bin}
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(${eapp_bin}-eyrie
-  "origin/dev-new-sdk"
+  "origin/master"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 
