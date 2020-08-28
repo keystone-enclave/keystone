@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-
+ARG CHECKOUT=master
 RUN apt update
 
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
@@ -13,6 +13,7 @@ RUN apt -y install autoconf automake autotools-dev bc \
 
 RUN git clone https://github.com/keystone-enclave/keystone /keystone
 RUN cd /keystone && \
+    git checkout $CHECKOUT && \
     rmdir linux qemu buildroot && \
     ./fast-setup.sh && \
     . ./source.sh && \
