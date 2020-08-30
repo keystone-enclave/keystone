@@ -9,7 +9,7 @@ set(package_script "./hello-native-runner hello-native eyrie-rt")
 # eapp
 
 add_executable(${eapp_bin} ${eapp_src})
-target_link_libraries(${eapp_bin} "-static" ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
+target_link_libraries(${eapp_bin} "-nostdlib -static" ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
 
 target_include_directories(${eapp_bin}
   PUBLIC ${KEYSTONE_SDK_DIR}/include/app
