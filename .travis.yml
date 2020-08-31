@@ -14,7 +14,7 @@ git:
   depth: 1
 
 env:
-  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin KEYSTONE_SDK_DIR=$TRAVIS_BUILD_DIR/sdk
+  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
 
 addons:
   apt:
@@ -93,3 +93,13 @@ jobs:
       after_failure:
         - cat screenlog.0
         - cat output.log
+    - stage: build (sifive)
+      script:
+        - source ./source.sh
+        - mkdir build
+        - cd build
+        - cmake -DLINUX_SIFIVE=y -DSM_PLATFORM=fu540 ../
+        - travis_wait 120 make -j3
+        - cd ..
+        - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
+        - cd linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../linux-git .git;cd ..

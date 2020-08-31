@@ -10,32 +10,47 @@ Fixes will be upstreamed in the future.
 
 If you just want to quickly test Keystone with QEMU, you can start with Docker, which will take <10
 minutes.
-Setting the environment by yourself (without Docker) will take 1-2 hours. 
+Setting the environment by yourself (without Docker) will take 1-2 hours.
 
 Start With Docker
 -----------------------
-The fastest way to try Keystone is through our `Docker <https://www.docker.com/>`_ image (Ubuntu 16.04/18.04).
-The image contains all of our source code, 
-as well as a compiled kernel, QEMU, example binaries, SDK, and GNU tools.
-Note that the source code in the Docker image may contain the latest release, not the latest branch.
-Always make sure you are working with the right version that matches with the documentation.
+The fastest way to try Keystone is through our `Docker <https://www.docker.com/>`_ image (Ubuntu 18.04).
+The image contains all of our source code, as well as a compiled kernel, QEMU, example binaries, SDK, and GNU tools.
 
-Prerequisite: Docker
+You may need to install Docker in your machine before you start.
 
-Download the image and run a container.
+We publish Docker images via `Docker Hub repositories <https://hub.docker.com/orgs/keystoneenclaveorg/repositories>`_.
+The following command will pull an image with everything. Replace ``<tag>`` with the image tag you want to pull.
+For example, if you want to pull an image of ``master`` branch,
+
 ::
 
-  wget https://keystone-enclave.eecs.berkeley.edu/files/keystone-sample-image_docker.tgz
-  docker load --input keystone-sample-image_docker.tgz
-  docker run --name keystone-sample -it keystone-sample-image
+  docker pull keystoneenclaveorg/keystone:master
 
-Now, run tests in the container. See :doc:`./QEMU-Run-Tests` for details.
+The image with ``dev`` tag contains the dev branch.
+
+To run all the tests, you can simply do
+
 ::
-  
+
+  docker run keystoneenclaveorg/keystone:master
+
+Or, to interact with the container via bash, do
+
+::
+
+  docker run -it --entrypoint /bin/bash keystoneenclaveorg/keystone:master
+
+In the interactive mode, you can run tests with the following commands:
+
+::
+
   # In the container
-  su keystone
-  cd ~/keystone
-  make run-tests 
+  cd /keystone
+  source source.sh
+  cd build
+  make run-tests
+
 
 Start Without Docker
 -----------------------

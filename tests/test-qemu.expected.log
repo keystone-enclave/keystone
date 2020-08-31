@@ -2,18 +2,20 @@
 # insmod keystone-driver.ko
 # ./tests.ke
 Verifying archive integrity... All good.
-Uncompressing Keystone vault archive
+Uncompressing Keystone Enclave Package
 testing stack
-testing fibonacci
-testing long-nop
 testing loop
 testing malloc
+testing long-nop
+testing fibonacci
 testing fib-bench
+testing attestation
+Attestation report SIGNATURE is valid
 testing untrusted
 Enclave said: hello world!
 Enclave said: 2nd hello world!
 Enclave said value: 13
 Enclave said value: 20
-testing attestation
-Attestation report SIGNATURE is valid
+testing data-sealing
+Enclave said: Sealing key derivation successful!
 # 

@@ -25,5 +25,3 @@ Example::
 
 Will cleanly rebuild Eyrie with free memory management and libc-style
 environment initialization.
-
-An example of using the wrapper can be seen in :doc:`vault.sh<Vault>`.

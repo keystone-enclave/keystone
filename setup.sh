@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 git submodule sync --recursive
 git submodule update --init --recursive
 
@@ -11,7 +13,21 @@ cd riscv-gnu-toolchain
 make && make linux
 cd ..
 
-# build tests in SDK
-make -C sdk
-export KEYSTONE_SDK_DIR=$(pwd)/sdk
-./sdk/scripts/init.sh --runtime eyrie --force
+# build SDK if not present
+if [ -z $KEYSTONE_SDK_DIR ]
+then
+  echo "KEYSTONE_SDK_DIR is not set. Installing from $(pwd)/sdk"
+  export KEYSTONE_SDK_DIR=$(pwd)/sdk/build
+  cd sdk
+  mkdir -p build
+  cd build
+  cmake ..
+  make
+  make install
+  cd ../..
+fi
+
+# update source.sh
+sed "s|KEYSTONE_SDK_DIR=.*|KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR|" -i source.sh
+
+echo "RISC-V toolchain and Keystone SDK have been fully setup"

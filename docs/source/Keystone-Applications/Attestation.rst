@@ -17,7 +17,7 @@ To use remote attestation in Keystone a remote client needs 3 things:
  - An expected hash for the security monitor
  - A copy of the enclave report after launch
 
-Once you have these items, the ``sdk/lib/verifier`` library provides
+Once you have these items, the ``sdk/src/verifier`` library provides
 the tools to validate the report.
 
 Device Root Keys
