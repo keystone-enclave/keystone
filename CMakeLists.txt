@@ -189,11 +189,9 @@ if(initramfs)
   execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
   string(STRIP ${gid} gid)
   add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
-  add_custom_target("sysroot" DEPENDS "buildroot" ${initramfs_sysroot} ${overlay_dir}
+  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
     COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
     COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
-    )
-  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS "sysroot" ${linux_srcdir} "linux-symvers"
     COMMAND $(MAKE) -C ${linux_srcdir}
       O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
       CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
@@ -281,7 +279,7 @@ add_custom_target("tests" DEPENDS examples ${overlay_root}
 ## COMPONENT: image
 ###############################################################################
 
-add_custom_target("image-deps" DEPENDS "tests" "driver"
+add_custom_target("image-deps" DEPENDS "tests" "driver" ${overlay_root}
   COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
 )
 add_custom_target("image" DEPENDS "buildroot" "sm"
