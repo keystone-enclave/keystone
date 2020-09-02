@@ -43,13 +43,13 @@ echo "Updating and cloning submodules, this may take a long time"
 git config submodule.riscv-gnu-toolchain.update none
 
 # shallow clone submodules ahead of time (Git must be > 2.11)
-if [ ! -d linux ]; then
+if [ ! -e linux/.git ]; then
   git clone --shallow-since=2019-09-14 https://github.com/torvalds/linux.git linux
 fi
-if [ ! -d buildroot ]; then
+if [ ! -e buildroot/.git ]; then
   git clone --shallow-since=2019-08-29 https://github.com/buildroot/buildroot.git buildroot
 fi
-if [ ! -d qemu ]; then
+if [ ! -e qemu/.git ]; then
   git clone --shallow-since=2018-08-14 https://github.com/qemu/qemu.git qemu
 fi
 
