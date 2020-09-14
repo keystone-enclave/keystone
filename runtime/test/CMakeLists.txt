@@ -9,3 +9,8 @@ include(AddCMockaTest)
 enable_testing()
 
 add_cmocka_test(test_string SOURCES string.c COMPILE_OPTIONS -I${CMAKE_BINARY_DIR}/cmocka/include LINK_LIBRARIES cmocka)
+add_cmocka_test(test_merkle
+    SOURCES merkle.c ../sha256.c
+    COMPILE_OPTIONS -DUSE_PAGE_HASH -DUSE_PAGING -DUSE_FREEMEM -D__riscv_xlen=64 -I${CMAKE_BINARY_DIR}/cmocka/include -g
+    LINK_LIBRARIES cmocka)
+

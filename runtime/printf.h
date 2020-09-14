@@ -34,7 +34,6 @@
 
 #include <stdarg.h>
 #include <stddef.h>
-#include "sbi.h"
 
 #ifdef __cplusplus
 extern "C" {
