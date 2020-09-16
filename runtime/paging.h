@@ -35,5 +35,8 @@ static inline uintptr_t __paging_va(uintptr_t pa)
   return (pa - paging_pa_start) + EYRIE_PAGING_START;
 }
 
+uintptr_t
+paging_alloc_backing_page(void);
+
 #endif
 #endif

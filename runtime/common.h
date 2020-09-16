@@ -22,6 +22,7 @@
 // reserved                         14
 #define RISCV_EXCP_STORE_PAGE_FAULT 15
 
+#undef assert
 #define assert(x) \
   if(!(x)) { printf("assertion failed at %s:%d\r\n", __FILE__, __LINE__);\
     sbi_exit_enclave(-1); \

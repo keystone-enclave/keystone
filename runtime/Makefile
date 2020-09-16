@@ -8,7 +8,7 @@ ifndef KEYSTONE_SDK_DIR
 endif
 
 CFLAGS = -Wall -Werror -fPIC -fno-builtin -std=c11 -g $(OPTIONS_FLAGS)
-SRCS = aes.c sha256.c boot.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c rt_util.c mm.c env.c freemem.c paging.c sbi.c
+SRCS = aes.c sha256.c boot.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c rt_util.c mm.c env.c freemem.c paging.c sbi.c merkle.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = $(CROSS_COMPILE)ld
@@ -49,8 +49,8 @@ copy: $(RUNTIME) $(DISK_IMAGE)
 	rm -rf $(MOUNT_DIR)
 
 $(RUNTIME): $(ASM_OBJS) $(OBJS) $(SDK_EDGE_LIB) $(TMPLIB)
-	$(LINK) $(LINKFLAGS) -o $@ $^ -T runtime.lds $(LDFLAGS)
-	$(OBJCOPY) --add-section .options_log=.options_log --set-section-flags .options_log=noload,readonly $(RUNTIME) 
+	$(LINK) -o $@ $^ -T runtime.lds $(LDFLAGS)
+	$(OBJCOPY) --add-section .options_log=.options_log --set-section-flags .options_log=noload,readonly $(RUNTIME)
 
 $(ASM_OBJS): $(ASM_SRCS) $(OBJ_DIR_EXISTS)
 	$(CC) $(CFLAGS) -c $< -o $@

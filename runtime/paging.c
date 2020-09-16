@@ -27,8 +27,8 @@ void paging_dec_user_page(void)
   assert(paging_user_page_count >= 0);
 }
 
-uintptr_t __alloc_backing_page()
-{
+uintptr_t
+paging_alloc_backing_page() {
   uintptr_t next_page;
 
   /* no backing page available */
@@ -241,7 +241,7 @@ uintptr_t paging_evict_and_free_one(uintptr_t swap_va)
   if(swap_va)
     dest_va = swap_va;
   else
-    dest_va = __alloc_backing_page();
+    dest_va = paging_alloc_backing_page();
 
   assert(dest_va >= paging_backing_storage_addr);
   assert(dest_va < paging_backing_storage_addr +
