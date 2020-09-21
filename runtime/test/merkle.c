@@ -1,7 +1,5 @@
 #define _GNU_SOURCE
 
-#define SBI_CALL(...) 0
-
 #include "../merkle.h"
 
 #include <math.h>
@@ -15,6 +13,11 @@
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+void
+sbi_exit_enclave(uintptr_t code) {
+  exit(code);
+}
 
 uintptr_t
 paging_alloc_backing_page() {
