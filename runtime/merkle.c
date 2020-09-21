@@ -115,9 +115,11 @@ merk_verify_single_node(
   sha256_init(&hasher);
 
   if (left) {
+    sha256_update(&hasher, (uint8_t*)&left->ptr, sizeof right->ptr);
     sha256_update(&hasher, left->hash, 32);
   }
   if (right) {
+    sha256_update(&hasher, (uint8_t*)&right->ptr, sizeof right->ptr);
     sha256_update(&hasher, right->hash, 32);
   }
 
@@ -127,6 +129,23 @@ merk_verify_single_node(
 
   sha256_final(&hasher, calculated_hash);
   return memcmp(calculated_hash, node->hash, 32) == 0;
+}
+
+static void
+merk_hash_single_node(
+    merkle_node_t* node, const merkle_node_t* left,
+    const merkle_node_t* right) {
+  SHA256_CTX hasher;
+  sha256_init(&hasher);
+  if (left) {
+    sha256_update(&hasher, (uint8_t*)&left->ptr, sizeof left->ptr);
+    sha256_update(&hasher, left->hash, 32);
+  }
+  if (right) {
+    sha256_update(&hasher, (uint8_t*)&right->ptr, sizeof right->ptr);
+    sha256_update(&hasher, right->hash, 32);
+  }
+  sha256_final(&hasher, node->hash);
 }
 
 bool
@@ -172,22 +191,49 @@ merk_verify(
   }
 }
 
+// Insert a node at the leaf position. May insert a new intermediate node or
+// overwrite an existing one. Returns the node modified.
+static merkle_node_t*
+merk_splice_node(merkle_node_t* leaf, merkle_node_t* node) {
+  if (node->ptr == leaf->ptr) {
+    // We've specified a key that already exists, so overwrite the old node.
+    merk_free_node(leaf);
+    return node;
+  }
+
+  merkle_node_t* new_parent = merk_alloc_node();
+
+  if (node->ptr < leaf->ptr) {
+    *new_parent = (merkle_node_t){
+        .ptr   = leaf->ptr,
+        .left  = node,
+        .right = leaf,
+    };
+    merk_hash_single_node(new_parent, node, leaf);
+  } else {
+    *new_parent = (merkle_node_t){
+        .ptr   = node->ptr,
+        .left  = leaf,
+        .right = node,
+    };
+    merk_hash_single_node(new_parent, leaf, node);
+  }
+
+  return new_parent;
+}
+
 #define MERK_MAX_DEPTH 32
-static merkle_node_t** intermediate_nodes[MERK_MAX_DEPTH] = {};
+static merkle_node_t* intermediate_nodes[MERK_MAX_DEPTH] = {};
 
-void
+int
 merk_insert(merkle_node_t* root, uintptr_t key, const uint8_t hash[32]) {
-  SHA256_CTX hasher;
-
-  merkle_node_t* node = merk_alloc_node();
-  *node               = (merkle_node_t){
+  merkle_node_t new_node_data = {
       .ptr = key,
   };
+  memcpy(new_node_data.hash, hash, 32);
 
-  uint8_t lowest_hash[32];
-
-  memcpy(lowest_hash, hash, 32);
-  memcpy(node->hash, lowest_hash, 32);
+  merkle_node_t* new_node            = merk_alloc_node();
+  *(volatile merkle_node_t*)new_node = new_node_data;
 
   // The root never contains data, only a single pointer to the start
   // of data on its right side.
@@ -195,68 +241,25 @@ merk_insert(merkle_node_t* root, uintptr_t key, const uint8_t hash[32]) {
   // nodes, as the root is merely a "guardian" which must reside in secure
   // memory while others don't need to.
   if (!root->right) {
-    root->right = node;
-    return;
+    merk_hash_single_node(root, NULL, &new_node_data);
+    root->right = new_node;
+    return 0;
   }
 
-  intermediate_nodes[0] = &root;
+  intermediate_nodes[0] = root;
   int i;
 
-  for (i = 1; i < MERK_MAX_DEPTH; i++) {
+  for (i = 0; i < MERK_MAX_DEPTH - 1; i++) {
     // Walk down the BST to find an appropriate location to store our new node.
-    // Races here don't matter so much as they will corrupt the tree, and the
-    // user will be alerted when attempting to locate a node.
 
-    merkle_node_t* parent = *intermediate_nodes[i - 1];
-
-    if (!parent->left && !parent->right) {
-      merkle_node_t* sibling = parent;
-
-      // We've traversed down to a child node, so break it off into a leaf and
-      // insert a new parent node in its place.
-
-      if (node->ptr < sibling->ptr) {
-        *intermediate_nodes[i - 1] = parent = merk_alloc_node();
-
-        *parent = (merkle_node_t){
-            .ptr   = sibling->ptr,
-            .left  = node,
-            .right = sibling,
-        };
-      } else if (node->ptr > sibling->ptr) {
-        *intermediate_nodes[i - 1] = parent = merk_alloc_node();
-
-        *parent = (merkle_node_t){
-            .ptr   = node->ptr,
-            .left  = sibling,
-            .right = node,
-        };
-      } else {
-        // We've specified a key that already exists, so overwrite the old node.
-        i--;
-        *intermediate_nodes[i] = node;
-        merk_free_node(sibling);
-      }
-      break;
-    }
+    merkle_node_t* parent = intermediate_nodes[i];
 
     // Traverse the BST
 
-    if (node->ptr < parent->ptr) {
-      if (!parent->left) {
-        parent->left = node;
-        break;
-      } else {
-        intermediate_nodes[i] = &parent->left;
-      }
-    } else {
-      if (!parent->right) {
-        parent->right = node;
-        break;
-      } else {
-        intermediate_nodes[i] = &parent->right;
-      }
-    }
+    bool traverse_left        = key < parent->ptr;
+    bool child_idx            = traverse_left ^ 1;
+    intermediate_nodes[i + 1] = parent->children[child_idx];
+    if (!intermediate_nodes[i + 1]) break;
   }
 
   if (i == MERK_MAX_DEPTH) {
@@ -269,11 +272,13 @@ merk_insert(merkle_node_t* root, uintptr_t key, const uint8_t hash[32]) {
     assert(false);
   }
 
-  for (i = i - 1; i >= 0; i--) {
+  merkle_node_t curr_node = *intermediate_nodes[i];
+
+  for (; i > 0; i--) {
     // Here we walk back up the tree to percolate up our new hashes.
-    // We keep the previous iteration's hash, as well as the current iteration's
-    // merkle node, in secure memory to avoid any race conditions after writing
-    // to DRAM in the last step.
+    // We keep the previous iteration's merkle node, as well as the current
+    // iteration's merkle node, in secure memory to avoid any race conditions
+    // after writing to DRAM in the last step.
     //
     // We otherwise aren't concerned that an attacker will modify any data
     // in the tree during this stage, as doing so will compromise the integrity
@@ -283,31 +288,55 @@ merk_insert(merkle_node_t* root, uintptr_t key, const uint8_t hash[32]) {
     // We also mark accesses to parent_ptr as volatile to ensure they get
     // written and read with the correct access pattern.
 
-    sha256_init(&hasher);
-    merkle_node_t* parent_ptr = *intermediate_nodes[i];
+    merkle_node_t* parent_ptr = intermediate_nodes[i - 1];
+    merkle_node_t* node_ptr   = intermediate_nodes[i];
     merkle_node_t parent      = *(volatile merkle_node_t*)parent_ptr;
-    assert(!memcmp(
-        lowest_hash, node->hash,
-        32));  // TODO: this sanity checking can probably go away
+    merkle_node_t sibling;
+    bool has_sibling = parent.left && parent.right;
+    int node_idx     = parent.right == node_ptr;
 
-    // Check which child we are, and compute the parent's hash with our
-    // pre-stored `lowest_hash` and the hash of our sibling, if it exists.
-    if (node == parent.left) {
-      sha256_update(&hasher, lowest_hash, 32);
-      if (parent.right) sha256_update(&hasher, parent.right->hash, 32);
-    } else {
-      assert(node == parent.right);
-      if (parent.left) sha256_update(&hasher, parent.left->hash, 32);
-      sha256_update(&hasher, lowest_hash, 32);
+    if (has_sibling)
+      sibling = *(volatile merkle_node_t*)parent.children[!node_idx];
+
+    // Check to see that the sibling we pull is valid.
+    // We don't care about node_ptr races here, because if it's been tampered
+    // with, verifying against parent will fail (eventually). And we already
+    // stored the node data we'll be using later on in curr_node, anyway.
+    if (has_sibling) {
+      const merkle_node_t* copied_children[2];
+      copied_children[node_idx]  = node_ptr;
+      copied_children[!node_idx] = &sibling;
+      if (!merk_verify_single_node(
+              &parent, copied_children[0], copied_children[1]))
+        return -1;
     }
 
-    sha256_final(&hasher, lowest_hash);
-    memcpy(parent.hash, lowest_hash, 32);
+    // At the leaf, insert the new node. merk_splice_node will handle updating
+    // the hashes, so if we insert a new intermediate node we can treat that as
+    // the new "leaf" / bottom-layer node.
+    if (!curr_node.left && !curr_node.right) {
+      node_ptr = intermediate_nodes[i] = merk_splice_node(node_ptr, new_node);
+      curr_node                        = *node_ptr;
 
-    // Writeback
-    *(volatile merkle_node_t*)parent_ptr = parent;
-    node                                 = parent_ptr;
+      parent.children[node_idx] = node_ptr;
+    }
+
+    // Hash our data from the saved curr_node and sibling.
+    assert(node_ptr == parent.children[node_idx]);
+    const merkle_node_t* copied_children[2];
+    copied_children[node_idx]  = &curr_node;
+    copied_children[!node_idx] = has_sibling ? &sibling : NULL;
+    merk_hash_single_node(&parent, copied_children[0], copied_children[1]);
+
+    // Writeback the previous changed node now
+    *(volatile merkle_node_t*)node_ptr = curr_node;
+    curr_node                          = parent;
   }
+
+  // Writeback the final changed node
+  *(volatile merkle_node_t*)root = curr_node;
+
+  return 0;
 }
 
 #endif

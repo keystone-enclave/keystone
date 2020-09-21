@@ -10,14 +10,19 @@ typedef union merkle_node {
   struct {
     uintptr_t ptr;
     uint8_t hash[32];
-    union merkle_node *left, *right;
+    union {
+      struct {
+        union merkle_node *left, *right;
+      };
+      union merkle_node* children[2];
+    };
   };
   struct {
     uint64_t raw_words[8];
   };
 } merkle_node_t;
 
-void
+int
 merk_insert(merkle_node_t* root, uintptr_t key, const uint8_t hash[32]);
 bool
 merk_verify(

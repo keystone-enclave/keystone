@@ -29,9 +29,13 @@ paging_alloc_backing_page() {
 
 const uint8_t*
 random_region() {
-  static const uint8_t* random_region_buf = NULL;
-  if (!random_region_buf)
+  static uint8_t* random_region_buf = NULL;
+  if (!random_region_buf) {
     random_region_buf = (uint8_t*)malloc(RAND_REGION_ENTRIES * RAND_ENTRY_SIZE);
+    for (size_t i = 0; i < RAND_REGION_ENTRIES * RAND_ENTRY_SIZE; i++) {
+      random_region_buf[i] = (uint8_t)rand();
+    }
+  }
   return random_region_buf;
 }
 
@@ -64,7 +68,8 @@ random_region_insert(merkle_node_t* root) {
     sha256_update(&sha, subregion, RAND_ENTRY_SIZE);
     sha256_final(&sha, hash);
 
-    merk_insert(root, (uintptr_t)subregion, hash);
+    int res = merk_insert(root, (uintptr_t)subregion, hash);
+    assert_int_equal(res, 0);
   }
 
   free(idxs);
@@ -156,7 +161,31 @@ test_verify_nonexistant() {
 }
 
 static void
-test_insert_and_verify() {
+test_insert_and_verify_1() {
+  merkle_node_t root       = {};
+  const uint8_t* rand_hash = random_region();
+
+  int res = merk_insert(&root, 1, rand_hash);
+  assert_int_equal(res, 0);
+  assert_true(merk_verify(&root, 1, rand_hash));
+}
+
+static void
+test_insert_and_verify_2() {
+  merkle_node_t root         = {};
+  const uint8_t* rand_hash_1 = random_region();
+  const uint8_t* rand_hash_2 = random_region() + 32;
+
+  int res = merk_insert(&root, 1, rand_hash_1);
+  assert_int_equal(res, 0);
+  res = merk_insert(&root, 2, rand_hash_2);
+  assert_int_equal(res, 0);
+  assert_true(merk_verify(&root, 1, rand_hash_1));
+  assert_true(merk_verify(&root, 2, rand_hash_2));
+}
+
+static void
+test_insert_and_verify_many() {
   merkle_node_t root = random_region_tree();
   assert_int_equal(count_verify_fails(&root), 0);
   struct merk_stats_s stats_0 = merk_stats(&root);
@@ -284,7 +313,8 @@ test_insert_corrupt_insert() {
 
   // Test that merk_insert doesn't incorrectly "validate" a hash that isn't the
   // one we inserted
-  merk_insert(&root, sibling_copy.ptr, sibling_copy.hash);
+  int res = merk_insert(&root, sibling_copy.ptr, sibling_copy.hash);
+  assert_int_not_equal(res, 0);
   ok = merk_verify(&root, leaf_copy.ptr, leaf_copy.hash);
   assert_false(ok);
 }
@@ -294,8 +324,10 @@ test_corrupt_key() {
   merkle_node_t root = {};
   SHA256_CTX sha;
 
-  merk_insert(&root, 1, random_region());
-  merk_insert(&root, 2, random_region() + 32);
+  int res = merk_insert(&root, 1, random_region());
+  assert_int_equal(res, 0);
+  res = merk_insert(&root, 2, random_region() + 32);
+  assert_int_equal(res, 0);
 
   assert_true(merk_verify(&root, 1, random_region()));
   assert_true(merk_verify(&root, 2, random_region() + 32));
@@ -319,7 +351,9 @@ int
 main() {
   const struct CMUnitTest tests[] = {
       cmocka_unit_test(test_verify_nonexistant),
-      cmocka_unit_test(test_insert_and_verify),
+      cmocka_unit_test(test_insert_and_verify_1),
+      cmocka_unit_test(test_insert_and_verify_2),
+      cmocka_unit_test(test_insert_and_verify_many),
       cmocka_unit_test(test_random_insert_stats),
       cmocka_unit_test(test_poison_data),
       cmocka_unit_test(test_poison_leaf),
