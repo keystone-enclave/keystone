@@ -1,4 +1,3 @@
-OVERLAY_DIR=../buildroot_overlay
 DRIVER = keystone-driver.ko
 
 ifneq ($(KERNELRELEASE),)
@@ -11,14 +10,10 @@ ifneq ($(KERNELRELEASE),)
 else
 
 PWD := $(shell pwd)
-KDIR := $(PWD)/../linux
+LINUXSRC := $(PWD)/../linux
 
 default:
-	$(MAKE) -C $(KDIR) ARCH=riscv SUBDIRS=$(PWD) modules
-
-copy:
-	cp $(DRIVER) $(OVERLAY_DIR)
-
+	$(MAKE) -C $(LINUXSRC) ARCH=riscv CROSS_COMPILE=riscv64-unknown-linux-gnu- M=$(PWD)
 
 endif
 
