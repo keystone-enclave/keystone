@@ -28,6 +28,7 @@ addons:
     - git
 
 before_install:
+  - git submodule update --init --recursive --depth=1
   - ./.fast-setup.sh
   - git clone "https://github.com/keystone-enclave/keystone-sdk"
   - pushd keystone-sdk
@@ -47,7 +48,7 @@ jobs:
         - FORMAT_COMMIT_START=$(echo $TRAVIS_COMMIT_RANGE | cut -d. -f1)
         - echo "Formatting from $FORMAT_COMMIT_START"
         - git clang-format --diff $FORMAT_COMMIT_START | tee .format-diff
-        - \[ "$(cat .format-diff)" = "no modified files to format" \]
+        - \[ "$(cat .format-diff)" = "no modified files to format" \] || \[ "$(cat .format-diff)" = "clang-format did not modify any files" \]
     - stage: default build
       script:
         - ./build.sh 
@@ -57,3 +58,11 @@ jobs:
     - stage: USE_PAGING
       script:
         - ./build.sh paging
+    - stage: test
+      script:
+        - mkdir -p obj/test
+        - pushd obj/test
+        - cmake ../../test
+        - make
+        - ctest -VV || ( cat obj/test/Testing/Temporary/LastTest.log && false )
+        - popd

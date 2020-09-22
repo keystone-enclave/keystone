@@ -21,12 +21,15 @@ CFLAGS += -I$(SDK_INCLUDE_EDGE_DIR) -I ./tmplib
 DISK_IMAGE = ../busybear-linux/busybear.bin
 MOUNT_DIR = ./tmp_busybear
 
-OBJS = $(patsubst %.c,%.o,$(SRCS))
-ASM_OBJS = $(patsubst %.S,%.o,$(ASM_SRCS))
+OBJS = $(patsubst %.c,obj/%.o,$(SRCS))
+ASM_OBJS = $(patsubst %.S,obj/%.o,$(ASM_SRCS))
+OBJ_DIR_EXISTS = obj/.exists
 
 TMPLIB = uaccess.o
 
-all: $(RUNTIME) $(OBJS)
+.PHONY: all test copy clean
+
+all: $(RUNTIME) $(TEST_BIN)
 
 $(TMPLIB):
 	$(MAKE) -C tmplib
@@ -46,14 +49,24 @@ $(RUNTIME): $(ASM_OBJS) $(OBJS) $(SDK_EDGE_LIB) $(TMPLIB)
 	$(LINK) $(LINKFLAGS) -o $@ $^ -T runtime.lds
 	$(OBJCOPY) --add-section .options_log=.options_log --set-section-flags .options_log=noload,readonly $(RUNTIME)
 
-$(ASM_OBJS): $(ASM_SRCS)
-	$(CC) $(CFLAGS) -c $<
+$(ASM_OBJS): $(ASM_SRCS) $(OBJ_DIR_EXISTS)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-%.o: %.c  $(TMPLIB)
-	$(CC) $(CFLAGS) -c $<
+$(OBJ_DIR_EXISTS):
+	mkdir -p obj
+	touch $(OBJ_DIR_EXISTS)
+
+obj/%.o: %.c  $(TMPLIB) $(OBJ_DIR_EXISTS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test:
+	mkdir -p obj/test
+	cd obj/test; cmake ../../test
+	$(MAKE) -C obj/test
+	$(MAKE) -C obj/test test
 
 clean:
-	rm -f $(RUNTIME) *.o
+	rm -rf $(RUNTIME) obj
 	$(MAKE) -C tmplib clean
 	# for legacy reasons, remove any lingering uaccess.h
 	rm -f uaccess.h
