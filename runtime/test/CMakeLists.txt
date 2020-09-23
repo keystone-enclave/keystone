@@ -13,4 +13,8 @@ add_cmocka_test(test_merkle
     SOURCES merkle.c ../sha256.c
     COMPILE_OPTIONS -DUSE_PAGE_HASH -DUSE_PAGING -DUSE_FREEMEM -D__riscv_xlen=64 -I${CMAKE_BINARY_DIR}/cmocka/include -g
     LINK_LIBRARIES cmocka)
+add_cmocka_test(test_pageswap
+    SOURCES page_swap.c ../merkle.c ../sha256.c ../aes.c
+    COMPILE_OPTIONS -DUSE_PAGE_HASH -DUSE_PAGE_CRYPTO -DUSE_PAGING -DUSE_FREEMEM -D__riscv_xlen=64 -I${CMAKE_BINARY_DIR}/cmocka/include -g
+    LINK_LIBRARIES cmocka)
 
