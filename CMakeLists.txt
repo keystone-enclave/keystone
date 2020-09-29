@@ -61,6 +61,7 @@ use_riscv_toolchain(${BITS})
 ################################################################################
 include_directories(include)
 add_subdirectory(src)
+install(FILES macros.cmake DESTINATION ${out_dir}/cmake/)
 
 ################################################################################
 # Auto Formatting
@@ -107,7 +108,8 @@ endif()
 add_custom_target("uninstall"
   COMMAND
   rm -rf ${out_dir}/lib
-  rm -rf ${out_dir}/include)
+  rm -rf ${out_dir}/include
+  rm -rf ${out_dir}/cmake)
 
 add_subdirectory(examples EXCLUDE_FROM_ALL)
 add_subdirectory(tests EXCLUDE_FROM_ALL)

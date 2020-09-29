@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.10)
+include(ExternalProject)
+
 macro(global_set Name Value)
     #  message("set ${Name} to " ${ARGN})
     set(${Name} "${Value}" CACHE STRING "NoDesc" FORCE)
