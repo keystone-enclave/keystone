@@ -44,7 +44,12 @@ remap_kernel_space(uintptr_t runtime_base,
                    uintptr_t runtime_size)
 {
   /* eyrie runtime is supposed to be smaller than a megapage */
+
+  #if __riscv_xlen == 64
   assert(runtime_size <= RISCV_GET_LVL_PGSIZE(2));
+  #elif __riscv_xlen == 32
+  assert(runtime_size <= RISCV_GET_LVL_PGSIZE(1));
+  #endif 
 
   map_with_reserved_page_table(runtime_base, runtime_size,
      runtime_va_start, kernel_l2_page_table, kernel_l3_page_table);

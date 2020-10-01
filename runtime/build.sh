@@ -3,6 +3,7 @@
 EYRIE_SOURCE_DIR=`dirname $0`
 REQ_PLUGINS=${@:1}
 OPTIONS_LOG=${EYRIE_SOURCE_DIR}/.options_log
+BITS="64"
 
 # Build known plugins
 declare -A PLUGINS
@@ -22,7 +23,9 @@ OPTIONS_FLAGS=
 echo > $OPTIONS_LOG
 
 for plugin in $REQ_PLUGINS; do
-    if [[ ! ${PLUGINS[$plugin]+_} ]]; then
+    if [ $plugin == 'rv32' ]; then
+	BITS="32"
+    elif [[ ! ${PLUGINS[$plugin]+_} ]]; then
         echo "Unknown Eyrie plugin '$plugin'. Skipping"
     else
         OPTIONS_FLAGS+=${PLUGINS[$plugin]}
@@ -30,6 +33,7 @@ for plugin in $REQ_PLUGINS; do
     fi
 done
 
+export BITS
 export OPTIONS_FLAGS
 make -C $EYRIE_SOURCE_DIR clean
 make -C $EYRIE_SOURCE_DIR
