@@ -71,11 +71,6 @@
 #define FLAGS_LONG_LONG (1U <<  9U)
 #define FLAGS_PRECISION (1U << 10U)
 
-void _putchar(char character)
-{
-  SBI_CALL_1(SBI_CONSOLE_PUTCHAR, character);
-}
-
 // output function type
 typedef void (*out_fct_type)(char character, void* buffer, size_t idx, size_t maxlen);
 
@@ -108,7 +103,7 @@ static inline void _out_char(char character, void* buffer, size_t idx, size_t ma
 {
   (void)buffer; (void)idx; (void)maxlen;
   if (character) {
-    _putchar(character);
+    sbi_putchar(character);
   }
 }
 

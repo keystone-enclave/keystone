@@ -1,9 +1,10 @@
 #ifndef _RT_UTIL_H_
 #define _RT_UTIL_H_
 
-#include "regs.h"
 #include <stddef.h>
-#include "vm.h"
+
+#include "regs.h"
+#include "vm_defs.h"
 
 #define FATAL_DEBUG
 

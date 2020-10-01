@@ -1,8 +1,9 @@
 #ifndef _MM_H_
 #define _MM_H_
-#include <stdint.h>
 #include <stddef.h>
-#include "vm.h"
+#include <stdint.h>
+
+#include "vm_defs.h"
 
 uintptr_t translate(uintptr_t va);
 pte* pte_of_va(uintptr_t va);

@@ -4,14 +4,15 @@
 #define __PAGING_H__
 
 #include <stdint.h>
+
+#include "common.h"
+#include "freemem.h"
+#include "mm.h"
 #include "printf.h"
 #include "regs.h"
-#include "common.h"
-#include "vm.h"
-#include "mm.h"
-#include "freemem.h"
-#include "string.h"
 #include "rt_util.h"
+#include "string.h"
+#include "vm_defs.h"
 
 unsigned int paging_remaining_pages(void);
 void init_paging(uintptr_t user_pa_start, uintptr_t user_pa_end);

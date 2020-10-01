@@ -6,6 +6,8 @@
 
 #include "paging.h"
 
+#include "vm.h"
+
 uintptr_t paging_backing_storage_addr;
 uintptr_t paging_backing_storage_size;
 uintptr_t paging_next_backing_page_offset;
