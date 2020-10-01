@@ -47,7 +47,7 @@ void not_implemented_fatal(struct encl_ctx* ctx){
 #endif
 
     // Bail to m-mode
-    asm volatile ("csrr a0, scause\r\nli a7, 1111\r\n ecall");
+    __asm__ volatile("csrr a0, scause\r\nli a7, 1111\r\n ecall");
 
     return;
 }
@@ -71,5 +71,5 @@ void rt_page_fault(struct encl_ctx* ctx)
 
 void tlb_flush(void)
 {
-  asm volatile ("fence.i\t\nsfence.vma\t\n");
+  __asm__ volatile("fence.i\t\nsfence.vma\t\n");
 }
