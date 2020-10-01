@@ -58,6 +58,15 @@ jobs:
     - stage: USE_PAGING
       script:
         - ./build.sh paging
+    - stage: USE_PAGE_CRYPTO
+      script:
+        - ./build.sh paging page_crypto
+    - stage: USE_PAGE_HASH
+      script:
+        - ./build.sh paging page_hash
+    - stage: USE_PAGE_CRYPTO + USE_PAGE_HASH
+      script:
+        - ./build.sh paging page_crypto page_hash
     - stage: test
       script:
         - mkdir -p obj/test
