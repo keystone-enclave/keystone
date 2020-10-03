@@ -9,6 +9,7 @@
 #include "edge_wrapper.h"
 #include "report.h"
 #include "test_dev_key.h"
+#include <thread>
 
 const char* longstr = "hellohellohellohellohellohellohellohellohellohello";
 
@@ -54,6 +55,10 @@ void copy_report(void* buffer)
   }
 }
 
+void run_background(Keystone *enclave){
+	enclave->run(); 
+}
+
 int main(int argc, char** argv)
 {
   if(argc < 3 || argc > 8)
@@ -69,6 +74,8 @@ int main(int argc, char** argv)
   size_t untrusted_size = 2*1024*1024;
   size_t freemem_size = 48*1024*1024;
   uintptr_t utm_ptr = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
+  uintptr_t utm_ptr1 = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
+
 
   static struct option long_options[] =
     {
@@ -83,6 +90,10 @@ int main(int argc, char** argv)
 
   char* eapp_file = argv[1];
   char* rt_file = argv[2];
+  
+  char* eapp_file_1 = argv[3];
+  char* rt_file_1 = argv[4];
+
 
   int c;
   int opt_index = 3;
@@ -111,31 +122,50 @@ int main(int argc, char** argv)
 
   Keystone enclave;
   Params params;
+
+  Keystone enclave_1;
+  Params params_1; 
+
   unsigned long cycles1,cycles2,cycles3,cycles4;
 
   params.setFreeMemSize(freemem_size);
   params.setUntrustedMem(utm_ptr, untrusted_size);
 
+  params_1.setFreeMemSize(freemem_size);
+  params_1.setUntrustedMem(utm_ptr1, untrusted_size);
 
   if( self_timing ){
     asm volatile ("rdcycle %0" : "=r" (cycles1));
   }
 
-  enclave.init(eapp_file, rt_file , params);
-
   if( self_timing ){
     asm volatile ("rdcycle %0" : "=r" (cycles2));
   }
-
-  edge_init(&enclave);
 
   if( self_timing ){
     asm volatile ("rdcycle %0" : "=r" (cycles3));
   }
 
   int retcode = 0;
-  if( !load_only )
-    retcode = enclave.run();
+  if( !load_only ){
+    
+    if(!fork()){
+      enclave_1.init(eapp_file_1, rt_file_1, params_1);
+      edge_init(&enclave_1); 
+      run_background(&enclave_1);
+    } else {
+      enclave.init(eapp_file, rt_file , params);
+      edge_init(&enclave);
+      run_background(&enclave);
+    }
+
+/*
+    std::thread t1(run_background, &enclave_1);
+    std::thread t2(run_background, &enclave);   
+    t:x
+1.join();
+    t2.join(); 
+*/  }
 
   if( self_timing ){
     asm volatile ("rdcycle %0" : "=r" (cycles4));

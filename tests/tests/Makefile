@@ -14,10 +14,11 @@ O := $(shell pwd)
 
 RUNTIME := eyrie-rt
 RUNNER := test-runner.riscv
-CCFLAGS := -I$(SDK_INCLUDE_HOST_DIR) -I$(SDK_INCLUDE_EDGE_DIR) -I$(SDK_INCLUDE_VERIFIER_DIR) -std=c++11
+CCFLAGS := -I$(SDK_INCLUDE_HOST_DIR) -I$(SDK_INCLUDE_EDGE_DIR) -I$(SDK_INCLUDE_VERIFIER_DIR) -std=c++11 -lpthread
 LDFLAGS := -L$(SDK_LIB_DIR)
 
-TESTS= message stack fibonacci long-nop loop malloc fib-bench untrusted attestation
+TESTS= granter
+HELPER= grantee
 
 OBJS := $(patsubst %.riscv, %.o,$(RUNNER)) $(KEYSTONE_OBJ) edge_wrapper.o
 SRCS := $(patsubst %.o, %.cpp, $(OBJS))
@@ -34,10 +35,15 @@ tests $(DST_TEST_SCRIPT):
 	$(foreach test, $(TESTS),\
 		$(MAKE) -C $(test) O=$(O)/$(test) ;\
 	)
+
+	$(foreach test,$(HELPER),\
+                $(MAKE) -C $(test) O=$(O)/$(test) ;\
+        )
+
 	rm -f $(DST_TEST_SCRIPT)
 	$(foreach test, $(TESTS), \
 		echo "echo 'testing $(test)'"                    >> $(DST_TEST_SCRIPT) ;\
-		echo "./$(RUNNER) $(test).eapp_riscv $(RUNTIME)" >> $(DST_TEST_SCRIPT) ;\
+		echo "./$(RUNNER) $(test).eapp_riscv $(RUNTIME) grantee.eapp_riscv $(RUNTIME)" >> $(DST_TEST_SCRIPT) ;\
 		echo '[ $$? -eq 0 ] || echo "... ERROR"'         >> $(DST_TEST_SCRIPT) ;\
 	)
 	chmod +x $(DST_TEST_SCRIPT)

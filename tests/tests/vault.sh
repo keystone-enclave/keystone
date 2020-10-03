@@ -11,16 +11,9 @@ BUILD_COMMAND="make -C \"$VAULT_DIR\" O=\"$ARTIFACTS_DIR\""
 OUTPUT_DIR=${OUTPUT_DIR:=$VAULT_DIR/../../buildroot_overlay/root/$NAME}
 EYRIE_DIR=$KEYSTONE_SDK_DIR/rts/eyrie
 EYRIE_PLUGINS="freemem"
-PACKAGE_FILES="stack/stack.eapp_riscv \
-               fibonacci/fibonacci.eapp_riscv \
-               long-nop/long-nop.eapp_riscv \
-               loop/loop.eapp_riscv \
-               malloc/malloc.eapp_riscv \
-               fib-bench/fib-bench.eapp_riscv \
-               untrusted/untrusted.eapp_riscv \
-               attestation/attestation.eapp_riscv \
-	       message/message.eapp_riscv \
-               test-runner.riscv \
+PACKAGE_FILES="granter/granter.eapp_riscv \
+	       grantee/grantee.eapp_riscv \
+	       test-runner.riscv \
                test \
                $EYRIE_DIR/eyrie-rt"
 PACKAGE_SCRIPT="./test"
