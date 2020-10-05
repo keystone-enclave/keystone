@@ -1,12 +1,18 @@
 #ifdef LINUX_SYSCALL_WRAPPING
-#include "uaccess.h"
+
+#define _GNU_SOURCE
 #include "linux_wrap.h"
-#include "syscall.h"
+
+#include <signal.h>
 #include <sys/mman.h>
+#include <sys/utsname.h>
+#include <time.h>
+
 #include "freemem.h"
 #include "mm.h"
 #include "rt_util.h"
-#include <sys/utsname.h>
+#include "syscall.h"
+#include "uaccess.h"
 
 #define CLOCK_FREQ 1000000000
 
@@ -14,7 +20,7 @@
 uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp){
   print_strace("[runtime] clock_gettime not fully supported (clock %x, assuming)\r\n", clock);
   unsigned long cycles;
-  asm volatile ("rdcycle %0" : "=r" (cycles));
+  __asm__ __volatile__("rdcycle %0" : "=r"(cycles));
 
   unsigned long sec = cycles / CLOCK_FREQ;
   unsigned long nsec = (cycles % CLOCK_FREQ);

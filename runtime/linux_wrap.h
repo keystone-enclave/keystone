@@ -2,9 +2,11 @@
 #ifndef _LINUX_WRAP_H_
 #define _LINUX_WRAP_H_
 
+#include <bits/types/sigset_t.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/time.h>
+
+struct timespec;
 
 uintptr_t linux_uname(void* buf);
 uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp);

@@ -55,6 +55,9 @@ jobs:
     - stage: USE_FREEMEM
       script:
         - ./build.sh freemem
+    - stage: USE_LINUX_SYSCALL + USE_FREEMEM
+      script:
+        - ./build.sh linux_syscall freemem
     - stage: USE_PAGING
       script:
         - ./build.sh paging
