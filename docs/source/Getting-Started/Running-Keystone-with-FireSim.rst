@@ -1,132 +1,109 @@
-Testing Keystone with FireSim
-======================================
+Testing Keystone with FireSim (w/ Chipyard Framework)
+=====================================================
 
-`FireSim <https://fires.im>`_ is an FPGA-based cycle-accurate simulator for RISC-V processors.
-Using FireSim, you can test Keystone on open-source processors like `RocketChip <https://github.com/freechipsproject/rocket-chip>`_
+`FireSim <https://fires.im>`_ is an FPGA-based cycle-accurate simulator for
+RISC-V processors.  Using FireSim, you can test Keystone on open-source
+processors like `RocketChip <https://github.com/freechipsproject/rocket-chip>`_
 or `BOOM <https://github.com/riscv-boom/riscv-boom>`_.
+
+FireSim has been integrated into  `Chipyard
+<https://chipyard.readthedocs.io/en/latest/>`_, which is a framework for
+hardware desigining.  We recommend you to follow the `tutorial
+<https://chipyard.readthedocs.io/en/latest/Simulation/FPGA-Accelerated-Simulation.html>`_
+to familiarize yourself with Chipyard and FireSim.
 
 Who needs it?
 -----------------------
 
-If you want to run your enclave application with Keystone, 
-but you don't own any RISC-V processor, FireSim is the way to go.
-FireSim allows you to simulate the processors with reasonably high speed.
-You can actually boot Linux on the simulated processor and run real workloads.
-You can test functionality or measure the performance of Keystone enclaves.
-If you want to improve your enclave system by modifying hardware,
-you can freely modify the processor hardware, and deploy it to Amazon AWS FPGAs using FireSim.
+If you want to run your enclave application with Keystone, but you don't own any
+RISC-V processor, FireSim is the way to go.  FireSim allows you to simulate the
+processors with reasonably high speed.  You can actually boot Linux on the
+simulated processor and run real workloads.  You can test functionality or
+measure the performance of Keystone enclaves.  If you want to improve your
+enclave system by modifying hardware, you can freely modify the processor
+hardware, and deploy it to Amazon AWS FPGAs using FireSim.
 
-Setting Up FireSim Manager Instance
+Setting Up Chipyard
 -------------------------------------
 
-Before we start, you have to create a FireSim manager instance.
-See `FireSim Documentation <https://docs.fires.im/>`_ to setup a manager instance.
-Be sure to use 1.4.0 or later version of FireSim.
+Follow `this documentation
+<https://chipyard.readthedocs.io/en/latest/Chipyard-Basics/Initial-Repo-Setup.html>`_
+to setup the Chipyard repo.  Then, follow `this
+<https://chipyard.readthedocs.io/en/latest/Simulation/FPGA-Accelerated-Simulation.html#firesim-sim-intro>`_
+to setup FireSim.
 
-Building Keystone 
-----------------------------------------
-
-You can generate necessary files for FireSim with CMake.
-
-First, clone the Keystone repository in the **manager instance**.
+We are going to use the latest version of `FireMarshal
+<https://chipyard.readthedocs.io/en/latest/Software/FireMarshal.html>`_.  Thus,
+go to the FireMarshal directory and checkout the dev branch.  The latest
+FireMarshal version we tested is 1.10.0.
 
 ::
-  
-  git clone https://github.com/keystone-enclave/keystone
 
-Follow :doc:`QEMU-Setup-Repository` to setup the repository.
+  cd <chipyard repo>
+  cd software/firemarshal
+  git checkout dev
 
 .. note::
-  FireSim's default manager instance is CentOS 7, where the default CMake package is version 2.
-  In order to use CMake version 3, you need to install it by running ``sudo yum install cmake3``.
-  Use ``cmake3`` instead of ``cmake``.
 
-After you setup the repository, you can run the following commands to build Keystone.
+  RISC-V toolchain must be in your ``PATH`` all time. Don't forget to update
+  your environment variables by ``source env.sh``.
 
-::
-  
-  mkdir <build directory>
-  cd <build directory>
-  cmake .. -Dfiresim=y
-  make
-  make image
-
-CMake with the flag ``-Dfiresim=y`` will automatically generate Makefiles to build
-FireSim-compatible Linux and SM.
-This includes some patches for DTB compatibility.
-Also, the build will forcibly use initramfs for a simpler deployment.
-
-Once you have built the image, you will see ``riscv-pk.build/bbl`` and
-``buildroot.build/images/rootfs.ext2`` under your
-build directory.
-
-You can also boot QEMU machine with the image using ``./scripts/run-qemu.sh``.
-
-Changing FireSim Workload Config
+Download Keystone Workload
 ----------------------------------------
 
-FireSim allows users to change their workload very easily through config files in the manager
-instance.
+We already wrote `the scripts and workload configuration for Keystone
+<https://github.com/keystone-enclave/firemarshal-keystone>`_ that works with the
+latest FireMarshal.  Clone the workload repo into any directory you want.
 
-In the FireSim's root directory, you'll see ``deploy/config_runtime.ini`` which looks as follows:
+::
+
+  git clone https://github.com/keystone-enclave/firemarshal-keystone <workload directory>
+
+The repo includes ``keystone.json`` which you should be using for building
+Keystone software stack using FireMarshal.
+
+
+Build Keystone Software Stack using FireMarshal
+------------------------------------------------
+
+Now, we're ready to build the software stack of Keystone.
+Go to FireMarshal directory, and build the workload.
 
 ::
 
-  # firesim/deploy/config_runtime.ini
-  # ... some other configs ...
-  
-  [workload]
-  workloadname=linux-uniform.json
-  terminateoncompletion=no
+  cd <chipyard repo>
+  cd software/firemarshal
+  ./marshal -v build <path/to/keystone.json>
 
-``linux-uniform.json`` is a file under ``deploy/workloads/``, and defines the boot binary, rootfs and
-so on:
+You should replace ``<path/to/keystone.json>`` with the absolute path to the
+``keystone.json`` in the workload directory.
 
-::
-  
-  # firesim/deploy/workloads/linux-uniform.json
-  {
-    "benchmark_name" : "linux-uniform",
-    "common_bootbinary" : "br-base-bin",
-    "common_rootfs"     : "br-base.img",
-    "common_outputs"    : ["/etc/os-release"],
-    "common_simulation_outputs" : ["uartlog", "memory_stats.csv"]
-  }
-
-
-Now, change ``linux-uniform.json`` to ``keystone.json`` :
+You can launch QEMU to run the tests.
 
 ::
-  
-  # firesim/deploy/config_runtime.ini
-  # ... some other configs ...
-  
+
+  ./marshal -v launch <path/to/keystone.json>
+
+Finally, install the workload in FireSim.
+
+::
+
+  ./marshal -v install <path/to/keystone.json>
+
+``keystone`` workload should be installed in ``<chipyard
+repo>/sims/firesim/deploy/workloads``.
+
+Launching Simulation (FireSim)
+------------------------------
+
+Open ``config_runtime.ini`` in ``<chipyard repo>/sims/firesim/deploy`` and edit
+``[workload]`` section as follows
+
+::
+
   [workload]
   workloadname=keystone.json
-  terminateoncompletion=no
-
-
-Simply, create ``keystone.json``, and make ``common_bootbinary`` point to the ``bbl`` file generated
-by ``make image``. Replace ``<path/to/keystone/build/directory>`` with the path that you built
-Keystone in the
-previous part.
-
-::
-  
-  # firesim/deploy/workloads/keystone.json
-  {
-    "benchmark_name" : "my-keystone"
-    "common_bootbinary" : "<path/to/keystone/build/directory>/riscv-pk.build/bbl",
-    "common_rootfs" : "<path/to/keystone/build/directory>/buildroot.build/images/rootfs.ext2"
-    "common_simulation_outputs" : ["uartlog", "memory_stats.csv"]
-  }
-
-Although ``common_rootfs`` is not required (``bbl`` already contains the rootfs in
-Linux with initramfs), FireSim does not allow it to be an empty field, thus we put the disk image we
-already built.
-
-Launching Simulation
-------------------------------
+  # ...
 
 Use FireSim commands to launch the simulation.
 Go to the top-level FireSim directory and run:
@@ -144,9 +121,11 @@ Launch runfarm and test!
   firesim infrasetup
   firesim boot
 
-You can login to the f1 instance via ``ssh`` and attach to the simulated node using ``screen`` command.
+You can login to the f1 instance via ``ssh`` and attach to the simulated node
+using ``screen`` command.
 
-See `FireSim Single Node Simulation <https://docs.fires.im/en/latest/Running-Simulations-Tutorial/Running-a-Single-Node-Simulation.html>`_ 
+See `FireSim Single Node Simulation
+<https://docs.fires.im/en/latest/Running-Simulations-Tutorial/Running-a-Single-Node-Simulation.html>`_
 for more details.
 
 ::
@@ -163,10 +142,13 @@ for more details.
 Running Keystone Enclaves
 -----------------------------
 
-::
-  
-  # [On the simulated node]
-  insmod keystone-driver.ko
+.. warning::
+
+  We don't support the emulated secure boot in FireSim, so the attestation key
+  of security monitor will be all zeroes.  Thus, the attestation will not work
+  unless you change your bootrom. See `this issue
+  <https://github.com/keystone-enclave/keystone/issues/210>`_.
+
 
 Run ``./tests.ke`` to run all enclaves sequentially.
 
