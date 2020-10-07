@@ -51,7 +51,9 @@ extern struct miscdevice keystone_dev;
 	a0;							\
 })
 
-#define SBI_CALL_3(which, arg0, arg1, arg2) SBI_CALL(which,arg0, arg1, arg2)
+#define SBI_CALL_1(which, arg0) _SBI_CALL(which,arg0, 0, 0, 0, 0, 0)
+#define SBI_CALL_2(which, arg0, arg1) _SBI_CALL(which,arg0, arg1, 0, 0, 0, 0)
+#define SBI_CALL_3(which, arg0, arg1, arg2) _SBI_CALL(which,arg0, arg1, arg2, 0, 0, 0)
 #define SBI_CALL_4(which, arg0, arg1, arg2, arg3) _SBI_CALL(which, arg0, arg1, arg2, arg3, 0, 0)
 #define SBI_CALL_5(which, arg0, arg1, arg2, arg3, arg4) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, 0)
 #define SBI_CALL_6(which, arg0, arg1, arg2, arg3, arg4, arg5) _SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5)

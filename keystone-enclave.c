@@ -6,7 +6,7 @@
 #include "keystone.h"
 /* idr for enclave UID to struct enclave */
 DEFINE_IDR(idr_enclave);
-DEFINE_SPINLOCK(idr_enclave_lock);
+DEFINE_MUTEX(idr_enclave_lock);
 
 #define ENCLAVE_IDR_MIN 0x1000
 #define ENCLAVE_IDR_MAX 0xffff
@@ -92,9 +92,9 @@ unsigned int enclave_idr_alloc(struct enclave* enclave)
 {
   unsigned int ueid;
 
-  spin_lock_bh(&idr_enclave_lock);
+  mutex_lock(&idr_enclave_lock);
   ueid = idr_alloc(&idr_enclave, enclave, ENCLAVE_IDR_MIN, ENCLAVE_IDR_MAX, GFP_KERNEL);
-  spin_unlock_bh(&idr_enclave_lock);
+  mutex_unlock(&idr_enclave_lock);
 
   if (ueid < ENCLAVE_IDR_MIN || ueid >= ENCLAVE_IDR_MAX) {
     keystone_err("failed to allocate UID\n");
@@ -107,17 +107,17 @@ unsigned int enclave_idr_alloc(struct enclave* enclave)
 struct enclave* enclave_idr_remove(unsigned int ueid)
 {
   struct enclave* enclave;
-  spin_lock_bh(&idr_enclave_lock);
+  mutex_lock(&idr_enclave_lock);
   enclave = idr_remove(&idr_enclave, ueid);
-  spin_unlock_bh(&idr_enclave_lock);
+  mutex_unlock(&idr_enclave_lock);
   return enclave;
 }
 
 struct enclave* get_enclave_by_id(unsigned int ueid)
 {
   struct enclave* enclave;
-  spin_lock_bh(&idr_enclave_lock);
+  mutex_lock(&idr_enclave_lock);
   enclave = idr_find(&idr_enclave, ueid);
-  spin_unlock_bh(&idr_enclave_lock);
+  mutex_unlock(&idr_enclave_lock);
   return enclave;
 }
