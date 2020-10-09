@@ -1,7 +1,10 @@
-CC = riscv64-unknown-elf-gcc
-OBJCOPY= riscv64-unknown-elf-objcopy
+march ?= rv64imafdc
+mabi ?= lp64
+CC ?= riscv64-unknown-elf-gcc
+OBJCOPY ?= riscv64-unknown-elf-objcopy
+
 CFLAGS = \
-	-march=rv64imafdc -mcmodel=medany -mabi=lp64 \
+	-march=$(march) -mcmodel=medany -mabi=$(mabi) \
 	-nostdlib -nostartfiles -fno-common -std=gnu11 \
 	-static \
 	-fPIC \
