@@ -7,8 +7,6 @@ ifndef KEYSTONE_SDK_DIR
   $(error KEYSTONE_SDK_DIR is undefined)
 endif
 
-CC = riscv64-unknown-linux-gnu-gcc
-OBJCOPY = riscv64-unknown-linux-gnu-objcopy
 CFLAGS = -Wall -Werror -fPIC -fno-builtin -std=c11 -g $(OPTIONS_FLAGS)
 SRCS = aes.c sha256.c boot.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c rt_util.c mm.c env.c freemem.c paging.c sbi.c
 ASM_SRCS = entry.S
