@@ -15,8 +15,8 @@ First, run the ``rv32-setup.sh`` script (located at the top-level directory) to 
 
   ./rv32-setup.sh
   
-This script will unzip and install the RV32 toolchain and store it in ``./riscv32``. The script will also set the ``$RISCV`` environment variable to point to ``riscv32`` \
-directory. We strongly recommend addinng the following to your ``.bashrc``.
+This script will unzip and install the RV32 toolchain and store it in ``./riscv32``. The script will also set the ``$RISCV`` environment variable to point to the ``riscv32`` \
+directory. We strongly recommend adding the following to your ``.bashrc``.
 
 ::
 
@@ -26,7 +26,7 @@ directory. We strongly recommend addinng the following to your ``.bashrc``.
 Build SDK in RV32
 #############################
 
-We will now have to build the SDK in RV32. Go to your sdk directory and create a build directory. 
+We will now have to build the SDK in RV32. Go to your SDK directory and create a build directory. 
 
 ::
 
