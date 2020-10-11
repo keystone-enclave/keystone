@@ -10,7 +10,8 @@
 #include <errno.h>
 #include "platform.h"
 #include "plugins/plugins.h"
-
+#include <sbi/riscv_asm.h>
+#include <sbi/sbi_console.h>
 uintptr_t mcall_sm_create_enclave(uintptr_t create_args)
 {
   struct keystone_sbi_create create_args_local;
@@ -147,14 +148,13 @@ uintptr_t mcall_sm_not_implemented(uintptr_t* encl_regs, unsigned long cause)
     // discard MSB
     cause = cause << 1;
     cause = cause >> 1;
-    printm("the runtime could not handle interrupt %ld\r\n", cause );
-    printm("mideleg: 0x%lx\r\n");
+    sbi_printf("the runtime could not handle interrupt %ld\r\n", cause );
 
   }
   else
   {
-    printm("the runtime could not handle exception %ld\r\n", cause);
-    printm("medeleg: 0x%lx (expected? %ld)\r\n", read_csr(medeleg), read_csr(medeleg) & (1<<cause));
+    sbi_printf("the runtime could not handle exception %ld\r\n", cause);
+    sbi_printf("medeleg: 0x%lx (expected? %ld)\r\n", csr_read(medeleg), csr_read(medeleg) & (1<<cause));
   }
 
   return exit_enclave(encl_regs, (uint64_t)-1UL, cpu_get_enclave_id());

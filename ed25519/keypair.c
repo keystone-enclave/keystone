@@ -1,5 +1,5 @@
 #include "ed25519.h"
-#include "sha3/sha3.h"
+#include "../sha3/sha3.h"
 #include "ge.h"
 
 

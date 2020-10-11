@@ -6,7 +6,7 @@
 #define _PMP_H_
 
 #include "sm.h"
-#include "mtrap.h"
+#include <sbi/riscv_atomic.h>
 #include <errno.h>
 
 #define PMP_N_REG         8 //number of PMP registers
@@ -40,7 +40,7 @@ enum pmp_priority {
 #endif
 
 #define PMP_SET(n, g, addr, pmpc) \
-{ uintptr_t oldcfg = read_csr(pmpcfg##g); \
+{ uintptr_t oldcfg = csr_read(pmpcfg##g); \
   pmpc |= (oldcfg & ~((uintptr_t)0xff << (uintptr_t)8*(n%PMP_PER_GROUP))); \
   asm volatile ("la t0, 1f\n\t" \
                 "csrrw t0, mtvec, t0\n\t" \
@@ -53,7 +53,7 @@ enum pmp_priority {
 }
 
 #define PMP_UNSET(n, g) \
-{ uintptr_t pmpc = read_csr(pmpcfg##g); \
+{ uintptr_t pmpc = csr_read(pmpcfg##g); \
   pmpc &= ~((uintptr_t)0xff << (uintptr_t)8*(n%PMP_PER_GROUP)); \
   asm volatile ("la t0, 1f \n\t" \
                 "csrrw t0, mtvec, t0 \n\t" \
@@ -66,13 +66,13 @@ enum pmp_priority {
 }
 
 #define PMP_ERROR(error, msg) {\
-  printm("%s:" msg "\n", __func__);\
+  sbi_printf("%s:" msg "\n", __func__);\
   return error; \
 }
 
 /* PMP IPI mailbox */
 struct ipi_msg{
-  uint8_t pending;
+  atomic_t pending;
   uint8_t perm;
 };
 
@@ -93,11 +93,12 @@ typedef int region_id;
 int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_free_atomic(region_id region);
-int pmp_set(region_id n, uint8_t perm);
+int pmp_set_keystone(region_id n, uint8_t perm);
 int pmp_set_global(region_id n, uint8_t perm);
 int pmp_unset(region_id n);
 int pmp_unset_global(region_id n);
 int pmp_detect_region_overlap_atomic(uintptr_t base, uintptr_t size);
+void handle_pmp_ipi();
 
 uintptr_t pmp_region_get_addr(region_id i);
 uint64_t pmp_region_get_size(region_id i);

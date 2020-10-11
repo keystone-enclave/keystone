@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include "pmp.h"
 #include "sm-sbi.h"
-#include "encoding.h"
+#include <sbi/riscv_encoding.h>
 
 #define SMM_BASE  0x80000000
 #define SMM_SIZE  0x200000

@@ -8,6 +8,7 @@
 #include "sm.h"
 #include "enclave.h"
 
+#define MAX_HARTS 16
 /* hart state for regulating SBI */
 struct cpu_state
 {

@@ -40,7 +40,7 @@ struct ctx
   uintptr_t t4;
   uintptr_t t5;
   uintptr_t t6;
-};
+} __packed;
 
 struct csrs
 {
