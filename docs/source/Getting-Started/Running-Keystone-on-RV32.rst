@@ -11,10 +11,14 @@ Setup RV32 Environment
 
 First, run the ``rv32-setup.sh`` script (located at the top-level directory) to install the RV32 toolchain (which uses the GC extensions). 
 
+::
+
   ./rv32-setup.sh
   
 This script will unzip and install the RV32 toolchain and store it in ``./riscv32``. The script will also set the ``$RISCV`` environment variable to point to ``riscv32`` \
 directory. We strongly recommend addinng the following to your ``.bashrc``.
+
+::
 
   export RISCV=$(pwd)/riscv32
   export PATH=$RISCV/bin:$PATH
@@ -23,6 +27,8 @@ Build SDK in RV32
 #############################
 
 We will now have to build the SDK in RV32. Go to your sdk directory and create a build directory. 
+
+::
 
   mkdir <build directory>
   cd <build directory>
@@ -35,6 +41,8 @@ Build Keystone in RV32
 #############################
 
 Similar to the SDK, we may now build the entire Keystone framework in RV32. First, create a build directory and specify the RV32 flag.
+
+::
 
   mkdir <build directory>
   cd <build directory>
