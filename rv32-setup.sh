@@ -11,8 +11,8 @@ then
 else
   echo "Downloading Prebuilt RISC-V 32 Toolchain... "
 
-  export RISCV=$(pwd)/riscv32
-  export PATH=$PATH:$RISCV/bin
+  export RISCV32=$(pwd)/riscv32
+  export PATH=$PATH:$RISCV32/bin
   wget https://keystone-enclave.eecs.berkeley.edu/files/rv32gc.tar.gz
 
   # Check tool integrity
@@ -27,5 +27,5 @@ else
   tar -xzvf rv32gc.tar.gz
   mv riscv32gc riscv32
   rm rv32gc.tar.gz
-  echo "Toolchain has been installed in $RISCV"
+  echo "Toolchain has been installed in $RISCV32"
 fi
