@@ -1,7 +1,7 @@
-#include "plugins/plugins.h"
+#include "plugins.h"
 
 #ifdef PLUGIN_ENABLE_MULTIMEM
-  #include "plugins/multimem.c"
+  #include "multimem.c"
 #endif
 
 uintptr_t

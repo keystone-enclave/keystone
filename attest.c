@@ -5,7 +5,9 @@
 #include "enclave.h"
 #include "crypto.h"
 #include "page.h"
+#include <sbi/sbi_console.h>
 
+typedef uintptr_t pte_t;
 /* This will walk the entire vaddr space in the enclave, validating
    linear at-most-once paddr mappings, and then hashing valid pages */
 int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
@@ -147,7 +149,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
                                          runtime_max_seen,
                                          user_max_seen);
       if(contiguous == -1){
-        printm("BAD MAP: %lx->%lx epm %x %lx uer %x %lx\n",
+        sbi_printf("BAD MAP: %lx->%lx epm %x %lx uer %x %lx\n",
                va_start,phys_addr,
                //in_runtime,
                0,
@@ -170,7 +172,6 @@ enclave_ret_code validate_and_hash_enclave(struct enclave* enclave){
 
   hash_ctx hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
-  int i;
 
   hash_init(&hash_ctx);
 

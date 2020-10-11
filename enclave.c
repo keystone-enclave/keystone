@@ -7,9 +7,10 @@
 #include "pmp.h"
 #include "page.h"
 #include "cpu.h"
-#include <string.h>
-#include "atomic.h"
 #include "platform.h"
+#include <sbi/sbi_string.h>
+#include <sbi/riscv_asm.h>
+#include <sbi/riscv_locks.h>
 
 #define ENCL_MAX  16
 #define ENCL_TIME_SLICE 100000
@@ -17,7 +18,7 @@
 struct enclave enclaves[ENCL_MAX];
 #define ENCLAVE_EXISTS(eid) (eid >= 0 && eid < ENCL_MAX && enclaves[eid].state >= 0)
 
-static spinlock_t encl_lock = SPINLOCK_INIT;
+static spinlock_t encl_lock = SPIN_LOCK_INITIALIZER;
 
 extern void save_host_regs(void);
 extern void restore_host_regs(void);
@@ -43,7 +44,7 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
 
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], regs, 1);
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+  swap_prev_mepc(&enclaves[eid].threads[0], csr_read(mepc));
 
   uintptr_t interrupts = 0;
   write_csr(mideleg, interrupts);
@@ -51,9 +52,9 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   if(load_parameters){
     // passing parameters for a first run
     // $mepc: (VA) kernel entry
-    write_csr(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
+    csr_write(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
     // $sepc: (VA) user entry
-    write_csr(sepc, (uintptr_t) enclaves[eid].params.user_entry);
+    csr_write(sepc, (uintptr_t) enclaves[eid].params.user_entry);
     // $a1: (PA) DRAM base,
     regs[11] = (uintptr_t) enclaves[eid].pa_params.dram_base;
     // $a2: (PA) DRAM size,
@@ -70,7 +71,7 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
     regs[17] = (uintptr_t) enclaves[eid].params.untrusted_size;
 
     // switch to the initial enclave page table
-    write_csr(satp, enclaves[eid].encl_satp);
+    csr_write(satp, enclaves[eid].encl_satp);
   }
 
   switch_vector_enclave();
@@ -80,7 +81,7 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   int memid;
   for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
     if(enclaves[eid].regions[memid].type != REGION_INVALID) {
-      pmp_set(enclaves[eid].regions[memid].pmp_rid, PMP_ALL_PERM);
+      pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_ALL_PERM);
     }
   }
 
@@ -99,7 +100,7 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
   int memid;
   for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
     if(enclaves[eid].regions[memid].type != REGION_INVALID) {
-      pmp_set(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
+      pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
     }
   }
   osm_pmp_set(PMP_ALL_PERM);
@@ -109,25 +110,24 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
 
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs, return_on_resume);
-  swap_prev_mepc(&enclaves[eid].threads[0], read_csr(mepc));
+  swap_prev_mepc(&enclaves[eid].threads[0], csr_read(mepc));
 
   switch_vector_host();
 
   uintptr_t pending = read_csr(mip);
 
   if (pending & MIP_MTIP) {
-    clear_csr(mip, MIP_MTIP);
-    set_csr(mip, MIP_STIP);
+    csr_clear(mip, MIP_MTIP);
+    csr_set(mip, MIP_STIP);
   }
   if (pending & MIP_MSIP) {
-    clear_csr(mip, MIP_MSIP);
-    set_csr(mip, MIP_SSIP);
+    csr_clear(mip, MIP_MSIP);
+    csr_set(mip, MIP_SSIP);
   }
   if (pending & MIP_MEIP) {
-    clear_csr(mip, MIP_MEIP);
-    set_csr(mip, MIP_SEIP);
+    csr_clear(mip, MIP_MEIP);
+    csr_set(mip, MIP_SEIP);
   }
-
 
   // Reconfigure platform specific defenses
   platform_switch_from_enclave(&(enclaves[eid]));
@@ -169,7 +169,7 @@ static enclave_ret_code clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
 
   // Zero out the untrusted memory region, since it may be in
   // indeterminate state.
-  memset((void*)utbase, 0, utsize);
+  sbi_memset((void*)utbase, 0, utsize);
 
   return ENCLAVE_SUCCESS;
 }
@@ -178,7 +178,7 @@ static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
 {
   enclave_id eid;
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
 
   for(eid=0; eid<ENCL_MAX; eid++)
   {
@@ -189,7 +189,7 @@ static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
   if(eid != ENCL_MAX)
     enclaves[eid].state = ALLOCATED;
 
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
 
   if(eid != ENCL_MAX){
     *_eid = eid;
@@ -202,9 +202,9 @@ static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
 
 static enclave_ret_code encl_free_eid(enclave_id eid)
 {
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
   enclaves[eid].state = INVALID;
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
   return ENCLAVE_SUCCESS;
 }
 
@@ -267,7 +267,6 @@ enclave_ret_code copy_enclave_create_args(uintptr_t src, struct keystone_sbi_cre
 
 static int buffer_in_enclave_region(struct enclave* enclave,
                                     void* start, size_t size){
-  int legal = 0;
 
   int i;
   /* Check if the source is in a valid region */
@@ -380,12 +379,9 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   size_t utsize = create_args.utm_region.size;
   enclave_id* eidptr = create_args.eid_pptr;
 
-  uint8_t perm = 0;
   enclave_id eid;
   enclave_ret_code ret;
   int region, shared_region;
-  int i;
-  int region_overlap = 0;
 
   /* Runtime parameters */
   if(!is_create_args_valid(&create_args))
@@ -431,7 +427,7 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   enclaves[eid].regions[1].pmp_rid = shared_region;
   enclaves[eid].regions[1].type = REGION_UTM;
 
-  enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
+  enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_SV39);
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = params;
   enclaves[eid].pa_params = pa_params;
@@ -446,7 +442,7 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
     goto unset_region;
 
   /* Validate memory, prepare hash and signature for attestation */
-  spinlock_lock(&encl_lock); // FIXME This should error for second enter.
+  spin_lock(&encl_lock); // FIXME This should error for second enter.
   ret = validate_and_hash_enclave(&enclaves[eid]);
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
   if(ret != ENCLAVE_SUCCESS)
@@ -461,11 +457,11 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
     goto unlock;
   }
 
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
   return ENCLAVE_SUCCESS;
 
 unlock:
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
 free_platform:
   platform_destroy_enclave(&enclaves[eid]);
 unset_region:
@@ -489,14 +485,14 @@ enclave_ret_code destroy_enclave(enclave_id eid)
 {
   int destroyable;
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
   destroyable = (ENCLAVE_EXISTS(eid)
                  && enclaves[eid].state <= STOPPED);
   /* update the enclave state first so that
    * no SM can run the enclave any longer */
   if(destroyable)
     enclaves[eid].state = DESTROYING;
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
 
   if(!destroyable)
     return ENCLAVE_NOT_DESTROYABLE;
@@ -520,7 +516,7 @@ enclave_ret_code destroy_enclave(enclave_id eid)
     rid = enclaves[eid].regions[i].pmp_rid;
     base = (void*) pmp_region_get_addr(rid);
     size = (size_t) pmp_region_get_size(rid);
-    memset((void*) base, 0, size);
+    sbi_memset((void*) base, 0, size);
 
     //1.b free pmp region
     pmp_unset_global(rid);
@@ -551,14 +547,14 @@ enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid)
 {
   int runable;
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
   runable = (ENCLAVE_EXISTS(eid)
             && enclaves[eid].state == FRESH);
   if(runable) {
     enclaves[eid].state = RUNNING;
     enclaves[eid].n_thread++;
   }
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
 
   if(!runable) {
     return ENCLAVE_NOT_FRESH;
@@ -572,14 +568,14 @@ enclave_ret_code exit_enclave(uintptr_t* encl_regs, unsigned long retval, enclav
 {
   int exitable;
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
   exitable = enclaves[eid].state == RUNNING;
   if (exitable) {
     enclaves[eid].n_thread--;
     if(enclaves[eid].n_thread == 0)
       enclaves[eid].state = STOPPED;
   }
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
 
   if(!exitable)
     return ENCLAVE_NOT_RUNNING;
@@ -593,14 +589,14 @@ enclave_ret_code stop_enclave(uintptr_t* encl_regs, uint64_t request, enclave_id
 {
   int stoppable;
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
   stoppable = enclaves[eid].state == RUNNING;
   if (stoppable) {
     enclaves[eid].n_thread--;
     if(enclaves[eid].n_thread == 0)
       enclaves[eid].state = STOPPED;
   }
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
 
   if(!stoppable)
     return ENCLAVE_NOT_RUNNING;
@@ -621,18 +617,19 @@ enclave_ret_code resume_enclave(uintptr_t* host_regs, enclave_id eid)
 {
   int resumable;
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
   resumable = (ENCLAVE_EXISTS(eid)
                && (enclaves[eid].state == RUNNING || enclaves[eid].state == STOPPED)
                && enclaves[eid].n_thread < MAX_ENCL_THREADS);
+
   if(!resumable) {
-    spinlock_unlock(&encl_lock);
+    spin_unlock(&encl_lock);
     return ENCLAVE_NOT_RESUMABLE;
   } else {
     enclaves[eid].n_thread++;
     enclaves[eid].state = RUNNING;
   }
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
 
   // Enclave is OK to resume, context switch to it
   return context_switch_to_enclave(host_regs, eid, 0);
@@ -647,7 +644,7 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
   if (size > ATTEST_DATA_MAXLEN)
     return ENCLAVE_ILLEGAL_ARGUMENT;
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
   attestable = (ENCLAVE_EXISTS(eid)
                 && (enclaves[eid].state >= FRESH));
 
@@ -666,26 +663,26 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
     goto err_unlock;
   }
 
-  spinlock_unlock(&encl_lock); // Don't need to wait while signing, which might take some time
+  spin_unlock(&encl_lock); // Don't need to wait while signing, which might take some time
 
-  memcpy(report.dev_public_key, dev_public_key, PUBLIC_KEY_SIZE);
-  memcpy(report.sm.hash, sm_hash, MDSIZE);
-  memcpy(report.sm.public_key, sm_public_key, PUBLIC_KEY_SIZE);
-  memcpy(report.sm.signature, sm_signature, SIGNATURE_SIZE);
-  memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
+  sbi_memcpy(report.dev_public_key, dev_public_key, PUBLIC_KEY_SIZE);
+  sbi_memcpy(report.sm.hash, sm_hash, MDSIZE);
+  sbi_memcpy(report.sm.public_key, sm_public_key, PUBLIC_KEY_SIZE);
+  sbi_memcpy(report.sm.signature, sm_signature, SIGNATURE_SIZE);
+  sbi_memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
   sm_sign(report.enclave.signature,
       &report.enclave,
       sizeof(struct enclave_report)
       - SIGNATURE_SIZE
       - ATTEST_DATA_MAXLEN + size);
 
-  spinlock_lock(&encl_lock);
+  spin_lock(&encl_lock);
 
   /* copy report to the enclave */
   ret = copy_enclave_report(&enclaves[eid],
       report_ptr,
       &report);
-      
+
   if (ret) {
     ret = ENCLAVE_ILLEGAL_ARGUMENT;
     goto err_unlock;
@@ -694,7 +691,7 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
   ret = ENCLAVE_SUCCESS;
 
 err_unlock:
-  spinlock_unlock(&encl_lock);
+  spin_unlock(&encl_lock);
   return ret;
 }
 

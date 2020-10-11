@@ -10,8 +10,6 @@
 #endif
 
 #include "sm.h"
-#include "bits.h"
-#include "vm.h"
 #include "pmp.h"
 #include "thread.h"
 #include "crypto.h"

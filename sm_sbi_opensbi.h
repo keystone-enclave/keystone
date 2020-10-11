@@ -1,0 +1,18 @@
+#ifndef _SM_SBI_OPENSBI_H_
+#define _SM_SBI_OPENSBI_H_
+
+#define SBI_SM_EVENT 0x0100
+#include "sbi/sbi_trap.h"
+#include "sbi/sbi_error.h"
+#include "sbi/sbi_scratch.h"
+
+/* Inbound interfaces */
+int sbi_sm_interface(struct sbi_scratch *scratch, unsigned long extension_id,
+                     struct sbi_trap_regs  *regs,
+                     unsigned long *out_val,
+                     struct sbi_trap_info *out_trap);
+void sm_ipi_process();
+
+/* Outbound interfaces */
+int sm_sbi_send_ipi(uintptr_t recipient_mask);
+#endif /*_SM_SBI_OPENSBI_H_*/

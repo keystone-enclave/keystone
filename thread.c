@@ -2,18 +2,17 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
+#include <sbi/riscv_asm.h>
 #include "thread.h"
-#include "mtrap.h"
-
 
 void switch_vector_enclave(){
   extern void trap_vector_enclave();
-  write_csr(mtvec, &trap_vector_enclave);
+  csr_write(mtvec, &trap_vector_enclave);
 }
 
 void switch_vector_host(){
   extern void trap_vector();
-  write_csr(mtvec, &trap_vector);
+  csr_write(mtvec, &trap_vector);
 }
 
 uint64_t getRTC(){
@@ -23,7 +22,7 @@ uint64_t getRTC(){
 void swap_prev_mpp(struct thread_state* thread, uintptr_t* regs){
   //Time interrupts can occur in either user mode or supervisor mode
 
-  int curr_mstatus = read_csr(mstatus);
+  int curr_mstatus = csr_read(mstatus);
   int old_mpp = thread->prev_mpp;
   if(old_mpp < 0){
    //Old MPP bit isn't initialized!
@@ -31,7 +30,7 @@ void swap_prev_mpp(struct thread_state* thread, uintptr_t* regs){
   }
   thread->prev_mpp = curr_mstatus & 0x800;
   int new_mstatus = (curr_mstatus & ~0x800) | old_mpp;
-  write_csr(mstatus, new_mstatus);
+  csr_write(mstatus, new_mstatus);
 }
 
 /* Swaps the entire s-mode visible state, general registers and then csrs */
@@ -66,8 +65,8 @@ thread){
 
 #define LOCAL_SWAP_CSR(csrname) \
   tmp = thread->prev_csrs.csrname;                 \
-  thread->prev_csrs.csrname = read_csr(csrname);   \
-  write_csr(csrname, tmp);
+  thread->prev_csrs.csrname = csr_read(csrname);   \
+  csr_write(csrname, tmp);
 
   LOCAL_SWAP_CSR(sstatus);
   // These only exist with N extension.
@@ -90,7 +89,7 @@ void swap_prev_mepc(struct thread_state* thread, uintptr_t current_mepc)
 {
   uintptr_t tmp = thread->prev_mepc;
   thread->prev_mepc = current_mepc;
-  write_csr(mepc, tmp);
+  csr_write(mepc, tmp);
 }
 
 
@@ -117,7 +116,7 @@ void clean_smode_csrs(struct thread_state* state){
   state->prev_csrs.sie = 0;
   state->prev_csrs.stvec = 0;
   // For now we take whatever the OS was doing
-  state->prev_csrs.scounteren = read_csr(scounteren);
+  state->prev_csrs.scounteren = csr_read(scounteren);
   state->prev_csrs.sscratch = 0;
   state->prev_csrs.sepc = 0;
   state->prev_csrs.scause = 0;

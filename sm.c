@@ -2,18 +2,19 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include <string.h>
 #include "sm.h"
-#include "mtrap.h"
 #include "pmp.h"
-#include "atomic.h"
 #include "crypto.h"
 #include "enclave.h"
 #include "platform.h"
+#include <sbi/sbi_string.h>
+#include <sbi/riscv_locks.h>
+#include <sbi/sbi_console.h>
+#include <sbi/sbi_hart.h>
 
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
-static spinlock_t sm_init_lock = SPINLOCK_INIT;
+static spinlock_t sm_init_lock = SPIN_LOCK_INITIALIZER;
 
 /* from Sanctum BootROM */
 extern byte sanctum_sm_hash[MDSIZE];
@@ -31,7 +32,7 @@ byte dev_public_key[PUBLIC_KEY_SIZE] = { 0, };
 int osm_pmp_set(uint8_t perm)
 {
   /* in case of OSM, PMP cfg is exactly the opposite.*/
-  return pmp_set(os_region_id, perm);
+  return pmp_set_keystone(os_region_id, perm);
 }
 
 int smm_init()
@@ -79,11 +80,11 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
 
 void sm_copy_key()
 {
-  memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
-  memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
-  memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
-  memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
-  memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
+  sbi_memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
+  sbi_memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
+  sbi_memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
+  sbi_memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
+  sbi_memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
 }
 
 /*
@@ -116,30 +117,38 @@ void sm_init(void)
 {
 	// initialize SMM
 
-  spinlock_lock(&sm_init_lock);
+  spin_lock(&sm_init_lock);
 
   if(!sm_init_done) {
     sm_region_id = smm_init();
-    if(sm_region_id < 0)
-      die("[SM] intolerable error - failed to initialize SM memory");
+    if(sm_region_id < 0) {
+      sbi_printf("[SM] intolerable error - failed to initialize SM memory");
+      sbi_hart_hang();
+    }
 
     os_region_id = osm_init();
-    if(os_region_id < 0)
-      die("[SM] intolerable error - failed to initialize OS memory");
+    if(os_region_id < 0) {
+      sbi_printf("[SM] intolerable error - failed to initialize OS memory");
+      sbi_hart_hang();
+    }
 
     sm_init_done = 1;
 
 
-    if(platform_init_global_once() != ENCLAVE_SUCCESS)
-      die("[SM] platform global init fatal error");
+    if(platform_init_global_once() != ENCLAVE_SUCCESS) {
+      sbi_printf("[SM] platform global init fatal error");
+      sbi_hart_hang();
+    }
   }
 
-  pmp_set(sm_region_id, PMP_NO_PERM);
-  pmp_set(os_region_id, PMP_ALL_PERM);
+  pmp_set_keystone(sm_region_id, PMP_NO_PERM);
+  pmp_set_keystone(os_region_id, PMP_ALL_PERM);
 
   /* Fire platform specific global init */
-  if(platform_init_global() != ENCLAVE_SUCCESS)
-    die("[SM] platform global init fatal error");
+  if(platform_init_global() != ENCLAVE_SUCCESS) {
+    sbi_printf("[SM] platform global init fatal error");
+    sbi_hart_hang();
+  }
 
   // Copy the keypair from the root of trust
   sm_copy_key();
@@ -147,7 +156,7 @@ void sm_init(void)
   // Init the enclave metadata
   enclave_init_metadata();
 
-  spinlock_unlock(&sm_init_lock);
+  spin_unlock(&sm_init_lock);
 
   return;
   // for debug

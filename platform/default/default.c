@@ -1,5 +1,5 @@
 /* Default platform does nothing special here */
-#include "enclave.h"
+#include "../../enclave.h"
 
 enclave_ret_code platform_init_global_once(){
   return ENCLAVE_SUCCESS;
