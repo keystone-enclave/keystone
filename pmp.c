@@ -7,6 +7,7 @@
 #include "cpu.h"
 #include "safe_math_util.h"
 #include "sm_sbi_opensbi.h"
+#include "page.h"
 #include <sbi/sbi_hart.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
@@ -214,10 +215,10 @@ int pmp_detect_region_overlap_atomic(uintptr_t addr, uintptr_t size)
 /*   ipi_mailbox[recipient].perm = perm & PMP_ALL_PERM; */
 /*   *OTHER_HLS(recipient)->ipi = 1; */
 /* } */
-
+/*
 static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type, uint8_t perm)
 {
-  uintptr_t mask = sbi_hart_available_mask();
+  uintptr_t mask = sbi_hsm_hart_started_mask();
   ipi_region_idx = region_idx;
   ipi_type = type;
 
@@ -240,25 +241,24 @@ static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type, uint8_t pe
     }
   }
 }
-
+*/
 /*
  * Checks if there is an update in the core's ipi mailbox.
  * If there is (the pending bit is not false), then we update the state of PMP entries.
  * Otherwise, we do nothing.
  */
 void pmp_ipi_update() {
-  if (ipi_mailbox[read_csr(mhartid)].pending) {
+  if (ipi_mailbox[csr_read(mhartid)].pending.counter) {
     if(ipi_type == IPI_PMP_SET) {
-      uint8_t perm = ipi_mailbox[read_csr(mhartid)].perm;
-      pmp_set(ipi_region_idx, perm);
+      uint8_t perm = ipi_mailbox[csr_read(mhartid)].perm;
+      pmp_set_keystone(ipi_region_idx, perm);
     } else {
       pmp_unset(ipi_region_idx);
     }
 
-    ipi_mailbox[read_csr(mhartid)].pending = 0;
+    ipi_mailbox[csr_read(mhartid)].pending.counter = 0;
   }
 }
-
 /*
  * Attempt to acquire the pmp ipi lock. If it fails, it means another core is broadcasting,
  * this means we may need to update our pmp state and then try to get the lock again.
@@ -291,7 +291,7 @@ int pmp_unset_global(int region_idx)
    * by ensuring only one hart can enter this region at a time */
 #ifdef __riscv_atomic
   pmp_ipi_acquire_lock();
-  send_and_sync_pmp_ipi(region_idx, IPI_PMP_UNSET, PMP_NO_PERM);
+  //send_and_sync_pmp_ipi(region_idx, IPI_PMP_UNSET, PMP_NO_PERM);
   pmp_ipi_release_lock();
 #endif
   /* unset PMP of itself */
@@ -310,7 +310,7 @@ int pmp_set_global(int region_idx, uint8_t perm)
    * by ensuring only one hart can enter this region at a time */
 #ifdef __riscv_atomic
   pmp_ipi_acquire_lock();
-  send_and_sync_pmp_ipi(region_idx, IPI_PMP_SET, perm);
+  //send_and_sync_pmp_ipi(region_idx, IPI_PMP_SET, perm);
   pmp_ipi_release_lock();
 #endif
   /* set PMP of itself */

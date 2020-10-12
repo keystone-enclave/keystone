@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include <stdbool.h>
 
 typedef struct { size_t words[8]; } mprv_block;
 
@@ -34,7 +33,7 @@ int copy_from_sm(uintptr_t dst, void *src_buf, size_t len)
             int res = copy_block_from_sm(dst, (mprv_block *)src);
             if (res)
                 return res;
-            
+
             src += MPRV_BLOCK;
             dst += MPRV_BLOCK;
             len -= MPRV_BLOCK;
@@ -73,7 +72,7 @@ int copy_to_sm(void *dst_buf, uintptr_t src, size_t len)
             int res = copy_block_to_sm((mprv_block *)dst, src);
             if (res)
                 return res;
-            
+
             src += MPRV_BLOCK;
             dst += MPRV_BLOCK;
             len -= MPRV_BLOCK;

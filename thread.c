@@ -11,12 +11,8 @@ void switch_vector_enclave(){
 }
 
 void switch_vector_host(){
-  extern void trap_vector();
-  csr_write(mtvec, &trap_vector);
-}
-
-uint64_t getRTC(){
-	return *mtime;
+  extern void _trap_handler();
+  csr_write(mtvec, &_trap_handler);
 }
 
 void swap_prev_mpp(struct thread_state* thread, uintptr_t* regs){

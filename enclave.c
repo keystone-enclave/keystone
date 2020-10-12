@@ -47,7 +47,7 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   swap_prev_mepc(&enclaves[eid].threads[0], csr_read(mepc));
 
   uintptr_t interrupts = 0;
-  write_csr(mideleg, interrupts);
+  csr_write(mideleg, interrupts);
 
   if(load_parameters){
     // passing parameters for a first run
@@ -106,7 +106,7 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
   osm_pmp_set(PMP_ALL_PERM);
 
   uintptr_t interrupts = MIP_SSIP | MIP_STIP | MIP_SEIP;
-  write_csr(mideleg, interrupts);
+  csr_write(mideleg, interrupts);
 
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], encl_regs, return_on_resume);
@@ -114,7 +114,7 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
 
   switch_vector_host();
 
-  uintptr_t pending = read_csr(mip);
+  uintptr_t pending = csr_read(mip);
 
   if (pending & MIP_MTIP) {
     csr_clear(mip, MIP_MTIP);
@@ -263,25 +263,6 @@ enclave_ret_code copy_enclave_create_args(uintptr_t src, struct keystone_sbi_cre
     return ENCLAVE_REGION_OVERLAPS;
   else
     return ENCLAVE_SUCCESS;
-}
-
-static int buffer_in_enclave_region(struct enclave* enclave,
-                                    void* start, size_t size){
-
-  int i;
-  /* Check if the source is in a valid region */
-  for(i = 0; i < ENCLAVE_REGIONS_MAX; i++){
-    if(enclave->regions[i].type == REGION_INVALID ||
-       enclave->regions[i].type == REGION_UTM)
-      continue;
-    uintptr_t region_start = pmp_region_get_addr(enclave->regions[i].pmp_rid);
-    size_t region_size = pmp_region_get_size(enclave->regions[i].pmp_rid);
-    if(start >= (void*)region_start
-       && start + size <= (void*)(region_start + region_size)){
-      return 1;
-    }
-  }
-  return 0;
 }
 
 /* copies data from enclave, source must be inside EPM */
@@ -462,7 +443,7 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
 
 unlock:
   spin_unlock(&encl_lock);
-free_platform:
+// free_platform:
   platform_destroy_enclave(&enclaves[eid]);
 unset_region:
   pmp_unset_global(region);
