@@ -13,7 +13,7 @@
  */
 
 #include "hmac_sha3.h"
-#include <string.h>
+#include <sbi/sbi_string.h>
 
 /*
  *  Function prepare_key:
@@ -36,7 +36,6 @@
 static void prepare_key(const unsigned char *key, int key_len,
                         unsigned char *new_key)
 {
-    int i = 0;
     sha3_ctx_t ctx;
 
     if (key_len > SHA3_512_BLOCK_LEN) {
@@ -44,13 +43,12 @@ static void prepare_key(const unsigned char *key, int key_len,
         sha3_update(&ctx, (void *)key, key_len);
         sha3_final(new_key, &ctx);
 
-        i = SHA3_512_HASH_LEN;
         key_len = SHA3_512_HASH_LEN;
     } else {
-        memcpy(new_key, key, key_len);
+        sbi_memcpy(new_key, key, key_len);
     }
 
-    memset(new_key + key_len, 0x00, SHA3_512_BLOCK_LEN - key_len);
+    sbi_memset(new_key + key_len, 0x00, SHA3_512_BLOCK_LEN - key_len);
 }
 
 /*

@@ -1,249 +1,154 @@
-#include "mtrap.h"
-#include "bits.h"
-#include "config.h"
-
-  .data
-  .align 6
-enclave_trap_table:
-#define BAD_TRAP_VECTOR 0
-  .word pmp_trap
-  .word pmp_trap
-  .word illegal_insn_trap
-  .word bad_trap
-  .word misaligned_load_trap
-  .word pmp_trap
-  .word misaligned_store_trap
-  .word pmp_trap
-  .word bad_trap
-  .word mcall_trap // 9 --> ECALL from S-mode
-  .word bad_trap
-  .word bad_trap
-  .word bad_trap
-#define TRAP_FROM_MACHINE_MODE_VECTOR 13
-  .word __trap_from_machine_mode
-  .word pmp_trap
-  .word pmp_trap
-#ifdef SM_ENABLED
-# define HANDLE_IPI_PMP_VECTOR 16
-  .word handle_pmp_ipi
-#endif
-
+#include <sbi/sbi_trap.h>
+#include <sbi/riscv_encoding.h>
+#include <sbi/riscv_asm.h>
+#include <sbi/sbi_scratch.h>
   .option norvc
   .section .text.init,"ax",@progbits
-  .globl enclave_trap_table
   .globl trap_vector_enclave
 
-
 trap_vector_enclave:
-  csrrw sp, mscratch, sp
-  beqz sp, .Ltrap_from_machine_mode
+    /* Swap TP and MSCRATCH */
+    csrrw    tp, CSR_MSCRATCH, tp
 
-  STORE a0, 10*REGBYTES(sp)
-  STORE a1, 11*REGBYTES(sp)
-  csrr a1, mcause
+    /* Save T0 in scratch space */
+    REG_S    t0, SBI_SCRATCH_TMP0_OFFSET(tp)
 
-  bgez a1, .Lhandle_trap_in_machine_mode
+    /*
+     * Set T0 to appropriate exception stack
+     *
+     * Came_From_M_Mode = ((MSTATUS.MPP < PRV_M) ? 1 : 0) - 1;
+     * Exception_Stack = TP ^ (Came_From_M_Mode & (SP ^ TP))
+     *
+     * Came_From_M_Mode = 0    ==>    Exception_Stack = TP
+     * Came_From_M_Mode = -1   ==>    Exception_Stack = SP
+     */
+    csrr    t0, CSR_MSTATUS
+    srl    t0, t0, MSTATUS_MPP_SHIFT
+    and    t0, t0, PRV_M
+    slti    t0, t0, PRV_M
+    add    t0, t0, -1
+    xor    sp, sp, tp
+    and    t0, t0, sp
+    xor    sp, sp, tp
+    xor    t0, tp, t0
 
-  STORE ra, 1*REGBYTES(sp)
-  STORE gp, 3*REGBYTES(sp)
-  STORE tp, 4*REGBYTES(sp)
-  STORE t0, 5*REGBYTES(sp)
-  STORE t1, 6*REGBYTES(sp)
-  STORE t2, 7*REGBYTES(sp)
-  STORE s0, 8*REGBYTES(sp)
-  STORE s1, 9*REGBYTES(sp)
-  STORE a2,12*REGBYTES(sp)
-  STORE a3,13*REGBYTES(sp)
-  STORE a4,14*REGBYTES(sp)
-  STORE a5,15*REGBYTES(sp)
-  STORE a6,16*REGBYTES(sp)
-  STORE a7,17*REGBYTES(sp)
-  STORE s2,18*REGBYTES(sp)
-  STORE s3,19*REGBYTES(sp)
-  STORE s4,20*REGBYTES(sp)
-  STORE s5,21*REGBYTES(sp)
-  STORE s6,22*REGBYTES(sp)
-  STORE s7,23*REGBYTES(sp)
-  STORE s8,24*REGBYTES(sp)
-  STORE s9,25*REGBYTES(sp)
-  STORE s10,26*REGBYTES(sp)
-  STORE s11,27*REGBYTES(sp)
-  STORE t3,28*REGBYTES(sp)
-  STORE t4,29*REGBYTES(sp)
-  STORE t5,30*REGBYTES(sp)
-  STORE t6,31*REGBYTES(sp)
-  csrrw t0, mscratch, x0           # t0 <- user sp
-  STORE t0, 2*REGBYTES(sp)         # sp
+    /* Save original SP on exception stack */
+    REG_S    sp, (SBI_TRAP_REGS_OFFSET(sp) - SBI_TRAP_REGS_SIZE)(t0)
 
-  # call mcall_sm_stop_enclave
-  mv a0, sp
-  li a1, 0
-  call mcall_sm_stop_enclave
-  li a0, 2
-  STORE a0, 10*REGBYTES(sp)
+    /* Set SP to exception stack and make room for trap registers */
+    add    sp, t0, -(SBI_TRAP_REGS_SIZE)
 
-  j restore_mscratch
+    /* Restore T0 from scratch space */
+    REG_L    t0, SBI_SCRATCH_TMP0_OFFSET(tp)
 
-############ Below are exact copy of mentry.S
-.Lmret:
-  # Go back whence we came.
-  LOAD a0, 10*REGBYTES(sp)
-  LOAD a1, 11*REGBYTES(sp)
-  csrrw sp, mscratch, sp # sp <- mscratch
-  mret
+    /* Save T0 on stack */
+    REG_S    t0, SBI_TRAP_REGS_OFFSET(t0)(sp)
 
-.Lhandle_ipi_in_machine_mode:
-  # Is it an IPI?
-  # li a0, IRQ_M_SOFT * 2
-  # bne a0, a1, .Lbad_trap
+    /* Swap TP and MSCRATCH */
+    csrrw    tp, CSR_MSCRATCH, tp
 
-  # Yes.  First, clear the MIPI bit.
-  LOAD a0, MENTRY_IPI_OFFSET(sp)
-  sw x0, (a0)
-  fence
-
-  # Now, decode the cause(s).
-#ifdef __riscv_atomic
-  addi a0, sp, MENTRY_IPI_PENDING_OFFSET
-  amoswap.w a0, x0, (a0)
-#else
-  lw a0, MENTRY_IPI_PENDING_OFFSET(a0)
-  sw x0, MENTRY_IPI_PENDING_OFFSET(a0)
+    /* Save MEPC and MSTATUS CSRs */
+    csrr    t0, CSR_MEPC
+    REG_S    t0, SBI_TRAP_REGS_OFFSET(mepc)(sp)
+    csrr    t0, CSR_MSTATUS
+    REG_S    t0, SBI_TRAP_REGS_OFFSET(mstatus)(sp)
+    REG_S    zero, SBI_TRAP_REGS_OFFSET(mstatusH)(sp)
+#if __riscv_xlen == 32
+    csrr    t0, CSR_MISA
+    srli    t0, t0, ('H' - 'A')
+    andi    t0, t0, 0x1
+    beq    t0, zero, _skip_mstatush_save
+    csrr    t0, CSR_MSTATUSH
+    REG_S    t0, SBI_TRAP_REGS_OFFSET(mstatusH)(sp)
+_skip_mstatush_save:
 #endif
 
-  and a1, a0, IPI_SOFT
-  beqz a1, 1f
-  csrs mip, MIP_SSIP
-1:
-  andi a1, a0, IPI_FENCE_I
-  beqz a1, 1f
-  fence.i
-1:
-  andi a1, a0, IPI_SFENCE_VMA
-  beqz a1, 1f
-  sfence.vma
-1:
-  andi a1, a0, IPI_HALT
-  beqz a1, 1f
-  wfi
-  j 1b
-#ifdef SM_ENABLED
-1:
-  andi a1, a0, IPI_PMP
-  bnez a1, .Lipi_pmp
-#endif
-1:
-  j .Lmret
+    /* Save all general regisers except SP and T0 */
+    REG_S    zero, SBI_TRAP_REGS_OFFSET(zero)(sp)
+    REG_S    ra, SBI_TRAP_REGS_OFFSET(ra)(sp)
+    REG_S    gp, SBI_TRAP_REGS_OFFSET(gp)(sp)
+    REG_S    tp, SBI_TRAP_REGS_OFFSET(tp)(sp)
+    REG_S    t1, SBI_TRAP_REGS_OFFSET(t1)(sp)
+    REG_S    t2, SBI_TRAP_REGS_OFFSET(t2)(sp)
+    REG_S    s0, SBI_TRAP_REGS_OFFSET(s0)(sp)
+    REG_S    s1, SBI_TRAP_REGS_OFFSET(s1)(sp)
+    REG_S    a0, SBI_TRAP_REGS_OFFSET(a0)(sp)
+    REG_S    a1, SBI_TRAP_REGS_OFFSET(a1)(sp)
+    REG_S    a2, SBI_TRAP_REGS_OFFSET(a2)(sp)
+    REG_S    a3, SBI_TRAP_REGS_OFFSET(a3)(sp)
+    REG_S    a4, SBI_TRAP_REGS_OFFSET(a4)(sp)
+    REG_S    a5, SBI_TRAP_REGS_OFFSET(a5)(sp)
+    REG_S    a6, SBI_TRAP_REGS_OFFSET(a6)(sp)
+    REG_S    a7, SBI_TRAP_REGS_OFFSET(a7)(sp)
+    REG_S    s2, SBI_TRAP_REGS_OFFSET(s2)(sp)
+    REG_S    s3, SBI_TRAP_REGS_OFFSET(s3)(sp)
+    REG_S    s4, SBI_TRAP_REGS_OFFSET(s4)(sp)
+    REG_S    s5, SBI_TRAP_REGS_OFFSET(s5)(sp)
+    REG_S    s6, SBI_TRAP_REGS_OFFSET(s6)(sp)
+    REG_S    s7, SBI_TRAP_REGS_OFFSET(s7)(sp)
+    REG_S    s8, SBI_TRAP_REGS_OFFSET(s8)(sp)
+    REG_S    s9, SBI_TRAP_REGS_OFFSET(s9)(sp)
+    REG_S    s10, SBI_TRAP_REGS_OFFSET(s10)(sp)
+    REG_S    s11, SBI_TRAP_REGS_OFFSET(s11)(sp)
+    REG_S    t3, SBI_TRAP_REGS_OFFSET(t3)(sp)
+    REG_S    t4, SBI_TRAP_REGS_OFFSET(t4)(sp)
+    REG_S    t5, SBI_TRAP_REGS_OFFSET(t5)(sp)
+    REG_S    t6, SBI_TRAP_REGS_OFFSET(t6)(sp)
 
-.Lhandle_trap_in_machine_mode:
-  # Preserve the registers.  Compute the address of the trap handler.
-  STORE ra, 1*REGBYTES(sp)
-  STORE gp, 3*REGBYTES(sp)
-  STORE tp, 4*REGBYTES(sp)
-  STORE t0, 5*REGBYTES(sp)
-1:auipc t0, %pcrel_hi(trap_table)  # t0 <- %hi(trap_table)
-  STORE t1, 6*REGBYTES(sp)
-  sll t1, a1, 2                    # t1 <- mcause << 2
-  STORE t2, 7*REGBYTES(sp)
-  add t1, t0, t1                   # t1 <- %hi(trap_table)[mcause]
-  STORE s0, 8*REGBYTES(sp)
-  LWU t1, %pcrel_lo(1b)(t1)         # t1 <- trap_table[mcause]
-  STORE s1, 9*REGBYTES(sp)
-  mv a0, sp                        # a0 <- regs
-  STORE a2,12*REGBYTES(sp)
-  csrr a2, mepc                    # a2 <- mepc
-  STORE a3,13*REGBYTES(sp)
-  csrrw t0, mscratch, x0           # t0 <- user sp
-  STORE a4,14*REGBYTES(sp)
-  STORE a5,15*REGBYTES(sp)
-  STORE a6,16*REGBYTES(sp)
-  STORE a7,17*REGBYTES(sp)
-  STORE s2,18*REGBYTES(sp)
-  STORE s3,19*REGBYTES(sp)
-  STORE s4,20*REGBYTES(sp)
-  STORE s5,21*REGBYTES(sp)
-  STORE s6,22*REGBYTES(sp)
-  STORE s7,23*REGBYTES(sp)
-  STORE s8,24*REGBYTES(sp)
-  STORE s9,25*REGBYTES(sp)
-  STORE s10,26*REGBYTES(sp)
-  STORE s11,27*REGBYTES(sp)
-  STORE t3,28*REGBYTES(sp)
-  STORE t4,29*REGBYTES(sp)
-  STORE t5,30*REGBYTES(sp)
-  STORE t6,31*REGBYTES(sp)
-  STORE t0, 2*REGBYTES(sp)         # sp
+    /* Call C routine */
+    add    a0, sp, zero
+    call    sbi_trap_handler_keystone_enclave
 
-#ifndef __riscv_flen
-  lw tp, (sp) # Move the emulated FCSR from x0's save slot into tp.
-#endif
-  STORE x0, (sp) # Zero x0's save slot.
+    /* Restore all general regisers except SP and T0 */
+    REG_L    ra, SBI_TRAP_REGS_OFFSET(ra)(sp)
+    REG_L    gp, SBI_TRAP_REGS_OFFSET(gp)(sp)
+    REG_L    tp, SBI_TRAP_REGS_OFFSET(tp)(sp)
+    REG_L    t1, SBI_TRAP_REGS_OFFSET(t1)(sp)
+    REG_L    t2, SBI_TRAP_REGS_OFFSET(t2)(sp)
+    REG_L    s0, SBI_TRAP_REGS_OFFSET(s0)(sp)
+    REG_L    s1, SBI_TRAP_REGS_OFFSET(s1)(sp)
+    REG_L    a0, SBI_TRAP_REGS_OFFSET(a0)(sp)
+    REG_L    a1, SBI_TRAP_REGS_OFFSET(a1)(sp)
+    REG_L    a2, SBI_TRAP_REGS_OFFSET(a2)(sp)
+    REG_L    a3, SBI_TRAP_REGS_OFFSET(a3)(sp)
+    REG_L    a4, SBI_TRAP_REGS_OFFSET(a4)(sp)
+    REG_L    a5, SBI_TRAP_REGS_OFFSET(a5)(sp)
+    REG_L    a6, SBI_TRAP_REGS_OFFSET(a6)(sp)
+    REG_L    a7, SBI_TRAP_REGS_OFFSET(a7)(sp)
+    REG_L    s2, SBI_TRAP_REGS_OFFSET(s2)(sp)
+    REG_L    s3, SBI_TRAP_REGS_OFFSET(s3)(sp)
+    REG_L    s4, SBI_TRAP_REGS_OFFSET(s4)(sp)
+    REG_L    s5, SBI_TRAP_REGS_OFFSET(s5)(sp)
+    REG_L    s6, SBI_TRAP_REGS_OFFSET(s6)(sp)
+    REG_L    s7, SBI_TRAP_REGS_OFFSET(s7)(sp)
+    REG_L    s8, SBI_TRAP_REGS_OFFSET(s8)(sp)
+    REG_L    s9, SBI_TRAP_REGS_OFFSET(s9)(sp)
+    REG_L    s10, SBI_TRAP_REGS_OFFSET(s10)(sp)
+    REG_L    s11, SBI_TRAP_REGS_OFFSET(s11)(sp)
+    REG_L    t3, SBI_TRAP_REGS_OFFSET(t3)(sp)
+    REG_L    t4, SBI_TRAP_REGS_OFFSET(t4)(sp)
+    REG_L    t5, SBI_TRAP_REGS_OFFSET(t5)(sp)
+    REG_L    t6, SBI_TRAP_REGS_OFFSET(t6)(sp)
 
-  # Invoke the handler.
-  jalr t1
-
-#ifndef __riscv_flen
-  sw tp, (sp) # Move the emulated FCSR from tp into x0's save slot.
-#endif
-
-restore_mscratch:
-  # Restore mscratch, so future traps will know they didn't come from M-mode.
-  csrw mscratch, sp
-
-restore_regs:
-  # Restore all of the registers.
-  LOAD ra, 1*REGBYTES(sp)
-  LOAD gp, 3*REGBYTES(sp)
-  LOAD tp, 4*REGBYTES(sp)
-  LOAD t0, 5*REGBYTES(sp)
-  LOAD t1, 6*REGBYTES(sp)
-  LOAD t2, 7*REGBYTES(sp)
-  LOAD s0, 8*REGBYTES(sp)
-  LOAD s1, 9*REGBYTES(sp)
-  LOAD a0,10*REGBYTES(sp)
-  LOAD a1,11*REGBYTES(sp)
-  LOAD a2,12*REGBYTES(sp)
-  LOAD a3,13*REGBYTES(sp)
-  LOAD a4,14*REGBYTES(sp)
-  LOAD a5,15*REGBYTES(sp)
-  LOAD a6,16*REGBYTES(sp)
-  LOAD a7,17*REGBYTES(sp)
-  LOAD s2,18*REGBYTES(sp)
-  LOAD s3,19*REGBYTES(sp)
-  LOAD s4,20*REGBYTES(sp)
-  LOAD s5,21*REGBYTES(sp)
-  LOAD s6,22*REGBYTES(sp)
-  LOAD s7,23*REGBYTES(sp)
-  LOAD s8,24*REGBYTES(sp)
-  LOAD s9,25*REGBYTES(sp)
-  LOAD s10,26*REGBYTES(sp)
-  LOAD s11,27*REGBYTES(sp)
-  LOAD t3,28*REGBYTES(sp)
-  LOAD t4,29*REGBYTES(sp)
-  LOAD t5,30*REGBYTES(sp)
-  LOAD t6,31*REGBYTES(sp)
-  LOAD sp, 2*REGBYTES(sp)
-  mret
-
-#ifdef SM_ENABLED
-.Lipi_pmp:
-  li a1, HANDLE_IPI_PMP_VECTOR
-  j .Lhandle_trap_in_machine_mode
+    /* Restore MEPC and MSTATUS CSRs */
+    REG_L    t0, SBI_TRAP_REGS_OFFSET(mepc)(sp)
+    csrw    CSR_MEPC, t0
+    REG_L    t0, SBI_TRAP_REGS_OFFSET(mstatus)(sp)
+    csrw    CSR_MSTATUS, t0
+#if __riscv_xlen == 32
+    csrr    t0, CSR_MISA
+    srli    t0, t0, ('H' - 'A')
+    andi    t0, t0, 0x1
+    beq    t0, zero, _skip_mstatush_restore
+    REG_L    t0, SBI_TRAP_REGS_OFFSET(mstatusH)(sp)
+    csrw    CSR_MSTATUSH, t0
+_skip_mstatush_restore:
 #endif
 
-.Ltrap_from_machine_mode:
-  csrr sp, mscratch
-  addi sp, sp, -INTEGER_CONTEXT_SIZE
-  STORE a0,10*REGBYTES(sp)
-  STORE a1,11*REGBYTES(sp)
-  li a1, TRAP_FROM_MACHINE_MODE_VECTOR
-  j .Lhandle_trap_in_machine_mode
+    /* Restore T0 */
+    REG_L    t0, SBI_TRAP_REGS_OFFSET(t0)(sp)
 
-.Lbad_trap:
-  li a1, BAD_TRAP_VECTOR
-  j .Lhandle_trap_in_machine_mode
+    /* Restore SP */
+    REG_L    sp, SBI_TRAP_REGS_OFFSET(sp)(sp)
 
-__trap_from_machine_mode:
-  jal trap_from_machine_mode
-  j restore_regs
-
+    mret

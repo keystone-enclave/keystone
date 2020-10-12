@@ -7,6 +7,7 @@
 #include "crypto.h"
 #include "enclave.h"
 #include "platform.h"
+#include "sm_sbi_opensbi.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/sbi_console.h>
@@ -66,8 +67,8 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
 {
   unsigned char info[MDSIZE + key_ident_size];
 
-  memcpy(info, enclave_hash, MDSIZE);
-  memcpy(info + MDSIZE, key_ident, key_ident_size);
+  sbi_memcpy(info, enclave_hash, MDSIZE);
+  sbi_memcpy(info + MDSIZE, key_ident, key_ident_size);
 
   /*
    * The key is derived without a salt because we have no entropy source
@@ -119,6 +120,10 @@ void sm_init(void)
 
   spin_lock(&sm_init_lock);
 
+  sbi_printf("[SM] Initializing ... \n");
+
+  sbi_ecall_register_extension(&ecall_keystone_enclave);
+
   if(!sm_init_done) {
     sm_region_id = smm_init();
     if(sm_region_id < 0) {
@@ -155,6 +160,8 @@ void sm_init(void)
 
   // Init the enclave metadata
   enclave_init_metadata();
+
+  sbi_printf("[SM] Keystone security monitor has been initialized!\n");
 
   spin_unlock(&sm_init_lock);
 

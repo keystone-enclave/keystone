@@ -7,50 +7,51 @@
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_scratch.h>
 #include <sbi/riscv_asm.h>
+#include <sbi/sbi_ecall.h>
 #include "sm_sbi_opensbi.h"
 #include "pmp.h"
 #include "sm-sbi.h"
 #include "sm.h"
 
-int sbi_sm_interface(struct sbi_scratch *scratch, unsigned long extension_id,
-                     struct sbi_trap_regs  *regs,
-                     unsigned long *out_val,
-                     struct sbi_trap_info *out_trap){
+static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long funcid,
+                     struct sbi_trap_regs *regs,
+                     unsigned long *args, unsigned long *out_val,
+                     struct sbi_trap_info *out_trap)
+{
   /* Note: regs is the sbi_trap.h format, which matches (... enough)
      the thread.h format, which means we can 'just use it' for now.
      This really needs to be handled far more cleanly. */
-
-  uintptr_t funcid = regs->a6; /* This was a7 in the old interface */
-  uintptr_t arg0 = regs->a0, arg1 = regs->a1, arg2 = regs->a2, arg3 = regs->a3;
+  // uintptr_t funcid = regs->a6; /* This was a7 in the old interface */
+  // uintptr_t args[0] = regs->a0, args[1] = regs->a1, args[2] = regs->a2, args[3] = regs->a3;
+  sbi_printf("Keystone extension handler, funcid = %lu\n",funcid);
   uintptr_t retval;
-
   switch(funcid){
   case SBI_SM_CREATE_ENCLAVE:
-    retval = mcall_sm_create_enclave(arg0);
+    retval = mcall_sm_create_enclave(args[0]);
     break;
   case SBI_SM_DESTROY_ENCLAVE:
-    retval = mcall_sm_destroy_enclave(arg0);
+    retval = mcall_sm_destroy_enclave(args[0]);
     break;
   case SBI_SM_RUN_ENCLAVE:
-    retval = mcall_sm_run_enclave((uintptr_t*)regs, arg0);
+    retval = mcall_sm_run_enclave((uintptr_t*)regs, args[0]);
     break;
   case SBI_SM_EXIT_ENCLAVE:
-    retval = mcall_sm_exit_enclave((uintptr_t*)regs, arg0);
+    retval = mcall_sm_exit_enclave((uintptr_t*)regs, args[0]);
     break;
   case SBI_SM_STOP_ENCLAVE:
-    retval = mcall_sm_stop_enclave((uintptr_t*)regs, arg0);
+    retval = mcall_sm_stop_enclave((uintptr_t*)regs, args[0]);
     break;
   case SBI_SM_RESUME_ENCLAVE:
-    retval = mcall_sm_resume_enclave((uintptr_t*)regs, arg0);
+    retval = mcall_sm_resume_enclave((uintptr_t*)regs, args[0]);
     break;
   case SBI_SM_ATTEST_ENCLAVE:
-    retval = mcall_sm_attest_enclave(arg0, arg1, arg2);
+    retval = mcall_sm_attest_enclave(args[0], args[1], args[2]);
     break;
   case SBI_SM_RANDOM:
     retval = mcall_sm_random();
     break;
   case SBI_SM_CALL_PLUGIN:
-    retval = mcall_sm_call_plugin(arg0, arg1, arg2, arg3);
+    retval = mcall_sm_call_plugin(args[0], args[1], args[2], args[3]);
     break;
   default:
     retval = ENCLAVE_NOT_IMPLEMENTED;
@@ -67,10 +68,11 @@ int sbi_sm_interface(struct sbi_scratch *scratch, unsigned long extension_id,
     retval = SBI_OK;
   }
 
+  sbi_printf("Keystone extension returning %lu\n", retval);
   return retval;
 
 }
-
+/*
 void sm_ipi_process(){
   sbi_printf("ipi got %lx\r\n",csr_read(mhartid));
   handle_pmp_ipi();
@@ -88,6 +90,10 @@ int sm_sbi_send_ipi(uintptr_t recipient_mask){
   sbi_printf("senidng ipi %lx\r\n", recipient_mask);
   return sbi_ipi_send_many(scratch, &uptrap, &recipient_mask,
                               SBI_SM_EVENT, &tlb_flush_info);
+}*/
 
-
-}
+struct sbi_ecall_extension ecall_keystone_enclave = {
+  .extid_start = SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE,
+  .extid_end = SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE,
+  .handle = sbi_ecall_keystone_enclave_handler,
+};

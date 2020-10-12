@@ -13,8 +13,8 @@
  */
 
 #include "hkdf_sha3_512.h"
-#include "hmac_sha3/hmac_sha3.h"
-#include <string.h>
+#include "../hmac_sha3/hmac_sha3.h"
+#include <sbi/sbi_string.h>
 
 /*
  * Function div_ceil:
@@ -88,7 +88,7 @@ void hkdf_extract(const unsigned char *salt, int salt_len,
     unsigned char nullsalt[SHA3_512_HASH_LEN];
 
     if (salt == NULL || salt_len == 0) {
-        memset(nullsalt, 0x00, SHA3_512_HASH_LEN);
+        sbi_memset(nullsalt, 0x00, SHA3_512_HASH_LEN);
         salt = nullsalt;
         salt_len = SHA3_512_HASH_LEN;
     }
@@ -120,7 +120,6 @@ int hkdf_expand(const unsigned char *prk, int prk_len,
                 const unsigned char *info, int info_len,
                 unsigned char *okm, int okm_len)
 {
-    int k = 0;
     int n = div_ceil(okm_len, SHA3_512_HASH_LEN);
     unsigned char t[SHA3_512_HASH_LEN];
     hmac_sha3_ctx_t ctx;
@@ -144,9 +143,9 @@ int hkdf_expand(const unsigned char *prk, int prk_len,
         hmac_sha3_final(&ctx, t);
 
         if (i < n)
-            memcpy(okm + (i - 1) * SHA3_512_HASH_LEN, t, SHA3_512_HASH_LEN);
+            sbi_memcpy(okm + (i - 1) * SHA3_512_HASH_LEN, t, SHA3_512_HASH_LEN);
         else
-            memcpy(okm + (i - 1) * SHA3_512_HASH_LEN, t,
+            sbi_memcpy(okm + (i - 1) * SHA3_512_HASH_LEN, t,
                    okm_len - (i - 1) * SHA3_512_HASH_LEN);
     }
 
