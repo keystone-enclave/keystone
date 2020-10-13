@@ -408,7 +408,7 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   enclaves[eid].regions[1].pmp_rid = shared_region;
   enclaves[eid].regions[1].type = REGION_UTM;
 
-  enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | SATP_MODE_SV39);
+  enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | (SATP_MODE_SV39 << HGATP_MODE_SHIFT));
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = params;
   enclaves[eid].pa_params = pa_params;
