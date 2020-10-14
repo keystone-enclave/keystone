@@ -26,6 +26,7 @@ typedef uintptr_t vaddr_t;
 typedef uintptr_t paddr_t;
 
 extern struct miscdevice keystone_dev;
+#define KEYSTONE_SBI_EXT_ID     0x08424b45
 #define SBI_SM_CREATE_ENCLAVE   101
 #define SBI_SM_DESTROY_ENCLAVE  102
 #define SBI_SM_RUN_ENCLAVE      105
@@ -43,15 +44,16 @@ extern struct miscdevice keystone_dev;
 	register uintptr_t a3 asm ("a3") = (uintptr_t)(arg3);	\
 	register uintptr_t a4 asm ("a4") = (uintptr_t)(arg4);	\
 	register uintptr_t a5 asm ("a5") = (uintptr_t)(arg5);	\
-	register uintptr_t a7 asm ("a7") = (uintptr_t)(which);	\
+	register uintptr_t a6 asm ("a6") = (uintptr_t)(which);	\
+	register uintptr_t a7 asm ("a7") = (uintptr_t)(KEYSTONE_SBI_EXT_ID);	\
 	asm volatile ("ecall"					\
 		      : "+r" (a0)				\
-		      : "r" (a1), "r" (a2), "r" (a3), "r" (a4), "r"(a5), "r" (a7)		\
+		      : "r" (a1), "r" (a2), "r" (a3), "r" (a4), "r"(a5), "r"(a6), "r" (a7)		\
 		      : "memory");				\
 	a0;							\
 })
 
-#define SBI_CALL_1(which, arg0) _SBI_CALL(which,arg0, 0, 0, 0, 0, 0)
+#define SBI_CALL_1(which, arg0) _SBI_CALL(which, arg0, 0, 0, 0, 0, 0)
 #define SBI_CALL_2(which, arg0, arg1) _SBI_CALL(which,arg0, arg1, 0, 0, 0, 0)
 #define SBI_CALL_3(which, arg0, arg1, arg2) _SBI_CALL(which,arg0, arg1, arg2, 0, 0, 0)
 #define SBI_CALL_4(which, arg0, arg1, arg2, arg3) _SBI_CALL(which, arg0, arg1, arg2, arg3, 0, 0)
