@@ -1,6 +1,12 @@
 set(host_bin test-runner)
 set(host_src test-runner.cpp edge_wrapper.cpp)
-set(eyrie_plugins "freemem")
+
+if(RISCV32)
+   set(eyrie_plugins "freemem rv32")
+else()
+   set(eyrie_plugins "freemem")
+endif()
+
 set(package_name "tests.ke")
 set(package_script "./run-test.sh")
 
@@ -22,7 +28,7 @@ set(all_test_bins
 # and (2) define the recipe of the test below:
 
 # stack
-add_executable(stack stack/stack.s)
+add_executable(stack stack/stack.S)
 target_link_libraries(stack ${KEYSTONE_LIB_EAPP})
 
 # loop
@@ -34,12 +40,14 @@ add_executable(malloc malloc/malloc.c)
 target_link_libraries(malloc ${KEYSTONE_LIB_EAPP})
 
 # long-nop
-add_executable(long-nop long-nop/long-nop.s ${CMAKE_CURRENT_BINARY_DIR}/add_long.s)
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/add_long.s
+add_executable(long-nop long-nop/long-nop.S ${CMAKE_CURRENT_BINARY_DIR}/add_long.S)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/add_long.S
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/generate_func.sh 4097
-  ${CMAKE_CURRENT_BINARY_DIR}/add_long.s
+  ${CMAKE_CURRENT_BINARY_DIR}/add_long.S
   ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/nop.s
-  ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/func_base.s)
+  ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/func_base.s
+  ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/nop.h 
+)
 target_link_libraries(long-nop ${KEYSTONE_LIB_EAPP})
 
 # fibonacci
@@ -72,6 +80,7 @@ foreach (test IN ITEMS ${all_test_bins})
   file(APPEND ${test_script_tmp} "echo 'testing ${test}'\n")
   file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt\n")
 endforeach(test)
+
 file(COPY ${test_script_tmp} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
   FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
 file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/tmp)

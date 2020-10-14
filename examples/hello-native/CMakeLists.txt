@@ -2,9 +2,14 @@ set(eapp_bin hello-native)
 set(eapp_src eapp/eapp_native.c)
 set(host_bin hello-native-runner)
 set(host_src host/host_native.cpp)
-set(eyrie_plugins "freemem")
 set(package_name "hello-native.ke")
 set(package_script "./hello-native-runner hello-native eyrie-rt")
+
+if(RISCV32)
+  set(eyrie_plugins "rv32 freemem")
+else()
+  set(eyrie_plugins "freemem")
+endif()
 
 # eapp
 

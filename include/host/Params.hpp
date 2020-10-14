@@ -47,10 +47,10 @@ class Params {
   }
   void setFreeMemSize(uint64_t size) { freemem_size = size; }
   bool isSimulated() { return simulated; }
-  uint64_t getUntrustedMem() { return untrusted; }
-  uint64_t getUntrustedSize() { return untrusted_size; }
-  uint64_t getUntrustedEnd() { return untrusted + untrusted_size; }
-  uint64_t getFreeMemSize() { return freemem_size; }
+  uintptr_t getUntrustedMem() { return untrusted; }
+  uintptr_t getUntrustedSize() { return untrusted_size; }
+  uintptr_t getUntrustedEnd() { return untrusted + untrusted_size; }
+  uintptr_t getFreeMemSize() { return freemem_size; }
 
  private:
   bool simulated;

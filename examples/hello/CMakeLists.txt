@@ -2,9 +2,14 @@ set(eapp_bin hello)
 set(eapp_src eapp/hello.c)
 set(host_bin hello-runner)
 set(host_src host/host.cpp)
-set(eyrie_plugins "freemem untrusted_io_syscall linux_syscall env_setup")
 set(package_name "hello.ke")
 set(package_script "./hello-runner hello eyrie-rt")
+
+if(RISCV32)
+  set(eyrie_plugins "freemem untrusted_io_syscall linux_syscall env_setup rv32")
+else()
+  set(eyrie_plugins "freemem untrusted_io_syscall linux_syscall env_setup")
+endif()
 
 # eapp
 
