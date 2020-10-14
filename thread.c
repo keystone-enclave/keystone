@@ -15,18 +15,18 @@ void switch_vector_host(){
   csr_write(mtvec, &_trap_handler);
 }
 
-void swap_prev_mpp(struct thread_state* thread, uintptr_t* regs){
+void swap_prev_mpp(struct thread_state* thread, struct sbi_trap_regs* regs) {
   //Time interrupts can occur in either user mode or supervisor mode
 
-  int curr_mstatus = csr_read(mstatus);
+  int curr_mstatus = regs->mstatus;
   int old_mpp = thread->prev_mpp;
-  if(old_mpp < 0){
+  if(old_mpp < 0) {
    //Old MPP bit isn't initialized!
    old_mpp = curr_mstatus & 0x800;
   }
   thread->prev_mpp = curr_mstatus & 0x800;
   int new_mstatus = (curr_mstatus & ~0x800) | old_mpp;
-  csr_write(mstatus, new_mstatus);
+  regs->mstatus = new_mstatus;
 }
 
 /* Swaps the entire s-mode visible state, general registers and then csrs */
@@ -81,11 +81,11 @@ thread){
 #undef LOCAL_SWAP_CSR
 }
 
-void swap_prev_mepc(struct thread_state* thread, uintptr_t current_mepc)
+void swap_prev_mepc(struct thread_state* thread, struct sbi_trap_regs* regs, uintptr_t current_mepc)
 {
   uintptr_t tmp = thread->prev_mepc;
   thread->prev_mepc = current_mepc;
-  csr_write(mepc, tmp);
+  regs->mepc = tmp;
 }
 
 

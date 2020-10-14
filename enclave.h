@@ -117,11 +117,11 @@ struct sealing_key
 // callables from the host
 enclave_ret_code create_enclave(struct keystone_sbi_create create_args);
 enclave_ret_code destroy_enclave(enclave_id eid);
-enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid);
-enclave_ret_code resume_enclave(uintptr_t* regs, enclave_id eid);
+enclave_ret_code run_enclave(struct sbi_trap_regs *regs, enclave_id eid);
+enclave_ret_code resume_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 // callables from the enclave
-enclave_ret_code exit_enclave(uintptr_t* regs, unsigned long retval, enclave_id eid);
-enclave_ret_code stop_enclave(uintptr_t* regs, uint64_t request, enclave_id eid);
+enclave_ret_code exit_enclave(struct sbi_trap_regs *regs, unsigned long retval, enclave_id eid);
+enclave_ret_code stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid);
 enclave_ret_code attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, enclave_id eid);
 /* attestation and virtual mapping validation */
 enclave_ret_code validate_and_hash_enclave(struct enclave* enclave);

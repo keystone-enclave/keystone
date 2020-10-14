@@ -1,3 +1,4 @@
+#include "enclave.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_encoding.h>
 #include <sbi/sbi_console.h>
@@ -10,7 +11,7 @@
 #include <sbi/sbi_timer.h>
 #include <sbi/sbi_trap.h>
 
-static void __noreturn sbi_trap_error(const char *msg, int rc,
+static void sbi_trap_error(const char *msg, int rc,
 				      ulong mcause, ulong mtval, ulong mtval2,
 				      ulong mtinst, struct sbi_trap_regs *regs)
 {
@@ -59,7 +60,7 @@ static void __noreturn sbi_trap_error(const char *msg, int rc,
 	sbi_printf("%s: hart%d: %s=0x%" PRILX "\n", __func__, hartid, "t6",
 		   regs->t6);
 
-	sbi_hart_hang();
+  mcall_sm_exit_enclave(regs, rc);
 }
 
 
@@ -95,12 +96,20 @@ void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs)
 	if (mcause & (1UL << (__riscv_xlen - 1))) {
 		mcause &= ~(1UL << (__riscv_xlen - 1));
 		switch (mcause) {
-		case IRQ_M_TIMER:
-			sbi_timer_process();
+		case IRQ_M_TIMER: {
+      regs->mepc -= 4;
+      mcall_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
+      regs->a0 = 2;
+      regs->mepc += 4;
 			break;
-		case IRQ_M_SOFT:
-			sbi_ipi_process();
+                      }
+		case IRQ_M_SOFT: {
+      regs->mepc -= 4;
+      mcall_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
+      regs->a0 = 2;
+      regs->mepc += 4;
 			break;
+                     }
 		default:
 			msg = "unhandled external interrupt";
 			goto trap_error;

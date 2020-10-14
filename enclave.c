@@ -13,7 +13,6 @@
 #include <sbi/riscv_locks.h>
 
 #define ENCL_MAX  16
-#define ENCL_TIME_SLICE 100000
 
 struct enclave enclaves[ENCL_MAX];
 #define ENCLAVE_EXISTS(eid) (eid >= 0 && eid < ENCL_MAX && enclaves[eid].state >= 0)
@@ -38,37 +37,35 @@ extern byte dev_public_key[PUBLIC_KEY_SIZE];
  *
  * Expects that eid has already been valided, and it is OK to run this enclave
 */
-static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
+static inline enclave_ret_code context_switch_to_enclave(struct sbi_trap_regs* regs,
                                                 enclave_id eid,
                                                 int load_parameters){
 
   /* save host context */
-  swap_prev_state(&enclaves[eid].threads[0], regs, 1);
-  swap_prev_mepc(&enclaves[eid].threads[0], csr_read(mepc));
+  swap_prev_state(&enclaves[eid].threads[0], (uintptr_t*) regs, 1);
+  swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
 
   uintptr_t interrupts = 0;
   csr_write(mideleg, interrupts);
 
   if(load_parameters){
     // passing parameters for a first run
-    // $mepc: (VA) kernel entry
-    csr_write(mepc, (uintptr_t) enclaves[eid].params.runtime_entry);
-    // $sepc: (VA) user entry
     csr_write(sepc, (uintptr_t) enclaves[eid].params.user_entry);
+    regs->mepc = (uintptr_t) enclaves[eid].params.runtime_entry - 4; // regs->mepc will be +4 before sbi_ecall_handler return
     // $a1: (PA) DRAM base,
-    regs[11] = (uintptr_t) enclaves[eid].pa_params.dram_base;
+    regs->a1 = (uintptr_t) enclaves[eid].pa_params.dram_base;
     // $a2: (PA) DRAM size,
-    regs[12] = (uintptr_t) enclaves[eid].pa_params.dram_size;
+    regs->a2 = (uintptr_t) enclaves[eid].pa_params.dram_size;
     // $a3: (PA) kernel location,
-    regs[13] = (uintptr_t) enclaves[eid].pa_params.runtime_base;
+    regs->a3 = (uintptr_t) enclaves[eid].pa_params.runtime_base;
     // $a4: (PA) user location,
-    regs[14] = (uintptr_t) enclaves[eid].pa_params.user_base;
+    regs->a4 = (uintptr_t) enclaves[eid].pa_params.user_base;
     // $a5: (PA) freemem location,
-    regs[15] = (uintptr_t) enclaves[eid].pa_params.free_base;
+    regs->a5 = (uintptr_t) enclaves[eid].pa_params.free_base;
     // $a6: (VA) utm base,
-    regs[16] = (uintptr_t) enclaves[eid].params.untrusted_ptr;
+    regs->a6 = (uintptr_t) enclaves[eid].params.untrusted_ptr;
     // $a7: (size_t) utm size
-    regs[17] = (uintptr_t) enclaves[eid].params.untrusted_size;
+    regs->a7 = (uintptr_t) enclaves[eid].params.untrusted_size;
 
     // switch to the initial enclave page table
     csr_write(satp, enclaves[eid].encl_satp);
@@ -92,7 +89,7 @@ static inline enclave_ret_code context_switch_to_enclave(uintptr_t* regs,
   return ENCLAVE_SUCCESS;
 }
 
-static inline void context_switch_to_host(uintptr_t* encl_regs,
+static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     enclave_id eid,
     int return_on_resume){
 
@@ -109,8 +106,8 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
   csr_write(mideleg, interrupts);
 
   /* restore host context */
-  swap_prev_state(&enclaves[eid].threads[0], encl_regs, return_on_resume);
-  swap_prev_mepc(&enclaves[eid].threads[0], csr_read(mepc));
+  swap_prev_state(&enclaves[eid].threads[0], (uintptr_t*) regs, return_on_resume);
+  swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
 
   switch_vector_host();
 
@@ -133,7 +130,7 @@ static inline void context_switch_to_host(uintptr_t* encl_regs,
   platform_switch_from_enclave(&(enclaves[eid]));
 
   cpu_exit_enclave_context();
-  swap_prev_mpp(&enclaves[eid].threads[0], encl_regs);
+  swap_prev_mpp(&enclaves[eid].threads[0], regs);
   return;
 }
 
@@ -524,7 +521,7 @@ enclave_ret_code destroy_enclave(enclave_id eid)
 }
 
 
-enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid)
+enclave_ret_code run_enclave(struct sbi_trap_regs *regs, enclave_id eid)
 {
   int runable;
 
@@ -542,10 +539,10 @@ enclave_ret_code run_enclave(uintptr_t* host_regs, enclave_id eid)
   }
 
   // Enclave is OK to run, context switch to it
-  return context_switch_to_enclave(host_regs, eid, 1);
+  return context_switch_to_enclave(regs, eid, 1);
 }
 
-enclave_ret_code exit_enclave(uintptr_t* encl_regs, unsigned long retval, enclave_id eid)
+enclave_ret_code exit_enclave(struct sbi_trap_regs *regs, unsigned long retval, enclave_id eid)
 {
   int exitable;
 
@@ -561,12 +558,12 @@ enclave_ret_code exit_enclave(uintptr_t* encl_regs, unsigned long retval, enclav
   if(!exitable)
     return ENCLAVE_NOT_RUNNING;
 
-  context_switch_to_host(encl_regs, eid, 0);
+  context_switch_to_host(regs, eid, 0);
 
   return ENCLAVE_SUCCESS;
 }
 
-enclave_ret_code stop_enclave(uintptr_t* encl_regs, uint64_t request, enclave_id eid)
+enclave_ret_code stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid)
 {
   int stoppable;
 
@@ -582,7 +579,7 @@ enclave_ret_code stop_enclave(uintptr_t* encl_regs, uint64_t request, enclave_id
   if(!stoppable)
     return ENCLAVE_NOT_RUNNING;
 
-  context_switch_to_host(encl_regs, eid, request == STOP_EDGE_CALL_HOST);
+  context_switch_to_host(regs, eid, request == STOP_EDGE_CALL_HOST);
 
   switch(request) {
   case(STOP_TIMER_INTERRUPT):
@@ -594,7 +591,7 @@ enclave_ret_code stop_enclave(uintptr_t* encl_regs, uint64_t request, enclave_id
   }
 }
 
-enclave_ret_code resume_enclave(uintptr_t* host_regs, enclave_id eid)
+enclave_ret_code resume_enclave(struct sbi_trap_regs *regs, enclave_id eid)
 {
   int resumable;
 
@@ -613,7 +610,7 @@ enclave_ret_code resume_enclave(uintptr_t* host_regs, enclave_id eid)
   spin_unlock(&encl_lock);
 
   // Enclave is OK to resume, context switch to it
-  return context_switch_to_enclave(host_regs, eid, 0);
+  return context_switch_to_enclave(regs, eid, 0);
 }
 
 enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, enclave_id eid)
