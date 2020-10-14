@@ -44,7 +44,7 @@ uintptr_t mcall_sm_destroy_enclave(unsigned long eid)
   ret = destroy_enclave((unsigned int)eid);
   return ret;
 }
-uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
+uintptr_t mcall_sm_run_enclave(struct sbi_trap_regs *regs, unsigned long eid)
 {
   enclave_ret_code ret;
 
@@ -58,7 +58,7 @@ uintptr_t mcall_sm_run_enclave(uintptr_t* regs, unsigned long eid)
   return ret;
 }
 
-uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
+uintptr_t mcall_sm_resume_enclave(struct sbi_trap_regs *regs, unsigned long eid)
 {
   enclave_ret_code ret;
 
@@ -67,11 +67,11 @@ uintptr_t mcall_sm_resume_enclave(uintptr_t* host_regs, unsigned long eid)
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  ret = resume_enclave(host_regs, (unsigned int) eid);
+  ret = resume_enclave(regs, (unsigned int) eid);
   return ret;
 }
 
-uintptr_t mcall_sm_exit_enclave(uintptr_t* encl_regs, unsigned long retval)
+uintptr_t mcall_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retval)
 {
   enclave_ret_code ret;
   /* only an enclave itself can call this SBI */
@@ -79,11 +79,11 @@ uintptr_t mcall_sm_exit_enclave(uintptr_t* encl_regs, unsigned long retval)
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  ret = exit_enclave(encl_regs, (unsigned long) retval, cpu_get_enclave_id());
+  ret = exit_enclave(regs, (unsigned long) retval, cpu_get_enclave_id());
   return ret;
 }
 
-uintptr_t mcall_sm_stop_enclave(uintptr_t* encl_regs, unsigned long request)
+uintptr_t mcall_sm_stop_enclave(struct sbi_trap_regs *regs, unsigned long request)
 {
   enclave_ret_code ret;
   /* only an enclave itself can call this SBI */
@@ -91,7 +91,7 @@ uintptr_t mcall_sm_stop_enclave(uintptr_t* encl_regs, unsigned long request)
     return ENCLAVE_SBI_PROHIBITED;
   }
 
-  ret = stop_enclave(encl_regs, (uint64_t)request, cpu_get_enclave_id());
+  ret = stop_enclave(regs, (uint64_t)request, cpu_get_enclave_id());
   return ret;
 }
 
@@ -136,7 +136,7 @@ uintptr_t mcall_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t
 }
 
 /* TODO: this should be removed in the future. */
-uintptr_t mcall_sm_not_implemented(uintptr_t* encl_regs, unsigned long cause)
+uintptr_t mcall_sm_not_implemented(struct sbi_trap_regs *regs, unsigned long cause)
 {
   /* only an enclave itself can call this SBI */
   if (!cpu_is_enclave_context()) {
@@ -157,5 +157,5 @@ uintptr_t mcall_sm_not_implemented(uintptr_t* encl_regs, unsigned long cause)
     sbi_printf("medeleg: 0x%lx (expected? %ld)\r\n", csr_read(medeleg), csr_read(medeleg) & (1<<cause));
   }
 
-  return exit_enclave(encl_regs, (uint64_t)-1UL, cpu_get_enclave_id());
+  return exit_enclave(regs, (uint64_t)-1UL, cpu_get_enclave_id());
 }

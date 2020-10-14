@@ -6,6 +6,7 @@
 #define __THREAD_H__
 
 #include <stdint.h>
+#include <sbi/sbi_trap.h>
 struct ctx
 {
   uintptr_t slot;
@@ -75,9 +76,9 @@ struct thread_state
 
 /* swap previous and current thread states */
 void swap_prev_state(struct thread_state* state, uintptr_t* regs, int return_on_resume);
-void swap_prev_mepc(struct thread_state* state, uintptr_t mepc);
+void swap_prev_mepc(struct thread_state* state, struct sbi_trap_regs* regs, uintptr_t mepc);
 void swap_prev_smode_csrs(struct thread_state* thread);
-void swap_prev_mpp(struct thread_state* thread, uintptr_t* regs);
+void swap_prev_mpp(struct thread_state* thread, struct sbi_trap_regs* regs);
 
 void switch_vector_enclave();
 void switch_vector_host();

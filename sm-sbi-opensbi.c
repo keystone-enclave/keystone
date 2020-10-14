@@ -33,16 +33,16 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
     retval = mcall_sm_destroy_enclave(args[0]);
     break;
   case SBI_SM_RUN_ENCLAVE:
-    retval = mcall_sm_run_enclave((uintptr_t*)regs, args[0]);
+    retval = mcall_sm_run_enclave(regs, args[0]);
     break;
   case SBI_SM_EXIT_ENCLAVE:
-    retval = mcall_sm_exit_enclave((uintptr_t*)regs, args[0]);
+    retval = mcall_sm_exit_enclave(regs, args[0]);
     break;
   case SBI_SM_STOP_ENCLAVE:
-    retval = mcall_sm_stop_enclave((uintptr_t*)regs, args[0]);
+    retval = mcall_sm_stop_enclave(regs, args[0]);
     break;
   case SBI_SM_RESUME_ENCLAVE:
-    retval = mcall_sm_resume_enclave((uintptr_t*)regs, args[0]);
+    retval = mcall_sm_resume_enclave(regs, args[0]);
     break;
   case SBI_SM_ATTEST_ENCLAVE:
     retval = mcall_sm_attest_enclave(args[0], args[1], args[2]);
@@ -59,16 +59,8 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
 
   }
 
-  *out_val = retval;
+  *out_val = regs->a1;
 
-  if(retval != ENCLAVE_SUCCESS){
-    retval = SBI_ENOTSUPP;
-  }
-  else{
-    retval = SBI_OK;
-  }
-
-  sbi_printf("Keystone extension returning %lu\n", retval);
   return retval;
 
 }
