@@ -26,14 +26,16 @@ directory. We strongly recommend adding the following to your ``.bashrc``.
 Build SDK in RV32
 #############################
 
-We will now have to build the SDK in RV32. Go to your SDK directory and create a build directory. 
+We will now have to build the SDK in RV32. Go to your SDK directory and create a build directory. Remember to set your SDK path
 
 ::
 
   mkdir <build directory>
   cd <build directory>
+  export KEYSTONE_SDK_DIR=<install_directory>
   cmake .. -DRISCV32=y 
   make
+  make install
   
 This will build the SDK in RV32. 
 
