@@ -6,6 +6,7 @@ cache:
   directories:
   # - $TRAVIS_BUILD_DIR/firesim-riscv-tools-prebuilt
   - $TRAVIS_BUILD_DIR/riscv
+  - $TRAVIS_BUILD_DIR/riscv32
   - $TRAVIS_BUILD_DIR/linux
   - $TRAVIS_BUILD_DIR/qemu
 
@@ -88,6 +89,13 @@ jobs:
         - travis_wait 120 make -j3
         - travis_wait 10 make run-tests
         - cd ..
+        - source ./source32.sh 
+        - mkdir build32
+        - cd build32
+        - cmake -DRISCV32=y ../
+        - travis_wait 120 make -j3
+        - travis_wait 10 run-tests 
+        - cd ..
         - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
         - cd linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../linux-git .git;cd ..
       after_failure:
@@ -99,6 +107,12 @@ jobs:
         - mkdir build
         - cd build
         - cmake -DLINUX_SIFIVE=y -DSM_PLATFORM=fu540 ../
+        - travis_wait 120 make -j3
+        - cd ..
+        - source ./source32.sh
+        - mkdir build32
+        - cd build32
+        - cmake -DLINUX_SIFIVE=y -DSM_PLATFORM=fu540 -DRISCV32=y ../
         - travis_wait 120 make -j3
         - cd ..
         - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
