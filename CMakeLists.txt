@@ -183,7 +183,6 @@ else()
   add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
 endif()
 
-
 if(initramfs)
   # linux-initramfs
   execute_process(COMMAND id -u OUTPUT_VARIABLE uid)
@@ -290,6 +289,10 @@ add_custom_target("image" DEPENDS "buildroot" "sm"
 )
 add_dependencies("buildroot" "image-deps")
 
+###############################################################################
+## PATCH
+###############################################################################
+add_custom_target("patch" DEPENDS ${qemu_patches} ${linux_patches} ${sm_patches})
 
 ###############################################################################
 ## QEMU scripts
