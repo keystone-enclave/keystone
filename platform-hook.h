@@ -1,5 +1,7 @@
-#ifndef _PLATFORM_H_
-#define _PLATFORM_H_
+#ifndef _PLATFORM_HOOK_H_
+#define _PLATFORM_HOOK_H_
+
+#include "enclave.h"
 
 /* These functions are defined by platform/soc specific objects,
    defined in platform/$PLATFORM/$PLATFORM.c */
@@ -35,4 +37,4 @@ void platform_switch_from_enclave(struct enclave* enclave);
    instead. */
 uint64_t platform_random();
 
-#endif /* _PLATFORM_H_ */
+#endif /* _PLATFORM_HOOK_H_ */

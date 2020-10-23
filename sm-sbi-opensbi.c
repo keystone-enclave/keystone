@@ -23,7 +23,6 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
      This really needs to be handled far more cleanly. */
   // uintptr_t funcid = regs->a6; /* This was a7 in the old interface */
   // uintptr_t args[0] = regs->a0, args[1] = regs->a1, args[2] = regs->a2, args[3] = regs->a3;
-  sbi_printf("Keystone extension handler, funcid = %lu\n",funcid);
   uintptr_t retval;
   switch(funcid){
   case SBI_SM_CREATE_ENCLAVE:
