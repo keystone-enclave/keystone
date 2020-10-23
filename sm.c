@@ -6,7 +6,7 @@
 #include "pmp.h"
 #include "crypto.h"
 #include "enclave.h"
-#include "platform.h"
+#include "platform-hook.h"
 #include "sm_sbi_opensbi.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_locks.h>

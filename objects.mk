@@ -1,9 +1,11 @@
 ifdef PLATFORM
-  libsbiutils-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/$(PLATFORM)/$(PLATFORM).h\""
+  libsbiutils-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/$(PLATFORM)/platform.h\""
 else
-  libsbiutils-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/default/default.h\""
+	PLATFORM = "generic"
+  libsbiutils-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/generic/platform.h\""
 endif
 
+libsbiutils-genflags-y += -I$(CURDIR)/lib/utils/experimental/keystone
 
 libsbiutils-objs-y += experimental/keystone/attest.o
 libsbiutils-objs-y += experimental/keystone/cpu.o
@@ -28,6 +30,6 @@ libsbiutils-objs-y += experimental/keystone/ed25519/sign.o
 libsbiutils-objs-y += experimental/keystone/hkdf_sha3_512/hkdf_sha3_512.o
 libsbiutils-objs-y += experimental/keystone/hmac_sha3/hmac_sha3.o
 
-libsbiutils-objs-y += experimental/keystone/platform/generic/generic.o
+libsbiutils-objs-y += experimental/keystone/platform/$(PLATFORM)/platform.o
 
 libsbiutils-objs-y += experimental/keystone/plugins/plugins.o

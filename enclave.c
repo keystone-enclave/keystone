@@ -7,7 +7,7 @@
 #include "pmp.h"
 #include "page.h"
 #include "cpu.h"
-#include "platform.h"
+#include "platform-hook.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>

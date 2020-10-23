@@ -8,7 +8,7 @@
 #include "page.h"
 #include "cpu.h"
 #include <errno.h>
-#include "platform.h"
+#include "platform-hook.h"
 #include "plugins/plugins.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>

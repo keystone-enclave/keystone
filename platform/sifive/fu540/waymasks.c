@@ -1,13 +1,14 @@
+#include <sbi/sbi_console.h>
 #include "waymasks.h"
 
 void waymask_debug_printstatus(){
-  unsigned int hartid = read_csr(mhartid);
-  printm("mhartid: %x, coremasters: %x & %x\r\n",hartid, (hartid)*2, (hartid)*2 + 1);
+  unsigned int hartid = csr_read(mhartid);
+  sbi_printf("mhartid: %x, coremasters: %x & %x\r\n",hartid, (hartid)*2, (hartid)*2 + 1);
 
   unsigned int master;
   for(master=0;master<WM_NUM_MASTERS;master++){
     waymask_t* master_mask = WM_REG_ADDR(master);
-    printm("Master %x : %0.8x\r\n",master, *master_mask);
+    sbi_printf("Master %x : %lx\r\n",master, *master_mask);
   }
 }
 
@@ -151,7 +152,7 @@ void waymask_allocate_scratchpad(){
 
   /* tmp sanity check */
   if( (allocated_ways & mask) != 0){
-    printm("Cannot allocate ways for scratchpad, in use!\r\n");
+    sbi_printf("Cannot allocate ways for scratchpad, in use!\r\n");
     return;
   }
 

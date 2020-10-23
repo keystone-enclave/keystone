@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "pmp.h"
 
 #define WM_NUM_MASTERS 21
 #define WM_NUM_WAYS 16
