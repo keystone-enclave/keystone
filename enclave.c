@@ -11,6 +11,7 @@
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
+#include <sbi/sbi_console.h>
 
 #define ENCL_MAX  16
 
@@ -44,6 +45,7 @@ static inline enclave_ret_code context_switch_to_enclave(struct sbi_trap_regs* r
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], (uintptr_t*) regs, 1);
   swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
+  swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
 
   uintptr_t interrupts = 0;
   csr_write(mideleg, interrupts);
@@ -52,6 +54,7 @@ static inline enclave_ret_code context_switch_to_enclave(struct sbi_trap_regs* r
     // passing parameters for a first run
     csr_write(sepc, (uintptr_t) enclaves[eid].params.user_entry);
     regs->mepc = (uintptr_t) enclaves[eid].params.runtime_entry - 4; // regs->mepc will be +4 before sbi_ecall_handler return
+    regs->mstatus = (1 << MSTATUS_MPP_SHIFT);
     // $a1: (PA) DRAM base,
     regs->a1 = (uintptr_t) enclaves[eid].pa_params.dram_base;
     // $a2: (PA) DRAM size,
@@ -85,7 +88,7 @@ static inline enclave_ret_code context_switch_to_enclave(struct sbi_trap_regs* r
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
   cpu_enter_enclave_context(eid);
-  swap_prev_mpp(&enclaves[eid].threads[0], regs);
+
   return ENCLAVE_SUCCESS;
 }
 
@@ -108,6 +111,7 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
   /* restore host context */
   swap_prev_state(&enclaves[eid].threads[0], (uintptr_t*) regs, return_on_resume);
   swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
+  swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
 
   switch_vector_host();
 
@@ -130,7 +134,7 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
   platform_switch_from_enclave(&(enclaves[eid]));
 
   cpu_exit_enclave_context();
-  swap_prev_mpp(&enclaves[eid].threads[0], regs);
+
   return;
 }
 
