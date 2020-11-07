@@ -19,3 +19,7 @@
 [submodule "qemu"]
 	path = qemu
 	url = https://github.com/qemu/qemu
+[submodule "FreeRTOS-Kernel"]
+	path = FreeRTOS-Kernel
+	url = git@github.com:keystone-enclave/FreeRTOS-Kernel.git
+	branch = master
