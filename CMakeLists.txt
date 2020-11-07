@@ -105,6 +105,23 @@ set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
 set(final_image ${CMAKE_BINARY_DIR}/bbl.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
+set(freeRTOS_srcdir ${CMAKE_SOURCE_DIR}/FreeRTOS-Kernel)
+mkdir(freeRTOS_wrkdir ${CMAKE_BINARY_DIR}/freeRTOS.build)
+set(freeRTOS_image ${freeRTOS_wrkdir}/FreeRTOS.elf)
+
+set(OPERATING_SYSTEM "linux" CACHE STRING "Build with specified OS")
+if (${OPERATING_SYSTEM} STREQUAL "linux")
+  message(STATUS "OS=linux")
+  set(OS_PAYLOAD ${linux_vmlinux_stripped})
+  set(OS_NAME linux)
+elseif(${OPERATING_SYSTEM} STREQUAL "freeRTOS")
+  message(STATUS "OS=freeRTOS")
+  set(OS_PAYLOAD ${freeRTOS_image})
+  set(OS_NAME freeRTOS)
+else()
+  message(FATAL_ERROR "Unknown Operating System: ${OPERATING_SYSTEM}")
+endif()
+
 
 ###############################################################################
 ## COMPONENT: QEMU
@@ -216,6 +233,18 @@ add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config
 add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
 add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux})
 
+###############################################################################
+## COMPONENT: freeRTOS
+###############################################################################
+
+add_custom_command(OUTPUT ${freeRTOS_wrkdir} COMMAND mkdir -p ${freeRTOS_wrkdir})
+add_custom_target("freeRTOS-sync" DEPENDS ${freeRTOS_srcdir} ${freeRTOS_wrkdir}
+	COMMAND rsync -r ${freeRTOS_srcdir}/ ${freeRTOS_wrkdir})
+add_custom_target("freeRTOS" ALL DEPENDS ${freeRTOS_srcdir} ${freeRTOS_wrkdir} "freeRTOS-sync"
+  COMMAND $(MAKE) -C ${freeRTOS_wrkdir} O=${freeRTOS_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
+    M=${freeRTOS_wrkdir}
+  COMMENT "Building freeRTOS"
+)
 
 ###############################################################################
 ## COMPONENT: linux driver
@@ -249,11 +278,11 @@ endif()
 
 add_custom_command(OUTPUT ${sm_wrkdir}/Makefile WORKING_DIRECTORY ${sm_wrkdir}
   DEPENDS ${sm_wrkdir_exists}
-  COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
+  COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${OS_PAYLOAD}
     --enable-logo --with-logo=${confdir}/sifive_logo.txt ${enabled_sm} ${SM_CONFIGURE_ARGS} --with-target-platform=${platform}
   COMMENT "Configuring sm"
 )
-add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile "linux" ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
+add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile ${OS_NAME} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
   COMMENT "Building sm"
 )
