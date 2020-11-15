@@ -1,3 +1,5 @@
+include(FreeRTOS-Kernel/macros.cmake)
+
 cmake_minimum_required(VERSION 3.5)
 project(keystone C)
 include(ProcessorCount)
@@ -56,10 +58,12 @@ if(RISCV32)
   message(STATUS "riscv32")
   set(BITS 32)
   set(ABI ilp32d)
+  use_riscv_toolchain(32)
 else()
   message(STATUS "riscv64")
   set(BITS 64)
   set(ABI lp64d)
+  use_riscv_toolchain(64)
 endif()
 
 set(ISA rv${BITS}imafdc)
@@ -107,7 +111,7 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 set(freeRTOS_srcdir ${CMAKE_SOURCE_DIR}/FreeRTOS-Kernel)
 mkdir(freeRTOS_wrkdir ${CMAKE_BINARY_DIR}/freeRTOS.build)
-set(freeRTOS_image ${freeRTOS_wrkdir}/FreeRTOS.elf)
+set(freeRTOS_image ${freeRTOS_wrkdir}/freeRTOS)
 
 set(OPERATING_SYSTEM "linux" CACHE STRING "Build with specified OS")
 if (${OPERATING_SYSTEM} STREQUAL "linux")
@@ -237,14 +241,18 @@ add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux}
 ## COMPONENT: freeRTOS
 ###############################################################################
 
-add_custom_command(OUTPUT ${freeRTOS_wrkdir} COMMAND mkdir -p ${freeRTOS_wrkdir})
-add_custom_target("freeRTOS-sync" DEPENDS ${freeRTOS_srcdir} ${freeRTOS_wrkdir}
-	COMMAND rsync -r ${freeRTOS_srcdir}/ ${freeRTOS_wrkdir})
-add_custom_target("freeRTOS" ALL DEPENDS ${freeRTOS_srcdir} ${freeRTOS_wrkdir} "freeRTOS-sync"
-  COMMAND $(MAKE) -C ${freeRTOS_wrkdir} O=${freeRTOS_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    M=${freeRTOS_wrkdir}
-  COMMENT "Building freeRTOS"
-)
+# add_custom_command(OUTPUT ${freeRTOS_wrkdir} COMMAND mkdir -p ${freeRTOS_wrkdir})
+# add_custom_target("freeRTOS-sync" DEPENDS ${freeRTOS_srcdir} ${freeRTOS_wrkdir}
+# 	COMMAND rsync -r ${freeRTOS_srcdir}/ ${freeRTOS_wrkdir})
+# add_custom_target("freeRTOS" ALL DEPENDS ${freeRTOS_srcdir} ${freeRTOS_wrkdir} "freeRTOS-sync"
+#   COMMAND $(MAKE) -C ${freeRTOS_wrkdir} O=${freeRTOS_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
+#     M=${freeRTOS_wrkdir}
+#   COMMENT "Building freeRTOS"
+# )
+
+add_subdirectory(FreeRTOS-Kernel ${freeRTOS_wrkdir})
+
+# add_custom_target("freeRTOS" DEPENDS FreeRTOS-Kernel)
 
 ###############################################################################
 ## COMPONENT: linux driver
