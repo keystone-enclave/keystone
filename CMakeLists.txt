@@ -252,8 +252,6 @@ add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux}
 
 add_subdirectory(FreeRTOS-Kernel ${freeRTOS_wrkdir})
 
-# add_custom_target("freeRTOS" DEPENDS FreeRTOS-Kernel)
-
 ###############################################################################
 ## COMPONENT: linux driver
 ###############################################################################
