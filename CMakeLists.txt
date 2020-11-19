@@ -111,7 +111,7 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 set(freeRTOS_srcdir ${CMAKE_SOURCE_DIR}/FreeRTOS-Kernel)
 mkdir(freeRTOS_wrkdir ${CMAKE_BINARY_DIR}/freeRTOS.build)
-set(freeRTOS_image ${freeRTOS_wrkdir}/freeRTOS)
+set(freeRTOS_image ${freeRTOS_wrkdir}/bin/freeRTOS)
 
 set(OPERATING_SYSTEM "linux" CACHE STRING "Build with specified OS")
 if (${OPERATING_SYSTEM} STREQUAL "linux")
