@@ -117,11 +117,11 @@ set(OPERATING_SYSTEM "linux" CACHE STRING "Build with specified OS")
 if (${OPERATING_SYSTEM} STREQUAL "linux")
   message(STATUS "OS=linux")
   set(OS_PAYLOAD ${linux_vmlinux_stripped})
-  set(OS_NAME linux)
+  set(OS_NAME "linux")
 elseif(${OPERATING_SYSTEM} STREQUAL "freeRTOS")
   message(STATUS "OS=freeRTOS")
   set(OS_PAYLOAD ${freeRTOS_image})
-  set(OS_NAME freeRTOS)
+  set(OS_NAME "freeRTOS")
 else()
   message(FATAL_ERROR "Unknown Operating System: ${OPERATING_SYSTEM}")
 endif()
@@ -152,24 +152,25 @@ add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
 ## COMPONENT: buildroot
 ###############################################################################
 
-add_custom_command(OUTPUT ${overlay_root} COMMAND mkdir -p ${overlay_root})
-add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
-add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
-add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
-  COMMENT "Building buildroot"
-)
+if (NOT ${OS_NAME} STREQUAL "freeRTOS")
+  add_custom_command(OUTPUT ${overlay_root} COMMAND mkdir -p ${overlay_root})
+  add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
+  add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
+  add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
+    COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
+    COMMENT "Building buildroot"
+  )
 
-string(REPLACE "/" "\\/" overlay_dir_stripped ${overlay_dir})
-add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.config
-  COMMAND mkdir -p ${buildroot_wrkdir}
-  COMMAND cp ${buildroot_config} ${buildroot_wrkdir}/.config
-  COMMAND sed \"s/^BR2_ROOTFS_OVERLAY=.*/BR2_ROOTFS_OVERLAY=\\\"${overlay_dir_stripped}\\\"/g\" -i ${buildroot_wrkdir}/.config
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH}
-    O=${buildroot_wrkdir} CROSS_COMPILE=${cross_compile} olddefconfig
-  COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
-)
-
+  string(REPLACE "/" "\\/" overlay_dir_stripped ${overlay_dir})
+  add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.config
+    COMMAND mkdir -p ${buildroot_wrkdir}
+    COMMAND cp ${buildroot_config} ${buildroot_wrkdir}/.config
+    COMMAND sed \"s/^BR2_ROOTFS_OVERLAY=.*/BR2_ROOTFS_OVERLAY=\\\"${overlay_dir_stripped}\\\"/g\" -i ${buildroot_wrkdir}/.config
+    COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH}
+      O=${buildroot_wrkdir} CROSS_COMPILE=${cross_compile} olddefconfig
+    COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
+  )
+endif()
 
 ###############################################################################
 ## component: bootrom
@@ -188,55 +189,55 @@ add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "boo
 ###############################################################################
 ## COMPONENT: linux kernel
 ###############################################################################
-
-add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
-  COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
-  COMMENT "Configuring linux"
-)
-add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
-
-if(firesim)
-  add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
-elseif(sifive)
-  add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} linux_patches)
-else()
-  add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
-endif()
-
-if(initramfs)
-  # linux-initramfs
-  execute_process(COMMAND id -u OUTPUT_VARIABLE uid)
-  string(STRIP ${uid} uid)
-  execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
-  string(STRIP ${gid} gid)
-  add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
-  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
-    COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
-    COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
-    COMMAND $(MAKE) -C ${linux_srcdir}
-      O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
-      CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
-      CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
-      CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
-    COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
-    COMMENT "Building linux (initramfs)"
+if (${OS_NAME} STREQUAL "linux")
+  add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
+    COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
+    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
+    COMMENT "Configuring linux"
   )
-else()
-  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${linux_srcdir} "linux-symvers"
-    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
-    COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
-    COMMENT "Building linux"
+  add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
+
+  if(firesim)
+    add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
+  elseif(sifive)
+    add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} linux_patches)
+  else()
+    add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
+  endif()
+
+  if(initramfs)
+    # linux-initramfs
+    execute_process(COMMAND id -u OUTPUT_VARIABLE uid)
+    string(STRIP ${uid} uid)
+    execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
+    string(STRIP ${gid} gid)
+    add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
+    add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
+      COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
+      COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
+      COMMAND $(MAKE) -C ${linux_srcdir}
+        O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
+        CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
+        CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
+        CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
+      COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+      COMMENT "Building linux (initramfs)"
+    )
+  else()
+    add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${linux_srcdir} "linux-symvers"
+      COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
+      COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+      COMMENT "Building linux"
+    )
+  endif()
+
+  add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config" ${linux_patches}
+    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv modules
+    COMMENT "Building linux symvers"
   )
+  add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
+  add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux})
 endif()
-
-add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config" ${linux_patches}
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv modules
-  COMMENT "Building linux symvers"
-)
-add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
-add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux})
-
 ###############################################################################
 ## COMPONENT: freeRTOS
 ###############################################################################
@@ -249,21 +250,24 @@ add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux}
 #     M=${freeRTOS_wrkdir}
 #   COMMENT "Building freeRTOS"
 # )
-
-add_subdirectory(FreeRTOS-Kernel ${freeRTOS_wrkdir})
+if (${OS_NAME} STREQUAL "freeRTOS")
+  add_subdirectory(FreeRTOS-Kernel ${freeRTOS_wrkdir})
+endif()
 
 ###############################################################################
 ## COMPONENT: linux driver
 ###############################################################################
 
-add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
-add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
-	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
-add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync"
-  COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    M=${driver_wrkdir} modules
-  COMMENT "Building driver"
-)
+if (${OS_NAME} STREQUAL "linux")
+  add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
+  add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
+    COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
+  add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync"
+    COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
+      M=${driver_wrkdir} modules
+    COMMENT "Building driver"
+  )
+endif()
 
 
 ###############################################################################
@@ -302,27 +306,29 @@ endif()
 ###############################################################################
 ## COMPONENT: tests
 ###############################################################################
-set(example_wrkdir examples)
-add_subdirectory(sdk/examples ${example_wrkdir})
-set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
+if (NOT ${OS_NAME} STREQUAL "freeRTOS")
+  set(example_wrkdir examples)
+  add_subdirectory(sdk/examples ${example_wrkdir})
+  set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 
-add_custom_target("tests" DEPENDS examples ${overlay_root}
-  COMMAND find ${example_wrkdir} -name "tests.ke" | xargs -I{} rsync {} ${overlay_root}
-  COMMENT "Copying example enclave packages"
-  )
-
+  add_custom_target("tests" DEPENDS examples ${overlay_root}
+    COMMAND find ${example_wrkdir} -name "tests.ke" | xargs -I{} rsync {} ${overlay_root}
+    COMMENT "Copying example enclave packages"
+    )
+endif()
 ###############################################################################
 ## COMPONENT: image
 ###############################################################################
-
-add_custom_target("image-deps" DEPENDS "tests" "driver" ${overlay_root}
-  COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
-)
+if (NOT ${OS_NAME} STREQUAL "freeRTOS")
+  add_custom_target("image-deps" DEPENDS "tests" "driver" ${overlay_root}
+    COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
+  )
+  add_dependencies("buildroot" "image-deps")
+endif()
 add_custom_target("image" DEPENDS "buildroot" "sm"
   COMMAND ${cross_compile}objcopy -S -O binary --change-addresses -0x80000000 ${sm_wrkdir}/bbl ${final_image}
   COMMENT "Generating image"
 )
-add_dependencies("buildroot" "image-deps")
 
 ###############################################################################
 ## PATCH
@@ -348,35 +354,67 @@ else()
 endif()
 
 # generate the qemu runscript, using the above options
-add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
-    WORKING_DIRECTORY ${scripts}
-    COMMAND echo "\
-      export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
-      echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
-      export SMP=1; \
-      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then echo \"**** GDB port \$((HOST_PORT + 1)) ****\"; DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
-      ${qemu_system} \
-      \$DEBUG \
-      -m 2G \
-      -nographic \
-      -machine virt \
-      -bios ${bootrom_wrkdir}/bootrom.bin \
-      -kernel ${sm_wrkdir}/bbl \
-      ${extra_qemu_options} \
-      -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
-      -device virtio-net-device,netdev=net0 \
-      -device virtio-rng-pci \
-      -smp $SMP" > run-qemu.sh
-      VERBATIM
-    COMMAND
-      chmod +x run-qemu.sh
-  )
+if (${OS_NAME} STREQUAL "freeRTOS")
+  add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
+      WORKING_DIRECTORY ${scripts}
+      COMMAND echo "\
+        export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
+        echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
+        export SMP=1; \
+        while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then echo \"**** GDB port \$((HOST_PORT + 1)) ****\"; DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
+        ${qemu_system} \
+        \$DEBUG \
+        -m 2G \
+        -nographic \
+        -machine virt \
+        -bios ${bootrom_wrkdir}/bootrom.bin \
+        -kernel ${sm_wrkdir}/bbl \
+        -smp $SMP" > run-qemu.sh
+        VERBATIM
+      COMMAND
+        chmod +x run-qemu.sh
+    )
+else()
+  add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
+      WORKING_DIRECTORY ${scripts}
+      COMMAND echo "\
+        export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
+        echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
+        export SMP=1; \
+        while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then echo \"**** GDB port \$((HOST_PORT + 1)) ****\"; DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
+        ${qemu_system} \
+        \$DEBUG \
+        -m 2G \
+        -nographic \
+        -machine virt \
+        -bios ${bootrom_wrkdir}/bootrom.bin \
+        -kernel ${sm_wrkdir}/bbl \
+        ${extra_qemu_options} \
+        -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
+        -device virtio-net-device,netdev=net0 \
+        -device virtio-rng-pci \
+        -smp $SMP" > run-qemu.sh
+        VERBATIM
+      COMMAND
+        chmod +x run-qemu.sh
+    )
+endif()
 add_custom_command(OUTPUT ${scripts}/test-qemu.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/test-qemu.sh ${scripts})
 add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/travis.sh ${scripts})
-add_custom_command(OUTPUT ${scripts}/gdb.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
-  COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/gdb.sh ${scripts})
+if (${OS_NAME} STREQUAL "freeRTOS")
+  add_custom_command(OUTPUT ${scripts}/gdb.sh DEPENDS ${scripts}
+      WORKING_DIRECTORY ${scripts}
+      COMMAND echo "riscv32-unknown-linux-gnu-gdb ${sm_wrkdir}/bbl" > gdb.sh
+        VERBATIM
+      COMMAND
+        chmod +x gdb.sh
+    )
+else()
+  add_custom_command(OUTPUT ${scripts}/gdb.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
+    COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/gdb.sh ${scripts})
+endif()
 
 add_custom_target(
   "tools" ALL
