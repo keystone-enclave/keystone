@@ -318,6 +318,21 @@ int pmp_set_global(int region_idx, uint8_t perm)
   return PMP_SUCCESS;
 }
 
+void pmp_init()
+{
+  uintptr_t pmpaddr = 0;
+  uintptr_t pmpcfg = 0;
+  int i;
+  for (i=0; i < PMP_N_REG; i++)
+  {
+    switch(i) {
+#define X(n,g) case n: { PMP_SET(n, g, pmpaddr, pmpcfg); break; }
+      LIST_OF_PMP_REGS
+#undef X
+    }
+  }
+}
+
 int pmp_set_keystone(int region_idx, uint8_t perm)
 {
   if(!is_pmp_region_valid(region_idx))

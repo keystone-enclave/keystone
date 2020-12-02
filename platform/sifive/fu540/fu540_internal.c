@@ -1,5 +1,6 @@
-#include "fu540.h"
-#include "encoding.h"
+#include <sbi/sbi_console.h>
+#include <sbi/riscv_encoding.h>
+#include "platform-hook.h"
 #include "sm-sbi.h"
 #include "pmp.h"
 #include "enclave.h"
@@ -18,7 +19,7 @@ enclave_ret_code scratch_init(){
   waymask_allocate_scratchpad();
 
   /* Clear scratchpad for use */
-  unsigned int core = read_csr(mhartid);
+  unsigned int core = csr_read(mhartid);
   waymask_apply_allocated_mask(scratchpad_allocated_ways, core);
 
   waymask_t invert_mask = WM_FLIP_MASK(scratchpad_allocated_ways);
@@ -68,7 +69,7 @@ enclave_ret_code scratch_init(){
      again... */
   for(addr = scratch_start; addr < scratch_stop; addr += L2_LINE_SIZE){
     if(*(uintptr_t*)addr != 64){
-      printm("FATAL: Found a bad line %x\r\n", addr);
+      sbi_printf("FATAL: Found a bad line %lx\r\n", addr);
       return ENCLAVE_UNKNOWN_ERROR;
     }
   }
@@ -85,14 +86,14 @@ enclave_ret_code platform_init_global_once(){
   if(pmp_region_init_atomic(CACHE_CONTROLLER_ADDR_START,
                             CACHE_CONTROLLER_ADDR_END - CACHE_CONTROLLER_ADDR_START,
                             PMP_PRI_ANY, &l2_controller_rid, 1)){
-    printm("FATAL CANNOT CREATE PMP FOR CONTROLLER\r\n");
+    sbi_printf("FATAL CANNOT CREATE PMP FOR CONTROLLER\r\n");
     return ENCLAVE_NO_FREE_RESOURCE;
   }
   /* Create PMP region for scratchpad */
   if(pmp_region_init_atomic(L2_SCRATCH_START,
                             L2_SCRATCH_STOP - L2_SCRATCH_START,
                             PMP_PRI_ANY, &scratch_rid, 1)){
-    printm("FATAL CANNOT CREATE SCRATCH PMP\r\n");
+    sbi_printf("FATAL CANNOT CREATE SCRATCH PMP\r\n");
     return ENCLAVE_NO_FREE_RESOURCE;
   }
   return ENCLAVE_SUCCESS;
@@ -100,8 +101,8 @@ enclave_ret_code platform_init_global_once(){
 
 
 enclave_ret_code platform_init_global(){
-  pmp_set(l2_controller_rid, PMP_NO_PERM);
-  pmp_set(scratch_rid, PMP_NO_PERM);
+  pmp_set_keystone(l2_controller_rid, PMP_NO_PERM);
+  pmp_set_keystone(scratch_rid, PMP_NO_PERM);
 
   return ENCLAVE_SUCCESS;
 }
@@ -116,7 +117,6 @@ void platform_init_enclave(struct enclave* enclave){
 
 enclave_ret_code platform_create_enclave(struct enclave* enclave){
   enclave->ped.use_scratch = 0;
-  int i;
   if(enclave->ped.use_scratch){
 
     if(scratch_init() != ENCLAVE_SUCCESS){
@@ -141,13 +141,13 @@ enclave_ret_code platform_create_enclave(struct enclave* enclave){
     size_t scratch_size = 8*L2_WAY_SIZE;
 
     if(size > scratch_size){
-      printm("FATAL: Enclave too big for scratchpad!\r\n");
+      sbi_printf("FATAL: Enclave too big for scratchpad!\r\n");
       return ENCLAVE_NO_FREE_RESOURCE;
     }
     memcpy((enclave_ret_code*)scratch_epm_start,
            (enclave_ret_code*)old_epm_start,
            size);
-    printm("Performing copy from %llx to %llx\r\n", old_epm_start, scratch_epm_start);
+    sbi_printf("Performing copy from %lx to %lx\r\n", old_epm_start, scratch_epm_start);
     /* Change pa params to the new region */
     enclave->pa_params.dram_base = scratch_epm_start;
     enclave->pa_params.dram_size = scratch_size;
@@ -159,9 +159,9 @@ enclave_ret_code platform_create_enclave(struct enclave* enclave){
                                      old_epm_start));
     enclave->pa_params.free_base = (scratch_epm_start +
                                        size);
-    enclave->encl_satp =((scratch_epm_start >> RISCV_PGSHIFT) | SATP_MODE_CHOICE);
+    enclave->encl_satp =((scratch_epm_start >> RISCV_PGSHIFT) | (SATP_MODE_SV39 << HGATP_MODE_SHIFT));
 
-  /* printm("[new pa_params]: \r\n\tbase_addr: %llx\r\n\tbasesize: %llx\r\n\truntime_addr: %llx\r\n\tuser_addr: %llx\r\n\tfree_addr: %llx\r\n", */
+  /* sbi_printf("[new pa_params]: \r\n\tbase_addr: %llx\r\n\tbasesize: %llx\r\n\truntime_addr: %llx\r\n\tuser_addr: %llx\r\n\tfree_addr: %llx\r\n", */
   /*        enclave->pa_params.dram_base, */
   /*        enclave->pa_params.dram_size, */
   /*        enclave->pa_params.runtime_base, */
@@ -205,14 +205,14 @@ void platform_switch_to_enclave(struct enclave* enclave){
 
   if(enclave->ped.num_ways > 0){
     // Each hart gets special access to some
-    unsigned int core = read_csr(mhartid);
+    unsigned int core = csr_read(mhartid);
 
     //Allocate ways, fresh every time we enter
-    size_t remaining = waymask_allocate_ways(enclave->ped.num_ways,
-                                             core,
-                                             &enclave->ped.saved_mask);
+    waymask_allocate_ways(enclave->ped.num_ways,
+        core,
+        &enclave->ped.saved_mask);
 
-    //printm("Chose ways: 0x%x, core 0x%x\r\n",enclave->ped.saved_mask, core);
+    //sbi_printf("Chose ways: 0x%x, core 0x%x\r\n",enclave->ped.saved_mask, core);
     /* Assign the ways to all cores */
     waymask_apply_allocated_mask(enclave->ped.saved_mask, core);
 
@@ -222,8 +222,8 @@ void platform_switch_to_enclave(struct enclave* enclave){
 
   /* Setup PMP region for scratchpad */
   if(enclave->ped.use_scratch != 0){
-    pmp_set(scratch_rid, PMP_ALL_PERM);
-    //printm("Switching to an enclave with scratchpad access\r\n");
+    pmp_set_keystone(scratch_rid, PMP_ALL_PERM);
+    //sbi_printf("Switching to an enclave with scratchpad access\r\n");
   }
 }
 
@@ -234,7 +234,7 @@ void platform_switch_from_enclave(struct enclave* enclave){
     /* We don't need to clean them, see docs */
   }
   if(enclave->ped.use_scratch != 0){
-    pmp_set(scratch_rid, PMP_NO_PERM);
+    pmp_set_keystone(scratch_rid, PMP_NO_PERM);
   }
 
 }

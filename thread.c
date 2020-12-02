@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include <sbi/riscv_asm.h>
+#include <sbi/sbi_console.h>
 #include "thread.h"
 
 void switch_vector_enclave(){
@@ -15,18 +16,15 @@ void switch_vector_host(){
   csr_write(mtvec, &_trap_handler);
 }
 
-void swap_prev_mpp(struct thread_state* thread, struct sbi_trap_regs* regs) {
+void swap_prev_mstatus(struct thread_state* thread, struct sbi_trap_regs* regs, uintptr_t current_mstatus) {
   //Time interrupts can occur in either user mode or supervisor mode
+  uintptr_t mstatus_mask = MSTATUS_SIE | MSTATUS_SPIE | MSTATUS_SPP |
+                            MSTATUS_MPP | MSTATUS_FS | MSTATUS_SUM |
+                            MSTATUS_MXR;
 
-  int curr_mstatus = regs->mstatus;
-  int old_mpp = thread->prev_mpp;
-  if(old_mpp < 0) {
-   //Old MPP bit isn't initialized!
-   old_mpp = curr_mstatus & 0x800;
-  }
-  thread->prev_mpp = curr_mstatus & 0x800;
-  int new_mstatus = (curr_mstatus & ~0x800) | old_mpp;
-  regs->mstatus = new_mstatus;
+  uintptr_t tmp = thread->prev_mstatus;
+  thread->prev_mstatus = (current_mstatus & ~mstatus_mask) | (current_mstatus & mstatus_mask);
+  regs->mstatus = (current_mstatus & ~mstatus_mask) | tmp;
 }
 
 /* Swaps the entire s-mode visible state, general registers and then csrs */
