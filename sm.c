@@ -125,6 +125,7 @@ void sm_init(void)
   sbi_ecall_register_extension(&ecall_keystone_enclave);
 
   if(!sm_init_done) {
+    /* only the cold-booting hart will execute these */
     sm_region_id = smm_init();
     if(sm_region_id < 0) {
       sbi_printf("[SM] intolerable error - failed to initialize SM memory");
@@ -146,6 +147,8 @@ void sm_init(void)
     }
   }
 
+  /* below are executed by all harts */
+  pmp_init();
   pmp_set_keystone(sm_region_id, PMP_NO_PERM);
   pmp_set_keystone(os_region_id, PMP_ALL_PERM);
 
