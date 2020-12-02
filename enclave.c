@@ -50,7 +50,7 @@ static inline enclave_ret_code context_switch_to_enclave(struct sbi_trap_regs* r
   uintptr_t interrupts = 0;
   csr_write(mideleg, interrupts);
 
-  if(load_parameters){
+  if(load_parameters) {
     // passing parameters for a first run
     csr_write(sepc, (uintptr_t) enclaves[eid].params.user_entry);
     regs->mepc = (uintptr_t) enclaves[eid].params.runtime_entry - 4; // regs->mepc will be +4 before sbi_ecall_handler return
