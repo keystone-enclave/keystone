@@ -49,6 +49,9 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
   case SBI_SM_RANDOM:
     retval = mcall_sm_random();
     break;
+  case SBI_SM_GET_SEALING_KEY:
+    retval = mcall_sm_get_sealing_key(args[0], args[1], args[2]);
+    break;
   case SBI_SM_CALL_PLUGIN:
     retval = mcall_sm_call_plugin(args[0], args[1], args[2], args[3]);
     break;
