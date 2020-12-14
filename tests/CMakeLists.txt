@@ -17,9 +17,7 @@ include_directories(
     ${CMAKE_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ./cmocka/
-    ../../machine
-    ../../
-    ../../build
+    ../../../../../include/
     ../
 )
 enable_testing()
@@ -34,7 +32,13 @@ add_test(test_pmp
         ${QEMU} ${CMAKE_CURRENT_BINARY_DIR}/test_pmp)
 set_target_properties(test_pmp
         PROPERTIES
-        LINK_FLAGS  "-Wl,--wrap=printm -Wl,--wrap=poweroff -Wl,--wrap=disabled_hart_mask -Wl,--wrap=hart_mask"
+        COMPILE_FLAGS -DTARGET_PLATFORM_HEADER=\\"..\/platform\/generic\/platform.h\\"
+        LINK_FLAGS
+          "-Wl,--wrap=sbi_printf \
+          -Wl,--wrap=sbi_hart_hang \
+          -Wl,--wrap=spin_lock \
+          -Wl,--wrap=spin_unlock \
+          -Wl,--wrap=spin_trylock"
 )
 
 ### test enclave ###
@@ -43,7 +47,7 @@ add_executable(test_enclave
                 mock/machine.c
                 mock/mprv.c
                 mock/secure_boot.c
-                ../platform/default/default.c
+                ../platform/generic/platform.c
                 ../sha3/sha3.c
                 ../ed25519/ge.c
                 ../ed25519/fe.c
@@ -64,15 +68,19 @@ add_test(test_enclave
         ${QEMU} ${CMAKE_CURRENT_BINARY_DIR}/test_enclave)
 set_target_properties(test_enclave
         PROPERTIES
-        COMPILE_FLAGS -DTARGET_PLATFORM_HEADER=\\"..\/platform\/default\/default.h\\"
+        COMPILE_FLAGS -DTARGET_PLATFORM_HEADER=\\"..\/platform\/generic\/platform.h\\"
         LINK_FLAGS
-          "-Wl,--wrap=printm \
-  -Wl,--wrap=mtime   \
-          -Wl,--wrap=trap_vector \
+          "-Wl,--wrap=sbi_printf \
+          -Wl,--wrap=spin_lock \
+          -Wl,--wrap=spin_unlock \
+          -Wl,--wrap=spin_trylock \
+          -Wl,--wrap=sbi_hart_hang \
+          -Wl,--wrap=sbi_memset \
+          -Wl,--wrap=sbi_memcpy \
           -Wl,--wrap=trap_vector_enclave \
-	  -Wl,--wrap=poweroff \
-	  -Wl,--wrap=disabled_hart_mask \
-          -Wl,--wrap=hart_mask \
+          -Wl,--wrap=_trap_handler \
+          -Wl,--wrap=ecall_keystone_enclave \
+          -Wl,--wrap=sbi_ecall_register_extension \
           -Wl,--wrap=sanctum_sm_hash \
           -Wl,--wrap=sanctum_sm_signature \
           -Wl,--wrap=sanctum_sm_public_key \

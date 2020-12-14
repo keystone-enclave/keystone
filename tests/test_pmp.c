@@ -1,5 +1,4 @@
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +9,6 @@
 #include <cmocka.h>
 
 #include "../pmp.c"
-
 
 static void test_search_rightmost_unset()
 {
@@ -88,7 +86,7 @@ static void test_pmp_region_init_and_free()
   assert_int_equal(reg_bitmap, 0x1);
   assert_int_equal(rid, 0);
   assert_int_equal(regions[0].size, 0x4000);
-  assert_int_equal(regions[0].addrmode, PMP_NAPOT);
+  assert_int_equal(regions[0].addrmode, PMP_A_NAPOT);
   assert_int_equal(regions[0].addr, 0x8000);
   assert_int_equal(regions[0].allow_overlap, false);
   assert_int_equal(regions[0].reg_idx, 0);
@@ -162,7 +160,7 @@ static void test_pmp_region_init_tor_pri_top()
   assert_int_equal(reg_bitmap, 0x1);
   assert_int_equal(rid, 0);
   assert_int_equal(regions[0].size, 0xdead000);
-  assert_int_equal(regions[0].addrmode, PMP_TOR);
+  assert_int_equal(regions[0].addrmode, PMP_A_TOR);
   assert_int_equal(regions[0].addr, 0x0);
   assert_int_equal(regions[0].allow_overlap, false);
   assert_int_equal(regions[0].reg_idx, 0);
@@ -176,7 +174,7 @@ static void test_region_helpers()
   region_init(rid,
               0xdeadbeef,
               0xfeed,
-              PMP_TOR,
+              PMP_A_TOR,
               true,
               5);
 
@@ -199,7 +197,7 @@ static void test_region_helpers()
   region_init(rid,
               0x8000,
               0x4000,
-              PMP_NAPOT,
+              PMP_A_NAPOT,
               false,
               0);
 
