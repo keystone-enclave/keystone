@@ -26,7 +26,7 @@ add_library(cmocka STATIC IMPORTED)
 SET_TARGET_PROPERTIES(cmocka PROPERTIES IMPORTED_LOCATION ${CMOCKA_LIBRARY})
 
 ### test pmp ###
-add_executable(test_pmp test_pmp.c mock/machine.c)
+add_executable(test_pmp test_pmp.c mock/opensbi.c)
 target_link_libraries(test_pmp cmocka)
 add_test(test_pmp
         ${QEMU} ${CMAKE_CURRENT_BINARY_DIR}/test_pmp)
@@ -44,7 +44,7 @@ set_target_properties(test_pmp
 ### test enclave ###
 add_executable(test_enclave
                 test_enclave.c
-                mock/machine.c
+                mock/opensbi.c
                 mock/mprv.c
                 mock/secure_boot.c
                 ../platform/generic/platform.c
