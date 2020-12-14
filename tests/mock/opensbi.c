@@ -1,12 +1,19 @@
+#include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/sbi_string.h>
 #include <sbi/sbi_ecall.h>
+
 extern void mock_assert(const int result, const char* const expression,
                             const char * const file, const int line);
 
 void __wrap_sbi_printf(const char* s, ...)
 {
+  va_list args;
+  va_start (args, s);
+  printf (s, args);
+  va_end (args);
   return;
 }
 
