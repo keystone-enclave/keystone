@@ -2,6 +2,7 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
+#include "ipi.h"
 #include "sm.h"
 #include "pmp.h"
 #include "crypto.h"
@@ -10,12 +11,12 @@
 #include "sm_sbi_opensbi.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_locks.h>
+#include <sbi/riscv_barrier.h>
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_hart.h>
 
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
-static spinlock_t sm_init_lock = SPIN_LOCK_INITIALIZER;
 
 /* from Sanctum BootROM */
 extern byte sanctum_sm_hash[MDSIZE];
@@ -114,18 +115,15 @@ void sm_print_cert()
 }
 */
 
-void sm_init(void)
+void sm_init(bool cold_boot)
 {
 	// initialize SMM
-
-  spin_lock(&sm_init_lock);
-
-  sbi_printf("[SM] Initializing ... \n");
-
-  sbi_ecall_register_extension(&ecall_keystone_enclave);
-
-  if(!sm_init_done) {
+  if (cold_boot) {
     /* only the cold-booting hart will execute these */
+    sbi_printf("[SM] Initializing ... hart [%lx]\n", csr_read(mhartid));
+
+    sbi_ecall_register_extension(&ecall_keystone_enclave);
+
     sm_region_id = smm_init();
     if(sm_region_id < 0) {
       sbi_printf("[SM] intolerable error - failed to initialize SM memory");
@@ -138,13 +136,24 @@ void sm_init(void)
       sbi_hart_hang();
     }
 
-    sm_init_done = 1;
-
-
     if(platform_init_global_once() != ENCLAVE_SUCCESS) {
       sbi_printf("[SM] platform global init fatal error");
       sbi_hart_hang();
     }
+    // Copy the keypair from the root of trust
+    sm_copy_key();
+
+    // Init the enclave metadata
+    enclave_init_metadata();
+
+    sm_init_done = 1;
+    mb();
+  }
+
+  /* wait until cold-boot hart finishes */
+  while (!sm_init_done)
+  {
+    mb();
   }
 
   /* below are executed by all harts */
@@ -158,15 +167,14 @@ void sm_init(void)
     sbi_hart_hang();
   }
 
-  // Copy the keypair from the root of trust
-  sm_copy_key();
-
-  // Init the enclave metadata
-  enclave_init_metadata();
+  struct sbi_scratch* scratch = sbi_hartid_to_scratch(csr_read(mhartid));
+  int ret;
+  ret = sbi_pmp_ipi_init(scratch, cold_boot);
+  if (ret) {
+    sbi_printf("error: %d\n",ret);
+  }
 
   sbi_printf("[SM] Keystone security monitor has been initialized!\n");
-
-  spin_unlock(&sm_init_lock);
 
   return;
   // for debug
