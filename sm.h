@@ -56,7 +56,7 @@
 #define PMP_REGION_OVERLAP                  25
 #define PMP_REGION_IMPOSSIBLE_TOR           26
 
-void sm_init(void);
+void sm_init(bool cold_boot);
 
 /* platform specific functions */
 #define ATTESTATION_KEY_LENGTH  64

@@ -8,15 +8,16 @@
 #include "safe_math_util.h"
 #include "sm_sbi_opensbi.h"
 #include "page.h"
+#include "ipi.h"
 #include <sbi/sbi_hart.h>
+#include <sbi/sbi_hsm.h>
+#include <sbi/sbi_domain.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/riscv_atomic.h>
-/* PMP global spin locks */
-static spinlock_t pmp_ipi_global_lock = SPIN_LOCK_INITIALIZER;
-static spinlock_t pmp_lock = SPIN_LOCK_INITIALIZER;
 
-void pmp_ipi_update();
+/* PMP global spin locks */
+static spinlock_t pmp_lock = SPIN_LOCK_INITIALIZER;
 
 /* PMP region getter/setters */
 static struct pmp_region regions[PMP_MAX_N_REGION];
@@ -140,19 +141,6 @@ static pmpreg_id get_conseq_free_reg_idx()
   return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x3);
 }
 
-/* IPI-related functions */
-static struct ipi_msg ipi_mailbox[MAX_HARTS] = {0,};
-static region_id ipi_region_idx = -1;
-static enum ipi_type {IPI_PMP_INVALID=-1,
-                      IPI_PMP_SET,
-                      IPI_PMP_UNSET} ipi_type = IPI_PMP_INVALID;
-
-void handle_pmp_ipi()
-{
-  pmp_ipi_update();
-  return;
-}
-
 /* We do an integery overflow safety check here for the inputs (addr +
  * size).  We do NOT do a safety check on epm_base + epm_size, since
  * only valid region should have been created previously.
@@ -201,79 +189,18 @@ int pmp_detect_region_overlap_atomic(uintptr_t addr, uintptr_t size)
   return region_overlap;
 }
 
-/* static void send_pmp_ipi(uintptr_t recipient, uint8_t perm) */
-/* { */
-
-/*   uintptr_t mask = sbi_hart_available_mask(); */
-/*   uintptr_t disabled_hart_mask = ~mask; */
-/*   if (((disabled_hart_mask >> recipient) & 1)) return; */
-/*   // never send IPI to my self; it will result in a deadlock */
-/*   if (recipient == csr_read(mhartid)) return; */
-/*   atomic_or(&OTHER_HLS(recipient)->mipi_pending, IPI_PMP); */
-/*   mb(); */
-/*   atomic_write(&(ipi_mailbox[recipient].pending), 1); */
-/*   ipi_mailbox[recipient].perm = perm & PMP_ALL_PERM; */
-/*   *OTHER_HLS(recipient)->ipi = 1; */
-/* } */
-/*
-static void send_and_sync_pmp_ipi(int region_idx, enum ipi_type type, uint8_t perm)
+static void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm)
 {
-  uintptr_t mask = sbi_hsm_hart_started_mask();
-  ipi_region_idx = region_idx;
-  ipi_type = type;
+  ulong mask = 0;
+  struct sbi_pmp_ipi_info info;
+  sbi_hsm_hart_started_mask(sbi_domain_thishart_ptr(), 0, &mask);
 
-  // TODO make this cleaner
-  mask = mask & (~(((uintptr_t)1) << csr_read(mhartid)));
+  info.type = type;
+  info.rid = region_idx;
+  info.perm = perm;
+  SBI_HARTMASK_INIT_EXCEPT(&(info.smask), current_hartid());
 
-  for(uintptr_t i=0, m=mask; m; i++, m>>=1) {
-    if(m & 1) {
-      atomic_write(&(ipi_mailbox[i].pending), 1);
-      ipi_mailbox[i].perm = perm & PMP_ALL_PERM;
-    }
-  }
-  sm_sbi_send_ipi(mask);
-  // wait until every other hart sets PMP
-  for(uintptr_t i=0, m=mask; m; i++, m>>=1) {
-    if(m & 1) {
-      while( atomic_read(&ipi_mailbox[i].pending) ) {
-        continue;
-      }
-    }
-  }
-}
-*/
-/*
- * Checks if there is an update in the core's ipi mailbox.
- * If there is (the pending bit is not false), then we update the state of PMP entries.
- * Otherwise, we do nothing.
- */
-void pmp_ipi_update() {
-  if (ipi_mailbox[csr_read(mhartid)].pending.counter) {
-    if(ipi_type == IPI_PMP_SET) {
-      uint8_t perm = ipi_mailbox[csr_read(mhartid)].perm;
-      pmp_set_keystone(ipi_region_idx, perm);
-    } else {
-      pmp_unset(ipi_region_idx);
-    }
-
-    ipi_mailbox[csr_read(mhartid)].pending.counter = 0;
-  }
-}
-/*
- * Attempt to acquire the pmp ipi lock. If it fails, it means another core is broadcasting,
- * this means we may need to update our pmp state and then try to get the lock again.
- */
-void pmp_ipi_acquire_lock() {
-  while(spin_trylock(&pmp_ipi_global_lock)) {
-    pmp_ipi_update();
-  }
-}
-
-/*
- * Releases the pmp_ipi_global_lock.
- */
-void pmp_ipi_release_lock() {
-  spin_unlock(&pmp_ipi_global_lock);
+  sbi_pmp_ipi_request(mask, 0, &info);
 }
 
 /*********************************
@@ -287,15 +214,7 @@ int pmp_unset_global(int region_idx)
   if(!is_pmp_region_valid(region_idx))
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
 
-  /* We avoid any complex PMP-related IPI management
-   * by ensuring only one hart can enter this region at a time */
-#ifdef __riscv_atomic
-  pmp_ipi_acquire_lock();
-  //send_and_sync_pmp_ipi(region_idx, IPI_PMP_UNSET, PMP_NO_PERM);
-  pmp_ipi_release_lock();
-#endif
-  /* unset PMP of itself */
-  pmp_unset(region_idx);
+  send_and_sync_pmp_ipi(region_idx, SBI_PMP_IPI_TYPE_UNSET, PMP_NO_PERM);
 
   return PMP_SUCCESS;
 }
@@ -306,15 +225,8 @@ int pmp_set_global(int region_idx, uint8_t perm)
   if(!is_pmp_region_valid(region_idx))
     PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
 
-  /* We avoid any complex PMP-related IPI management
-   * by ensuring only one hart can enter this region at a time */
-#ifdef __riscv_atomic
-  pmp_ipi_acquire_lock();
-  //send_and_sync_pmp_ipi(region_idx, IPI_PMP_SET, perm);
-  pmp_ipi_release_lock();
-#endif
-  /* set PMP of itself */
-  pmp_set_keystone(region_idx, perm);
+  send_and_sync_pmp_ipi(region_idx, SBI_PMP_IPI_TYPE_SET, perm);
+
   return PMP_SUCCESS;
 }
 
@@ -345,12 +257,10 @@ int pmp_set_keystone(int region_idx, uint8_t perm)
 
   pmpaddr = region_pmpaddr_val(region_idx);
 
-  /*  spinlock_lock(&pmp_lock);
-  printm("pmp_set() [hart %d]: reg[%d], mode[%s], range[0x%lx-0x%lx], perm[0x%x]\r\n",
-         csr_read(mhartid), reg_idx, (region_is_tor(region_idx) ? "TOR":"NAPOT"),
-         region_get_addr(region_idx), region_get_addr(region_idx) + region_get_size(region_idx), perm);
-  printm("  pmp[%d] = pmpaddr: 0x%lx, pmpcfg: 0x%lx\r\n", reg_idx, pmpaddr, pmpcfg);
-  spinlock_unlock(&pmp_lock);*/
+  //sbi_printf("pmp_set() [hart %d]: reg[%d], mode[%s], range[0x%lx-0x%lx], perm[0x%x]\r\n",
+  //       current_hartid(), reg_idx, (region_is_tor(region_idx) ? "TOR":"NAPOT"),
+  //       region_get_addr(region_idx), region_get_addr(region_idx) + region_get_size(region_idx), perm);
+  //sbi_printf("  pmp[%d] = pmpaddr: 0x%lx, pmpcfg: 0x%lx\r\n", reg_idx, pmpaddr, pmpcfg);
 
   int n=reg_idx;
 

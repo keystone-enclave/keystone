@@ -19,6 +19,7 @@ libsbiutils-objs-y += experimental/keystone/thread.o
 libsbiutils-objs-y += experimental/keystone/mprv.o
 libsbiutils-objs-y += experimental/keystone/sbi_trap_hack.o
 libsbiutils-objs-y += experimental/keystone/trap.o
+libsbiutils-objs-y += experimental/keystone/ipi.o
 
 libsbiutils-objs-y += experimental/keystone/sha3/sha3.o
 libsbiutils-objs-y += experimental/keystone/ed25519/fe.o
