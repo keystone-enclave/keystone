@@ -62,7 +62,6 @@ static void sbi_pmp_ipi_sync(struct sbi_scratch *scratch)
 
 static void sbi_pmp_ipi_process(struct sbi_scratch* scratch)
 {
-  sbi_printf("hart[%d] received pmp ipi message\n", current_hartid());
   struct sbi_pmp_ipi_info info;
   struct sbi_fifo *pmp_ipi_fifo =
     sbi_scratch_offset_ptr(scratch, pmp_ipi_fifo_off);
@@ -104,7 +103,6 @@ static u32 pmp_ipi_event = SBI_IPI_EVENT_MAX;
 
 int sbi_pmp_ipi_request(ulong hmask, ulong hbase, struct sbi_pmp_ipi_info *info)
 {
-  sbi_printf("hart[%lx] is sending to %lx\n", csr_read(mhartid), hmask);
   return sbi_ipi_send_many(hmask, hbase, pmp_ipi_event, info);
 }
 
@@ -114,8 +112,6 @@ int sbi_pmp_ipi_init(struct sbi_scratch* scratch, bool cold_boot)
   void* pmp_ipi_mem;
   struct sbi_fifo *pmp_ipi_q;
   unsigned long* pmp_sync;
-
-  sbi_printf("PMP IPI init started\n");
 
   if (cold_boot) {
     pmp_ipi_sync_off = sbi_scratch_alloc_offset(sizeof(*pmp_sync), "PMP_IPI_SYNC");
@@ -162,6 +158,5 @@ int sbi_pmp_ipi_init(struct sbi_scratch* scratch, bool cold_boot)
 
   sbi_fifo_init(pmp_ipi_q, pmp_ipi_mem, SBI_PMP_IPI_FIFO_NUM_ENTRIES, SBI_PMP_IPI_INFO_SIZE);
 
-  sbi_printf("PMP IPI configured\n");
   return 0;
 }
