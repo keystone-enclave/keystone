@@ -3,6 +3,7 @@
 #include <sbi/sbi_scratch.h>
 #include <sbi/sbi_platform.h>
 #include <sbi/sbi_console.h>
+#include <sbi/sbi_tlb.h>
 #include "ipi.h"
 
 static unsigned long pmp_ipi_sync_off;
@@ -56,6 +57,29 @@ static void sbi_pmp_ipi_sync(struct sbi_scratch *scratch)
     sbi_scratch_offset_ptr(scratch, pmp_ipi_sync_off);
 
   while (!atomic_raw_xchg_ulong(pmp_sync, 0)) {
+    // in order to avoid deadlock with TLB IPI,
+    // we just clean up any tlb FIFO entries.
+    // This is totally OK because PMP update will always
+    // flush the entire TLB.
+    struct sbi_tlb_info tinfo;
+    struct sbi_fifo *tlb_fifo =
+      sbi_scratch_offset_ptr(scratch, tlb_fifo_off);
+    while (!sbi_fifo_dequeue(tlb_fifo, &tinfo)) {
+      u32 rhartid;
+      struct sbi_scratch *rscratch = NULL;
+      unsigned long *rtlb_sync = NULL;
+
+      sbi_hartmask_for_each_hart(rhartid, &(tinfo.smask)) {
+        rscratch = sbi_hartid_to_scratch(rhartid);
+        if (!rscratch)
+          continue;
+
+        rtlb_sync = sbi_scratch_offset_ptr(rscratch, tlb_sync_off);
+        while (atomic_raw_xchg_ulong(rtlb_sync, 1));
+      }
+    }
+
+    // consume any incoming PMP IPI from the other core to avoid another deadlock
     sbi_pmp_ipi_process_count(scratch, 1);
   }
 }
