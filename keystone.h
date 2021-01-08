@@ -27,14 +27,15 @@ typedef uintptr_t paddr_t;
 
 extern struct miscdevice keystone_dev;
 #define KEYSTONE_SBI_EXT_ID     0x08424b45
-#define SBI_SM_CREATE_ENCLAVE   101
-#define SBI_SM_DESTROY_ENCLAVE  102
-#define SBI_SM_RUN_ENCLAVE      105
-#define SBI_SM_STOP_ENCLAVE     106
-#define SBI_SM_RESUME_ENCLAVE   107
+#define SBI_SM_CREATE_ENCLAVE   2001
+#define SBI_SM_DESTROY_ENCLAVE  2002
+#define SBI_SM_RUN_ENCLAVE      2003
+#define SBI_SM_RESUME_ENCLAVE   2005
 
-/* error codes: need to add more */
+#define SBI_ERR_SM_ENCLAVE_INTERRUPTED  100002
+#define SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST 100011
 #define ENCLAVE_INTERRUPTED     2
+#define ENCLAVE_EDGE_CALL_HOST  11
 
 #define SBI_KEYSTONE_SM 0x08000000
 

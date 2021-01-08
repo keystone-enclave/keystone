@@ -5,6 +5,7 @@
 #include "keystone.h"
 #include "keystone-sbi-arg.h"
 #include "keystone_user.h"
+#include <asm/sbi.h>
 #include <linux/uaccess.h>
 
 int __keystone_destroy_enclave(unsigned int ueid);
@@ -36,7 +37,7 @@ int keystone_create_enclave(struct file *filep, unsigned long arg)
 
 int keystone_finalize_enclave(unsigned long arg)
 {
-  int ret;
+  struct sbiret ret;
   struct enclave *enclave;
   struct utm *utm;
   struct keystone_sbi_create_t create_args;
@@ -57,7 +58,7 @@ int keystone_finalize_enclave(unsigned long arg)
 
   utm = enclave->utm;
 
-  if(utm) {
+  if (utm) {
     create_args.utm_region.paddr = __pa(utm->ptr);
     create_args.utm_region.size = utm->size;
   } else {
@@ -72,14 +73,16 @@ int keystone_finalize_enclave(unsigned long arg)
 
   create_args.params = enclp->params;
 
-  // SM will write the eid to struct enclave.eid
-  create_args.eid_vptr = &enclave->eid;
+  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
+                  SBI_SM_CREATE_ENCLAVE,
+                  (unsigned long) &create_args, 0, 0, 0, 0, 0);
 
-  ret = SM_SBI_CALL_1(SBI_SM_CREATE_ENCLAVE, &create_args);
-  if (ret) {
-    keystone_err("keystone_create_enclave: SBI call failed\n");
+  if (ret.error) {
+    keystone_err("keystone_create_enclave: SBI call failed with error codd %d\n", ret.error);
     goto error_destroy_enclave;
   }
+
+  enclave->eid = ret.value;
 
   return 0;
 
@@ -87,18 +90,18 @@ error_destroy_enclave:
   /* This can handle partial initialization failure */
   destroy_enclave(enclave);
 
-  return ret;
+  return -EINVAL;
 
 }
 
-int keystone_run_enclave(unsigned long arg)
+int keystone_run_enclave(unsigned long data)
 {
-  int ret = 0;
+  struct sbiret ret;
   unsigned long ueid;
   struct enclave* enclave;
-  struct keystone_ioctl_run_enclave *run = (struct keystone_ioctl_run_enclave*) arg;
+  struct keystone_ioctl_run_enclave *arg = (struct keystone_ioctl_run_enclave*) data;
 
-  ueid = run->eid;
+  ueid = arg->eid;
   enclave = get_enclave_by_id(ueid);
 
   if(!enclave) {
@@ -106,9 +109,14 @@ int keystone_run_enclave(unsigned long arg)
     return -EINVAL;
   }
 
-  ret = SM_SBI_CALL_1(SBI_SM_RUN_ENCLAVE, enclave->eid);
+  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
+                  SBI_SM_RUN_ENCLAVE,
+                  enclave->eid, 0, 0, 0, 0, 0);
 
-  return ret;
+  arg->error = ret.error;
+  arg->value = ret.value;
+
+  return 0;
 }
 
 int utm_init_ioctl(struct file *filp, unsigned long arg)
@@ -158,7 +166,7 @@ int keystone_destroy_enclave(struct file *filep, unsigned long arg)
 
 int __keystone_destroy_enclave(unsigned int ueid)
 {
-  int ret;
+  struct sbiret ret;
   struct enclave *enclave;
   enclave = get_enclave_by_id(ueid);
 
@@ -166,10 +174,13 @@ int __keystone_destroy_enclave(unsigned int ueid)
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
-  ret = SM_SBI_CALL_1(SBI_SM_DESTROY_ENCLAVE, enclave->eid);
-  if (ret) {
-    keystone_err("fatal: cannot destroy enclave: SBI failed\n");
-    return ret;
+  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
+                  SBI_SM_DESTROY_ENCLAVE,
+                  enclave->eid, 0, 0, 0, 0, 0);
+
+  if (ret.error) {
+    keystone_err("fatal: cannot destroy enclave: SBI failed with error code %d\n", ret.error);
+    return -EINVAL;
   }
 
   destroy_enclave(enclave);
@@ -178,11 +189,11 @@ int __keystone_destroy_enclave(unsigned int ueid)
   return 0;
 }
 
-int keystone_resume_enclave(unsigned long arg)
+int keystone_resume_enclave(unsigned long data)
 {
-  int ret = 0;
-  struct keystone_ioctl_run_enclave *resume = (struct keystone_ioctl_run_enclave*) arg;
-  unsigned long ueid = resume->eid;
+  struct sbiret ret;
+  struct keystone_ioctl_run_enclave *arg = (struct keystone_ioctl_run_enclave*) data;
+  unsigned long ueid = arg->eid;
   struct enclave* enclave;
   enclave = get_enclave_by_id(ueid);
 
@@ -192,9 +203,14 @@ int keystone_resume_enclave(unsigned long arg)
     return -EINVAL;
   }
 
-  ret = SM_SBI_CALL_1(SBI_SM_RESUME_ENCLAVE, enclave->eid);
+  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
+                  SBI_SM_RESUME_ENCLAVE,
+                  enclave->eid, 0, 0, 0, 0, 0);
 
-  return ret;
+  arg->error = ret.error;
+  arg->value = ret.value;
+
+  return 0;
 }
 
 long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
