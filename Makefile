@@ -5,7 +5,8 @@ ifneq ($(KERNELRELEASE),)
 		keystone.o \
 		keystone-page.o \
 		keystone-ioctl.o \
-		keystone-enclave.o
+		keystone-enclave.o \
+	  keystone-sbi.o
 	obj-m += keystone-driver.o
 else
 

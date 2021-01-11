@@ -26,41 +26,6 @@ typedef uintptr_t vaddr_t;
 typedef uintptr_t paddr_t;
 
 extern struct miscdevice keystone_dev;
-#define KEYSTONE_SBI_EXT_ID     0x08424b45
-#define SBI_SM_CREATE_ENCLAVE   2001
-#define SBI_SM_DESTROY_ENCLAVE  2002
-#define SBI_SM_RUN_ENCLAVE      2003
-#define SBI_SM_RESUME_ENCLAVE   2005
-
-#define SBI_ERR_SM_ENCLAVE_INTERRUPTED  100002
-#define SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST 100011
-#define ENCLAVE_INTERRUPTED     2
-#define ENCLAVE_EDGE_CALL_HOST  11
-
-#define SBI_KEYSTONE_SM 0x08000000
-
-/* don't want to taint asm/sbi.h, so just copied SBI_CALL and increased # args */
-#define SM_SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5) ({			\
-	register uintptr_t a0 asm ("a0") = (uintptr_t)(arg0);	\
-	register uintptr_t a1 asm ("a1") = (uintptr_t)(arg1);	\
-	register uintptr_t a2 asm ("a2") = (uintptr_t)(arg2);	\
-	register uintptr_t a3 asm ("a3") = (uintptr_t)(arg3);	\
-	register uintptr_t a4 asm ("a4") = (uintptr_t)(arg4);	\
-	register uintptr_t a5 asm ("a5") = (uintptr_t)(arg5);	\
-	register uintptr_t a6 asm ("a6") = (uintptr_t)(which);	\
-	register uintptr_t a7 asm ("a7") = (uintptr_t)(KEYSTONE_SBI_EXT_ID);	\
-	asm volatile ("ecall"					\
-		      : "+r" (a0)				\
-		      : "r" (a1), "r" (a2), "r" (a3), "r" (a4), "r"(a5), "r"(a6), "r" (a7)		\
-		      : "memory");				\
-	a0;							\
-})
-#define SM_SBI_CALL_1(which, arg0) SM_SBI_CALL(which,arg0, 0, 0, 0, 0, 0)
-#define SM_SBI_CALL_2(which, arg0, arg1) SM_SBI_CALL(which,arg0, arg1, 0, 0, 0, 0)
-#define SM_SBI_CALL_3(which, arg0, arg1, arg2) SM_SBI_CALL(which,arg0, arg1, arg2, 0, 0, 0)
-#define SM_SBI_CALL_4(which, arg0, arg1, arg2, arg3) SM_SBI_CALL(which, arg0, arg1, arg2, arg3, 0, 0)
-#define SM_SBI_CALL_5(which, arg0, arg1, arg2, arg3, arg4) SM_SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, 0)
-#define SM_SBI_CALL_6(which, arg0, arg1, arg2, arg3, arg4, arg5) SM_SBI_CALL(which, arg0, arg1, arg2, arg3, arg4, arg5)
 
 long keystone_ioctl(struct file* filep, unsigned int cmd, unsigned long arg);
 int keystone_release(struct inode *inode, struct file *file);
@@ -86,7 +51,7 @@ struct utm {
 
 struct enclave
 {
-  uint64_t eid;
+  unsigned long eid;
   int close_on_pexit;
   struct utm* utm;
   struct epm* epm;

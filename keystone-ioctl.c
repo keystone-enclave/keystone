@@ -3,7 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "keystone.h"
-#include "keystone-sbi-arg.h"
+#include "keystone-sbi.h"
 #include "keystone_user.h"
 #include <asm/sbi.h>
 #include <linux/uaccess.h>
@@ -73,12 +73,10 @@ int keystone_finalize_enclave(unsigned long arg)
 
   create_args.params = enclp->params;
 
-  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
-                  SBI_SM_CREATE_ENCLAVE,
-                  (unsigned long) &create_args, 0, 0, 0, 0, 0);
+  ret = sbi_sm_create_enclave(&create_args);
 
   if (ret.error) {
-    keystone_err("keystone_create_enclave: SBI call failed with error codd %d\n", ret.error);
+    keystone_err("keystone_create_enclave: SBI call failed with error codd %ld\n", ret.error);
     goto error_destroy_enclave;
   }
 
@@ -109,9 +107,7 @@ int keystone_run_enclave(unsigned long data)
     return -EINVAL;
   }
 
-  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
-                  SBI_SM_RUN_ENCLAVE,
-                  enclave->eid, 0, 0, 0, 0, 0);
+  ret = sbi_sm_run_enclave(enclave->eid);
 
   arg->error = ret.error;
   arg->value = ret.value;
@@ -174,12 +170,11 @@ int __keystone_destroy_enclave(unsigned int ueid)
     keystone_err("invalid enclave id\n");
     return -EINVAL;
   }
-  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
-                  SBI_SM_DESTROY_ENCLAVE,
-                  enclave->eid, 0, 0, 0, 0, 0);
+
+  ret = sbi_sm_destroy_enclave(enclave->eid);
 
   if (ret.error) {
-    keystone_err("fatal: cannot destroy enclave: SBI failed with error code %d\n", ret.error);
+    keystone_err("fatal: cannot destroy enclave: SBI failed with error code %ld\n", ret.error);
     return -EINVAL;
   }
 
@@ -203,9 +198,7 @@ int keystone_resume_enclave(unsigned long data)
     return -EINVAL;
   }
 
-  ret = sbi_ecall(KEYSTONE_SBI_EXT_ID,
-                  SBI_SM_RESUME_ENCLAVE,
-                  enclave->eid, 0, 0, 0, 0, 0);
+  ret = sbi_sm_resume_enclave(enclave->eid);
 
   arg->error = ret.error;
   arg->value = ret.value;
@@ -264,8 +257,7 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 
 int keystone_release(struct inode *inode, struct file *file) {
   unsigned long ueid = (unsigned long)(file->private_data);
-
-  /* pr_info("Releasing enclave: %d\n", ueid); */
+  struct enclave *enclave;
 
   /* enclave has been already destroyed */
   if (!ueid) {
@@ -273,7 +265,6 @@ int keystone_release(struct inode *inode, struct file *file) {
   }
 
   /* We need to send destroy enclave just the eid to close. */
-  struct enclave *enclave;
   enclave = get_enclave_by_id(ueid);
 
   if (!enclave) {
