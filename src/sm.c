@@ -8,7 +8,7 @@
 #include "crypto.h"
 #include "enclave.h"
 #include "platform-hook.h"
-#include "sm_sbi_opensbi.h"
+#include "sm-sbi-opensbi.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/riscv_barrier.h>
@@ -19,11 +19,11 @@ static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
 
 /* from Sanctum BootROM */
-extern byte sanctum_sm_hash[MDSIZE];
-extern byte sanctum_sm_signature[SIGNATURE_SIZE];
-extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
-extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
-extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
+byte sanctum_sm_hash[MDSIZE];
+byte sanctum_sm_signature[SIGNATURE_SIZE];
+byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
+byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
+byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
 
 byte sm_hash[MDSIZE] = { 0, };
 byte sm_signature[SIGNATURE_SIZE] = { 0, };
@@ -136,7 +136,7 @@ void sm_init(bool cold_boot)
       sbi_hart_hang();
     }
 
-    if(platform_init_global_once() != ENCLAVE_SUCCESS) {
+    if (platform_init_global_once() != SBI_ERR_SM_ENCLAVE_SUCCESS) {
       sbi_printf("[SM] platform global init fatal error");
       sbi_hart_hang();
     }
@@ -162,16 +162,9 @@ void sm_init(bool cold_boot)
   pmp_set_keystone(os_region_id, PMP_ALL_PERM);
 
   /* Fire platform specific global init */
-  if(platform_init_global() != ENCLAVE_SUCCESS) {
+  if (platform_init_global() != SBI_ERR_SM_ENCLAVE_SUCCESS) {
     sbi_printf("[SM] platform global init fatal error");
     sbi_hart_hang();
-  }
-
-  struct sbi_scratch* scratch = sbi_hartid_to_scratch(csr_read(mhartid));
-  int ret;
-  ret = sbi_pmp_ipi_init(scratch, cold_boot);
-  if (ret) {
-    sbi_printf("error: %d\n",ret);
   }
 
   sbi_printf("[SM] Keystone security monitor has been initialized!\n");

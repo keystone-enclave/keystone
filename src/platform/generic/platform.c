@@ -1,12 +1,12 @@
 /* Default platform does nothing special here */
 #include "../../enclave.h"
 
-enclave_ret_code platform_init_global_once(){
-  return ENCLAVE_SUCCESS;
+unsigned long platform_init_global_once(){
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-enclave_ret_code platform_init_global(){
-  return ENCLAVE_SUCCESS;
+unsigned long platform_init_global(){
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 void platform_init_enclave(struct enclave* enclave){
@@ -17,8 +17,8 @@ void platform_destroy_enclave(struct enclave* enclave){
   return;
 }
 
-enclave_ret_code platform_create_enclave(struct enclave* enclave){
-  return ENCLAVE_SUCCESS;
+unsigned long platform_create_enclave(struct enclave* enclave){
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 void platform_switch_to_enclave(struct enclave* enclave){
@@ -35,10 +35,10 @@ uint64_t platform_random(){
 
   unsigned long cycles;
   asm volatile ("rdcycle %0" : "=r" (cycles));
-  
+
   // from Middle Square Weyl Sequence algorithm
   uint64_t x = cycles;
-  x *= x; 
-  x += (w += s); 
+  x *= x;
+  x += (w += s);
   return (x>>32) | (x<<32);
 }

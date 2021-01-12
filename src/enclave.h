@@ -115,21 +115,21 @@ struct sealing_key
 
 /*** SBI functions & external functions ***/
 // callables from the host
-enclave_ret_code create_enclave(struct keystone_sbi_create create_args);
-enclave_ret_code destroy_enclave(enclave_id eid);
-enclave_ret_code run_enclave(struct sbi_trap_regs *regs, enclave_id eid);
-enclave_ret_code resume_enclave(struct sbi_trap_regs *regs, enclave_id eid);
+unsigned long create_enclave(unsigned long *eid, struct keystone_sbi_create create_args);
+unsigned long destroy_enclave(enclave_id eid);
+unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid);
+unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 // callables from the enclave
-enclave_ret_code exit_enclave(struct sbi_trap_regs *regs, unsigned long retval, enclave_id eid);
-enclave_ret_code stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid);
-enclave_ret_code attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, enclave_id eid);
+unsigned long exit_enclave(struct sbi_trap_regs *regs, enclave_id eid);
+unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid);
+unsigned long attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, enclave_id eid);
 /* attestation and virtual mapping validation */
-enclave_ret_code validate_and_hash_enclave(struct enclave* enclave);
+unsigned long validate_and_hash_enclave(struct enclave* enclave);
 // TODO: These functions are supposed to be internal functions.
 void enclave_init_metadata();
-enclave_ret_code copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest);
+unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest);
 int get_enclave_region_index(enclave_id eid, enum enclave_region_type type);
 uintptr_t get_enclave_region_base(enclave_id eid, int memid);
 uintptr_t get_enclave_region_size(enclave_id eid, int memid);
-enclave_ret_code get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid);
+unsigned long get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid);
 #endif

@@ -168,7 +168,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
   return -1;
 }
 
-enclave_ret_code validate_and_hash_enclave(struct enclave* enclave){
+unsigned long validate_and_hash_enclave(struct enclave* enclave){
 
   hash_ctx hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
@@ -189,10 +189,10 @@ enclave_ret_code validate_and_hash_enclave(struct enclave* enclave){
                                     0, 0, enclave, &runtime_max_seen, &user_max_seen);
 
   if(valid == -1){
-    return ENCLAVE_ILLEGAL_PTE;
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_PTE;
   }
 
   hash_finalize(enclave->hash, &hash_ctx);
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }

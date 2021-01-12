@@ -38,10 +38,9 @@ extern byte dev_public_key[PUBLIC_KEY_SIZE];
  *
  * Expects that eid has already been valided, and it is OK to run this enclave
 */
-static inline enclave_ret_code context_switch_to_enclave(struct sbi_trap_regs* regs,
+static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
                                                 enclave_id eid,
                                                 int load_parameters){
-
   /* save host context */
   swap_prev_state(&enclaves[eid].threads[0], (uintptr_t*) regs, 1);
   swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
@@ -88,8 +87,6 @@ static inline enclave_ret_code context_switch_to_enclave(struct sbi_trap_regs* r
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
   cpu_enter_enclave_context(eid);
-
-  return ENCLAVE_SUCCESS;
 }
 
 static inline void context_switch_to_host(struct sbi_trap_regs *regs,
@@ -163,7 +160,7 @@ void enclave_init_metadata(){
 
 }
 
-static enclave_ret_code clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
+static unsigned long clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
 {
 
   // This function is quite temporary. See issue #38
@@ -172,10 +169,10 @@ static enclave_ret_code clean_enclave_memory(uintptr_t utbase, uintptr_t utsize)
   // indeterminate state.
   sbi_memset((void*)utbase, 0, utsize);
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
+static unsigned long encl_alloc_eid(enclave_id* _eid)
 {
   enclave_id eid;
 
@@ -194,19 +191,19 @@ static enclave_ret_code encl_alloc_eid(enclave_id* _eid)
 
   if(eid != ENCL_MAX){
     *_eid = eid;
-    return ENCLAVE_SUCCESS;
+    return SBI_ERR_SM_ENCLAVE_SUCCESS;
   }
   else{
-    return ENCLAVE_NO_FREE_RESOURCE;
+    return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
   }
 }
 
-static enclave_ret_code encl_free_eid(enclave_id eid)
+static unsigned long encl_free_eid(enclave_id eid)
 {
   spin_lock(&encl_lock);
   enclaves[eid].state = INVALID;
   spin_unlock(&encl_lock);
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 int get_enclave_region_index(enclave_id eid, enum enclave_region_type type){
@@ -236,58 +233,44 @@ uintptr_t get_enclave_region_base(enclave_id eid, int memid)
   return 0;
 }
 
-/* Ensures that dest ptr is in host, not in enclave regions
- */
-static enclave_ret_code copy_word_to_host(uintptr_t dest_ptr, uintptr_t value)
-{
-  enclave_ret_code ret = ENCLAVE_REGION_OVERLAPS;
-
-  int err = copy_word_from_sm(dest_ptr, (uintptr_t *)&value);
-  if (!err) {
-    ret = ENCLAVE_SUCCESS;
-  }
-
-  return ret;
-}
-
 // TODO: This function is externally used by sm-sbi.c.
 // Change it to be internal (remove from the enclave.h and make static)
 /* Internal function enforcing a copy source is from the untrusted world.
  * Does NOT do verification of dest, assumes caller knows what that is.
  * Dest should be inside the SM memory.
  */
-enclave_ret_code copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest){
+unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest){
 
   int region_overlap = copy_to_sm(dest, src, sizeof(struct keystone_sbi_create));
 
   if (region_overlap)
-    return ENCLAVE_REGION_OVERLAPS;
+    return SBI_ERR_SM_ENCLAVE_REGION_OVERLAPS;
   else
-    return ENCLAVE_SUCCESS;
+    return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 /* copies data from enclave, source must be inside EPM */
-static enclave_ret_code copy_enclave_data(struct enclave* enclave,
+static unsigned long copy_enclave_data(struct enclave* enclave,
                                           void* dest, uintptr_t source, size_t size) {
 
   int illegal = copy_to_sm(dest, source, size);
 
   if(illegal)
-    return ENCLAVE_ILLEGAL_ARGUMENT;
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
   else
-    return ENCLAVE_SUCCESS;
+    return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 /* copies data into enclave, destination must be inside EPM */
-static enclave_ret_code copy_enclave_report(struct enclave* enclave,
+static unsigned long copy_enclave_report(struct enclave* enclave,
                                             uintptr_t dest, struct report* source) {
 
   int illegal = copy_from_sm(dest, source, sizeof(struct report));
 
   if(illegal)
-    return ENCLAVE_ILLEGAL_ARGUMENT;
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
   else
-    return ENCLAVE_SUCCESS;
+    return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 static int is_create_args_valid(struct keystone_sbi_create* args)
@@ -352,22 +335,21 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
  *
  * This may fail if: it cannot allocate PMP regions, EIDs, etc
  */
-enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
+unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create create_args)
 {
   /* EPM and UTM parameters */
   uintptr_t base = create_args.epm_region.paddr;
   size_t size = create_args.epm_region.size;
   uintptr_t utbase = create_args.utm_region.paddr;
   size_t utsize = create_args.utm_region.size;
-  enclave_id* eidptr = create_args.eid_pptr;
 
   enclave_id eid;
-  enclave_ret_code ret;
+  unsigned long ret;
   int region, shared_region;
 
   /* Runtime parameters */
   if(!is_create_args_valid(&create_args))
-    return ENCLAVE_ILLEGAL_ARGUMENT;
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
 
   /* set va params */
   struct runtime_va_params_t params = create_args.params;
@@ -380,12 +362,12 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
 
 
   // allocate eid
-  ret = ENCLAVE_NO_FREE_RESOURCE;
-  if(encl_alloc_eid(&eid) != ENCLAVE_SUCCESS)
+  ret = SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
+  if (encl_alloc_eid(&eid) != SBI_ERR_SM_ENCLAVE_SUCCESS)
     goto error;
 
   // create a PMP region bound to the enclave
-  ret = ENCLAVE_PMP_FAILURE;
+  ret = SBI_ERR_SM_ENCLAVE_PMP_FAILURE;
   if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region, 0))
     goto free_encl_idx;
 
@@ -420,27 +402,22 @@ enclave_ret_code create_enclave(struct keystone_sbi_create create_args)
   /* Platform create happens as the last thing before hashing/etc since
      it may modify the enclave struct */
   ret = platform_create_enclave(&enclaves[eid]);
-  if(ret != ENCLAVE_SUCCESS)
+  if (ret)
     goto unset_region;
 
   /* Validate memory, prepare hash and signature for attestation */
   spin_lock(&encl_lock); // FIXME This should error for second enter.
   ret = validate_and_hash_enclave(&enclaves[eid]);
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
-  if(ret != ENCLAVE_SUCCESS)
+  if (ret)
     goto unlock;
 
   enclaves[eid].state = FRESH;
   /* EIDs are unsigned int in size, copy via simple copy */
-
-  ret = copy_word_to_host((uintptr_t)eidptr, (uintptr_t)eid);
-  if (ret) {
-    ret = ENCLAVE_ILLEGAL_ARGUMENT;
-    goto unlock;
-  }
+  *eidptr = eid;
 
   spin_unlock(&encl_lock);
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 
 unlock:
   spin_unlock(&encl_lock);
@@ -463,7 +440,7 @@ error:
  * Deallocates EID, clears epm, etc
  * Fails only if the enclave isn't running.
  */
-enclave_ret_code destroy_enclave(enclave_id eid)
+unsigned long destroy_enclave(enclave_id eid)
 {
   int destroyable;
 
@@ -477,7 +454,7 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   spin_unlock(&encl_lock);
 
   if(!destroyable)
-    return ENCLAVE_NOT_DESTROYABLE;
+    return SBI_ERR_SM_ENCLAVE_NOT_DESTROYABLE;
 
 
   // 0. Let the platform specifics do cleanup/modifications
@@ -521,11 +498,11 @@ enclave_ret_code destroy_enclave(enclave_id eid)
   // 3. release eid
   encl_free_eid(eid);
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 
-enclave_ret_code run_enclave(struct sbi_trap_regs *regs, enclave_id eid)
+unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid)
 {
   int runable;
 
@@ -539,14 +516,16 @@ enclave_ret_code run_enclave(struct sbi_trap_regs *regs, enclave_id eid)
   spin_unlock(&encl_lock);
 
   if(!runable) {
-    return ENCLAVE_NOT_FRESH;
+    return SBI_ERR_SM_ENCLAVE_NOT_FRESH;
   }
 
   // Enclave is OK to run, context switch to it
-  return context_switch_to_enclave(regs, eid, 1);
+  context_switch_to_enclave(regs, eid, 1);
+
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-enclave_ret_code exit_enclave(struct sbi_trap_regs *regs, unsigned long retval, enclave_id eid)
+unsigned long exit_enclave(struct sbi_trap_regs *regs, enclave_id eid)
 {
   int exitable;
 
@@ -560,14 +539,14 @@ enclave_ret_code exit_enclave(struct sbi_trap_regs *regs, unsigned long retval, 
   spin_unlock(&encl_lock);
 
   if(!exitable)
-    return ENCLAVE_NOT_RUNNING;
+    return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
 
   context_switch_to_host(regs, eid, 0);
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-enclave_ret_code stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid)
+unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid)
 {
   int stoppable;
 
@@ -581,21 +560,21 @@ enclave_ret_code stop_enclave(struct sbi_trap_regs *regs, uint64_t request, encl
   spin_unlock(&encl_lock);
 
   if(!stoppable)
-    return ENCLAVE_NOT_RUNNING;
+    return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
 
   context_switch_to_host(regs, eid, request == STOP_EDGE_CALL_HOST);
 
   switch(request) {
-  case(STOP_TIMER_INTERRUPT):
-    return ENCLAVE_INTERRUPTED;
-  case(STOP_EDGE_CALL_HOST):
-    return ENCLAVE_EDGE_CALL_HOST;
-  default:
-    return ENCLAVE_UNKNOWN_ERROR;
+    case(STOP_TIMER_INTERRUPT):
+      return SBI_ERR_SM_ENCLAVE_INTERRUPTED;
+    case(STOP_EDGE_CALL_HOST):
+      return SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST;
+    default:
+      return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
   }
 }
 
-enclave_ret_code resume_enclave(struct sbi_trap_regs *regs, enclave_id eid)
+unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid)
 {
   int resumable;
 
@@ -606,7 +585,7 @@ enclave_ret_code resume_enclave(struct sbi_trap_regs *regs, enclave_id eid)
 
   if(!resumable) {
     spin_unlock(&encl_lock);
-    return ENCLAVE_NOT_RESUMABLE;
+    return SBI_ERR_SM_ENCLAVE_NOT_RESUMABLE;
   } else {
     enclaves[eid].n_thread++;
     enclaves[eid].state = RUNNING;
@@ -614,24 +593,26 @@ enclave_ret_code resume_enclave(struct sbi_trap_regs *regs, enclave_id eid)
   spin_unlock(&encl_lock);
 
   // Enclave is OK to resume, context switch to it
-  return context_switch_to_enclave(regs, eid, 0);
+  context_switch_to_enclave(regs, eid, 0);
+
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, enclave_id eid)
+unsigned long attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t size, enclave_id eid)
 {
   int attestable;
   struct report report;
   int ret;
 
   if (size > ATTEST_DATA_MAXLEN)
-    return ENCLAVE_ILLEGAL_ARGUMENT;
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
 
   spin_lock(&encl_lock);
   attestable = (ENCLAVE_EXISTS(eid)
                 && (enclaves[eid].state >= FRESH));
 
   if(!attestable) {
-    ret = ENCLAVE_NOT_INITIALIZED;
+    ret = SBI_ERR_SM_ENCLAVE_NOT_INITIALIZED;
     goto err_unlock;
   }
 
@@ -641,7 +622,7 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
   report.enclave.data_len = size;
 
   if (ret) {
-    ret = ENCLAVE_NOT_ACCESSIBLE;
+    ret = SBI_ERR_SM_ENCLAVE_NOT_ACCESSIBLE;
     goto err_unlock;
   }
 
@@ -666,18 +647,18 @@ enclave_ret_code attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t 
       &report);
 
   if (ret) {
-    ret = ENCLAVE_ILLEGAL_ARGUMENT;
+    ret = SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
     goto err_unlock;
   }
 
-  ret = ENCLAVE_SUCCESS;
+  ret = SBI_ERR_SM_ENCLAVE_SUCCESS;
 
 err_unlock:
   spin_unlock(&encl_lock);
   return ret;
 }
 
-enclave_ret_code get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
+unsigned long get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
                                  size_t key_ident_size, enclave_id eid)
 {
   struct sealing_key *key_struct = (struct sealing_key *)sealing_key;
@@ -688,11 +669,11 @@ enclave_ret_code get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
                               (const unsigned char *)key_ident, key_ident_size,
                               (const unsigned char *)enclaves[eid].hash);
   if (ret)
-    return ENCLAVE_UNKNOWN_ERROR;
+    return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
 
   /* sign derived key */
   sm_sign((void *)key_struct->signature, (void *)key_struct->key,
           SEALING_KEY_SIZE);
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }

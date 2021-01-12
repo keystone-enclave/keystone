@@ -6,7 +6,7 @@
 #include "pmp.h"
 #include "cpu.h"
 #include "safe_math_util.h"
-#include "sm_sbi_opensbi.h"
+#include "sm-sbi-opensbi.h"
 #include "page.h"
 #include "ipi.h"
 #include <sbi/sbi_hart.h>
@@ -192,15 +192,13 @@ int pmp_detect_region_overlap_atomic(uintptr_t addr, uintptr_t size)
 static void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm)
 {
   ulong mask = 0;
-  struct sbi_pmp_ipi_info info;
+  ulong source_hart = current_hartid();
+  struct sbi_tlb_info tlb_info;
   sbi_hsm_hart_started_mask(sbi_domain_thishart_ptr(), 0, &mask);
 
-  info.type = type;
-  info.rid = region_idx;
-  info.perm = perm;
-  SBI_HARTMASK_INIT_EXCEPT(&(info.smask), current_hartid());
-
-  sbi_pmp_ipi_request(mask, 0, &info);
+  SBI_TLB_INFO_INIT(&tlb_info, type, region_idx, perm, 0,
+      sbi_pmp_ipi_local_update, source_hart);
+  sbi_tlb_request(mask, 0, &tlb_info);
 }
 
 /*********************************
@@ -212,22 +210,22 @@ static void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm)
 int pmp_unset_global(int region_idx)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
 
   send_and_sync_pmp_ipi(region_idx, SBI_PMP_IPI_TYPE_UNSET, PMP_NO_PERM);
 
-  return PMP_SUCCESS;
+  return SBI_ERR_SM_PMP_SUCCESS;
 }
 
 /* populate pmp set command to every other hart */
 int pmp_set_global(int region_idx, uint8_t perm)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
 
   send_and_sync_pmp_ipi(region_idx, SBI_PMP_IPI_TYPE_SET, perm);
 
-  return PMP_SUCCESS;
+  return SBI_ERR_SM_PMP_SUCCESS;
 }
 
 void pmp_init()
@@ -248,7 +246,7 @@ void pmp_init()
 int pmp_set_keystone(int region_idx, uint8_t perm)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
 
   uint8_t perm_bits = perm & PMP_ALL_PERM;
   pmpreg_id reg_idx = region_register_idx(region_idx);
@@ -286,13 +284,13 @@ int pmp_set_keystone(int region_idx, uint8_t perm)
       sm_assert(FALSE);
     }
   }
-  return PMP_SUCCESS;
+  return SBI_ERR_SM_PMP_SUCCESS;
 }
 
 int pmp_unset(int region_idx)
 {
   if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(PMP_REGION_INVALID,"Invalid PMP region index");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID,"Invalid PMP region index");
 
   pmpreg_id reg_idx = region_register_idx(region_idx);
   int n=reg_idx;
@@ -316,7 +314,7 @@ int pmp_unset(int region_idx)
     }
   }
 
-  return PMP_SUCCESS;
+  return SBI_ERR_SM_PMP_SUCCESS;
 }
 
 int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap)
@@ -341,7 +339,7 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
 
   region_idx = get_free_region_idx();
   if(region_idx < 0 || region_idx > PMP_MAX_N_REGION)
-    PMP_ERROR(PMP_REGION_MAX_REACHED, "Reached the maximum number of PMP regions");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "Reached the maximum number of PMP regions");
 
   *rid = region_idx;
   switch(priority)
@@ -349,9 +347,9 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
     case(PMP_PRI_ANY): {
       reg_idx = get_conseq_free_reg_idx();
       if(reg_idx < 0)
-        PMP_ERROR(PMP_REGION_MAX_REACHED, "No available PMP register");
+        PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "No available PMP register");
       if(TEST_BIT(reg_bitmap, reg_idx) || TEST_BIT(reg_bitmap, reg_idx + 1) || reg_idx + 1 >= PMP_N_REG)
-        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
+        PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
 
       break;
     }
@@ -359,7 +357,7 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
       sm_assert(start == 0);
       reg_idx = 0;
       if(TEST_BIT(reg_bitmap, reg_idx))
-        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
+        PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     default: {
@@ -375,7 +373,7 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
   if(reg_idx > 0)
     SET_BIT(reg_bitmap, reg_idx + 1);
 
-  return PMP_SUCCESS;
+  return SBI_ERR_SM_PMP_SUCCESS;
 }
 
 static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap)
@@ -397,7 +395,7 @@ static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority p
   //find avaiable pmp region idx
   region_idx = get_free_region_idx();
   if(region_idx < 0 || region_idx > PMP_MAX_N_REGION)
-    PMP_ERROR(PMP_REGION_MAX_REACHED, "Reached the maximum number of PMP regions");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "Reached the maximum number of PMP regions");
 
   *rid = region_idx;
 
@@ -406,15 +404,15 @@ static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority p
     case(PMP_PRI_ANY): {
       reg_idx = get_free_reg_idx();
       if(reg_idx < 0)
-        PMP_ERROR(PMP_REGION_MAX_REACHED, "No available PMP register");
+        PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "No available PMP register");
       if(TEST_BIT(reg_bitmap, reg_idx) || reg_idx >= PMP_N_REG)
-        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
+        PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     case(PMP_PRI_TOP): {
       reg_idx = 0;
       if(TEST_BIT(reg_bitmap, reg_idx))
-        PMP_ERROR(PMP_REGION_MAX_REACHED, "PMP register unavailable");
+        PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     case(PMP_PRI_BOTTOM): {
@@ -433,7 +431,7 @@ static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority p
   SET_BIT(region_def_bitmap, region_idx);
   SET_BIT(reg_bitmap, reg_idx);
 
-  return PMP_SUCCESS;
+  return SBI_ERR_SM_PMP_SUCCESS;
 }
 
 int pmp_region_free_atomic(int region_idx)
@@ -444,7 +442,7 @@ int pmp_region_free_atomic(int region_idx)
   if(!is_pmp_region_valid(region_idx))
   {
     spin_unlock(&pmp_lock);
-    PMP_ERROR(PMP_REGION_INVALID, "Invalid PMP region index");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
   }
 
   pmpreg_id reg_idx = region_register_idx(region_idx);
@@ -457,26 +455,26 @@ int pmp_region_free_atomic(int region_idx)
 
   spin_unlock(&pmp_lock);
 
-  return PMP_SUCCESS;
+  return SBI_ERR_SM_PMP_SUCCESS;
 }
 
 int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid, int allow_overlap)
 {
   if(!size)
-    PMP_ERROR(PMP_REGION_SIZE_INVALID, "Invalid PMP size");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_SIZE_INVALID, "Invalid PMP size");
 
   /* overlap detection */
   if (!allow_overlap) {
     if (detect_region_overlap(start, size)) {
-      return PMP_REGION_OVERLAP;
+      return SBI_ERR_SM_PMP_REGION_OVERLAP;
     }
   }
 
   /* PMP granularity check */
   if(size != -1UL && (size & (RISCV_PGSIZE - 1)))
-    PMP_ERROR(PMP_REGION_NOT_PAGE_GRANULARITY, "PMP granularity is RISCV_PGSIZE");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_NOT_PAGE_GRANULARITY, "PMP granularity is RISCV_PGSIZE");
   if(start & (RISCV_PGSIZE - 1))
-    PMP_ERROR(PMP_REGION_NOT_PAGE_GRANULARITY, "PMP granularity is RISCV_PGSIZE");
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_NOT_PAGE_GRANULARITY, "PMP granularity is RISCV_PGSIZE");
 
   /* if the address covers the entire RAM or it's NAPOT */
   if ((size == -1UL && start == 0) ||
@@ -487,7 +485,7 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
   {
     if(priority != PMP_PRI_ANY &&
       (priority != PMP_PRI_TOP || start != 0)) {
-      PMP_ERROR(PMP_REGION_IMPOSSIBLE_TOR, "The top-priority TOR PMP entry must start from address 0");
+      PMP_ERROR(SBI_ERR_SM_PMP_REGION_IMPOSSIBLE_TOR, "The top-priority TOR PMP entry must start from address 0");
     }
 
     return tor_region_init(start, size, priority, rid, allow_overlap);

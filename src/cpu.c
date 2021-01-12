@@ -5,11 +5,11 @@
 #include "cpu.h"
 #include <sbi/riscv_asm.h>
 
-static struct cpu_state cpus[MAX_HARTS];
+static struct cpu_state cpus[MAX_HARTS] = {0,};
 
 int cpu_is_enclave_context()
 {
-  return cpus[csr_read(mhartid)].is_enclave != 0;
+  return cpus[csr_read(mhartid)].is_enclave;
 }
 
 int cpu_get_enclave_id()

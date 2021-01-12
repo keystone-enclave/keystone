@@ -11,12 +11,12 @@
 void platform_init_enclave(struct enclave* enclave);
 
 /* This fires once GLOBALLY before any other platform init */
-enclave_ret_code platform_init_global_once();
+unsigned long platform_init_global_once();
 /* Fires once per-hart after global_once */
-enclave_ret_code platform_init_global();
+unsigned long platform_init_global();
 
 /* This fires once each time an enclave is created by the sm */
-enclave_ret_code platform_create_enclave(struct enclave* enclave);
+unsigned long platform_create_enclave(struct enclave* enclave);
 
 /* This fires once each time an enclave is destroyed by the sm */
 void platform_destroy_enclave(struct enclave* enclave);

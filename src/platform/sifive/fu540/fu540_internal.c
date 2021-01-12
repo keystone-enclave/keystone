@@ -10,7 +10,7 @@
 #include "platform.h"
 #include "sm.h"
 
-enclave_ret_code scratch_init(){
+unsigned long scratch_init(){
   if(scratchpad_allocated_ways != 0){
     return ENCLAVE_SUCCESS;
   }
@@ -77,7 +77,7 @@ enclave_ret_code scratch_init(){
   return ENCLAVE_SUCCESS;
 }
 
-enclave_ret_code platform_init_global_once(){
+unsigned long platform_init_global_once(){
 
   waymask_init();
   scratchpad_allocated_ways = 0;
@@ -100,7 +100,7 @@ enclave_ret_code platform_init_global_once(){
 }
 
 
-enclave_ret_code platform_init_global(){
+unsigned long platform_init_global(){
   pmp_set_keystone(l2_controller_rid, PMP_NO_PERM);
   pmp_set_keystone(scratch_rid, PMP_NO_PERM);
 
@@ -115,7 +115,7 @@ void platform_init_enclave(struct enclave* enclave){
 
 }
 
-enclave_ret_code platform_create_enclave(struct enclave* enclave){
+unsigned long platform_create_enclave(struct enclave* enclave){
   enclave->ped.use_scratch = 0;
   if(enclave->ped.use_scratch){
 
@@ -144,8 +144,8 @@ enclave_ret_code platform_create_enclave(struct enclave* enclave){
       sbi_printf("FATAL: Enclave too big for scratchpad!\r\n");
       return ENCLAVE_NO_FREE_RESOURCE;
     }
-    memcpy((enclave_ret_code*)scratch_epm_start,
-           (enclave_ret_code*)old_epm_start,
+    memcpy((unsigned long*)scratch_epm_start,
+           (unsigned long*)old_epm_start,
            size);
     sbi_printf("Performing copy from %lx to %lx\r\n", old_epm_start, scratch_epm_start);
     /* Change pa params to the new region */

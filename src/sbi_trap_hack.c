@@ -60,7 +60,7 @@ static void sbi_trap_error(const char *msg, int rc,
 	sbi_printf("%s: hart%d: %s=0x%" PRILX "\n", __func__, hartid, "t6",
 		   regs->t6);
 
-  mcall_sm_exit_enclave(regs, rc);
+  sbi_sm_exit_enclave(regs, rc);
 }
 
 
@@ -98,15 +98,15 @@ void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs)
 		switch (mcause) {
 		case IRQ_M_TIMER: {
       regs->mepc -= 4;
-      mcall_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
-      regs->a0 = 2;
+      sbi_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
+      regs->a0 = SBI_ERR_SM_ENCLAVE_INTERRUPTED;
       regs->mepc += 4;
 			break;
                       }
 		case IRQ_M_SOFT: {
       regs->mepc -= 4;
-      mcall_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
-      regs->a0 = 2;
+      sbi_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
+      regs->a0 = SBI_ERR_SM_ENCLAVE_INTERRUPTED;
       regs->mepc += 4;
 			break;
                      }

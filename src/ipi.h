@@ -1,20 +1,21 @@
 #ifndef __PMP_IPI_H__
 #define __PMP_IPI_H__
 
-#include "pmp.h"
 #include <sbi/sbi_scratch.h>
 #include <sbi/sbi_hartmask.h>
+#include <sbi/sbi_tlb.h>
+
 #define SBI_PMP_IPI_TYPE_SET    0
 #define SBI_PMP_IPI_TYPE_UNSET  1
 
-#define SBI_PMP_IPI_FIFO_NUM_ENTRIES  8
-
 struct sbi_pmp_ipi_info {
-  int type;
-  region_id rid;
-  uint8_t perm;
-  struct sbi_hartmask smask;
+  unsigned long type;
+  unsigned long rid;
+  unsigned long perm;
+  unsigned long __dummy;
 };
+
+void sbi_pmp_ipi_local_update(struct sbi_tlb_info *info);
 
 #define SBI_PMP_IPI_INFO_SIZE sizeof(struct sbi_pmp_ipi_info)
 
