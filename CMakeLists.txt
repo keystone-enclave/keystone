@@ -3,7 +3,6 @@ project(keystone C)
 include(ProcessorCount)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-
 ###############################################################################
 ## MACROS
 ###############################################################################
@@ -71,8 +70,8 @@ set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
-set(sm_srcdir ${CMAKE_SOURCE_DIR}/riscv-pk)
-mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/riscv-pk.build)
+set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
+mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
 set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
@@ -98,6 +97,7 @@ endif()
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 mkdir(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
 set(linux_symvers ${linux_wrkdir}/Modules.symvers)
+set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(linux_vmlinux ${linux_wrkdir}/vmlinux)
 set(linux_vmlinux_stripped ${linux_wrkdir}/vmlinux-stripped)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
@@ -190,9 +190,15 @@ if(initramfs)
   execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
   string(STRIP ${gid} gid)
   add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
-  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
+  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} ${linux_image} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
     COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
     COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
+    COMMAND $(MAKE) -C ${linux_srcdir}
+      O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
+      CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
+      CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
+      CROSS_COMPILE=${cross_compile} ARCH=riscv
+
     COMMAND $(MAKE) -C ${linux_srcdir}
       O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
       CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
@@ -202,8 +208,9 @@ if(initramfs)
     COMMENT "Building linux (initramfs)"
   )
 else()
-  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${linux_srcdir} "linux-symvers"
+  add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} ${linux_image} DEPENDS ${linux_srcdir} "linux-symvers"
     COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
+    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
     COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
     COMMENT "Building linux"
   )
@@ -214,7 +221,7 @@ add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config
   COMMENT "Building linux symvers"
 )
 add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
-add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux})
+add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux} ${linux_image})
 
 
 ###############################################################################
@@ -232,37 +239,14 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 
 
 ###############################################################################
-## COMPONENT: bbl + sm
+## COMPONENT: security monitor (sm)
 ###############################################################################
 
-if (${USE_RUST_SM})
-  set(enabled_sm --enable-sm_rs)
-else()
-  set(enabled_sm --enable-sm)
-endif()
-
-if(firesim)
-  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} sm_patches)
-elseif(sifive)
-  add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} sm_patches)
-endif()
-
-add_custom_command(OUTPUT ${sm_wrkdir}/Makefile WORKING_DIRECTORY ${sm_wrkdir}
-  DEPENDS ${sm_wrkdir_exists}
-  COMMAND ${sm_srcdir}/configure --host=riscv${BITS}-unknown-linux-gnu --with-payload=${linux_vmlinux_stripped}
-    --enable-logo --with-logo=${confdir}/sifive_logo.txt ${enabled_sm} ${SM_CONFIGURE_ARGS} --with-target-platform=${platform}
-  COMMENT "Configuring sm"
-)
-add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile "linux" ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
-  COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
+add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} WORKING_DIRECTORY ${sm_wrkdir}
+  COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/generic
+    CROSS_COMPILE=riscv64-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y
   COMMENT "Building sm"
 )
-
-if(firesim)
-  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} "sm")
-elseif(sifive)
-  add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} "sm")
-endif()
 
 ###############################################################################
 ## COMPONENT: tests
@@ -326,7 +310,7 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
       -nographic \
       -machine virt \
       -bios ${bootrom_wrkdir}/bootrom.bin \
-      -kernel ${sm_wrkdir}/bbl \
+      -kernel ${sm_wrkdir}/platform/generic/firmware/fw_payload.elf \
       ${extra_qemu_options} \
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
       -device virtio-net-device,netdev=net0 \
