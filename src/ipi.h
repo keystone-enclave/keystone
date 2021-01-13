@@ -10,9 +10,9 @@
 
 struct sbi_pmp_ipi_info {
   unsigned long type;
+  unsigned long __dummy;
   unsigned long rid;
   unsigned long perm;
-  unsigned long __dummy;
 };
 
 void sbi_pmp_ipi_local_update(struct sbi_tlb_info *info);
