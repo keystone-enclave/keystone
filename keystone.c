@@ -5,7 +5,7 @@
 //#include <asm/io.h>
 //#include <asm/page.h>
 #include "keystone.h"
-#include "keystone-sbi-arg.h"
+#include "keystone-sbi.h"
 
 #include <linux/dma-mapping.h>
 #include <linux/mm.h>
