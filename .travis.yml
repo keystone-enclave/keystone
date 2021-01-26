@@ -98,7 +98,7 @@ jobs:
         - source ./source.sh
         - mkdir build
         - cd build
-        - cmake -DLINUX_SIFIVE=y -DSM_PLATFORM=fu540 ../
+        - cmake -DLINUX_SIFIVE=y -DSM_PLATFORM=sifive/fu540 ../
         - travis_wait 120 make -j3
         - cd ..
         - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
