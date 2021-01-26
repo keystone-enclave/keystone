@@ -12,7 +12,7 @@
 
 unsigned long scratch_init(){
   if(scratchpad_allocated_ways != 0){
-    return ENCLAVE_SUCCESS;
+    return SBI_ERR_SM_ENCLAVE_SUCCESS;
   }
 
   /* TODO TMP way to try and get the scratchpad allocated */
@@ -70,11 +70,11 @@ unsigned long scratch_init(){
   for(addr = scratch_start; addr < scratch_stop; addr += L2_LINE_SIZE){
     if(*(uintptr_t*)addr != 64){
       sbi_printf("FATAL: Found a bad line %lx\r\n", addr);
-      return ENCLAVE_UNKNOWN_ERROR;
+      return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
     }
   }
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 unsigned long platform_init_global_once(){
@@ -87,16 +87,16 @@ unsigned long platform_init_global_once(){
                             CACHE_CONTROLLER_ADDR_END - CACHE_CONTROLLER_ADDR_START,
                             PMP_PRI_ANY, &l2_controller_rid, 1)){
     sbi_printf("FATAL CANNOT CREATE PMP FOR CONTROLLER\r\n");
-    return ENCLAVE_NO_FREE_RESOURCE;
+    return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
   }
   /* Create PMP region for scratchpad */
   if(pmp_region_init_atomic(L2_SCRATCH_START,
                             L2_SCRATCH_STOP - L2_SCRATCH_START,
                             PMP_PRI_ANY, &scratch_rid, 1)){
     sbi_printf("FATAL CANNOT CREATE SCRATCH PMP\r\n");
-    return ENCLAVE_NO_FREE_RESOURCE;
+    return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
   }
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 
@@ -104,7 +104,7 @@ unsigned long platform_init_global(){
   pmp_set_keystone(l2_controller_rid, PMP_NO_PERM);
   pmp_set_keystone(scratch_rid, PMP_NO_PERM);
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
 void platform_init_enclave(struct enclave* enclave){
@@ -119,15 +119,15 @@ unsigned long platform_create_enclave(struct enclave* enclave){
   enclave->ped.use_scratch = 0;
   if(enclave->ped.use_scratch){
 
-    if(scratch_init() != ENCLAVE_SUCCESS){
-      return ENCLAVE_UNKNOWN_ERROR;
+    if(scratch_init() != SBI_ERR_SM_ENCLAVE_SUCCESS){
+      return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
     }
 
     /* Swap regions */
     int old_epm_idx = get_enclave_region_index(enclave->eid, REGION_EPM);
     int new_idx = get_enclave_region_index(enclave->eid, REGION_INVALID);
     if(old_epm_idx < 0 || new_idx < 0){
-      return ENCLAVE_NO_FREE_RESOURCE;
+      return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
     }
 
     enclave->regions[new_idx].pmp_rid = scratch_rid;
@@ -142,7 +142,7 @@ unsigned long platform_create_enclave(struct enclave* enclave){
 
     if(size > scratch_size){
       sbi_printf("FATAL: Enclave too big for scratchpad!\r\n");
-      return ENCLAVE_NO_FREE_RESOURCE;
+      return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
     }
     memcpy((unsigned long*)scratch_epm_start,
            (unsigned long*)old_epm_start,
@@ -170,7 +170,7 @@ unsigned long platform_create_enclave(struct enclave* enclave){
 
   }
 
-  return ENCLAVE_SUCCESS;
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
 
 }
 
