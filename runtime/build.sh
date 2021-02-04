@@ -17,7 +17,7 @@ CFLAGS[paging]="-DUSE_PAGING -DUSE_FREEMEM "
 CFLAGS[page_crypto]="-DPAGE_CRYPTO "
 CFLAGS[page_hash]="-DPAGE_HASH "
 CFLAGS[debug]="-DDEBUG "
-CFLAGS[rv32]="-mabi=ilp32d -march=rv32imafdc -mcmodel=medany "
+CFLAGS[rv32]="-mabi=ilp32 -march=rv32imafdc -mcmodel=medany "
 LDFLAGS[rv32]="-melf32lriscv_ilp32"
 #CFLAGS[dynamic_resizing]="-DDYN_ALLOCATION "
 

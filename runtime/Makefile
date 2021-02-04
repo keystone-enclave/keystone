@@ -72,4 +72,4 @@ clean:
 	rm -rf $(RUNTIME) obj
 	$(MAKE) -C tmplib clean
 	# for legacy reasons, remove any lingering uaccess.h
-	rm -f uaccess.h
+	rm -f uaccess.h $(TMPLIB)
