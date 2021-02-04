@@ -1,5 +1,4 @@
-CC = riscv$(BITS)-unknown-linux-gnu-gcc
-CFLAGS = -Wall -Werror -fPIC -I.
+CC = riscv64-unknown-linux-gnu-gcc
 
 ASM_SRCS = uaccess.S
 ASM_OBJS = $(patsubst %.S,%.o,$(ASM_SRCS))
@@ -15,7 +14,7 @@ all: $(ASM_OBJS)
 	cp $(COPY_TARGETS) ../
 
 $(ASM_OBJS): $(ASM_SRCS)
-	$(CC) $(CFLAGS) $(BUILD_DEFS) -c $<
+	$(CC) $(CFLAGS) -I. $(BUILD_DEFS) -c $<
 
 clean:
-	rm $(ASM_OBJS) $(patsubst %,../%,$(COPY_HEADERS))
+	rm -f $(ASM_OBJS) $(patsubst %,../%,$(COPY_HEADERS))
