@@ -7,12 +7,12 @@ ifndef KEYSTONE_SDK_DIR
   $(error KEYSTONE_SDK_DIR is undefined)
 endif
 
-CFLAGS = -Wall -Werror -fPIC -fno-builtin -std=c11 -g $(OPTIONS_C_FLAGS)
-SRCS = aes.c sha256.c boot.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c rt_util.c mm.c env.c freemem.c paging.c sbi.c merkle.c page_swap.c vm.c
+CFLAGS = -Wall -Werror -fPIC -fno-builtin -std=c11 -g $(OPTIONS_FLAGS)
+SRCS = aes.c sha256.c boot.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c rt_util.c mm.c env.c freemem.c paging.c sbi.c merkle.c page_swap.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = $(CROSS_COMPILE)ld
-LDFLAGS = -static -nostdlib $(shell $(CC) $(OPTIONS_C_FLAGS) --print-file-name=libgcc.a) $(OPTIONS_LD_FLAGS)
+LDFLAGS = -static -nostdlib $(shell $(CC) --print-file-name=libgcc.a)
 
 SDK_LIB_DIR = $(KEYSTONE_SDK_DIR)/lib
 SDK_INCLUDE_EDGE_DIR = $(KEYSTONE_SDK_DIR)/include/edge
@@ -35,7 +35,7 @@ TMPLIB = uaccess.o
 all: $(RUNTIME) $(TEST_BIN)
 
 $(TMPLIB):
-	$(MAKE) -C tmplib CFLAGS="$(CFLAGS)"
+	$(MAKE) -C tmplib
 
 $(DISK_IMAGE):
 	echo "missing $(DISK_IMAGE)."
@@ -72,4 +72,4 @@ clean:
 	rm -rf $(RUNTIME) obj
 	$(MAKE) -C tmplib clean
 	# for legacy reasons, remove any lingering uaccess.h
-	rm -f uaccess.h $(TMPLIB)
+	rm -f uaccess.h
