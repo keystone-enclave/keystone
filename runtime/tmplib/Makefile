@@ -18,4 +18,4 @@ $(ASM_OBJS): $(ASM_SRCS)
 	$(CC) $(CFLAGS) $(BUILD_DEFS) -c $<
 
 clean:
-	rm $(ASM_OBJS) $(patsubst %,../%,$(COPY_HEADERS))
+	rm -f $(ASM_OBJS) $(patsubst %,../%,$(COPY_HEADERS))

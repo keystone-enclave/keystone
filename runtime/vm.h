@@ -9,20 +9,21 @@
 
 extern void* rt_base;
 
-uintptr_t runtime_va_start;
+extern uintptr_t runtime_va_start;
+extern uintptr_t kernel_offset;
+extern uintptr_t load_pa_start;
+
 /* Eyrie is for Sv39 */
 static inline uintptr_t satp_new(uintptr_t pa)
 {
   return (SATP_MODE | (pa >> RISCV_PAGE_BITS));
 }
 
-uintptr_t kernel_offset;
 static inline uintptr_t kernel_va_to_pa(void* ptr)
 {
   return (uintptr_t) ptr - kernel_offset;
 }
 
-uintptr_t load_pa_start;
 static inline uintptr_t __va(uintptr_t pa)
 {
   return (pa - load_pa_start) + EYRIE_LOAD_START;
@@ -64,29 +65,25 @@ static inline uintptr_t pte_ppn(pte pte)
   return pte >> PTE_PPN_SHIFT;
 }
 
-
-
-#ifdef USE_FREEMEM
 /* root page table */
-pte root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+extern pte root_page_table[];
 /* page tables for kernel remap */
-pte kernel_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+extern pte kernel_l2_page_table[];
+extern pte kernel_l3_page_table[];
 /* page tables for loading physical memory */
-pte load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+extern pte load_l2_page_table[];
+extern pte load_l3_page_table[];
 
 /* Program break */
-uintptr_t program_break;
+extern uintptr_t program_break;
 
 /* freemem */
-uintptr_t freemem_va_start;
-size_t freemem_size;
-#endif // USE_FREEMEM
+extern uintptr_t freemem_va_start;
+extern size_t freemem_size;
 
 /* shared buffer */
-uintptr_t shared_buffer;
-uintptr_t shared_buffer_size;
+extern uintptr_t shared_buffer;
+extern uintptr_t shared_buffer_size;
 
 
 #endif
