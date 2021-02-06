@@ -5,8 +5,7 @@
 #ifndef _KEYSTONE_SBI_H_
 #define _KEYSTONE_SBI_H_
 
-#include <stdint.h>
-#include <stddef.h>
+#include <sbi/sbi_types.h>
 #include <sbi/sbi_trap.h>
 
 unsigned long

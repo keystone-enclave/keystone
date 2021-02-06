@@ -1,7 +1,7 @@
 #ifndef ED25519_H
 #define ED25519_H
 
-#include <stddef.h>
+#include <sbi/sbi_types.h>
 
 #if defined(_WIN32)
     #if defined(ED25519_BUILD_DLL)

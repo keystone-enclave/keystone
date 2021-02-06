@@ -4,8 +4,7 @@
 #ifndef SHA3_H
 #define SHA3_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <sbi/sbi_types.h>
 
 #ifndef KECCAKF_ROUNDS
 #define KECCAKF_ROUNDS 24

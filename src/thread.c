@@ -28,7 +28,7 @@ void swap_prev_mstatus(struct thread_state* thread, struct sbi_trap_regs* regs, 
 }
 
 /* Swaps the entire s-mode visible state, general registers and then csrs */
-void swap_prev_state(struct thread_state* thread, uintptr_t* regs, int return_on_resume)
+void swap_prev_state(struct thread_state* thread, struct sbi_trap_regs* regs, int return_on_resume)
 {
   int i;
 
@@ -37,8 +37,8 @@ void swap_prev_state(struct thread_state* thread, uintptr_t* regs, int return_on
   {
     /* swap state */
     uintptr_t tmp = prev[i];
-    prev[i] = regs[i];
-    regs[i] = tmp;
+    prev[i] = ((unsigned long *)regs)[i];
+    ((unsigned long *)regs)[i] = tmp;
   }
 
   prev[0] = !return_on_resume;

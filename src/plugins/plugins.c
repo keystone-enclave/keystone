@@ -20,7 +20,7 @@ call_plugin(
 #endif
     default:
       // TOO fix it
-      return -ENOSYS;
+      return SBI_ERR_SM_NOT_IMPLEMENTED;
   }
 }
 

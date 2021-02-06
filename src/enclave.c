@@ -42,7 +42,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
                                                 enclave_id eid,
                                                 int load_parameters){
   /* save host context */
-  swap_prev_state(&enclaves[eid].threads[0], (uintptr_t*) regs, 1);
+  swap_prev_state(&enclaves[eid].threads[0], regs, 1);
   swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
   swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
 
@@ -106,7 +106,7 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
   csr_write(mideleg, interrupts);
 
   /* restore host context */
-  swap_prev_state(&enclaves[eid].threads[0], (uintptr_t*) regs, return_on_resume);
+  swap_prev_state(&enclaves[eid].threads[0], regs, return_on_resume);
   swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
   swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
 
@@ -390,8 +390,11 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   enclaves[eid].regions[0].type = REGION_EPM;
   enclaves[eid].regions[1].pmp_rid = shared_region;
   enclaves[eid].regions[1].type = REGION_UTM;
-
+#if __riscv_xlen == 32
+  enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | (SATP_MODE_SV32 << HGATP_MODE_SHIFT));
+#else
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | (SATP_MODE_SV39 << HGATP_MODE_SHIFT));
+#endif
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = params;
   enclaves[eid].pa_params = pa_params;

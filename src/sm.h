@@ -5,7 +5,7 @@
 #ifndef sm_h
 #define sm_h
 
-#include <stdint.h>
+#include <sbi/sbi_types.h>
 #include "pmp.h"
 #include "sm-sbi.h"
 #include <sbi/riscv_encoding.h>

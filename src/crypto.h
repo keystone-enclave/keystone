@@ -5,7 +5,7 @@
 #ifndef __CRYPTO_H__
 #define __CRYPTO_H__
 
-#include <stdint.h>
+#include <sbi/sbi_types.h>
 #include "sha3/sha3.h"
 #include "ed25519/ed25519.h"
 #include "hkdf_sha3_512/hkdf_sha3_512.h"

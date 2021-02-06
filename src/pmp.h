@@ -7,7 +7,6 @@
 
 #include "sm.h"
 #include <sbi/riscv_atomic.h>
-#include <errno.h>
 
 #define PMP_N_REG         8 //number of PMP registers
 #define PMP_MAX_N_REGION  16 //maximum number of PMP regions

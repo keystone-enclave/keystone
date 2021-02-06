@@ -7,7 +7,6 @@
 #include "enclave.h"
 #include "page.h"
 #include "cpu.h"
-#include <errno.h>
 #include "platform-hook.h"
 #include "plugins/plugins.h"
 #include <sbi/riscv_asm.h>

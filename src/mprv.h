@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <sbi/sbi_types.h>
 
 typedef struct { size_t words[8]; } mprv_block;
 
