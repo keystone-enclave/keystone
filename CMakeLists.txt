@@ -111,7 +111,6 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 ###############################################################################
 
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
-add_patch("qemu" "qemu-pmp-bug.patch" ${qemu_srcdir} qemu_patches)
 add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} qemu_patches)
 
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
@@ -236,7 +235,8 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
 add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
-    CROSS_COMPILE=riscv64-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y
+    CROSS_COMPILE=riscv${BITS}-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
+    PLATFORM_RISCV_ISA=${ISA} PLATFORM_RISCV_ABI=${ABI}
   COMMENT "Building sm"
 )
 

@@ -1,20 +1,19 @@
 language: minimal
-dist: xenial
+dist: bionic
 cache:
   apt: true
   timeout: 1000 #In seconds
   directories:
-  # - $TRAVIS_BUILD_DIR/firesim-riscv-tools-prebuilt
-  - $TRAVIS_BUILD_DIR/riscv
-  - $TRAVIS_BUILD_DIR/linux
-  - $TRAVIS_BUILD_DIR/qemu
+  - $TRAVIS_BUILD_DIR/riscv64
+  - $TRAVIS_BUILD_DIR/linux/.git
+  - $TRAVIS_BUILD_DIR/qemu/.git
 
 git:
   submodules: false
   depth: 1
 
 env:
-  - RISCV=$TRAVIS_BUILD_DIR/riscv PATH=$PATH:$RISCV/bin
+  - RISCV=$TRAVIS_BUILD_DIR/riscv64 PATH=$PATH:$RISCV/bin
 
 addons:
   apt:
@@ -54,6 +53,7 @@ addons:
     - libssl-dev
     - makeself
     - unzip
+    - p7zip-full
 
 branches:
   only:
@@ -62,15 +62,13 @@ branches:
 
 
 before_install:
+  - if [ -d "linux/.git" ]; then ls; else git clone --shallow-since=2020-04-01 https://github.com/torvalds/linux linux; fi
+  - if [ -d "qemu/.git" ]; then ls; else git clone --shallow-since=2020-04-01 https://github.com/qemu/qemu qemu; fi
   - git submodule init -- linux
   - git submodule init -- qemu
-  - if [ -d "linux/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/torvalds/linux linux; fi
-  - if [ -d "qemu/.git" ]; then ls; else git clone --shallow-since=2018-05-01 https://github.com/qemu/qemu qemu; fi
   - git submodule update --depth=1 -- linux
   - git submodule update --depth=1 -- qemu
   - ./fast-setup.sh
-  - cp -r linux/.git linux-git
-  - cp -r qemu/.git qemu-git
 
 jobs:
   include:
@@ -78,8 +76,8 @@ jobs:
       script: true
       after_failure:
         - ls -al
-        - cat firesim-riscv-tools-prebuilt-*/riscv-tools-install.log
-    - stage: build everything & test
+        - git submodule status
+    - stage: build rv64 & test
       script:
         - source ./source.sh
         - mkdir build
@@ -88,8 +86,6 @@ jobs:
         - travis_wait 120 make -j3
         - travis_wait 10 make run-tests
         - cd ..
-        - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
-        - cd linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../linux-git .git;cd ..
       after_failure:
         - cat screenlog.0
         - cat output.log
@@ -101,5 +97,16 @@ jobs:
         - cmake -DLINUX_SIFIVE=y -DSM_PLATFORM=sifive/fu540 ../
         - travis_wait 120 make -j3
         - cd ..
-        - cd qemu; git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../qemu-git  .git;cd ..
-        - cd linux;git clean -fxd > /dev/null;git reset --hard > /dev/null;rm -rf .git;mv ../linux-git .git;cd ..
+    - stage: build rv32 & test
+      script:
+        - BITS=32 ./fast-setup.sh
+        - source source.sh
+    - stage: build rv32 & test
+      script:
+        - BITS=32 ./fast-setup.sh
+        - source source.sh
+        - mkdir build32
+        - cmake ../ -DRISCV32=y
+        - travis_wait 120 make -j3
+        - travis_wait 10 make run-tests
+        - cd ..

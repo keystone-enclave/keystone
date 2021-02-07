@@ -2,41 +2,52 @@
 
 set -e
 
+if [ -z "$BITS" ]; then
+  BITS=64
+fi
+
+echo "Fast Setup (RV$BITS)";
+
+if [ "$BITS" = "64" ]; then
+  TOOLCHAIN_7Z_FILE=riscv-toolchain-lp64d-rv64gc-2021.01.7z
+else
+  TOOLCHAIN_7Z_FILE=riscv-toolchain-ilp32d-rv32gc-2021.01.7z
+  SDK_FLAGS="-DRISCV32=y"
+fi
+
 echo "Starting..."
-if ( $(command -v riscv64-unknown-linux-gnu-gcc > /dev/null) &&
-  $(command -v riscv64-unknown-elf-gcc > /dev/null) )
+if ( $(command -v riscv$BITS-unknown-linux-gnu-gcc > /dev/null) &&
+  $(command -v riscv$BITS-unknown-elf-gcc > /dev/null) )
 then
   echo "RISCV tools are already installed"
 else
   echo "Downloading Prebuilt RISC-V Toolchain... "
 
-  # The 1.0 version expected libmpfr.so.4, modern Ubuntu has .6
-  TOOL_VER=1.0
-  if [[ $(ldconfig -p | grep "libmpfr.so.6") ]]; then
-      echo "Downloading tools v2.0 (support for libmpfr.so.6)"
-      TOOL_VER=2.0
+  export RISCV=$(pwd)/riscv$BITS
+  export PATH=$PATH:$RISCV/bin
+
+  if [ -f $TOOLCHAIN_7Z_FILE ]; then
+    rm $TOOLCHAIN_7Z_FILE;
   fi
 
-  export RISCV=$(pwd)/riscv
-  export PATH=$PATH:$RISCV/bin
-  wget https://keystone-enclave.eecs.berkeley.edu/files/${TOOL_VER}.tar.gz
+  wget https://keystone-enclave.eecs.berkeley.edu/files/$TOOLCHAIN_7Z_FILE
 
   # Check tool integrity
   echo "Verifying prebuilt toolchain integrity..."
+
   sha256sum -c .prebuilt_tools_shasums --status --ignore-missing
-  if [[ $? != 0 ]]
-  then
-      echo "Toolchain binary download incomplete or corrupted. You can build the toolchain locally or try again."
-      exit 1
+
+  if [[ $? != 0 ]]; then
+    echo "Toolchain binary download incomplete or corrupted. You can build the toolchain locally or try again."
+    exit 1
   fi
 
-  tar -xzvf ${TOOL_VER}.tar.gz
-  cd firesim-riscv-tools-prebuilt-${TOOL_VER}
-  ./installrelease.sh > riscv-tools-install.log
-  mv distrib riscv
-  cp -R riscv ../
-  cd ..
+  echo "Extracting Toolchain"
+  7za x -y $TOOLCHAIN_7Z_FILE -o./riscv$BITS
+
   echo "Toolchain has been installed in $RISCV"
+
+  rm $TOOLCHAIN_7Z_FILE
 fi
 
 echo "Updating and cloning submodules, this may take a long time"
@@ -60,17 +71,24 @@ git submodule update --init --recursive
 if [ -z $KEYSTONE_SDK_DIR ]
 then
   echo "KEYSTONE_SDK_DIR is not set. Installing from $(pwd)/sdk"
-  export KEYSTONE_SDK_DIR=$(pwd)/sdk/build
+  export KEYSTONE_SDK_DIR=$(pwd)/sdk/build$BITS
   cd sdk
   mkdir -p build
   cd build
-  cmake ..
+  cmake .. $SDK_FLAGS
   make
   make install
   cd ../..
 fi
 
 # update source.sh
-sed "s|KEYSTONE_SDK_DIR=.*|KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR|" -i source.sh
+echo "export RISCV=$(pwd)/riscv${BITS}" > ./source.sh
+echo "export PATH=$RISCV/bin:\$PATH" >> ./source.sh
+echo "export KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR" >> ./source.sh
 
 echo "RISC-V toolchain and Keystone SDK have been fully setup"
+echo ""
+echo " * Notice: run the following command to update enviroment variables *"
+echo ""
+echo "           source ./source.sh"
+echo ""
