@@ -102,9 +102,14 @@ int keystone_run_enclave(unsigned long data)
   ueid = arg->eid;
   enclave = get_enclave_by_id(ueid);
 
-  if(!enclave) {
+  if (!enclave) {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
+  }
+
+  if (enclave->eid < 0) {
+    keystone_warn("keystone_run_enclave: skipping (enclave does not exist)\n");
+    return 0;
   }
 
   ret = sbi_sm_run_enclave(enclave->eid);
@@ -171,6 +176,11 @@ int __keystone_destroy_enclave(unsigned int ueid)
     return -EINVAL;
   }
 
+  if (enclave->eid < 0) {
+    keystone_warn("keystone_destroy_enclave: skipping (enclave does not exist)\n");
+    return 0;
+  }
+
   ret = sbi_sm_destroy_enclave(enclave->eid);
 
   if (ret.error) {
@@ -196,6 +206,11 @@ int keystone_resume_enclave(unsigned long data)
   {
     keystone_err("invalid enclave id\n");
     return -EINVAL;
+  }
+
+  if (enclave->eid < 0) {
+    keystone_warn("keystone_resume_enclave: skipping (enclave does not exist)\n");
+    return 0;
   }
 
   ret = sbi_sm_resume_enclave(enclave->eid);

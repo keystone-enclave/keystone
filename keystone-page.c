@@ -100,6 +100,7 @@ int utm_init(struct utm* utm, size_t untrusted_size)
    * It is always allocated from the buddy allocator */
   utm->ptr = (void*) __get_free_pages(GFP_HIGHUSER, order);
   if (!utm->ptr) {
+    keystone_err("failed to allocate UTM (size = %ld bytes)\n",(1<<order));
     return -ENOMEM;
   }
 
