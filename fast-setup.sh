@@ -51,10 +51,6 @@ else
   echo "Extracting Toolchain"
   7za x -y $TOOLCHAIN_7Z_FILE -o./riscv$BITS
 
-  if [[ ! $(ldconfig -p | grep "libmpfr.so.4") ]]; then
-    echo "WARNING: libmpfr.so.4 is missing!"
-  fi
-
   echo "Toolchain has been installed in $RISCV"
 
   rm $TOOLCHAIN_7Z_FILE
@@ -65,13 +61,13 @@ git config submodule.riscv-gnu-toolchain.update none
 
 # shallow clone submodules ahead of time (Git must be > 2.11)
 if [ ! -e linux/.git ]; then
-  git clone --shallow-since=2019-09-14 https://github.com/torvalds/linux.git linux
+  git clone --shallow-since=2020-05-15 https://github.com/torvalds/linux.git linux
 fi
 if [ ! -e buildroot/.git ]; then
-  git clone --shallow-since=2019-08-29 https://github.com/buildroot/buildroot.git buildroot
+  git clone --shallow-since=2020-04-15 https://github.com/buildroot/buildroot.git buildroot
 fi
 if [ ! -e qemu/.git ]; then
-  git clone --shallow-since=2018-08-14 https://github.com/qemu/qemu.git qemu
+  git clone --shallow-since=2020-11-15 https://github.com/qemu/qemu.git qemu
 fi
 
 git submodule sync --recursive
