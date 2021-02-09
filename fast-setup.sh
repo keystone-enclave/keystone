@@ -8,10 +8,16 @@ fi
 
 echo "Fast Setup (RV$BITS)";
 
+DIST=xenial
+
+if [[ $(ldconfig -p | grep "libmpfr.so.6") ]]; then
+  DIST=bionic
+fi
+
 if [ "$BITS" = "64" ]; then
-  TOOLCHAIN_7Z_FILE=riscv-toolchain-lp64d-rv64gc-2021.01.7z
+  TOOLCHAIN_7Z_FILE=riscv-toolchain-lp64d-rv64gc-2021.01.$DIST.7z
 else
-  TOOLCHAIN_7Z_FILE=riscv-toolchain-ilp32d-rv32gc-2021.01.7z
+  TOOLCHAIN_7Z_FILE=riscv-toolchain-ilp32d-rv32gc-2021.01.$DIST.7z
   SDK_FLAGS="-DRISCV32=y"
 fi
 
@@ -44,6 +50,10 @@ else
 
   echo "Extracting Toolchain"
   7za x -y $TOOLCHAIN_7Z_FILE -o./riscv$BITS
+
+  if [[ ! $(ldconfig -p | grep "libmpfr.so.4") ]]; then
+    echo "WARNING: libmpfr.so.4 is missing!"
+  fi
 
   echo "Toolchain has been installed in $RISCV"
 

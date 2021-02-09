@@ -1,2 +1,4 @@
-ad8c0e3357579ae8b9c6f8adb76aae5ac9155134304e11e429b81111283a4718  riscv-toolchain-ilp32d-rv32gc-2021.01.7z
-ed41a452ba736d40de73b847777ad9cedd54e528f5d8930c44a6eb937e4d36d9  riscv-toolchain-lp64d-rv64gc-2021.01.7z
+ad8c0e3357579ae8b9c6f8adb76aae5ac9155134304e11e429b81111283a4718  riscv-toolchain-ilp32d-rv32gc-2021.01.xenial.7z
+ed41a452ba736d40de73b847777ad9cedd54e528f5d8930c44a6eb937e4d36d9  riscv-toolchain-lp64d-rv64gc-2021.01.xenial.7z
+7e232c2030cc8ab8dab169a4e9dac1cc75c41ea1da8cbe1a70ba416a6d6b971f  riscv-toolchain-ilp32d-rv32gc-2021.01.bionic.7z
+2c37fa700f5ecf7ab8c1e5aeddd018fc15e0c187721b769a1d1318ed58228685  riscv-toolchain-lp64d-rv64gc-2021.01.bionic.7z
