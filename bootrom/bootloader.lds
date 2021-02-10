@@ -12,6 +12,7 @@ SECTIONS
     *(.reset)
     *(*)
   }
+  . = ALIGN(4);
   PROVIDE( _dtb = . );
 }
 
