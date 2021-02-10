@@ -5,7 +5,7 @@
 //#include <asm/io.h>
 //#include <asm/page.h>
 #include "keystone.h"
-#include "keystone-sbi-arg.h"
+#include "keystone-sbi.h"
 
 #include <linux/dma-mapping.h>
 #include <linux/mm.h>
@@ -15,7 +15,7 @@
 #include <linux/miscdevice.h>
 #include "keystone_user.h"
 #define   DRV_DESCRIPTION   "keystone enclave"
-#define   DRV_VERSION       "0.2"
+#define   DRV_VERSION       "1.0.0"
 
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("Dayeol Lee <dayeol@berkeley.edu>");

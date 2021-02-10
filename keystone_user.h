@@ -66,10 +66,8 @@ struct keystone_ioctl_create_enclave {
 
 struct keystone_ioctl_run_enclave {
   uintptr_t eid;
-  uintptr_t entry;
-  uintptr_t args_ptr;
-  uintptr_t args_size;
-  uintptr_t ret;
+  uintptr_t error;
+  uintptr_t value;
 };
 
 #endif
