@@ -28,7 +28,7 @@ For example, if you want to debug with the `bbl` symbols
 
 ```bash
 # in your <build directory>
-riscv64-unknown-linux-gnu-gdb ./riscv-pk.build/bbl
+riscv64-unknown-linux-gnu-gdb ./sm.build/platform/generic/firmware/fw_payload.elf
 ```
 
 If you want to debug with the kernel's debug information
