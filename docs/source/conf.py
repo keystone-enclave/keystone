@@ -24,13 +24,13 @@ extensions = ['sphinx.ext.graphviz']
 # -- Project information -----------------------------------------------------
 
 project = u'Keystone Enclave'
-copyright = u'2018, Dayeol Lee, and David Kohlbrenner'
-author = u'Dayeol Lee, and David Kohlbrenner'
+copyright = u'2021, Keystone Enclave'
+author = u'Keystone Team'
 
 # The short X.Y version
-version = u'0.3'
+version = u'1.0'
 # The full version, including alpha/beta/rc tags
-release = u'0.3.0'
+release = u'1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -134,7 +134,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'KeystoneEnclave.tex', u'Keystone Enclave Documentation',
-     u'Dayeol Lee, David Kohlbrenner, Dawn Song, Krste Asanovic', 'manual'),
+     u'Keystone Team', 'manual'),
 ]
 
 
