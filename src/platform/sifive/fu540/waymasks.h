@@ -39,17 +39,17 @@
 typedef uint64_t waymask_t;
 
 /* Ways currently allocated to enclaves */
-waymask_t enclave_allocated_ways;
+extern waymask_t enclave_allocated_ways;
 
 /* Ways currently allocated to the scratchpad */
-waymask_t scratchpad_allocated_ways;
+extern waymask_t scratchpad_allocated_ways;
 
 /* All allocated ways, should be OR of above two */
-waymask_t allocated_ways;
+extern waymask_t allocated_ways;
 
 /* PMP Region ID for the scratchpad */
-region_id scratch_rid;
-region_id l2_controller_rid;
+extern region_id scratch_rid;
+extern region_id l2_controller_rid;
 
 // Waymask master IDs
 #define WM_Hart_0_DCache_MMIO           0

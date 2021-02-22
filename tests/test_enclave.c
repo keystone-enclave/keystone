@@ -8,7 +8,7 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
-#include "../enclave.c"
+#include "../src/enclave.c"
 
 static void test_is_create_args_valid()
 {

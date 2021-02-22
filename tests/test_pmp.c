@@ -1,14 +1,15 @@
-#include <errno.h>
+//#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
 #include <cmocka.h>
 
-#include "../pmp.c"
+#include "../src/pmp.c"
+
+#define PMP_SUCCESS SBI_ERR_SM_PMP_SUCCESS
 
 static void test_search_rightmost_unset()
 {

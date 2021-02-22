@@ -1,6 +1,19 @@
 #include <sbi/sbi_console.h>
 #include "waymasks.h"
 
+/* Ways currently allocated to enclaves */
+waymask_t enclave_allocated_ways;
+
+/* Ways currently allocated to the scratchpad */
+waymask_t scratchpad_allocated_ways;
+
+/* All allocated ways, should be OR of above two */
+waymask_t allocated_ways;
+
+/* PMP Region ID for the scratchpad */
+region_id scratch_rid;
+region_id l2_controller_rid;
+
 void waymask_debug_printstatus(){
   unsigned int hartid = csr_read(mhartid);
   sbi_printf("mhartid: %x, coremasters: %x & %x\r\n",hartid, (hartid)*2, (hartid)*2 + 1);

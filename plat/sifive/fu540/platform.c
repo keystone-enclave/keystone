@@ -18,6 +18,7 @@
 #include <sbi_utils/irqchip/plic.h>
 #include <sbi_utils/serial/sifive-uart.h>
 #include <sbi_utils/sys/clint.h>
+#include <sm.h>
 
 /* clang-format off */
 
@@ -75,6 +76,8 @@ static void fu540_modify_dt(void *fdt)
 static int fu540_final_init(bool cold_boot)
 {
 	void *fdt;
+
+  sm_init(cold_boot);
 
 	if (!cold_boot)
 		return 0;

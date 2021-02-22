@@ -10,8 +10,6 @@
 #include "page.h"
 #include "ipi.h"
 #include <sbi/sbi_hart.h>
-#include <sbi/sbi_hsm.h>
-#include <sbi/sbi_domain.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/riscv_atomic.h>
@@ -187,18 +185,6 @@ int pmp_detect_region_overlap_atomic(uintptr_t addr, uintptr_t size)
   region_overlap = detect_region_overlap(addr, size);
   spin_unlock(&pmp_lock);
   return region_overlap;
-}
-
-static void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm)
-{
-  ulong mask = 0;
-  ulong source_hart = current_hartid();
-  struct sbi_tlb_info tlb_info;
-  sbi_hsm_hart_started_mask(sbi_domain_thishart_ptr(), 0, &mask);
-
-  SBI_TLB_INFO_INIT(&tlb_info, type, 0, region_idx, perm,
-      sbi_pmp_ipi_local_update, source_hart);
-  sbi_tlb_request(mask, 0, &tlb_info);
 }
 
 /*********************************
