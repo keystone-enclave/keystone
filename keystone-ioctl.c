@@ -108,8 +108,8 @@ int keystone_run_enclave(unsigned long data)
   }
 
   if (enclave->eid < 0) {
-    keystone_warn("keystone_run_enclave: skipping (enclave does not exist)\n");
-    return 0;
+    keystone_err("real enclave does not exist\n");
+    return -EINVAL;
   }
 
   ret = sbi_sm_run_enclave(enclave->eid);
@@ -176,17 +176,16 @@ int __keystone_destroy_enclave(unsigned int ueid)
     return -EINVAL;
   }
 
-  if (enclave->eid < 0) {
+  if (enclave->eid >= 0) {
+    ret = sbi_sm_destroy_enclave(enclave->eid);
+    if (ret.error) {
+      keystone_err("fatal: cannot destroy enclave: SBI failed with error code %ld\n", ret.error);
+      return -EINVAL;
+    }
+  } else {
     keystone_warn("keystone_destroy_enclave: skipping (enclave does not exist)\n");
-    return 0;
   }
 
-  ret = sbi_sm_destroy_enclave(enclave->eid);
-
-  if (ret.error) {
-    keystone_err("fatal: cannot destroy enclave: SBI failed with error code %ld\n", ret.error);
-    return -EINVAL;
-  }
 
   destroy_enclave(enclave);
   enclave_idr_remove(ueid);
@@ -209,8 +208,8 @@ int keystone_resume_enclave(unsigned long data)
   }
 
   if (enclave->eid < 0) {
-    keystone_warn("keystone_resume_enclave: skipping (enclave does not exist)\n");
-    return 0;
+    keystone_err("real enclave does not exist\n");
+    return -EINVAL;
   }
 
   ret = sbi_sm_resume_enclave(enclave->eid);
