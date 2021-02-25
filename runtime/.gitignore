@@ -3,3 +3,4 @@ eyrie-rt
 *.o
 obj/
 .exists
+.format-diff

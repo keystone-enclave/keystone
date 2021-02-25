@@ -68,6 +68,14 @@ test:
 	$(MAKE) -C obj/test
 	$(MAKE) -C obj/test test
 
+clang-format:
+	# This is an attempt to get the clang-format command in git.
+	git $(shell git help -a | grep clang-format) | tee .format-diff
+
+format: clang-format
+	$(eval FORMAT_DIF := "$(shell cat .format-diff)")
+	@\[ $(FORMAT_DIF) = "no modified files to format" \] || \[ $(FORMAT_DIF) = "clang-format did not modify any files" \]
+
 clean:
 	rm -rf $(RUNTIME) obj
 	$(MAKE) -C tmplib clean
