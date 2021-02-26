@@ -79,8 +79,6 @@ set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
 
 if(firesim)
-  message(STATUS "FireSim configs and patches. Forcing initramfs=y")
-	set(linux_defconfig ${confdir}/linux64-firesim-defconfig)
   message(STATUS "Using Linux defconfig: ${linux_defconfig}")
 	set(initramfs true)
 elseif(sifive)
