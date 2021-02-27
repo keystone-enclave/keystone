@@ -1,0 +1,188 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+# prebuilt docker images with toolchain
+executors:
+  setup-rv64gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv64gc
+  setup-rv32gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv32gc
+
+
+
+commands:
+  update-riscv-toolchain-path:
+    steps:
+      - run: echo 'export PATH=/keystone/riscv/bin:/keystone/riscv64/bin:/keystone/riscv32/bin:$PATH' >> $BASH_ENV
+  build-sdk:
+    steps:
+      - run: |
+          cd /keystone/sdk
+          mkdir build
+          cd build
+          KEYSTONE_SDK_DIR=$(pwd) cmake ..
+          make install
+  checkout-runtime:
+    steps:
+      - run: |
+          git submodule sync
+          git submodule update --init
+
+jobs:
+  format:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - run: apt-get install clang-format -y
+      - run:
+          name: "test"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              make format
+          no_output_timeout: 120m
+  default-build:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "Default build"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              ./build.sh
+          no_output_timeout: 120m
+  use-freemem:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "USE_FREEMEM"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              ./build.sh freemem
+          no_output_timeout: 120m
+  use_linux_syscall_use_freemem:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "USE_LINUX_SYSCALL + USE_FREEMEM"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              ./build.sh linux_syscall freemem
+          no_output_timeout: 120m
+  use_paging:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "USE_PAGING"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              ./build.sh paging
+          no_output_timeout: 120m
+  use_package_crypto:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "USE_PAGE_CRYPTO"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              ./build.sh paging page_crypto
+          no_output_timeout: 120m
+  use_page_hash:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "USE_PAGE_HASH"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              ./build.sh paging page_hash
+          no_output_timeout: 120m
+  use_page_crypto_use_page_hash:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "USE_PAGE_CRYPTO + USE_PAGE_HASH"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              ./build.sh paging page_crypto page_hash
+          no_output_timeout: 120m
+  test:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - checkout-runtime
+      - update-riscv-toolchain-path
+      - build-sdk
+      - run:
+          name: "test"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              mkdir -p obj/test
+              pushd obj/test
+              cmake ../../test
+              make
+              ctest -VV || ( cat obj/test/Testing/Temporary/LastTest.log && false )
+              popd
+          no_output_timeout: 120m
+
+workflows:
+  build-and-test:
+    jobs:
+      - default-build
+      - format
+      - use-freemem:
+          requires:
+            - default-build
+      - use_linux_syscall_use_freemem:
+          requires:
+            - default-build
+      - use_package_crypto:
+          requires:
+            - default-build
+      - use_page_hash:
+          requires:
+            - default-build
+      - use_page_crypto_use_page_hash:
+          requires:
+            - default-build
+      - test:
+          requires:
+            - default-build
