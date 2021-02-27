@@ -129,10 +129,11 @@ class Json final {
 
   // Implicit constructor: vector-like objects (std::list, std::vector,
   // std::set, etc)
-  template <class V, typename std::enable_if<
-                         std::is_constructible<
-                             Json, decltype(*std::declval<V>().begin())>::value,
-                         int>::type = 0>
+  template <
+      class V, typename std::enable_if<
+                   std::is_constructible<
+                       Json, decltype(*std::declval<V>().begin())>::value,
+                   int>::type = 0>
   Json(const V& v) : Json(array(v.begin(), v.end())) {}
 
   // This prevents Json(some_pointer) from accidentally producing a bool. Use

@@ -46,7 +46,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/add_long.S
   ${CMAKE_CURRENT_BINARY_DIR}/add_long.S
   ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/nop.s
   ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/func_base.s
-  ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/nop.h 
+  ${CMAKE_CURRENT_SOURCE_DIR}/long-nop/nop.h
 )
 target_link_libraries(long-nop ${KEYSTONE_LIB_EAPP})
 
@@ -78,7 +78,12 @@ set(test_script ${CMAKE_CURRENT_BINARY_DIR}/run-test.sh)
 file(WRITE ${test_script_tmp} "")
 foreach (test IN ITEMS ${all_test_bins})
   file(APPEND ${test_script_tmp} "echo 'testing ${test}'\n")
-  file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt\n")
+  if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${test}/retval)
+    execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/${test}/retval OUTPUT_VARIABLE retval)
+    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt --retval ${retval}")
+  else()
+    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt\n")
+  endif()
 endforeach(test)
 
 file(COPY ${test_script_tmp} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
@@ -99,7 +104,7 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE} ${KE
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(test-eyrie
-  "origin/master"
+  "v1.0.0"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 

@@ -49,12 +49,9 @@ Error
 Enclave::loadUntrusted() {
   uintptr_t va_start = ROUND_DOWN(params.getUntrustedMem(), PAGE_BITS);
   uintptr_t va_end   = ROUND_UP(params.getUntrustedEnd(), PAGE_BITS);
-  static char nullpage[PAGE_SIZE] = {
-      0,
-  };
 
   while (va_start < va_end) {
-    if (!pMemory->allocPage(va_start, (uintptr_t)nullpage, UTM_FULL)) {
+    if (!pMemory->allocPage(va_start, 0, UTM_FULL)) {
       return Error::PageAllocationFailure;
     }
     va_start += PAGE_SIZE;
@@ -418,18 +415,18 @@ Enclave::destroy() {
 }
 
 Error
-Enclave::run() {
+Enclave::run(uintptr_t* retval) {
   if (params.isSimulated()) {
     return Error::Success;
   }
 
-  Error ret = pDevice->run();
+  Error ret = pDevice->run(retval);
   while (ret == Error::EdgeCallHost || ret == Error::EnclaveInterrupted) {
     /* enclave is stopped in the middle. */
     if (ret == Error::EdgeCallHost && oFuncDispatch != NULL) {
       oFuncDispatch(getSharedBuffer());
     }
-    ret = pDevice->resume();
+    ret = pDevice->resume(retval);
   }
 
   if (ret != Error::Success) {

@@ -95,8 +95,8 @@ Memory::allocPage(uintptr_t va, uintptr_t src, unsigned int mode) {
       break;
     }
     case UTM_FULL: {
+      assert(!src);
       *pte = pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_V);
-      writeMem(src, (uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     default: {
@@ -127,10 +127,9 @@ Memory::__ept_walk_internal(uintptr_t addr, int create) {
       return create ? __ept_continue_walk_create(addr, &t[idx]) : 0;
     }
 
-    t = reinterpret_cast<pte*>(
-        readMem(
-            reinterpret_cast<uintptr_t>(pte_ppn(t[idx]) << RISCV_PGSHIFT),
-            PAGE_SIZE));
+    t = reinterpret_cast<pte*>(readMem(
+        reinterpret_cast<uintptr_t>(pte_ppn(t[idx]) << RISCV_PGSHIFT),
+        PAGE_SIZE));
   }
   return &t[pt_idx(addr, 0)];
 }

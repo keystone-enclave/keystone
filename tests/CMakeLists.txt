@@ -35,7 +35,7 @@ add_executable(TestKeystone
   ${HOST_LIB_SOURCES} ${COMMON_SOURCES})
 
 message(STATUS ${GTEST_FOUND})
-target_link_libraries(TestKeystone ${GTEST_LIBRARIES})
+target_link_libraries(TestKeystone ${GTEST_LIBRARIES} pthread)
 
 add_test(NAME TestKeystone
   COMMAND ./TestKeystone)

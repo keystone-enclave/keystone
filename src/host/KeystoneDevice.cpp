@@ -75,7 +75,7 @@ KeystoneDevice::destroy() {
 }
 
 Error
-KeystoneDevice::__run(bool resume) {
+KeystoneDevice::__run(bool resume, uintptr_t* ret) {
   struct keystone_ioctl_run_enclave encl;
   encl.eid = eid;
 
@@ -90,36 +90,45 @@ KeystoneDevice::__run(bool resume) {
     request = KEYSTONE_IOC_RUN_ENCLAVE;
   }
 
-  int ret;
-  ret = ioctl(fd, request, &encl);
+  if (ioctl(fd, request, &encl)) {
+    return error;
+  }
 
-  switch (ret) {
+  switch (encl.error) {
     case KEYSTONE_ENCLAVE_EDGE_CALL_HOST:
       return Error::EdgeCallHost;
     case KEYSTONE_ENCLAVE_INTERRUPTED:
       return Error::EnclaveInterrupted;
     case KEYSTONE_ENCLAVE_DONE:
+      if (ret) {
+        *ret = encl.value;
+      }
       return Error::Success;
     default:
-      perror("ioctl error");
+      ERROR(
+          "Unknown SBI error (%d) returned by %s_enclave\n", encl.error,
+          resume ? "resume" : "run");
       return error;
   }
 }
 
 Error
-KeystoneDevice::run() {
-  return __run(false);
+KeystoneDevice::run(uintptr_t* ret) {
+  return __run(false, ret);
 }
 
 Error
-KeystoneDevice::resume() {
-  return __run(true);
+KeystoneDevice::resume(uintptr_t* ret) {
+  return __run(true, ret);
 }
 
 void*
 KeystoneDevice::map(uintptr_t addr, size_t size) {
   assert(fd >= 0);
-  return mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
+  void* ret;
+  ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
+  assert(ret != MAP_FAILED);
+  return ret;
 }
 
 bool
@@ -157,12 +166,12 @@ MockKeystoneDevice::destroy() {
 }
 
 Error
-MockKeystoneDevice::run() {
+MockKeystoneDevice::run(uintptr_t* ret) {
   return Error::Success;
 }
 
 Error
-MockKeystoneDevice::resume() {
+MockKeystoneDevice::resume(uintptr_t* ret) {
   return Error::Success;
 }
 

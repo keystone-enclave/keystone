@@ -17,7 +17,7 @@ if [ ! -d $EYRIE_DIR ]
 then
   git clone https://github.com/keystone-enclave/keystone-runtime $EYRIE_DIR
 fi
-cd $EYRIE_DIR; git checkout 3130f20; cd ..
+cd $EYRIE_DIR; git checkout 73ce863; cd ..
 
 ################################################################
 #                       Build Enclave                          #

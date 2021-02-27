@@ -39,10 +39,10 @@ memset(void* dest, int byte, size_t len) {
     word |= word << 16;
     word |= word << 16 << 16;
 
-    uintptr_t* d                              = dest;
+    uintptr_t* d = dest;
     while (d < (uintptr_t*)(dest + len)) *d++ = word;
   } else {
-    char* d                              = dest;
+    char* d = dest;
     while (d < (char*)(dest + len)) *d++ = byte;
   }
   return dest;
@@ -77,8 +77,8 @@ memmove(void* dest, const void* src, size_t count) {
   const char* s;
 
   if (dest <= src) {
-    tmp                    = dest;
-    s                      = src;
+    tmp = dest;
+    s   = src;
     while (count--) *tmp++ = *s++;
   } else {
     tmp = dest;

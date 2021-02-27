@@ -45,7 +45,7 @@ sha3_keccakf(uint64_t st[25]) {
   // actual iteration
   for (r = 0; r < KECCAKF_ROUNDS; r++) {
     // Theta
-    for (i  = 0; i < 5; i++)
+    for (i = 0; i < 5; i++)
       bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
 
     for (i = 0; i < 5; i++) {
@@ -96,9 +96,9 @@ sha3_init(sha3_ctx_t* c, int mdlen) {
   int i;
 
   for (i = 0; i < 25; i++) c->st.q[i] = 0;
-  c->mdlen                            = mdlen;
-  c->rsiz                             = 200 - 2 * mdlen;
-  c->pt                               = 0;
+  c->mdlen = mdlen;
+  c->rsiz  = 200 - 2 * mdlen;
+  c->pt    = 0;
 
   return 1;
 }

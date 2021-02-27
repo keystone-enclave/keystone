@@ -28,7 +28,7 @@
 /* Currently we have only one command avaiable from the enclave.
  * We need to move it out to other header file (e.g., keystone-sm.h) */
 #define KEYSTONE_ENCLAVE_DONE 0
-#define KEYSTONE_ENCLAVE_INTERRUPTED 2
-#define KEYSTONE_ENCLAVE_EDGE_CALL_HOST 11
+#define KEYSTONE_ENCLAVE_INTERRUPTED 100002
+#define KEYSTONE_ENCLAVE_EDGE_CALL_HOST 100011
 
 #endif

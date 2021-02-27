@@ -113,7 +113,7 @@ register void* stack_pointer asm("r15");
 #else
 #define MALLOC_LIMIT                                                         \
   __builtin_frame_address(0) /* dkohlbre: modification for our malloc region \
-                                */
+                              */
 #endif
 
 #if MALLOC_DIRECTION < 0
@@ -444,7 +444,7 @@ mallinfo(void) {
       if (MALLOC_DIRECTION > 0)
         atend = (void*)((size_t)fr + fr->size) == __malloc_end;
       else
-        atend               = (void*)fr == __malloc_end;
+        atend = (void*)fr == __malloc_end;
       if (atend) r.keepcost = fr->size;
     }
   }
