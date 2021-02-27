@@ -70,7 +70,7 @@ test:
 
 clang-format:
 	# This is an attempt to get the clang-format command in git.
-	git $(shell git help -a | grep clang-format) | tee .format-diff
+	git $(shell git help -a | grep clang-format | tail -n1) | tee .format-diff
 
 format: clang-format
 	$(eval FORMAT_DIF := "$(shell cat .format-diff)")

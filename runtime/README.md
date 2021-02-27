@@ -4,6 +4,13 @@ Eyrie only builds as part of the Keystone [sdk](https://github.com/keystone-encl
 
 We strongly encourage using the top-level [Keystone](https://github.com/keystone-enclave/keystone) build process.
 
+# Compatibility
+
+| Name         | Version        |
+|--------------|----------------|
+| Keystone SDK | v1.0 or higher |
+| Keystone SM  | v1.0 or higher |
+
 # Building
 
 ## Building the Eyrie Runtime
@@ -28,12 +35,8 @@ See the sdk Makefile for feature selection.
 
 The Eyrie Runtime is licensed under the 3-clause BSD license. See LICENSE for more details.
 
-Before submitting a pull request to GitHub, make sure you format your code first. You can use one of the following options:
+Before submitting a pull request to GitHub, make sure you format your code first.
 
 ```sh
-git clang-format HEAD   # Formats any staged changes
-git clang-format HEAD^  # Formats a single commit, and the staged changes
-git clang-format HEAD~5 # Formats the past 5 commits (for example), and the staged changes
+make format
 ```
-
-It's recommended that you use always the first option to format staged changes before committing, to keep changes clean.
