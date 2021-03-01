@@ -88,7 +88,7 @@ then
 fi
 
 # update source.sh
-GCC_PATH=$(whereis riscv64-unknown-linux-gnu-gcc)
+GCC_PATH=$(whereis riscv$BITS-unknown-linux-gnu-gcc)
 RISCV_DIR=$(dirname $(dirname $(cut -d' ' -f2 <<< $GCC_PATH)))
 echo "export RISCV=$RISCV_DIR" > ./source.sh
 echo "export PATH=$RISCV/bin:\$PATH" >> ./source.sh
