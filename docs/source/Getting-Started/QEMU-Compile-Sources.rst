@@ -1,7 +1,7 @@
 Compile Sources
 -----------------------------
 
-Build All Components (RV64)
+Build All Components
 ##############################################################
 
 We use `CMake <https://cmake.org/>`_ as a build system. It lets you generate the Makefile for a
@@ -16,6 +16,14 @@ given configuration.
   cmake ..
   make
 
+Here are some useful CMake flags you can add:
+
+* ``-Dinitramfs=y``: This will compile the Linux kernel with buildroot image as the initramfs.
+* ``-DRISCV32=y``: This will conrigure the build with RV32. You should have ran ``BITS=32 ./fast-setup.sh``.
+* ``-DLINUX_SIFIVE=y``: This is a temporary flag for HiFive Unleashed board.
+* ``-DSM_PLATFORM=<platform>``: The security monitor will be compiled with platform sources in ``sm/plat/<platform>``. The default value is "generic".
+* ``-DUSE_RUST_SM=y``: Use the Rust port of the security monitor. Curently not supported in v1.0.
+
 In order to build the driver and the tests, and have the final images for QEMU, you need to run
 
 ::
@@ -23,25 +31,11 @@ In order to build the driver and the tests, and have the final images for QEMU, 
   # in your <build directory>
   make image
 
-This updates all components except QEMU and the boot ROM.
-
-If you want to use ``initramfs``, use the following flag when running ``cmake``
-
-::
-
-  cmake .. -Dinitramfs=y
-
-If you want to use the Rust port of the Security Monitor, run ``cmake`` with ``-DUSE_RUST_SM=y``.
-
-Please refer to the following sections if you want to learn how to build each individual component.
-Otherwise, skip to :ref:`LaunchQEMU`.
-
-Most of the components will be built out-of-tree; in ``<build directory>/<component name>.build``
-directory.
-
 If you run into any issues, check our
 ``CMakeLists.txt`` and as it will always have the up-to-date build recipes.
 
+Please refer to the following sections if you want to learn how to build each individual component.
+Otherwise, skip to :ref:`LaunchQEMU`.
 
 Build Buildroot
 ##############################################################
@@ -85,7 +79,7 @@ The patch is located at ``patches/linux/``
   # in your <build directory>
   make linux
 
-Build Berkeley Bootloader (BBL) with Keystone Security Monitor
+Build OpenSBI Firmware with Keystone Security Monitor
 ##############################################################
 
 The following command will build the M-mode security monitor.
@@ -94,18 +88,6 @@ The following command will build the M-mode security monitor.
 
   # in your <build directory>
   make sm
-
-Optionally, you can specify the target platform when you run ``cmake``.
-
-::
-
-  # in your <build directory>
-  cmake .. -DSM_PLATFORM=fu540
-  make sm
-
-The default platform is "default", which does not have any platform-specific features.
-See ``riscv-pk/sm/platform/`` for available platforms.
-See :doc:`../Building-Components/Security-Monitor-Platform-Build` for details.
 
 Build Root-of-Trust Boot ROM
 ##############################################################

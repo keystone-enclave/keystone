@@ -4,17 +4,25 @@
 #define DTB   0
 #define INIT  8
 
+#if __riscv_xlen == 64
+# define STORE    sd
+# define LOAD     ld
+#else
+# define STORE    sw
+# define LOAD     lw
+#endif
+
 reset:
   li sp, STACK_TOP
   addi sp, sp, -16
 
-  sd x0, INIT(sp)
+  STORE x0, INIT(sp)
 
   csrr t0, mhartid
   bnez t0, loop
-  
+
   # sd a1, DTB(sp)
-  
+
   /* secure boot */
   call bootloader
 
@@ -22,17 +30,17 @@ reset:
   li t1, STACK_BOTTOM
 clean_loop:
   beq t1, sp, clean_done
-  sd x0, (t1)
+  STORE x0, (t1)
   addi t1, t1, 8
   j clean_loop
 clean_done:
   li t0, 1
-  sd t0, INIT(sp)
+  STORE t0, INIT(sp)
   fence
 
 boot:
   call clear_all_but_sp
-  
+
   # boot payload
 	csrr a0, mhartid
   la a1, _dtb
@@ -41,7 +49,7 @@ boot:
   jr t0
 
 loop:
-  ld t1, INIT(sp)
+  LOAD t1, INIT(sp)
   beqz t1, loop
   j boot
 

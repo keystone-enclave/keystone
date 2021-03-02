@@ -1,31 +1,31 @@
 diff --git hw/riscv/virt.c hw/riscv/virt.c
-index 25faf3b417..47bff37d27 100644
+index 85ec9e22aa..ed8442c68f 100644
 --- hw/riscv/virt.c
 +++ hw/riscv/virt.c
-@@ -55,7 +55,7 @@ static const struct MemmapEntry {
+@@ -56,7 +56,7 @@ static const struct MemmapEntry {
      hwaddr size;
  } virt_memmap[] = {
      [VIRT_DEBUG] =       {        0x0,         0x100 },
 -    [VIRT_MROM] =        {     0x1000,       0x11000 },
 +    [VIRT_MROM] =        {     0x1000,       0x40000 },
      [VIRT_TEST] =        {   0x100000,        0x1000 },
+     [VIRT_RTC] =         {   0x101000,        0x1000 },
      [VIRT_CLINT] =       {  0x2000000,       0x10000 },
-     [VIRT_PLIC] =        {  0xc000000,     0x4000000 },
-@@ -405,8 +405,8 @@ static void riscv_virt_board_init(MachineState *machine)
+@@ -506,8 +506,8 @@ static void riscv_virt_board_init(MachineState *machine)
      memory_region_add_subregion(system_memory, memmap[VIRT_MROM].base,
                                  mask_rom);
- 
+
 -    riscv_find_and_load_firmware(machine, BIOS_FILENAME,
 -                                 memmap[VIRT_DRAM].base);
 +    //riscv_find_and_load_firmware(machine, BIOS_FILENAME,
 +    //                             memmap[VIRT_DRAM].base);
- 
+
      if (machine->kernel_filename) {
-         uint64_t kernel_entry = riscv_load_kernel(machine->kernel_filename);
-@@ -423,6 +423,50 @@ static void riscv_virt_board_init(MachineState *machine)
-         }
+         uint64_t kernel_entry = riscv_load_kernel(machine->kernel_filename,
+@@ -533,6 +533,52 @@ static void riscv_virt_board_init(MachineState *machine)
+         start_addr = virt_memmap[VIRT_FLASH].base;
      }
- 
+
 +    if (machine->firmware) {
 +      qemu_log("overriding secure boot ROM (file: %s)\n",machine->firmware);
 +      /* reset_vector */
@@ -54,18 +54,20 @@ index 25faf3b417..47bff37d27 100644
 +		            memmap[VIRT_MROM].base, &address_space_memory);
 +
 +			/* copy in the device tree */
-+			/* copy in the device tree */
-+			if (fdt_pack(s->fdt) || fdt_totalsize(s->fdt) >
++      if (fdt_pack(s->fdt) || fdt_totalsize(s->fdt) >
 +					memmap[VIRT_MROM].size - bootloader_size) {
 +				error_report("not enough space to store device-tree");
 +				exit(1);
 +			}
 +			qemu_fdt_dumpdtb(s->fdt, fdt_totalsize(s->fdt));
++      long fdt_location = memmap[VIRT_MROM].base + bootloader_size;
++      // align fdt location with word
++      fdt_location = ((fdt_location + 0x4 - 1) & ~(0x4 - 1));
 +			rom_add_blob_fixed_as("mrom.fdt", s->fdt, fdt_totalsize(s->fdt),
-+					memmap[VIRT_MROM].base + bootloader_size,
++					fdt_location,
 +					&address_space_memory);
-+			
-+			qemu_log("fdt dumped at %ld\n", memmap[VIRT_MROM].base + bootloader_size);
++
++			qemu_log("fdt dumped at %ld\n", fdt_location);
 +
 +      free(bootloader_bytes);
 +    } else {
@@ -73,20 +75,20 @@ index 25faf3b417..47bff37d27 100644
      /* reset vector */
      uint32_t reset_vec[8] = {
          0x00000297,                  /* 1:  auipc  t0, %pcrel_hi(dtb) */
-@@ -446,6 +490,7 @@ static void riscv_virt_board_init(MachineState *machine)
-     }
+@@ -557,6 +603,7 @@ static void riscv_virt_board_init(MachineState *machine)
      rom_add_blob_fixed_as("mrom.reset", reset_vec, sizeof(reset_vec),
                            memmap[VIRT_MROM].base, &address_space_memory);
-+    
- 
+
++
      /* copy in the device tree */
      if (fdt_pack(s->fdt) || fdt_totalsize(s->fdt) >
-@@ -457,6 +502,8 @@ static void riscv_virt_board_init(MachineState *machine)
-     rom_add_blob_fixed_as("mrom.fdt", s->fdt, fdt_totalsize(s->fdt),
+             memmap[VIRT_MROM].size - sizeof(reset_vec)) {
+@@ -568,6 +615,8 @@ static void riscv_virt_board_init(MachineState *machine)
                            memmap[VIRT_MROM].base + sizeof(reset_vec),
                            &address_space_memory);
-+    
+
 +    }
- 
++
      /* create PLIC hart topology configuration string */
      plic_hart_config_len = (strlen(VIRT_PLIC_HART_CONFIG) + 1) * smp_cpus;
+     plic_hart_config = g_malloc0(plic_hart_config_len);

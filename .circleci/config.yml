@@ -1,0 +1,75 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+# prebuilt docker images with toolchain
+executors:
+  setup-rv64gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv64gc
+  setup-rv32gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv32gc
+
+
+commands:
+  update-riscv-toolchain-path:
+    steps:
+      - run: echo 'export PATH=/keystone/riscv64/bin:/keystone/riscv32/bin:$PATH' >> $BASH_ENV
+
+jobs:
+  build-and-test-rv64-qemu:
+    executor: setup-rv64gc
+    working_directory: /keystone
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - run:
+          name: "Build rv64 and run tests"
+          command: |
+              ./fast-setup.sh
+              source ./source.sh
+              mkdir build64
+              cd build64
+              cmake /keystone
+              make -j$(nproc)
+              make run-tests
+          no_output_timeout: 120m
+  build-rv64-fu540:
+    executor: setup-rv64gc
+    working_directory: /keystone
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - run:
+          name: "Build rv64 sifive FU540"
+          command: |
+              ./fast-setup.sh
+              source ./source.sh
+              mkdir build64-fu540
+              cd build64-fu540
+              cmake /keystone -DLINUX_SIFIVE=y -DSM_PLATFORM=sifive/fu540
+              make -j$(nproc)
+  build-and-test-rv32-qemu:
+    executor: setup-rv32gc
+    working_directory: /keystone
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - run:
+          name: "Build rv32 and run tests"
+          command: |
+              BITS=32 ./fast-setup.sh
+              source ./source.sh
+              mkdir build32
+              cd build32
+              cmake /keystone -DRISCV32=y
+              make -j$(nproc)
+              make run-tests
+          no_output_timeout: 120m
+
+workflows:
+  build-and-test:
+    jobs:
+      - build-and-test-rv64-qemu
+      - build-rv64-fu540
+      - build-and-test-rv32-qemu

@@ -8,7 +8,7 @@ RISC-V presents us with a number of benefits besides just being open-source:
 
 * RISC-V has added security-oriented primitives (notably Physical Memory Protection) that enable efficient isolation.
 
-* RISC-V is an evolving and community driven ISA. Keystone can explore the design space of useful 
+* RISC-V is an evolving and community driven ISA. Keystone can explore the design space of useful
   security features, and feed good ideas back into the standards themselves.
 
 * RISC-V has a constantly expanding world of open-source cores and products. This gives Keystone a
@@ -30,10 +30,11 @@ ISA Compatibility
 Currently, Keystone is compatible with a specific subset of RISC-V ISA as follows:
 
 * Keystone requires all of three privilege modes (M/S/U) to support dynamic user-level isolation in Linux machines.
-* Keystone only supports RV64 (64-bit) with Sv39 addressing mode which translates 39-bit virtual addresses into 50-bit physical addresses based on a 3-level page table.
+* rv64gc-lp64d (Sv39 virutal addressing mode)
+* rv32gc-ilp32d (Sv32 virtual addressing mode)
 
-We're actively working on extending compatibility of Keystone by supporting static isolation in M/U-only systems as well as RV32.
-
+Recently, Keystone enclaves in M/U-only machines are prototyped in FreeRTOS.
+We are planning to upstream the version in the near future.
 
 RISC-V Privilieged ISA
 -----------------------------------
