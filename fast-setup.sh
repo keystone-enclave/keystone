@@ -88,8 +88,8 @@ then
 fi
 
 # update source.sh
-GCC_PATH=$(whereis riscv$BITS-unknown-linux-gnu-gcc)
-RISCV_DIR=$(dirname $(dirname $(cut -d' ' -f2 <<< $GCC_PATH)))
+GCC_PATH=$(which riscv$BITS-unknown-linux-gnu-gcc)
+RISCV_DIR=$(dirname $(dirname $GCC_PATH))
 echo "export RISCV=$RISCV_DIR" > ./source.sh
 echo "export PATH=$RISCV/bin:\$PATH" >> ./source.sh
 echo "export KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR" >> ./source.sh
