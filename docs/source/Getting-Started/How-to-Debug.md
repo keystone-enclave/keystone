@@ -21,7 +21,7 @@ From your `build` directory where you ran `make`, use:
 All cores will immediately hang at the first instruction (i.e., bootrom), waiting for `gdb` to be attached.
 
 Now, run a riscv `gdb` in another terminal.  You can feed it with the
-bbl binary or the kernel image to add debug information.  
+bbl binary or the kernel image to add debug information.
 
 
 For example, if you want to debug with the `bbl` symbols
@@ -50,7 +50,7 @@ Try to set breakpoints and run.
 Before setting breakpoints, you should run following command:
 
 ```
-(gdb) set riscv use_compressed_breakpoints no
+(gdb) set riscv use-compressed-breakpoints no
 ```
 
 To see why we need that command, see [this issue](https://github.com/riscv/riscv-binutils-gdb/issues/106)
