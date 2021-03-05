@@ -89,6 +89,15 @@ void sm_copy_key()
   sbi_memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
 }
 
+void sm_print_hash()
+{
+  for (int i=0; i<MDSIZE; i++)
+  {
+    sbi_printf("%02x", (char) sm_hash[i]);
+  }
+  sbi_printf("\n");
+}
+
 /*
 void sm_print_cert()
 {
@@ -168,6 +177,8 @@ void sm_init(bool cold_boot)
   }
 
   sbi_printf("[SM] Keystone security monitor has been initialized!\n");
+
+  sm_print_hash();
 
   return;
   // for debug
