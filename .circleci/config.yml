@@ -64,6 +64,8 @@ jobs:
           name: "Build for generic platform"
           command: |
               make -C opensbi O=$(pwd)/build PLATFORM_DIR=$(pwd)/plat/generic CROSS_COMPILE=riscv64-unknown-elf-
+              make hash -C tools FW_PATH=$(pwd)/build/platform/generic/firmware
+              cat tools/sm_expected_hash.h
   build-platform-generic-32:
     executor: setup-rv32gc
     working_directory: /keystone/sm
@@ -76,6 +78,8 @@ jobs:
           command: |
               make -C opensbi O=$(pwd)/build PLATFORM_DIR=$(pwd)/plat/generic CROSS_COMPILE=riscv32-unknown-elf- \
                 PLATFORM_RISCV_XLEN=32 PLATFORM_RISCV_ISA=rv32imafd PLATFORM_RISCV_ABI=ilp32d
+              make hash -C tools FW_PATH=$(pwd)/build/platform/generic/firmware
+              cat tools/sm_expected_hash.h
   build-platform-sifive-fu540:
     executor: setup-rv64gc
     working_directory: /keystone/sm
@@ -87,6 +91,8 @@ jobs:
           name: "Build for sifive/fu540 platform"
           command: |
               make -C opensbi O=$(pwd)/build PLATFORM_DIR=$(pwd)/plat/sifive/fu540 CROSS_COMPILE=riscv64-unknown-elf-
+              make hash -C tools FW_PATH=$(pwd)/build/platform/sifive/fu540/firmware
+              cat tools/sm_expected_hash.h
   unit-test-rv64:
     executor: setup-rv64gc
     working_directory: /keystone/sm

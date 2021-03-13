@@ -4,7 +4,12 @@
 #ifndef SHA3_H
 #define SHA3_H
 
+#ifdef __riscv_xlen
 #include <sbi/sbi_types.h>
+#else
+#include <stdint.h>
+#include <stddef.h>
+#endif
 
 #ifndef KECCAKF_ROUNDS
 #define KECCAKF_ROUNDS 24
