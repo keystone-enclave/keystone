@@ -12,17 +12,12 @@ The SM provides the following functionality:
 4. System PMP Synchronization
 5. Side-Channel Defenses
 
-.. attention::
-
-  Version 0.1 only implements 1, 2, and 3, supporting single-threaded enclave.
-
 The security monitor must be verified by the *root of trust* in hardware before being trusted.
 After the root of trust measures the SM it generates a keypair for remote attestation, signs the public key, and then continues booting.
 See `Chain of Trust <#>`_ for details.
 
 The OS and enclaves may call SM functions using the supervisor binary interface (SBI),
-which is implemented in RISC-V environment calls (i.e., ``ecall`` instruction).
-See `SBI Documentation <#>`_ for details.
+For detailed specification, see `SBI Documentation <https://github.com/keystone-enclave/sm/tree/master/spec>`_.
 
 Specific platforms
 ------------------
@@ -161,7 +156,7 @@ You can re-configure and re-build the ``bbl`` in the build directory:
 		--enable-sm \
 		--with-target-platform=<platform> \
 		--host=riscv64-unknown-linux-gnu \
-		--with-payload=<path to vmlinux> 
+		--with-payload=<path to vmlinux>
 
 	make
 
@@ -176,7 +171,7 @@ The platform directory ``sm/platform`` contains all current platform specific su
 Currently that is:
 ``default`` and ``fu540`` directories.
 
-   
+
 System PMP Synchronization
 -------------------------------------
 

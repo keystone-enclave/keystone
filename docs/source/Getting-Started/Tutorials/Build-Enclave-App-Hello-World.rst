@@ -130,14 +130,14 @@ Next, copy the package into the buildroot overlay directory.
 ::
 
   # in the build directory
-  cp examples/hello/hello.ke ./overlay
+  cp examples/hello ./overlay/root
 
-Running ``make image`` in the top-level directory (``keystone``) will generate the buildroot disk
+Running ``make image`` in your build directory will generate the buildroot disk
 image containing the copied package.
 
 ::
 
-	# go to top-level keystone directory
+	# in your <build directory>
 	make image
 
 Deploying Enclave

@@ -1,15 +1,3 @@
-diff --git arch/riscv/Kconfig arch/riscv/Kconfig
-index 59a4727ecd..b9154739b3 100644
---- arch/riscv/Kconfig
-+++ arch/riscv/Kconfig
-@@ -12,6 +12,7 @@ config 32BIT
- 
- config RISCV
- 	def_bool y
-+  select ARCH_32BIT_OFF_T if !64BIT
- 	# even on 32-bit, physical (and DMA) addresses are > 32-bits
- 	select PHYS_ADDR_T_64BIT
- 	select OF
 diff --git arch/riscv/include/uapi/asm/unistd.h arch/riscv/include/uapi/asm/unistd.h
 index 13ce76cc5a..95217ebb63 100644
 --- arch/riscv/include/uapi/asm/unistd.h
@@ -28,37 +16,24 @@ index 13ce76cc5a..95217ebb63 100644
  
  #include <asm-generic/unistd.h>
  
-diff --git arch/riscv/kernel/vdso/Makefile arch/riscv/kernel/vdso/Makefile
-index 49a5852fd0..725dfe8c93 100644
---- arch/riscv/kernel/vdso/Makefile
-+++ arch/riscv/kernel/vdso/Makefile
-@@ -3,11 +3,9 @@
- 
- # Symbols present in the vdso
- vdso-syms  = rt_sigreturn
--ifdef CONFIG_64BIT
- vdso-syms += gettimeofday
- vdso-syms += clock_gettime
- vdso-syms += clock_getres
--endif
- vdso-syms += getcpu
- vdso-syms += flush_icache
- 
 diff --git arch/riscv/mm/init.c arch/riscv/mm/init.c
-index 42bf939693..49d7da7d86 100644
+index 736de6c873..ad9ebf2e9a 100644
 --- arch/riscv/mm/init.c
 +++ arch/riscv/mm/init.c
-@@ -11,6 +11,7 @@
- #include <linux/swap.h>
- #include <linux/sizes.h>
- #include <linux/of_fdt.h>
-+#include <linux/dma-contiguous.h>
+@@ -22,6 +22,8 @@
  
- #include <asm/fixmap.h>
- #include <asm/tlbflush.h>
-@@ -444,4 +445,5 @@ void __init paging_init(void)
- 	setup_vm_final();
+ #include "../kernel/head.h"
+ 
++#include <linux/dma-contiguous.h>
++
+ unsigned long empty_zero_page[PAGE_SIZE / sizeof(unsigned long)]
+ 							__page_aligned_bss;
+ EXPORT_SYMBOL(empty_zero_page);
+@@ -524,6 +526,7 @@ void __init paging_init(void)
+ 	sparse_init();
  	setup_zero_page();
  	zone_sizes_init();
 +	dma_contiguous_reserve(memblock_end_of_DRAM());
  }
+ 
+ #ifdef CONFIG_SPARSEMEM_VMEMMAP

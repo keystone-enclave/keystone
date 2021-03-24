@@ -5,7 +5,6 @@ project(keystone C)
 include(ProcessorCount)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-
 ###############################################################################
 ## MACROS
 ###############################################################################
@@ -38,9 +37,26 @@ if(NOT DEFINED ENV{RISCV})
 	message(FATAL_ERROR "set RISCV environment variable. \n Try `cd ${CMAKE_SOURCE_DIR}; source source.sh`")
 endif()
 
+
+
+set(OPERATING_SYSTEM "linux" CACHE STRING "Build with specified OS")
+if (${OPERATING_SYSTEM} STREQUAL "linux")
+  message(STATUS "OS=linux")
+  set(OS_NAME "linux")
+elseif(${OPERATING_SYSTEM} STREQUAL "freeRTOS")
+  message(STATUS "OS=freeRTOS")
+  set(OS_NAME "freeRTOS")
+else()
+  message(FATAL_ERROR "Unknown Operating System: ${OPERATING_SYSTEM}")
+endif()
+
 set(USE_RUST_SM FALSE CACHE BOOL "Use Rust version of the security monitor.")
 set(SM_CONFIGURE_ARGS --enable-opt=2 CACHE STRING "Security Monitor configure script arguments")
-set(SM_PLATFORM "default" CACHE STRING "Board name for SM hardware-specific functions")
+if(${OS_NAME} STREQUAL "freeRTOS")
+  set(SM_PLATFORM "default" CACHE STRING "Board name for SM hardware-specific functions")
+else()
+  set(SM_PLATFORM "generic" CACHE STRING "Board name for SM hardware-specific functions")
+endif()
 set(platform ${SM_PLATFORM})
 message(STATUS "platform=${platform}")
 
@@ -75,8 +91,6 @@ set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
-set(sm_srcdir ${CMAKE_SOURCE_DIR}/riscv-pk)
-mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/riscv-pk.build)
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
 set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
@@ -84,8 +98,6 @@ set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
 
 if(firesim)
-  message(STATUS "FireSim configs and patches. Forcing initramfs=y")
-	set(linux_defconfig ${confdir}/linux64-firesim-defconfig)
   message(STATUS "Using Linux defconfig: ${linux_defconfig}")
 	set(initramfs true)
 elseif(sifive)
@@ -102,37 +114,34 @@ endif()
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 mkdir(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
 set(linux_symvers ${linux_wrkdir}/Modules.symvers)
-set(linux_vmlinux ${linux_wrkdir}/vmlinux)
-set(linux_vmlinux_stripped ${linux_wrkdir}/vmlinux-stripped)
+set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
-set(final_image ${CMAKE_BINARY_DIR}/bbl.bin)
+set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.elf)
+set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.bin)
+set(final_image ${CMAKE_BINARY_DIR}/firmware.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 set(freeRTOS_srcdir ${CMAKE_SOURCE_DIR}/FreeRTOS-Kernel)
 mkdir(freeRTOS_wrkdir ${CMAKE_BINARY_DIR}/freeRTOS.build)
 set(freeRTOS_image ${freeRTOS_wrkdir}/bin/freeRTOS)
 
-set(OPERATING_SYSTEM "linux" CACHE STRING "Build with specified OS")
-if (${OPERATING_SYSTEM} STREQUAL "linux")
-  message(STATUS "OS=linux")
-  set(OS_PAYLOAD ${linux_vmlinux_stripped})
-  set(OS_NAME "linux")
-elseif(${OPERATING_SYSTEM} STREQUAL "freeRTOS")
-  message(STATUS "OS=freeRTOS")
+if (${OS_NAME} STREQUAL "freeRTOS")
+  # FIXME Once freeRTOS merges with the opensbi and sm dir structure, this will no longer be needed.
+  set(sm_srcdir ${CMAKE_SOURCE_DIR}/riscv-pk)
+  mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/riscv-pk.build)
   set(OS_PAYLOAD ${freeRTOS_image})
-  set(OS_NAME "freeRTOS")
 else()
-  message(FATAL_ERROR "Unknown Operating System: ${OPERATING_SYSTEM}")
+  set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
+  mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
+  set(OS_PAYLOAD ${linux_vmlinux_stripped})
 endif()
-
 
 ###############################################################################
 ## COMPONENT: QEMU
 ###############################################################################
 
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
-add_patch("qemu" "qemu-pmp-bug.patch" ${qemu_srcdir} qemu_patches)
 add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} qemu_patches)
 
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
@@ -189,7 +198,7 @@ add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "boo
 ###############################################################################
 ## COMPONENT: linux kernel
 ###############################################################################
-if (${OS_NAME} STREQUAL "linux")
+if(${OS_NAME} STREQUAL "linux")
   add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
     COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
     COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
@@ -212,32 +221,34 @@ if (${OS_NAME} STREQUAL "linux")
     execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
     string(STRIP ${gid} gid)
     add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
-    add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
+    add_custom_command(OUTPUT ${linux_image} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
       COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
       COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
       COMMAND $(MAKE) -C ${linux_srcdir}
         O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
         CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
         CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
-        CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
-      COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+        CROSS_COMPILE=${cross_compile} ARCH=riscv
       COMMENT "Building linux (initramfs)"
     )
   else()
-    add_custom_command(OUTPUT ${linux_vmlinux_stripped} ${linux_vmlinux} DEPENDS ${linux_srcdir} "linux-symvers"
-      COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv vmlinux
-      COMMAND ${cross_compile}strip -o ${linux_vmlinux_stripped} ${linux_vmlinux}
+    add_custom_command(OUTPUT ${linux_image} DEPENDS ${linux_srcdir} "linux-symvers"
+      COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
       COMMENT "Building linux"
     )
+    add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
+    add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux})
   endif()
 
+
   add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config" ${linux_patches}
-    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv modules
-    COMMENT "Building linux symvers"
+  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv modules
+  COMMENT "Building linux symvers"
   )
   add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
-  add_custom_target("linux" ALL DEPENDS ${linux_vmlinux_stripped} ${linux_vmlinux})
+  add_custom_target("linux" ALL DEPENDS ${linux_image})
 endif()
+
 ###############################################################################
 ## COMPONENT: freeRTOS
 ###############################################################################
@@ -253,6 +264,7 @@ endif()
 if (${OS_NAME} STREQUAL "freeRTOS")
   add_subdirectory(FreeRTOS-Kernel ${freeRTOS_wrkdir})
 endif()
+
 
 ###############################################################################
 ## COMPONENT: linux driver
@@ -271,7 +283,7 @@ endif()
 
 
 ###############################################################################
-## COMPONENT: bbl + sm
+## COMPONENT: security monitor (sm)
 ###############################################################################
 
 if (${USE_RUST_SM})
@@ -294,14 +306,14 @@ add_custom_command(OUTPUT ${sm_wrkdir}/Makefile WORKING_DIRECTORY ${sm_wrkdir}
 )
 add_custom_target("sm" ALL DEPENDS ${sm_wrkdir}/Makefile ${OS_NAME} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND env CFLAGS='${CFLAGS} -mabi=${ABI} -march=${ISA}' $(MAKE) -C ${sm_wrkdir}
+# FIXME This is the incomming changes but will need to figure what integrates.
+# add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
+# add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
+#   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
+#     CROSS_COMPILE=riscv${BITS}-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
+#     PLATFORM_RISCV_ISA=${ISA} PLATFORM_RISCV_ABI=${ABI}
   COMMENT "Building sm"
 )
-
-if(firesim)
-  add_patch("riscv-pk" "riscv-pk.firesim.patch" ${sm_srcdir} "sm")
-elseif(sifive)
-  add_patch("riscv-pk" "riscv-pk.sifive.patch" ${sm_srcdir} "sm")
-endif()
 
 ###############################################################################
 ## COMPONENT: tests
@@ -326,7 +338,6 @@ if (NOT ${OS_NAME} STREQUAL "freeRTOS")
   add_dependencies("buildroot" "image-deps")
 endif()
 add_custom_target("image" DEPENDS "buildroot" "sm"
-  COMMAND ${cross_compile}objcopy -S -O binary --change-addresses -0x80000000 ${sm_wrkdir}/bbl ${final_image}
   COMMENT "Generating image"
 )
 
@@ -388,7 +399,7 @@ else()
         -nographic \
         -machine virt \
         -bios ${bootrom_wrkdir}/bootrom.bin \
-        -kernel ${sm_wrkdir}/bbl \
+        -kernel ${fw_elf} \
         ${extra_qemu_options} \
         -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
         -device virtio-net-device,netdev=net0 \

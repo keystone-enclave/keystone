@@ -34,7 +34,7 @@ Keystone Workflow
 .. figure:: /_static/images/keystone_workflow.png
 
 Keystone is a framework wherein both *platform provider* and *enclave developer* customize elements of the system to their needs.
-This involves two separate workflows: one for each of the platform provider and the enclave developer. 
+This involves two separate workflows: one for each of the platform provider and the enclave developer.
 
 Provisioning the Security Monitor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -43,11 +43,8 @@ A **platform provider** the party who provides a machine which can run
 Keystone enclaves. In the *provisioning* stage, the platform provider
 compiles the security monitor and deploys it to the machine.
 
-The platform provider 
+The platform provider
 configures(❶), builds(❷), and then deploys(❸) the security monitor with target hardware.
-
-See :doc:`/Building-Components/Security-Monitor-Platform-Build` to learn how to build and
-deploy the security monitor.
 
 Developing the Enclave
 ~~~~~~~~~~~~~~~~~~~~~~

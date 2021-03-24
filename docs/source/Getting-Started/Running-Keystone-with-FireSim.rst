@@ -26,11 +26,14 @@ hardware, and deploy it to Amazon AWS FPGAs using FireSim.
 Setting Up Chipyard
 -------------------------------------
 
-Follow `this documentation
-<https://chipyard.readthedocs.io/en/latest/Chipyard-Basics/Initial-Repo-Setup.html>`_
-to setup the Chipyard repo.  Then, follow `this
+Follow the `FireSim setup documentation
 <https://chipyard.readthedocs.io/en/latest/Simulation/FPGA-Accelerated-Simulation.html#firesim-sim-intro>`_
-to setup FireSim.
+and the `Chipyard documentation
+<https://chipyard.readthedocs.io/en/latest/Chipyard-Basics/Initial-Repo-Setup.html>`__ 
+to set up Chipyard using Firesim. You will first need to set up a FireSim Manager 
+instance on Amazon EC2, onto which you will install the Chipyard repo. Finally, Firesim
+will be initalized as a library in Chipyard, so you do not need to set it separately 
+within the Manager instance.  
 
 We are going to use the latest version of `FireMarshal
 <https://chipyard.readthedocs.io/en/latest/Software/FireMarshal.html>`_.  Thus,
@@ -78,11 +81,12 @@ Go to FireMarshal directory, and build the workload.
 You should replace ``<path/to/keystone.json>`` with the absolute path to the
 ``keystone.json`` in the workload directory.
 
-You can launch QEMU to run the tests.
+You can launch QEMU to run the tests. 
 
 ::
 
   ./marshal -v launch <path/to/keystone.json>
+  # Login via [root/firesim]
 
 Finally, install the workload in FireSim.
 
@@ -96,14 +100,38 @@ repo>/sims/firesim/deploy/workloads``.
 Launching Simulation (FireSim)
 ------------------------------
 
+We will need to edit some of the FireSim configs. 
 Open ``config_runtime.ini`` in ``<chipyard repo>/sims/firesim/deploy`` and edit
-``[workload]`` section as follows
+the following sections 
 
 ::
 
   [workload]
   workloadname=keystone.json
   # ...
+
+:: 
+
+  [runfarm]
+  runfarmtag=mainrunfarm
+
+  f1_16xlarges=0
+  m4_16xlarges=0
+  f1_4xlarges=0
+  f1_2xlarges=1 
+  # ... 
+
+  [targetconfig]
+  topology=no_net_config
+  no_net_num_nodes=1
+  # ... 
+
+  defaulthwconfig=firesim-rocket-quadcore-no-nic-l2-llc4mb-ddr3
+
+See the `FireSim Manager Configuration Files
+<https://docs.fires.im/en/latest/Advanced-Usage/Manager/Manager-Configuration-Files.html>`_
+for an explanation of other possible configuration options. 
+
 
 Use FireSim commands to launch the simulation.
 Go to the top-level FireSim directory and run:

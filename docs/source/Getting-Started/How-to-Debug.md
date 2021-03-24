@@ -5,6 +5,13 @@
 We use QEMU+GDB to debug the security monitor or the kernel.
 QEMU is an effective way to debug them.
 
+First compile with debugging symbols
+
+```bash
+# in your <build directory>
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+```
+
 From your `build` directory where you ran `make`, use:
 
 ```bash
@@ -14,19 +21,21 @@ From your `build` directory where you ran `make`, use:
 All cores will immediately hang at the first instruction (i.e., bootrom), waiting for `gdb` to be attached.
 
 Now, run a riscv `gdb` in another terminal.  You can feed it with the
-bbl binary or the kernel image to add debug information.  (You may
-want to compile them with the debugging flag `-g`)
+bbl binary or the kernel image to add debug information.
+
 
 For example, if you want to debug with the `bbl` symbols
 
 ```bash
-riscv64-unknown-linux-gnu-gdb ./hifive-work/riscv-pk/bbl
+# in your <build directory>
+riscv64-unknown-linux-gnu-gdb ./sm.build/platform/generic/firmware/fw_payload.elf
 ```
 
 If you want to debug with the kernel's debug information
 
 ```bash
-riscv64-unknown-linux-gnu-gdb ./riscv-linux/vmlinux
+# in your <build directory>
+riscv64-unknown-linux-gnu-gdb ./linux.build/vmlinux
 ```
 
 Then, attach to QEMU on the port printed by the starting qemu script:
@@ -41,7 +50,7 @@ Try to set breakpoints and run.
 Before setting breakpoints, you should run following command:
 
 ```
-(gdb) set riscv use_compressed_breakpoints no
+(gdb) set riscv use-compressed-breakpoints no
 ```
 
 To see why we need that command, see [this issue](https://github.com/riscv/riscv-binutils-gdb/issues/106)
