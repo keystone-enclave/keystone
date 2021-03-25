@@ -23,6 +23,8 @@ Here are some useful CMake flags you can add:
 * ``-DLINUX_SIFIVE=y``: This is a temporary flag for HiFive Unleashed board.
 * ``-DSM_PLATFORM=<platform>``: The security monitor will be compiled with platform sources in ``sm/plat/<platform>``. The default value is "generic".
 * ``-DUSE_RUST_SM=y``: Use the Rust port of the security monitor. Curently not supported in v1.0.
+* ``-DOPERATING_SYSTEM=<OS>``: This specifies the operating system to build. Currently only ``linux`` and ``freeRTOS`` are supported
+* ``-DCMAKE_BUILD_TYPE=Debug``: This will build everying in debug mode which assists in GDB debugging. 
 
 In order to build the driver and the tests, and have the final images for QEMU, you need to run
 
