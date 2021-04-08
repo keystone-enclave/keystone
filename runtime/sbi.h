@@ -6,6 +6,7 @@
 #define __SBI_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define SBI_SET_TIMER 0
 #define SBI_CONSOLE_PUTCHAR 1
@@ -38,9 +39,9 @@ sbi_exit_enclave(uint64_t retval);
 uintptr_t
 sbi_random();
 uintptr_t
-sbi_query_multimem();
+sbi_query_multimem(size_t *size);
 uintptr_t
-sbi_query_multimem_addr();
+sbi_query_multimem_addr(uintptr_t *addr);
 uintptr_t
 sbi_attest_enclave(void* report, void* buf, uintptr_t len);
 uintptr_t

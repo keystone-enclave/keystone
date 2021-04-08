@@ -36,22 +36,24 @@ void paging_dec_user_page(void)
 
 void init_paging(uintptr_t user_pa_start, uintptr_t user_pa_end)
 {
-  uintptr_t addr;
-  uintptr_t size;
+  uintptr_t addr = 0;
+  uintptr_t size = 0;
   uintptr_t* trap_table = &rt_trap_table;
 
   /* query if there is backing store */
-  size = MEGAPAGE_DOWN(sbi_query_multimem());
+  int ret = sbi_query_multimem(&size);
+  size = MEGAPAGE_DOWN(size);
 
-  if (!size) {
+  if (ret || !size) {
 		warn("no backing store found\n");
     return;
   }
 
   /* query the backing store PA */
-  addr = MEGAPAGE_UP(sbi_query_multimem_addr());
+  ret = sbi_query_multimem_addr(&addr);
+  addr = MEGAPAGE_UP(addr);
 
-  if (!addr) {
+  if (ret || !addr) {
 		warn("address is zero\n");
     return;
   }
