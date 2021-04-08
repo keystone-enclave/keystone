@@ -71,6 +71,20 @@ static u32 hart_idx2id[MPFS_HART_COUNT - 1] = {
 
 extern unsigned long STACK_SIZE_PER_HART;
 
+static int mpfs_early_init(bool cold_boot)
+{
+    struct sbi_scratch *sbi = sbi_scratch_thishart_ptr();
+    
+    // The SM expects that we'll be able to protect a region of size
+    // 0x200000. If we don't grow the fw_size, OpenSBI will only mark
+    // a small region of memory as reserved, and so later stage boot
+    // will try to access illegal memory.
+    if (sbi->fw_size > 0x200000)
+        return -1;
+    sbi->fw_size = 0x200000;
+    return 0;
+}
+
 static int mpfs_final_init(bool cold_boot)
 {
     sm_init(cold_boot);
@@ -202,7 +216,7 @@ static u64 mpfs_get_tlbr_flush_limit(void)
 }
 
 const struct sbi_platform_operations platform_ops = {
-    .early_init = NULL,
+    .early_init = mpfs_early_init,
     .final_init = mpfs_final_init,
     .early_exit = NULL,
     .final_exit = NULL,
