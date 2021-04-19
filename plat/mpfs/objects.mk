@@ -43,3 +43,4 @@ platform-objs-y += uart_helper.o
 platform-objs-y += csr_helper.o
 platform-objs-y += hss_clock.o
 platform-objs-y += drivers/mss_uart/mss_uart.o
+platform-objs-y += drivers/mss_sys_services/mss_sys_services.o
