@@ -1,3 +1,6 @@
+[submodule "riscv-gnu-toolchain"]
+	path = riscv-gnu-toolchain
+	url = https://github.com/riscv/riscv-gnu-toolchain
 [submodule "riscv-pk"]
 	path = riscv-pk
 	url = https://github.com/keystone-enclave/riscv-pk
