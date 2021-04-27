@@ -4,18 +4,9 @@
 [submodule "riscv-pk"]
 	path = riscv-pk
 	url = https://github.com/keystone-enclave/riscv-pk
-[submodule "sdk"]
-	path = sdk
-	url = https://github.com/keystone-enclave/keystone-sdk
-[submodule "linux-keystone-driver"]
-	path = linux-keystone-driver
-	url = https://github.com/keystone-enclave/linux-keystone-driver
 [submodule "buildroot"]
 	path = buildroot
 	url = https://github.com/buildroot/buildroot.git
-[submodule "linux"]
-	path = linux
-	url = https://github.com/torvalds/linux
 [submodule "qemu"]
 	path = qemu
 	url = https://github.com/qemu/qemu
@@ -23,6 +14,3 @@
 	path = FreeRTOS-Kernel
 	url = https://github.com/keystone-enclave/FreeRTOS-Kernel.git
 	branch = master
-[submodule "sm"]
-	path = sm
-	url = https://github.com/keystone-enclave/sm
