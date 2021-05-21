@@ -109,7 +109,7 @@ enclave, copy the package into the overlay directory, and then do
 Deploying Enclave
 ------------------------------
 
-Boot the machine with QEMU.
+Boot the machine with QEMU. Login as ``root`` with the password ``sifive``.
 
 ::
 
