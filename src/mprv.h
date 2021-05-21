@@ -24,7 +24,7 @@ int copy_block_to_sm(mprv_block *dst, uintptr_t src);
 #define REGBYTES (1 << LOG_REGBYTES)
 #define MPRV_BLOCK (REGBYTES * 8)
 
-int copy_from_sm(uintptr_t dst, void *src_buf, size_t len)
+static inline int copy_from_sm(uintptr_t dst, void *src_buf, size_t len)
 {
     uintptr_t src = (uintptr_t)src_buf;
 
@@ -63,7 +63,7 @@ int copy_from_sm(uintptr_t dst, void *src_buf, size_t len)
     return 0;
 }
 
-int copy_to_sm(void *dst_buf, uintptr_t src, size_t len)
+static inline int copy_to_sm(void *dst_buf, uintptr_t src, size_t len)
 {
     uintptr_t dst = (uintptr_t)dst_buf;
 
