@@ -145,7 +145,7 @@ Enclave::loadElf(ElfFile* elf) {
     if (va < file_end) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
-      memcpy(page, (const void*)src, (size_t)(file_end - va));
+      memcpy(page, (const void*)src, static_cast<size_t>(file_end - va));
       if (!pMemory->allocPage(va, (uintptr_t)page, mode))
         return Error::PageAllocationFailure;
       va += PAGE_SIZE;
