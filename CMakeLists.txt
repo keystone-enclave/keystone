@@ -246,7 +246,7 @@ add_subdirectory(sdk/examples ${example_wrkdir})
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 
 add_custom_target("tests" DEPENDS examples ${overlay_root}
-  COMMAND find ${example_wrkdir} -name "tests.ke" | xargs -I{} rsync {} ${overlay_root}
+  COMMAND find ${example_wrkdir} -name "*.ke" | xargs -I{} rsync {} ${overlay_root}
   COMMENT "Copying example enclave packages"
   )
 
