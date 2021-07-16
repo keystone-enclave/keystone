@@ -74,9 +74,11 @@ git submodule sync --recursive
 git submodule update --init --recursive
 
 # build SDK if not present
-if [ -z $KEYSTONE_SDK_DIR ]
+if [ ! -z $KEYSTONE_SDK_DIR ] && [ -e $KEYSTONE_SDK_DIR ]
 then
-  echo "KEYSTONE_SDK_DIR is not set. Installing from $(pwd)/sdk"
+  echo "KEYSTONE_SDK_DIR is set to $KEYSTONE_SDK_DIR and present. Skipping SDK installation."
+else
+  echo "KEYSTONE_SDK_DIR is not set or present. Installing from $(pwd)/sdk"
   export KEYSTONE_SDK_DIR=$(pwd)/sdk/build$BITS
   cd sdk
   mkdir -p build
