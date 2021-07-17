@@ -8,7 +8,7 @@ ifndef KEYSTONE_SDK_DIR
 endif
 
 CFLAGS = -Wall -Werror -fPIC -fno-builtin -std=c11 -g $(OPTIONS_FLAGS)
-SRCS = aes.c sha256.c boot.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c rt_util.c mm.c env.c freemem.c paging.c sbi.c merkle.c page_swap.c vm.c
+SRCS = aes.c sha256.c boot.c interrupt.c printf.c syscall.c string.c linux_wrap.c io_wrap.c net_wrap.c rt_util.c mm.c env.c freemem.c paging.c sbi.c merkle.c page_swap.c vm.c
 ASM_SRCS = entry.S
 RUNTIME = eyrie-rt
 LINK = $(CROSS_COMPILE)ld
