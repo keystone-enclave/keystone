@@ -14,6 +14,7 @@ uintptr_t io_syscall_openat(int dirfd, char* path,
                             int flags, mode_t mode);
 uintptr_t io_syscall_fstatat(int dirfd, char *pathname, struct stat *statbuf,
                              int flags);
+uintptr_t io_syscall_fstat(int fd, struct stat *statbuf);
 uintptr_t io_syscall_unlinkat(int dirfd, char* path,
                               int flags);
 uintptr_t io_syscall_fsync(int fd);

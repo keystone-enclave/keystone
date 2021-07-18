@@ -280,6 +280,9 @@ void handle_syscall(struct encl_ctx* ctx)
   case(SYS_fstatat):
     ret = io_syscall_fstatat((int)arg0, (char*)arg1, (struct stat*)arg2, (int)arg3);
     break;
+  case(SYS_fstat): 
+    ret = io_syscall_fstat((int)arg0, (struct stat*)arg1); 
+    break;
   case(SYS_lseek):
     ret = io_syscall_lseek((int)arg0, (off_t)arg1, (int)arg2);
     break;
