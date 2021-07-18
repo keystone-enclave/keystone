@@ -154,6 +154,11 @@ typedef struct sargs_SYS_fstatat {
   char pathname[];
 } sargs_SYS_fstatat;
 
+typedef struct sargs_SYS_fstat {
+  int fd;
+  struct stat stats;
+} sargs_SYS_fstat;
+
 void
 incoming_syscall(struct edge_call* buffer);
 

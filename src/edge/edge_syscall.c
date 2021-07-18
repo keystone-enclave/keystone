@@ -20,6 +20,8 @@ incoming_syscall(struct edge_call* edge_call) {
   edge_call->return_data.call_status = CALL_STATUS_OK;
 
   int64_t ret;
+  int is_str_ret = 0; 
+  char* retbuf;
 
   // Right now we only handle some io syscalls. See runtime for how
   // others are handled.
@@ -47,7 +49,17 @@ incoming_syscall(struct edge_call* edge_call) {
       ret = fstatat(
           fstatat_args->dirfd, fstatat_args->pathname, &fstatat_args->stats,
           fstatat_args->flags);
-      break;
+			break;
+    case (SYS_fstat):; 
+      sargs_SYS_fstat* fstat_args = (sargs_SYS_fstat*)syscall_info->data;
+      // Note the use of the implicit buffer in the stat args object (stats)
+			ret = fstat(fstat_args->fd, &fstat_args->stats);
+			break;
+    case (SYS_getcwd):;  // TODO: how to handle string return 
+      sargs_SYS_getcwd* getcwd_args = (sargs_SYS_getcwd*)syscall_info->data;
+			retbuf = getcwd(getcwd_args->buf, getcwd_args->size);
+      is_str_ret = 1;
+			break;
     case (SYS_write):;
       sargs_SYS_write* write_args = (sargs_SYS_write*)syscall_info->data;
       ret = write(write_args->fd, write_args->buf, write_args->len);
@@ -80,10 +92,6 @@ incoming_syscall(struct edge_call* edge_call) {
       sargs_SYS_epoll_create1 *epoll_args = (sargs_SYS_epoll_create1 *) syscall_info->data;
       ret = epoll_create(epoll_args->size);
       break;
-    case (SYS_getcwd):;  // TODO: how to handle string return 
-      sargs_SYS_getcwd* getcwd_args = (sargs_SYS_getcwd*) syscall_info->data;
-			getcwd(getcwd_args->buf, getcwd_args->size);
-			break;
     case(SYS_chdir):;
       sargs_SYS_chdir* chdir_args = (sargs_SYS_chdir*) syscall_info->data;
 			ret = chdir(chdir_args->path);
@@ -146,9 +154,15 @@ incoming_syscall(struct edge_call* edge_call) {
 
   /* Setup return value */
   void* ret_data_ptr      = (void*)edge_call_data_ptr();
-  *(int64_t*)ret_data_ptr = ret;
-  if (edge_call_setup_ret(edge_call, ret_data_ptr, sizeof(int64_t)) != 0)
-    goto syscall_error;
+  if (is_str_ret) {
+    *(char**) ret_data_ptr = retbuf; // TODO: check ptr stuff
+    if (edge_call_setup_ret(edge_call, ret_data_ptr, sizeof(int64_t)) != 0)
+      goto syscall_error;
+  } else {
+    *(int64_t*)ret_data_ptr = ret;
+    if (edge_call_setup_ret(edge_call, ret_data_ptr, sizeof(int64_t)) != 0)
+      goto syscall_error;
+  }
 
   return;
 
