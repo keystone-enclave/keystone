@@ -1,3 +1,6 @@
+#ifndef _TEST_DEV_KEY_H_
+#define _TEST_DEV_KEY_H_
+
 /* These are known device TESTING keys, use them for testing on platforms/qemu
  */
 
@@ -16,3 +19,5 @@ static const unsigned char _sanctum_dev_public_key[] = {
     0x96, 0x6f, 0x7c, 0x1f, 0xf3, 0x25, 0x64, 0xdd, 0x17, 0xd7, 0xdc,
     0x2b, 0x46, 0xcb, 0x50, 0xa8, 0x4a, 0x69, 0x27, 0x0b, 0x4c};
 static const size_t _sanctum_dev_public_key_len = 32;
+
+#endif /* _TEST_DEV_KEY_H_ */

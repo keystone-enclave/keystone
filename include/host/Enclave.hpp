@@ -10,9 +10,12 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <cerrno>
 #include <cstring>
+#include <functional>
 #include <iostream>
+
 #include "./common.h"
 extern "C" {
 #include "common/sha3.h"
@@ -25,8 +28,7 @@ extern "C" {
 
 namespace Keystone {
 
-class Enclave;
-typedef void (*OcallFunc)(void*);
+typedef std::function<void(void*)> OcallFunc;
 
 class Enclave {
  private:

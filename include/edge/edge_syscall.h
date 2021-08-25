@@ -60,16 +60,16 @@ typedef struct sargs_SYS_epoll_create1 {
 typedef struct sargs_SYS_socket{
   int domain;
   int type;
-  int protocol; 
-} sargs_SYS_socket; 
+  int protocol;
+} sargs_SYS_socket;
 
 typedef struct sargs_SYS_setsockopt{
   int socket;
   int level;
   int option_name;
-  int option_value; 
+  int option_value;
   socklen_t option_len;
-} sargs_SYS_setsockopt; 
+} sargs_SYS_setsockopt;
 
 typedef struct sargs_SYS_bind{
   int sockfd;
@@ -89,40 +89,40 @@ typedef struct sargs_SYS_accept{
 } sargs_SYS_accept;
 
 typedef struct sargs_SYS_epoll_ctl{
-  int epfd; 
+  int epfd;
   int op;
-  int fd; 
-  uintptr_t event; 
+  int fd;
+  uintptr_t event;
 } sargs_SYS_epoll_ctl;
 
 typedef struct sargs_SYS_fcntl {
-  int fd; 
-  int cmd; 
-  int has_struct; 
-  unsigned long arg[]; 
+  int fd;
+  int cmd;
+  int has_struct;
+  unsigned long arg[];
 } sargs_SYS_fcntl;
 
 typedef struct sargs_SYS_getcwd {
   size_t size;
-  char buf[]; 
+  char buf[];
 } sargs_SYS_getcwd;
 
 typedef struct sargs_SYS_chdir{
-  char path[0]; 
+  char path[0];
 } sargs_SYS_chdir;
 
 
 typedef struct sargs_SYS_epoll_pwait{
-  int epfd; 
+  int epfd;
   struct epoll_event events;
   int maxevents;
-  int timeout; 
+  int timeout;
 } sargs_SYS_epoll_pwait;
 
 
 typedef struct sargs_SYS_getpeername{
   int sockfd;
-  struct sockaddr_storage addr;  
+  struct sockaddr_storage addr;
   socklen_t addrlen;
 } sargs_SYS_getpeername;
 
@@ -131,7 +131,7 @@ typedef struct sargs_SYS_getpeername{
 typedef struct sargs_SYS_renameat2{
   int olddirfd;
   char oldpath[128];
-  int newdirfd; 
+  int newdirfd;
   char newpath[128];
   unsigned int flags;
 } sargs_SYS_renameat2;

@@ -2,8 +2,8 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#ifndef _EDGE_COMMON_H_
-#define _EDGE_COMMON_H_
+#ifndef __EDGE_COMMON_H_
+#define __EDGE_COMMON_H_
 #include <stddef.h>
 #include <stdint.h>
 

@@ -1,6 +1,7 @@
 // sha3.h
 // 19-Nov-11  Markku-Juhani O. Saarinen <mjos@iki.fi>
-#pragma once
+#ifndef __SHA3_H_
+#define __SHA3_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -39,3 +40,5 @@ sha3_final(void* md, sha3_ctx_t* c);  // digest goes to md
 // compute a sha3 hash (md) of given byte length from "in"
 void*
 sha3(const void* in, size_t inlen, void* md, int mdlen);
+
+#endif /* __SHA3_H_ */

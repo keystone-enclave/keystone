@@ -3,7 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #ifndef __EDGE_CALL_H_
-#define __EDGE_CALL_H__
+#define __EDGE_CALL_H_
 
 #include "edge_common.h"
 

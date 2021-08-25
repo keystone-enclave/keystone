@@ -1,5 +1,8 @@
 // Copied from musl's build (build/obj/include/bits/syscall.h)
 // In the future we'll want to build musl with our own syscalls as the targets
+#ifndef __SYSCALL_NUMS_H_
+#define __SYSCALL_NUMS_H_
+
 #define __NR_io_setup 0
 #define __NR_io_destroy 1
 #define __NR_io_submit 2
@@ -555,3 +558,5 @@
 #define SYS_pkey_free 290
 #define SYS_sysriscv __NR_arch_specific_syscall
 #define SYS_riscv_flush_icache (__NR_sysriscv + 15)
+
+#endif /* __SYSCALL_NUMS_H_ */

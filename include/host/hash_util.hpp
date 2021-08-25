@@ -18,5 +18,3 @@ void
 hash_extend_page(hash_ctx_t* hash_ctx, const void* ptr);
 void
 hash_finalize(void* md, hash_ctx_t* hash_ctx);
-void
-printHash(char* hash);
