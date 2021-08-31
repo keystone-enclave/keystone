@@ -245,7 +245,9 @@ set(example_wrkdir examples)
 add_subdirectory(sdk/examples ${example_wrkdir})
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 
-add_custom_target("tests" DEPENDS examples ${overlay_root}
+add_custom_target("tests" DEPENDS sm examples ${overlay_root}
+  COMMAND cp ${fw_bin} ${overlay_root}
+  COMMENT "Copying SM binary for the attestation example to calculate hash"
   COMMAND find ${example_wrkdir} -name "*.ke" | xargs -I{} rsync {} ${overlay_root}
   COMMENT "Copying example enclave packages"
   )
