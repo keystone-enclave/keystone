@@ -263,8 +263,6 @@ add_custom_target("image" DEPENDS "buildroot" "sm"
   COMMENT "Generating image"
 )
 
-add_dependencies("buildroot" "image-deps")
-
 ###############################################################################
 ## PATCH
 ###############################################################################
