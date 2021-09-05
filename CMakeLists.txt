@@ -253,7 +253,7 @@ set(example_wrkdir examples)
 add_subdirectory(sdk/examples ${example_wrkdir})
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 
-add_custom_target("tests" DEPENDS examples "sm")
+add_custom_target("tests" DEPENDS examples)
 
 ###############################################################################
 ## COMPONENT: image
