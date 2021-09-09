@@ -1,0 +1,26 @@
+#!/bin/bash
+
+SSH_OPTIONS="-i @overlay_root@/.ssh/id_rsa"
+SSH_OPTIONS+=" -o StrictHostKeyChecking=no"
+SSH_OPTIONS+=" -o UserKnownHostsFile=/dev/null"
+
+upload_to_qemu() {
+    echo "Uploading \"$(basename $1)\" to QEMU ..."
+    scp ${SSH_OPTIONS} -P @qemu_ssh_port@ $1 root@localhost:.
+}
+
+run_in_qemu() {
+    echo "Running \"$1\" in QEMU ..."
+    ssh ${SSH_OPTIONS} -p @qemu_ssh_port@ root@localhost "$1"
+}
+
+run_in_qemu "insmod keystone-driver.ko"
+
+upload_to_qemu "@CMAKE_BINARY_DIR@/examples/tests/tests.ke"
+run_in_qemu "./tests.ke"
+
+upload_to_qemu "@CMAKE_BINARY_DIR@/examples/attestation/attestor.ke"
+upload_to_qemu "@fw_bin@"
+run_in_qemu "./attestor.ke"
+
+run_in_qemu "poweroff"

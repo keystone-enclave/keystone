@@ -1,6 +1,6 @@
-
-# insmod keystone-driver.ko
-# ./tests.ke
+Running "insmod keystone-driver.ko" in QEMU ...
+Uploading "tests.ke" to QEMU ...
+Running "./tests.ke" in QEMU ...
 Verifying archive integrity... All good.
 Uncompressing Keystone Enclave Package
 testing stack
@@ -18,7 +18,9 @@ Enclave said value: 13
 Enclave said value: 20
 testing data-sealing
 Enclave said: Sealing key derivation successful!
-# ./attestor.ke
+Uploading "attestor.ke" to QEMU ...
+Uploading "fw_payload.bin" to QEMU ...
+Running "./attestor.ke" in QEMU ...
 Verifying archive integrity... All good.
 Uncompressing Keystone Enclave Package
 Enclave said value: 5000
@@ -26,4 +28,4 @@ Enclave said value: 10000
 Attestation report SIGNATURE is valid
 Enclave and SM hashes match with expected.
 Returned data in the report match with the nonce sent.
-# 
+Running "poweroff" in QEMU ...
