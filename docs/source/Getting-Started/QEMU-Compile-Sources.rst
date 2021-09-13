@@ -69,10 +69,11 @@ Build Linux Kernel
 ##############################################################
 
 Kernel config files are located at ``conf/``. RV64 linux will use ``conf/linux-v5.0-defconfig-rv64``.
-The following command will build the linux
+The following command will build the linux.
+Note that you need at least 2GB of memory in order to successfully build the kernel.
 
 Keystone requires patches for the Linux kernel to reserve CMA region at boot.
-The patch is located at ``patches/linux/``
+The patch is located at ``patches/linux/``.
 
 ::
 
