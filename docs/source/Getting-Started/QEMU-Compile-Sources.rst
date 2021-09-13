@@ -24,7 +24,7 @@ Here are some useful CMake flags you can add:
 * ``-DSM_PLATFORM=<platform>``: The security monitor will be compiled with platform sources in ``sm/plat/<platform>``. The default value is "generic".
 * ``-DUSE_RUST_SM=y``: Use the Rust port of the security monitor. Curently not supported in v1.0.
 
-In order to build the driver and the tests, and have the final images for QEMU, you need to run
+In order to build the driver and have the final images for QEMU, you need to run
 
 ::
 
@@ -112,19 +112,6 @@ The following command will build the linux driver for Keystone.
 
   # in your <build directory>
   make driver
-
-Build Tests
-##############################################################
-
-The tests are a part of Keystone SDK's example enclaves.
-Thus, we build them using ``sdk/examples/CMakeLists.txt``.
-
-The following command will build the tests and copy the package into the buildroot overlay directory.
-
-::
-
-  # in your <build directory>
-  make tests
 
 Updating Images
 ##############################################################

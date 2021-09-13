@@ -18,7 +18,7 @@ If you wish to compile and run tests by your self, follow the following instruct
 Build Test Binaries
 #############################
 
-Test enclaves are a part of Keysonte SDK's examples.
+Keystone tests leverage packages built as part of Keysonte SDK's examples.
 You can build the tests by executing ``make tests``.
 Note that ``KEYSTONE_SDK_DIR`` must be set to the install path of the SDK.
 
@@ -26,17 +26,29 @@ Note that ``KEYSTONE_SDK_DIR`` must be set to the install path of the SDK.
 
   make tests
 
-This command will build the enclave package named ``tests.ke``
-and copy it into ``<build directory>/overlay`` directory.
+This command will build a few enclave packages named ``*.ke`` in the ``<build directory>/example`` directory.
+
+Next, you need to copy the enclave packages into the disk image that you're going to boot on.
+We use `Buildroot Overlay <https://buildroot.org/downloads/manual/manual.html#rootfs-custom>`_ for injecting the test binaries into the disk image.
+The buildroot overlay directory is ``<build directory>/overlay``.
+
+We need to copy the packages into the ``<build directory>/overlay`` directory and re-generate the QEMU image:
+
+::
+
+   find ./examples/ -name '*.ke' -exec cp \{\} ./overlay/root/ \;
+
+The ``attestor.ke`` example requires the Security Monitor binary also located under ``/root``, so let's copy the Security Monitor binary as well:
+
+::
+
+   cp sm.build/platform/generic/firmware/fw_payload.bin overlay/root/
+
 
 Build Disk Image
 #############################
 
-Next, you need to copy the enclave package into the disk image that you're going to boot on.
-
-We use `Buildroot Overlay <https://buildroot.org/downloads/manual/manual.html#rootfs-custom>`_ for
-injecting the test binaries into the disk image.
-The buildroot overlay directory is ``<build directory>/overlay``.
+Now it's time to re-generate the QEMU image:
 
 ::
 
@@ -89,3 +101,5 @@ In order to extract the package without execution, run
   ./tests.ke --noexec --target <dst>
 
 Run ``./tests.ke --help`` for more information.
+
+You can run other examples such as ``attestor.ke`` as well. See :doc:`Tutorials<Tutorials/index>` for a list of tutorials related to these examples.

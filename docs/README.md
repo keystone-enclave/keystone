@@ -10,6 +10,12 @@ make html
 You can locally host the built doc by running
 
 ```
-python -m SimpleHTTPServer
+python2 -m SimpleHTTPServer
+```
+
+or
+
+```
+python3 -m http.server
 ```
 
