@@ -130,7 +130,7 @@ Next, copy the package into the buildroot overlay directory.
 ::
 
   # in the build directory
-  cp examples/hello ./overlay/root
+  cp examples/hello/hello.ke ./overlay/root
 
 Running ``make image`` in your build directory will generate the buildroot disk
 image containing the copied package.
@@ -161,7 +161,7 @@ Deploy the enclave
 ::
 
 	# [inside QEMU]
-	./hello/hello.ke
+	./hello.ke
 
 You'll see the enclave running!
 

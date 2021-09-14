@@ -159,7 +159,9 @@ verifier.
 
 While 1 and 2 are typically done beforehand (or delegated to a trusted
 party), 3-5 are done at runtime by checking signature and payload of
-the attestation report.
+the attestation report. See
+:doc:`Attestation<../../Keystone-Applications/Attestation>` for
+additional details on Keystone's attestation support.
 
 The ``Verifier::verify_report`` method accomplishes 3-5:
 
@@ -294,12 +296,13 @@ In order to build the example, try the following in the build directory:
 This will generate an enclave package named ``attestor.ke`` under ``<build directory>/examples/attestation``.
 ``attestor.ke`` is an self-extracting archive file for the enclave.
 
-Next, copy the package into the buildroot overlay directory.
+Next, copy the package and the Security Monitor binary into the buildroot overlay directory.
 
 ::
 
   # in the build directory
-  cp examples/attestation ./overlay/root
+  cp examples/attestation/attestor.ke ./overlay/root
+  cp sm.build/platform/generic/firmware/fw_payload.bin overlay/root/
 
 Running ``make image`` in your build directory will generate the buildroot disk
 image containing the copied package.
@@ -330,7 +333,7 @@ Deploy the enclave
 ::
 
 	# [inside QEMU]
-	./attestation/attestor.ke
+	./attestor.ke
 
 You'll see the enclave running!
 
