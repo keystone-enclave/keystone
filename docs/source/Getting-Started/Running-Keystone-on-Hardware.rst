@@ -6,14 +6,14 @@ board (referred to as HiFive for the rest of this document) with an
 FU540 chip.
 
 
-Building Keystone 
+Building Keystone
 ----------------------------------------
 
 Building for the HiFive is straight-forward.
 First, clone the Keystone repository in the **manager instance**.
 
 ::
-  
+
   git clone https://github.com/keystone-enclave/keystone
 
 Follow :doc:`QEMU-Setup-Repository` to setup the repository.
@@ -21,7 +21,7 @@ Follow :doc:`QEMU-Setup-Repository` to setup the repository.
 After you setup the repository, you can run the following commands to build Keystone.
 
 ::
-  
+
   mkdir <build directory>
   cd <build directory>
   cmake .. -DLINUX_SIFIVE=y
@@ -153,4 +153,4 @@ Example
 ::
 
    insmod keystone-driver.ko
-   ./tests/tests.ke
+   ./tests.ke
