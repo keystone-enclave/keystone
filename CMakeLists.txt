@@ -100,7 +100,6 @@ set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
 set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.elf)
 set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.bin)
-set(final_image ${CMAKE_BINARY_DIR}/firmware.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 
