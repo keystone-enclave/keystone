@@ -26,7 +26,6 @@ After you setup the repository, you can run the following commands to build Keys
   cd <build directory>
   cmake .. -DLINUX_SIFIVE=y
   make
-  make image
 
 CMake with the flag ``-Dsifive=y`` will automatically generate Makefiles to build
 SiFive-compatible Linux and SM.
@@ -35,9 +34,7 @@ Also, the build will forcibly use initramfs for a simpler deployment.
 
 Once you have built the image, you will see 
 ``sm.build/platform/generic/firmware/fw_payload.bin`` under your build directory.
-
-Separately, ``make image`` will also generate ``fw_payload.bin`` under your build
-directory. This is the file that you want to reflash the SD card with.
+This is the file that you want to reflash the SD card with.
 
 You can also boot QEMU machine with the image using ``./scripts/run-qemu.sh``.
 
