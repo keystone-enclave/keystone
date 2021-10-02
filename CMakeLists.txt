@@ -68,7 +68,7 @@ set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
-set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu)
+set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
 mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
@@ -98,8 +98,8 @@ set(linux_symvers ${linux_wrkdir}/Modules.symvers)
 set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
-set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.elf)
-set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.bin)
+set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
+set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
 set(final_image ${CMAKE_BINARY_DIR}/firmware.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
@@ -108,18 +108,18 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 ## COMPONENT: QEMU
 ###############################################################################
 
-set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
-add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} qemu_patches)
+set(qemu_system ${qemu_wrkdir}/qemu-system-riscv${BITS})
+#add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} qemu_patches)
 
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
 add_custom_command(OUTPUT ${qemu_system}
-  COMMAND $(MAKE) -C ${qemu_srcdir}
+  COMMAND $(MAKE) -C ${qemu_wrkdir}
   DEPENDS ${qemu_wrkdir}/config-host.mak ${qemu_patches}
   COMMENT "Building QEMU"
 )
 add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
-  WORKING_DIRECTORY ${qemu_srcdir}
-  COMMAND ./configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user
+  WORKING_DIRECTORY ${qemu_wrkdir}
+  COMMAND ../configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user
   COMMENT "Configuring QEMU"
 )
 
@@ -299,8 +299,8 @@ add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
       -m 2G \
       -nographic \
       -machine virt \
-      -bios ${bootrom_wrkdir}/bootrom.bin \
-      -kernel ${fw_elf} \
+      -bios ${fw_elf} \
+      -kernel ${linux_image} \
       ${extra_qemu_options} \
       -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
       -device virtio-net-device,netdev=net0 \
