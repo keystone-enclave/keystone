@@ -1,4 +1,4 @@
-#ifdef IO_NET_SYSCALL_WRAPPING
+#ifdef NET_SYSCALL_WRAPPING
 #include <stdint.h>
 #include "io_wrap.h"
 #include <alloca.h>
@@ -7,6 +7,8 @@
 #include "string.h"
 #include "edge_syscall.h"
 #include <sys/epoll.h>
+#include <sys/time.h>
+#include <sys/select.h>
 
 //Length of optional value for setsockopt 
 #define MAX_OPTION_LEN 256
@@ -123,16 +125,12 @@ uintptr_t io_syscall_accept(int sockfd, uintptr_t addr, uintptr_t addrlen) {
 
 uintptr_t io_syscall_getpeername(int sockfd, uintptr_t addr,
                        uintptr_t addrlen){
-           uintptr_t ret = -1;
+  uintptr_t ret = -1;
   struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   sargs_SYS_getpeername* args = (sargs_SYS_getpeername*) edge_syscall->data;
 
   edge_syscall->syscall_num = SYS_getpeername;
   args->sockfd = sockfd;
-
-  if(addrlen > sizeof(struct sockaddr_storage)) {
-    return ret; 
-  }
 
   copy_from_user(&args->addrlen, (void *) addrlen, sizeof(socklen_t)); 
   copy_from_user(&args->addr, (void *) addr, args->addrlen);  
@@ -145,4 +143,73 @@ uintptr_t io_syscall_getpeername(int sockfd, uintptr_t addr,
   return ret;
 }
 
-#endif /* IO_NET_SYSCALL_WRAPPING */ 
+uintptr_t io_syscall_getsockname(int sockfd, uintptr_t addr,
+                       uintptr_t addrlen){
+  uintptr_t ret = -1;
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  sargs_SYS_getsockname* args = (sargs_SYS_getsockname*) edge_syscall->data;
+
+  edge_syscall->syscall_num = SYS_getsockname;
+  args->sockfd = sockfd;
+
+  copy_from_user(&args->addrlen, (void *) addrlen, sizeof(socklen_t)); 
+  copy_from_user(&args->addr, (void *) addr, args->addrlen);  
+
+  size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_getsockname);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  print_strace("[runtime] proxied getsockname: fd: %d, ret: %d\r\n", args->sockfd, ret);
+  return ret;
+}
+
+uintptr_t io_syscall_getuid() {
+  uintptr_t ret = -1; 
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+
+  edge_syscall->syscall_num = SYS_getuid;
+
+  size_t totalsize = (sizeof(struct edge_syscall));
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  print_strace("[runtime] proxied getuid, ret: %d\r\n", ret);
+  return ret;
+}
+
+uintptr_t io_syscall_pselect(int nfds, fd_set *readfds, fd_set *writefds,
+            fd_set *exceptfds, uintptr_t timeout,
+            uintptr_t sigmask) {
+  uintptr_t ret = -1;
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  sargs_SYS_pselect* args = (sargs_SYS_pselect*) edge_syscall->data;
+
+  edge_syscall->syscall_num = SYS_pselect6;
+  args->nfds = nfds; 
+
+  if (readfds != (void *) 0) 
+    copy_from_user(&args->readfds, (void *) readfds, sizeof(fd_set)); 
+  if (writefds != (void *) 0)
+    copy_from_user(&args->writefds, (void *) writefds, sizeof(fd_set)); 
+  if (exceptfds != (void *) 0)
+    copy_from_user(&args->exceptfds, (void *) exceptfds, sizeof(fd_set)); 
+  if (timeout != 0) 
+    copy_from_user(&args->timeout, (void *) timeout, sizeof(struct timespec)); 
+  if (sigmask != 0) 
+    copy_from_user(&args->sigmask, (void *) sigmask, sizeof(sigset_t));  
+
+  size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_pselect);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  if (ret >= 0) {
+    if (readfds != (void *) 0) 
+      copy_to_user(readfds, &args->readfds, sizeof(fd_set)); 
+    if (writefds != (void *) 0)
+      copy_to_user(writefds, &args->writefds, sizeof(fd_set)); 
+    if (exceptfds != (void *) 0)
+      copy_to_user(exceptfds, &args->exceptfds, sizeof(fd_set));
+  }
+
+  print_strace("[runtime] proxied pselect: nfds: %d, ret: %d\r\n", args->nfds, ret);
+  return ret;
+}
+
+#endif /* NET_SYSCALL_WRAPPING */ 

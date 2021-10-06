@@ -4,6 +4,7 @@
 //------------------------------------------------------------------------------
 #include <stdint.h>
 #include <stddef.h>
+#include <sys/select.h>
 #include "syscall.h"
 #include "string.h"
 #include "edge_call.h"
@@ -346,6 +347,15 @@ void handle_syscall(struct encl_ctx* ctx)
     break;
   case(SYS_getpeername): 
     ret = io_syscall_getpeername((int) arg0,  (uintptr_t) arg1, (uintptr_t) arg2);
+    break;
+  case(SYS_getsockname): 
+    ret = io_syscall_getsockname((int) arg0,  (uintptr_t) arg1, (uintptr_t) arg2);
+    break;
+  case(SYS_getuid): 
+    ret = io_syscall_getuid(); 
+    break; 
+  case(SYS_pselect6): 
+    ret = io_syscall_pselect((int) arg0, (fd_set*) arg1, (fd_set*) arg2, (fd_set*) arg3, (uintptr_t) arg4, (uintptr_t) arg5);
     break;
 #endif /* NET_SYSCALL_WRAPPING */
 

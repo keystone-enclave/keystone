@@ -9,7 +9,7 @@ BITS="64"
 declare -A PLUGINS
 PLUGINS[freemem]="-DUSE_FREEMEM "
 PLUGINS[untrusted_io_syscall]="-DIO_SYSCALL_WRAPPING "
-PLUGINS[untrusted_net_syscall]="-DIO_NET_SYSCALL_WRAPPING "
+PLUGINS[untrusted_net_syscall]="-DNET_SYSCALL_WRAPPING "
 PLUGINS[linux_syscall]="-DLINUX_SYSCALL_WRAPPING "
 PLUGINS[env_setup]="-DENV_SETUP "
 PLUGINS[strace_debug]="-DINTERNAL_STRACE "
