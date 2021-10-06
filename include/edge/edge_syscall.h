@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
+#include <time.h>
 #include "edge_call.h"
 #include "edge_common.h"
 #include "syscall_nums.h"
@@ -126,7 +128,11 @@ typedef struct sargs_SYS_getpeername{
   socklen_t addrlen;
 } sargs_SYS_getpeername;
 
-
+typedef struct sargs_SYS_getsockname{
+  int sockfd;
+  struct sockaddr addr;
+  socklen_t addrlen;
+} sargs_SYS_getsockname;
 
 typedef struct sargs_SYS_renameat2{
   int olddirfd;
@@ -158,6 +164,16 @@ typedef struct sargs_SYS_fstat {
   int fd;
   struct stat stats;
 } sargs_SYS_fstat;
+
+typedef struct sargs_SYS_pselect {
+  int nfds; 
+  fd_set readfds; 
+  fd_set writefds; 
+  fd_set exceptfds; 
+  struct timespec timeout; 
+  sigset_t sigmask; 
+} sargs_SYS_pselect;
+
 
 void
 incoming_syscall(struct edge_call* buffer);

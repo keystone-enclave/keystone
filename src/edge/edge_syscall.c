@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 // Special edge-call handler for syscall proxying
 void
 incoming_syscall(struct edge_call* edge_call) {
@@ -111,6 +112,11 @@ incoming_syscall(struct edge_call* edge_call) {
                 &getpeername_args->addrlen);
 
       break; 
+    case (SYS_getsockname):; 
+      sargs_SYS_getsockname *getsockname_args = (sargs_SYS_getsockname *) syscall_info->data;
+      ret = getsockname(getsockname_args->sockfd, (struct sockaddr *) &getsockname_args->addr, 
+                &getsockname_args->addrlen);
+      break; 
     case (SYS_renameat2):;
       sargs_SYS_renameat2 *renameat_args = (sargs_SYS_renameat2 *) syscall_info->data;
 
@@ -148,6 +154,15 @@ incoming_syscall(struct edge_call* edge_call) {
       else 
         ret = fcntl(fcntl_args->fd, fcntl_args->cmd, fcntl_args->arg);
       break; 
+    case (SYS_getuid):;
+      ret = getuid(); 
+      break;
+    case (SYS_pselect6):;
+      sargs_SYS_pselect* pselect_args = (sargs_SYS_pselect*)syscall_info->data; 
+      ret = pselect(pselect_args->nfds, &pselect_args->readfds, &pselect_args->writefds,
+            &pselect_args->exceptfds, &pselect_args->timeout,
+            &pselect_args->sigmask);
+      break;
     default:
       goto syscall_error;
   }
