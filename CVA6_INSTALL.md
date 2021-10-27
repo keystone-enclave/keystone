@@ -14,6 +14,9 @@ git checkout dev-cva6-support
 ```
 mkdir <build directory>
 cd <build directory>
+
+export BUILD_ROOT=<absolute path to build directory>
+
 cmake .. -Dcva6=y
 make
 
