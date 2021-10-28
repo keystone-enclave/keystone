@@ -345,6 +345,15 @@ void handle_syscall(struct encl_ctx* ctx)
   case (SYS_accept):
     ret = io_syscall_accept((int) arg0, (uintptr_t) arg1, (uintptr_t) arg2);
     break;
+  case(SYS_recvfrom):
+    ret = io_syscall_recvfrom((int) arg0, (uintptr_t) arg1, (int) arg2, (int) arg3, (uintptr_t) arg4, (uintptr_t) arg5);
+    break;
+  case(SYS_sendto):
+    ret = io_syscall_sendto((int) arg0, (uintptr_t) arg1, (int) arg2, (int) arg3, (uintptr_t) arg4, (int) arg5);
+    break;
+  case(SYS_sendfile):
+    ret = io_syscall_sendfile((int) arg0, (int) arg1, (uintptr_t) arg2, (int) arg3);
+    break;
   case(SYS_getpeername): 
     ret = io_syscall_getpeername((int) arg0,  (uintptr_t) arg1, (uintptr_t) arg2);
     break;
@@ -355,7 +364,7 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = io_syscall_getuid(); 
     break; 
   case(SYS_pselect6): 
-    ret = io_syscall_pselect((int) arg0, (fd_set*) arg1, (fd_set*) arg2, (fd_set*) arg3, (uintptr_t) arg4, (uintptr_t) arg5);
+    ret = io_syscall_pselect((int) arg0, (uintptr_t) arg1, (uintptr_t) arg2, (uintptr_t) arg3, (uintptr_t) arg4, (uintptr_t) arg5);
     break;
 #endif /* NET_SYSCALL_WRAPPING */
 

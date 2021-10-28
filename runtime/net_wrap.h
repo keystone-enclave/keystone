@@ -14,8 +14,12 @@ uintptr_t io_syscall_listen(int sockfd, int backlog);
 uintptr_t io_syscall_getpeername(int sockfd, uintptr_t addr, uintptr_t addrlen);
 uintptr_t io_syscall_getsockname(int sockfd, uintptr_t addr, uintptr_t addrlen);
 uintptr_t io_syscall_accept(int sockfd, uintptr_t addr, uintptr_t addrlen);
+uintptr_t io_syscall_recvfrom(int sockfd, uintptr_t buf, size_t len, int flags,
+                				uintptr_t src_addr, uintptr_t addrlen);
+uintptr_t io_syscall_sendto(int sockfd, uintptr_t buf, size_t len, int flags,
+                				uintptr_t dest_addr, int addrlen);
+uintptr_t io_syscall_sendfile(int out_fd, int in_fd, uintptr_t offset, int count);
 uintptr_t io_syscall_getuid();
-uintptr_t io_syscall_pselect(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, uintptr_t timeout, uintptr_t sigmask);
-
+uintptr_t io_syscall_pselect(int nfds, uintptr_t readfds, uintptr_t writefds, uintptr_t exceptfds, uintptr_t timeout, uintptr_t sigmask);
 #endif /* _NET_WRAP_H_ */
 #endif /* NET_SYSCALL_WRAPPING */
