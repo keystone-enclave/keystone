@@ -167,6 +167,11 @@ typedef struct sargs_SYS_fstat {
 
 typedef struct sargs_SYS_pselect {
   int nfds; 
+  int readfds_is_null; 
+  int writefds_is_null; 
+  int exceptfds_is_null; 
+  int timeout_is_null; 
+  int sigmask_is_null; 
   fd_set readfds; 
   fd_set writefds; 
   fd_set exceptfds; 
@@ -174,6 +179,33 @@ typedef struct sargs_SYS_pselect {
   sigset_t sigmask; 
 } sargs_SYS_pselect;
 
+typedef struct sargs_SYS_recvfrom {
+  int sockfd; 
+  size_t len; 
+  int flags; 
+  int src_addr_is_null; 
+  struct sockaddr src_addr; 
+  socklen_t addrlen; 
+  char buf[]; 
+} sargs_SYS_recvfrom;
+
+typedef struct sargs_SYS_sendto {
+  int sockfd; 
+  size_t len; 
+  int flags; 
+  int dest_addr_is_null; 
+  struct sockaddr dest_addr; 
+  socklen_t addrlen; 
+  char buf[]; 
+} sargs_SYS_sendto;
+
+typedef struct sargs_SYS_sendfile {
+  int out_fd; 
+  size_t in_fd; 
+  int offset_is_null;
+  off_t offset; 
+  size_t count;
+} sargs_SYS_sendfile;
 
 void
 incoming_syscall(struct edge_call* buffer);

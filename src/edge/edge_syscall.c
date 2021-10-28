@@ -5,6 +5,7 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/sendfile.h>
 // Special edge-call handler for syscall proxying
 void
 incoming_syscall(struct edge_call* edge_call) {
@@ -147,6 +148,24 @@ incoming_syscall(struct edge_call* edge_call) {
       sargs_SYS_accept *accept_args = (sargs_SYS_accept *) syscall_info->data; 
       ret = accept(accept_args->sockfd, (struct sockaddr *) &accept_args->addr, &accept_args->addrlen);
       break;
+    case (SYS_recvfrom):; 
+      sargs_SYS_recvfrom *recvfrom_args = (sargs_SYS_recvfrom *) syscall_info->data; 
+      struct sockaddr *src_addr = recvfrom_args->src_addr_is_null ? NULL : &recvfrom_args->src_addr; 
+      socklen_t *addrlen = recvfrom_args->src_addr_is_null ? NULL : &recvfrom_args->addrlen; 
+      ret = recvfrom(recvfrom_args->sockfd, recvfrom_args->buf, recvfrom_args->len, recvfrom_args->flags, 
+                      src_addr, addrlen);
+      break;
+    case (SYS_sendto):; 
+      sargs_SYS_sendto *sendto_args = (sargs_SYS_sendto *) syscall_info->data; 
+      struct sockaddr *dest_addr = sendto_args->dest_addr_is_null ? NULL : &sendto_args->dest_addr; 
+      socklen_t dest_addrlen = sendto_args->dest_addr_is_null ? 0 : sendto_args->addrlen; 
+      ret = sendto(sendto_args->sockfd, sendto_args->buf, sendto_args->len, sendto_args->flags, 
+                      dest_addr, dest_addrlen);
+      break;
+    case (SYS_sendfile):; 
+      sargs_SYS_sendfile *sendfile_args = (sargs_SYS_sendfile *) syscall_info->data; 
+      ret = sendfile(sendfile_args->out_fd, sendfile_args->in_fd, &sendfile_args->offset, sendfile_args->count);
+      break;
     case (SYS_fcntl):;
       sargs_SYS_fcntl* fcntl_args = (sargs_SYS_fcntl*)syscall_info->data; 
       if (!fcntl_args->has_struct) 
@@ -159,9 +178,12 @@ incoming_syscall(struct edge_call* edge_call) {
       break;
     case (SYS_pselect6):;
       sargs_SYS_pselect* pselect_args = (sargs_SYS_pselect*)syscall_info->data; 
-      ret = pselect(pselect_args->nfds, &pselect_args->readfds, &pselect_args->writefds,
-            &pselect_args->exceptfds, &pselect_args->timeout,
-            &pselect_args->sigmask);
+      fd_set *readfds = pselect_args->readfds_is_null ? NULL : &pselect_args->readfds; 
+      fd_set *writefds = pselect_args->writefds_is_null ? NULL : &pselect_args->writefds; 
+      fd_set *exceptfds = pselect_args->exceptfds_is_null ? NULL : &pselect_args->exceptfds; 
+      struct timespec *timeout = pselect_args->timeout_is_null ? NULL : &pselect_args->timeout; 
+      sigset_t *sigmask = pselect_args->sigmask_is_null ? NULL : &pselect_args->sigmask; 
+      ret = pselect(pselect_args->nfds, readfds, writefds, exceptfds, timeout, sigmask);
       break;
     default:
       goto syscall_error;
