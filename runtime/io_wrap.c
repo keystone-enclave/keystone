@@ -325,7 +325,9 @@ uintptr_t io_syscall_epoll_create(int size){
 
   sargs_SYS_epoll_create1 *args = (sargs_SYS_epoll_create1 *) edge_syscall->data;
 
-  args->size = size; 
+  // Since Linux 2.6.8, the size argument is ignored, but must be greater than
+  // zero. See https://man7.org/linux/man-pages/man2/epoll_create.2.html
+  args->size = 1024; 
 
   size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_epoll_create1);
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
