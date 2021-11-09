@@ -1,9 +1,9 @@
 Example Hardware Deployment
 ===========================
 
-Currently we only support the SiFive HiFive Unleashed development
+Currently we support the SiFive HiFive Unleashed development
 board (referred to as HiFive for the rest of this document) with an
-FU540 chip.
+FU540 chip as well as the [CVA6 Core](https://github.com/openhwgroup/cva6) from ETH Zurich, which can also be flashed onto a Genesis 2 board for development.
 
 
 Building Keystone 
@@ -24,19 +24,19 @@ After you setup the repository, you can run the following commands to build Keys
   
   mkdir <build directory>
   cd <build directory>
-  cmake .. -DLINUX_SIFIVE=y
+  cmake .. -DLINUX_SIFIVE=y // HiFive, for CVA6: -Dcva6=y
   make
   make image
 
-CMake with the flag ``-Dsifive=y`` will automatically generate Makefiles to build
-SiFive-compatible Linux and SM.
+CMake with the flag ``-DLINUX_SIFIVE=y`` will automatically generate Makefiles to build
+SiFive-compatible Linux and SM. For the CVA6 core, you should replace the flag with ``-Dcva6=y``
 This includes some patches for DTB compatibility.
 Also, the build will forcibly use initramfs for a simpler deployment.
 
-Once you have built the image, you will see ``riscv-pk.build/bbl`` under your
+Once you have built the image, you will see ``sm.build/platform/generic/firmware/fw_payload.bin`` under your
 build directory.
 
-Separately, ``make image`` will also generate ``bbl.bin`` under your build directory.
+Separately, ``make image`` will also generate ``fw_payload.bin`` under your build directory.
 This is the file that you want to reflash the SD card with.
 
 You can also boot QEMU machine with the image using ``./scripts/run-qemu.sh``.
@@ -62,9 +62,9 @@ or example script below).
 Load Linux Image
 ################
 
-The hifive build process generates a bbl.bin in
-``<build directory>/bbl.bin``. Flash this to the Linux partition on the
-card. (Note that this is a relocated version of the bbl binary used
+The hifive build process generates a fw_payload.bin in
+``<build directory>/sm.build/platform/generic/firmware/fw_payload.bin``. Flash this to the Linux partition on the
+card. (Note that this is a relocated version of the OpenSBI binary used
 for QEMU)
 
 
@@ -72,7 +72,7 @@ Example loading script
 ######################
 
 This is an example of a script to load the FSBL and BBL into a card
-for use on the HiFive. Be careful as this will repartition the target
+for use on the HiFive Unleashed. Be careful as this will repartition the target
 disk!
 
 You only need to reprogram the FSBL when modifying the first-stage
@@ -112,7 +112,7 @@ bootloader itself. (Likely never)
 
   echo "COPYING BBL to $PART_BBL"
   test -b $PART_BBL
-  dd if=bbl.bin of=$PART_BBL bs=4096
+  dd if=sm.build/platform/generic/firmware/fw_payload.bin of=$PART_BBL bs=4096
   echo "Copy done"
 
   echo "COPYING FSBL to $PART_FSBL"
@@ -122,7 +122,20 @@ bootloader itself. (Likely never)
   echo "Copy done"
 
 
-Running on the HiFive
+The CVA6 image uses a simplified structure due to bootloader ROM integration on the device:
+::
+  #!/bin/bash
+
+  set -e
+  
+  # format disk
+  sgdisk --clear --new=1:2048:67583 --new=2 --typecode=1:3000 --typecode=2:8300 /dev/sdc
+
+  # flash image
+  dd if=sm.build/platform/generic/firmware/fw_payload.bin  of=/dev/sdc1 status=progress oflag=sync bs=1M
+
+
+Running on the HiFive / CVA6
 ---------------------
 
 The needed driver, bins, etc are included in the buildroot image.
