@@ -24,7 +24,7 @@ After you setup the repository, you can run the following commands to build Keys
 
   mkdir <build directory>
   cd <build directory>
-  cmake .. -DLINUX_SIFIVE=y // HiFive, for CVA6: -Dcva6=y
+  cmake .. -DLINUX_SIFIVE=y // for CVA6: set environment var first: export BUILD_ROOT=<absolute path to build directory>, then run: cmake .. -Dcva6=y
   make
   make image
 
