@@ -22,7 +22,7 @@ You must have a completed build of the sdk, qemu, and other components
 outlined in :doc:`Quick Start <../Running-Keystone-with-QEMU>`.
 
 Set ``PATH`` to include RISC-V tools and ``KEYSTONE_SDK_DIR`` to point the
-absolute path to ``sdk`` directory.
+absolute path to ``/keystone/sdk/build64/`` directory.
 
 First Build
 -----------
@@ -109,7 +109,7 @@ enclave, copy the package into the overlay directory, and then do
 Deploying Enclave
 ------------------------------
 
-Boot the machine with QEMU.
+Boot the machine with QEMU. Login as ``root`` with the password ``sifive``.
 
 ::
 

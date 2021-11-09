@@ -6,14 +6,14 @@ board (referred to as HiFive for the rest of this document) with an
 FU540 chip as well as the [CVA6 Core](https://github.com/openhwgroup/cva6) from ETH Zurich, which can also be flashed onto a Genesis 2 board for development.
 
 
-Building Keystone 
+Building Keystone
 ----------------------------------------
 
 Building for the HiFive is straight-forward.
 First, clone the Keystone repository in the **manager instance**.
 
 ::
-  
+
   git clone https://github.com/keystone-enclave/keystone
 
 Follow :doc:`QEMU-Setup-Repository` to setup the repository.
@@ -21,7 +21,7 @@ Follow :doc:`QEMU-Setup-Repository` to setup the repository.
 After you setup the repository, you can run the following commands to build Keystone.
 
 ::
-  
+
   mkdir <build directory>
   cd <build directory>
   cmake .. -DLINUX_SIFIVE=y // HiFive, for CVA6: -Dcva6=y
@@ -33,10 +33,8 @@ SiFive-compatible Linux and SM. For the CVA6 core, you should replace the flag w
 This includes some patches for DTB compatibility.
 Also, the build will forcibly use initramfs for a simpler deployment.
 
-Once you have built the image, you will see ``sm.build/platform/generic/firmware/fw_payload.bin`` under your
-build directory.
-
-Separately, ``make image`` will also generate ``fw_payload.bin`` under your build directory.
+Once you have built the image, you will see
+``sm.build/platform/generic/firmware/fw_payload.bin`` under your build directory.
 This is the file that you want to reflash the SD card with.
 
 You can also boot QEMU machine with the image using ``./scripts/run-qemu.sh``.
@@ -72,7 +70,7 @@ Example loading script
 ######################
 
 This is an example of a script to load the FSBL and BBL into a card
-for use on the HiFive Unleashed. Be careful as this will repartition the target
+for use on the HiFive. Be careful as this will repartition the target
 disk!
 
 You only need to reprogram the FSBL when modifying the first-stage
@@ -122,20 +120,7 @@ bootloader itself. (Likely never)
   echo "Copy done"
 
 
-The CVA6 image uses a simplified structure due to bootloader ROM integration on the device:
-::
-  #!/bin/bash
-
-  set -e
-  
-  # format disk
-  sgdisk --clear --new=1:2048:67583 --new=2 --typecode=1:3000 --typecode=2:8300 /dev/sdc
-
-  # flash image
-  dd if=sm.build/platform/generic/firmware/fw_payload.bin  of=/dev/sdc1 status=progress oflag=sync bs=1M
-
-
-Running on the HiFive / CVA6
+Running on the HiFive
 ---------------------
 
 The needed driver, bins, etc are included in the buildroot image.
@@ -166,4 +151,4 @@ Example
 ::
 
    insmod keystone-driver.ko
-   ./tests/tests.ke
+   ./tests.ke

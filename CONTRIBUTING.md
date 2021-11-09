@@ -90,12 +90,29 @@ For now, there is only one *latest* version. We don't support stable versions at
 
 # Call for Contribution
 
-We have several specific TODOs that need contribution.
-Any other contributions are very welcomed.
+There are a few things that needs to be done before we bring Keystone into real world.
 
-1. Better programming model for the enclaves in SDK (something like Google Asylo, Intel SGX SDK or even better)
-2. Integration with hardware memory encryption engine
-3. Better runtime supporting more system calls and dynamic library support
-4. More use-case applications
+## List of Projects
 
-For potential collaboration or large suggestions, please feel free to create an issue or contact us (keystone-leads@googlegroups.com).
+**Hardware** (Requirements are marked *)
+
+| Name | Type | Assigned | Description |
+|:--------|:-----|:---:|:------------|
+| *Silicon root of trust | development |  | Currently, Keystone only implements software-based root of trust simulated via early-stage bootloader (e.g., ZSBL). This lacks hardware-based protection of the keys and the certificate. OpenTitan is a potential open-source project that can be integrated with Keystone. |
+| *I/O protection | development | | SoCs needs to also enforce the memory isolation for peripheral devices. This can be done by RISC-V IOPMP standard, which is still WIP. Some companies have already came up with non-standard IOPMP on their chip. |
+| Interrupt Controller | development |  |Keystone doesn't have ability to allow enclaves to receive their own interrupts. This can be implemented on PLIC or CLIC interrupt controller. |
+| Crypto Accelerator | research, development | Gui Andrade| Cryptographic accelerators may speed up secure booting, measurement, and attestation. Also, this could potentially make software-based memory encryption practical (ongoing research by Gui Andrade) |
+| PMP Limitation | research |  | The limited number of PMP entries (e.g., 16) limits the number of concurrent enclaves, as well as some of research extensions (e.g., Elasticlave). A number of solutions have been proposed (e.g., sPMP of Penglai Enclave) as well. Faster hardware implementations or a better specification shall be explored. |
+
+**Software**  (Requirements are marked *)
+
+| Name | Type | Assigned | Description |
+|:--------|:-----|:---:|:------------|
+| System Call (`fork()`) | research, development| Dayeol Lee | `fork()` is one of the most tricky system calls to implement in TEEs. We are currently exploring secure, verified cloning of an enclave via snapshotting and post-init measurement (ongoing research by Dayeol Lee). This will improve start-up latency and resource utilization of numerous workloads (e.g., FaaS). |
+| *System Calls (I/O) | development |  | More I/O system calls must be handled in the runtime in order to support more legacy applications. |
+| Dynamic Loading | research, development | Cathy Lu | Currently, enclaves can only be statically initialized and should be completely loaded before the beginning of the execution. To support dynamic libraries in Keystone, we need to re-design how applications are loaded and also how the enclave verify the libraries after initialization. |
+|More off-the-shelf microkernels| development | | We are hoping to support more off-the-shelf microkernels other than seL4 so that one can easily port their specific application into Keystone enclave. |
+| *Concurrent Multithreading | research, development | Stephan Kaminsky | Enclaves can have multiple threads, but they can't run in parallel because we have no mechanism for an enclave to be aware of multiple harts. |
+| Embedded Device TEE | research, development | Alex Thomas | Embedded or IoT devices often do not have MMU or S-mode. Our security monitor interface needs to be general enough to support these chips. |
+| Toolings | development | | You can run unmodified application on Keystone, but you still need a bunch of tools like signature generator or edge-call development tools. |
+| Interop with TEE Open-Source frameworks | development | | Asylo, OP-TEE |

@@ -74,9 +74,11 @@ git submodule sync --recursive
 git submodule update --init --recursive
 
 # build SDK if not present
-if [ -z $KEYSTONE_SDK_DIR ]
+if [ ! -z $KEYSTONE_SDK_DIR ] && [ -e $KEYSTONE_SDK_DIR ]
 then
-  echo "KEYSTONE_SDK_DIR is not set. Installing from $(pwd)/sdk"
+  echo "KEYSTONE_SDK_DIR is set to $KEYSTONE_SDK_DIR and present. Skipping SDK installation."
+else
+  echo "KEYSTONE_SDK_DIR is not set or present. Installing from $(pwd)/sdk"
   export KEYSTONE_SDK_DIR=$(pwd)/sdk/build$BITS
   cd sdk
   mkdir -p build
@@ -88,7 +90,9 @@ then
 fi
 
 # update source.sh
-echo "export RISCV=$(pwd)/riscv${BITS}" > ./source.sh
+GCC_PATH=$(which riscv$BITS-unknown-linux-gnu-gcc)
+RISCV_DIR=$(dirname $(dirname $GCC_PATH))
+echo "export RISCV=$RISCV_DIR" > ./source.sh
 echo "export PATH=$RISCV/bin:\$PATH" >> ./source.sh
 echo "export KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR" >> ./source.sh
 

@@ -107,7 +107,6 @@ set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
 set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.elf)
 set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.bin)
-set(final_image ${CMAKE_BINARY_DIR}/firmware.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 
@@ -135,8 +134,16 @@ add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
 ## COMPONENT: buildroot
 ###############################################################################
 
-add_custom_command(OUTPUT ${overlay_root} COMMAND mkdir -p ${overlay_root})
 add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
+add_custom_command(DEPENDS ${overlay_dir}
+  OUTPUT ${overlay_root}
+  ${overlay_root}/.ssh/id_rsa ${overlay_root}/.ssh/id_rsa.pub
+  ${overlay_root}/.ssh/authorized_keys
+  COMMAND mkdir -p ${overlay_root}
+  COMMAND mkdir -p ${overlay_root}/.ssh
+  COMMAND ssh-keygen -C 'root@keystone' -t rsa -f ${overlay_root}/.ssh/id_rsa -N ''
+  COMMAND cp ${overlay_root}/.ssh/id_rsa.pub ${overlay_root}/.ssh/authorized_keys)
+
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
@@ -240,10 +247,10 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
 add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
-    CROSS_COMPILE=riscv${BITS}-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
-    PLATFORM_RISCV_ISA=${ISA} PLATFORM_RISCV_ABI=${ABI}
+  CROSS_COMPILE=riscv${BITS}-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
+  PLATFORM_RISCV_ISA=${ISA} PLATFORM_RISCV_ABI=${ABI}
   COMMENT "Building sm"
-)
+  )
 
 ###############################################################################
 ## COMPONENT: tests
@@ -252,16 +259,13 @@ set(example_wrkdir examples)
 add_subdirectory(sdk/examples ${example_wrkdir})
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 
-add_custom_target("tests" DEPENDS examples ${overlay_root}
-  COMMAND find ${example_wrkdir} -name "tests.ke" | xargs -I{} rsync {} ${overlay_root}
-  COMMENT "Copying example enclave packages"
-  )
+add_custom_target("tests" DEPENDS examples)
 
 ###############################################################################
 ## COMPONENT: image
 ###############################################################################
 
-add_custom_target("image-deps" DEPENDS "tests" "driver" ${overlay_root}
+add_custom_target("image-deps" DEPENDS "driver" ${overlay_root}
   COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
 )
 add_custom_target("image" DEPENDS "buildroot" "sm"
@@ -294,45 +298,36 @@ else()
 endif()
 
 # generate the qemu runscript, using the above options
-add_custom_command(OUTPUT ${scripts}/run-qemu.sh DEPENDS ${scripts}
-    WORKING_DIRECTORY ${scripts}
-    COMMAND echo "\
-      export HOST_PORT=\${HOST_PORT:=\"\$((3000 + RANDOM % 3000))\"}; \
-      echo \"**** Running QEMU SSH on port \${HOST_PORT} ****\"; \
-      export SMP=1; \
-      while [ \"\$1\" != \"\" ]; do if [ \"\$1\" = \"-debug\" ]; then echo \"**** GDB port \$((HOST_PORT + 1)) ****\"; DEBUG=\"-gdb tcp::\$((HOST_PORT + 1)) -S -d in_asm -D debug.log\"; fi; if [ \"\$1\" = \"-smp\" ]; then SMP=\"\$2\"; shift; fi; shift; done; \
-      ${qemu_system} \
-      \$DEBUG \
-      -m 2G \
-      -nographic \
-      -machine virt \
-      -bios ${bootrom_wrkdir}/bootrom.bin \
-      -kernel ${fw_elf} \
-      ${extra_qemu_options} \
-      -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::\$\{HOST_PORT\}-:22 \
-      -device virtio-net-device,netdev=net0 \
-      -device virtio-rng-pci \
-      -smp $SMP" > run-qemu.sh
-      VERBATIM
-    COMMAND
-      chmod +x run-qemu.sh
-  )
-add_custom_command(OUTPUT ${scripts}/test-qemu.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
-  COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/test-qemu.sh ${scripts})
-add_custom_command(OUTPUT ${scripts}/travis.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
+string(RANDOM LENGTH 4 ALPHABET 0123456789 qemu_ssh_port)
+math(EXPR qemu_ssh_port "3000 + ${qemu_ssh_port}%3000")
+configure_file(
+  ${CMAKE_SOURCE_DIR}/scripts/run-qemu.sh.in
+  ${scripts}/run-qemu.sh
+  @ONLY)
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/scripts/test-qemu.sh.in
+  ${scripts}/test-qemu.sh
+  @ONLY)
+
+add_custom_command(OUTPUT ${scripts}/travis.sh
+  DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/travis.sh ${scripts})
-add_custom_command(OUTPUT ${scripts}/gdb.sh DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
+add_custom_command(OUTPUT ${scripts}/gdb.sh
+  DEPENDS ${CMAKE_SOURCE_DIR}/scripts ${scripts}
   COMMAND cp ${CMAKE_SOURCE_DIR}/scripts/gdb.sh ${scripts})
 
 add_custom_target(
   "tools" ALL
-  DEPENDS ${scripts} ${scripts}/run-qemu.sh ${scripts}/test-qemu.sh ${scripts}/travis.sh ${scripts}/gdb.sh
+  DEPENDS ${scripts} ${scripts}/run-qemu.sh ${scripts}/test-qemu.sh
+  ${scripts}/travis.sh ${scripts}/gdb.sh
   COMMENT "Generating scripts and tools"
 )
 
 add_custom_target(
   "run-tests"
-  DEPENDS "tools" "image"
+  DEPENDS "tests" "tools" "image" "${fw_bin}"
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   COMMAND
     ./scripts/travis.sh ${CMAKE_SOURCE_DIR}/tests
   COMMENT "Running tests"
