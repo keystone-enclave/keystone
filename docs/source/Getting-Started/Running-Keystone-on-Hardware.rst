@@ -120,7 +120,20 @@ bootloader itself. (Likely never)
   echo "Copy done"
 
 
-Running on the HiFive
+The CVA6 image uses a simplified structure due to bootloader ROM integration on the device:
+::
+  #!/bin/bash
+
+  set -e
+
+  # format disk
+  sgdisk --clear --new=1:2048:67583 --new=2 --typecode=1:3000 --typecode=2:8300 /dev/sdc
+
+  # flash image
+  dd if=sm.build/platform/generic/firmware/fw_payload.bin  of=/dev/sdc1 status=progress oflag=sync bs=1M
+
+
+Running on the HiFive / CVA6
 ---------------------
 
 The needed driver, bins, etc are included in the buildroot image.
