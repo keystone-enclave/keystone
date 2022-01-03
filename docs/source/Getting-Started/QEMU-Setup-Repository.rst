@@ -3,8 +3,7 @@ Setup
 
 In this stage, you will (1) install RISC-V toolchain, (2) checkout git submodules, and (3) Install
 SDK.
-You can either quickly setup everything (:ref:`QEMUSetupQuick`) or manually setup
-(:ref:`QEMUSetupManual`).
+You can either quickly setup everything (:ref:`QEMUSetupQuick`) or manually setup.
 
 .. _QEMUSetupQuick:
 
