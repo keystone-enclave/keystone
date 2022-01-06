@@ -15,6 +15,9 @@ Welcome to Keystone Enclave's documentation!
    Getting-Started/index
    Getting-Started/How-Keystone-Works/index
    Getting-Started/How-to-Debug
+   Getting-Started/Running-Keystone-on-CVA6
+   Getting-Started/Running-Keystone-on-RV32
+   Getting-Started/Running-Keystone-on-Unleashed
    Getting-Started/Tutorials/index
    Getting-Started/FAQ
 
@@ -35,7 +38,6 @@ Welcome to Keystone Enclave's documentation!
    :caption: Building Keystone Components:
    :numbered:
 
-   Building-Components/Security-Monitor-Platform-Build
    Building-Components/Eyrie
 
 

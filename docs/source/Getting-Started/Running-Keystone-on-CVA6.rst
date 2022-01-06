@@ -35,7 +35,7 @@ Setting up the CVA6
 ---------------------
 
 FPGA Emulation / Software Simulation
-################
+####################################
 
 Keystone can either be simulated (https://github.com/openhwgroup/cva6#memory-preloading) or FPGA emulated (https://github.com/openhwgroup/cva6#corev-apu-fpga-emulation) on the Xilinx Genesys 2 board 
 (https://digilent.com/reference/programmable-logic/genesys-2/reference-manual)
@@ -60,16 +60,16 @@ bootloader itself. (Likely never)
 
 
 The CVA6 image uses a simplified structure due to bootloader ROM integration on the device:
-::
-  #!/bin/bash
+:: code-block:: bash
+#!/bin/bash
 
-  set -e
+set -e
 
-  # format disk
-  sgdisk --clear --new=1:2048:67583 --new=2 --typecode=1:3000 --typecode=2:8300 /dev/sdc
+# format disk
+sgdisk --clear --new=1:2048:67583 --new=2 --typecode=1:3000 --typecode=2:8300 /dev/sdc
 
-  # flash image
-  dd if=sm.build/platform/generic/firmware/fw_payload.bin  of=/dev/sdc1 status=progress oflag=sync bs=1M
+# flash image
+dd if=sm.build/platform/generic/firmware/fw_payload.bin  of=/dev/sdc1 status=progress oflag=sync bs=1M
 
 
 Running on the CVA6
