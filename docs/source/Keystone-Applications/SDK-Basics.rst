@@ -47,9 +47,9 @@ The best way to see how to write a simple application is to look a the
 
 A full system for using a Keystone enclave consists of possibly
 writing 3 things:
- - Host (userspace, outside enclave, untrusted)
- - Runtime (system level, inside enclave, trusted) - most users will not modify this
- - Enclave app (userspace, inside enclave, trusted)
+- Host (userspace, outside enclave, untrusted)
+- Runtime (system level, inside enclave, trusted) - most users will not modify this
+- Enclave app (userspace, inside enclave, trusted)
 
 Most users will only need to write a simple Host, and use the Eyrie
 runtime. The bulk of the work is done in the enclave application, and
