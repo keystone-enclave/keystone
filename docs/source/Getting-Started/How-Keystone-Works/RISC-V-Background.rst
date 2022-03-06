@@ -70,7 +70,7 @@ Unlike microcode, we can build M-mode software in existing programming languages
 Since the SM is entirely software, it is possible to patch bugs or vulnerabilities without involving hardware-specific updates.
 
 **Verifiability**:
-In general, software is easier to formally verify then hardware.
+In general, software is easier to formally verify than hardware.
 
 Physical Memory Protection (PMP)
 -----------------------------------
