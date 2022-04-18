@@ -33,7 +33,7 @@ typedef unsigned char byte;
 extern byte sanctum_dev_public_key[32];
 extern byte sanctum_dev_secret_key[64];
 unsigned int sanctum_sm_size = 0x1ff000;
-extern byte sanctum_sm_hash[64];
+extern byte sanctum_sm_hash[32];
 extern byte sanctum_sm_public_key[32];
 extern byte sanctum_sm_secret_key[64];
 extern byte sanctum_sm_signature[64];
@@ -93,10 +93,10 @@ void bootloader() {
   ed25519_create_keypair(sanctum_sm_public_key, sanctum_sm_secret_key, scratchpad);
 
   // Endorse the SM
-  memcpy(scratchpad, sanctum_sm_hash, 64);
-  memcpy(scratchpad + 64, sanctum_sm_public_key, 32);
+  memcpy(scratchpad, sanctum_sm_hash, 32);
+  memcpy(scratchpad + 32, sanctum_sm_public_key, 32);
   // Sign (H_SM, PK_SM) with SK_D
-  ed25519_sign(sanctum_sm_signature, scratchpad, 64 + 32, sanctum_dev_public_key, sanctum_dev_secret_key);
+  ed25519_sign(sanctum_sm_signature, scratchpad, 32 + 32, sanctum_dev_public_key, sanctum_dev_secret_key);
 
   // Clean up
   // Erase SK_D
