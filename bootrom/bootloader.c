@@ -93,8 +93,13 @@ void bootloader() {
   ed25519_create_keypair(sanctum_sm_public_key, sanctum_sm_secret_key, scratchpad);
 
   // Endorse the SM
+<<<<<<< HEAD
   memcpy(scratchpad, sanctum_sm_hash, 32);
   memcpy(scratchpad + 32, sanctum_sm_public_key, 32);
+=======
+  memcpy2(scratchpad, sanctum_sm_hash, 32);
+  memcpy2(scratchpad + 32, sanctum_sm_public_key, 32);
+>>>>>>> dev-rohit-sha256-fix
   // Sign (H_SM, PK_SM) with SK_D
   ed25519_sign(sanctum_sm_signature, scratchpad, 32 + 32, sanctum_dev_public_key, sanctum_dev_secret_key);
 
