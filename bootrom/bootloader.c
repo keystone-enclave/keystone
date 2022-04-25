@@ -25,7 +25,7 @@
 /*
   provides memcpy, memset
 */
-
+#include "sha256/sha256.h"
 
 typedef unsigned char byte;
 
@@ -33,7 +33,7 @@ typedef unsigned char byte;
 extern byte sanctum_dev_public_key[32];
 extern byte sanctum_dev_secret_key[64];
 unsigned int sanctum_sm_size = 0x1ff000;
-extern byte sanctum_sm_hash[64];
+extern byte sanctum_sm_hash[32];
 extern byte sanctum_sm_public_key[32];
 extern byte sanctum_sm_secret_key[64];
 extern byte sanctum_sm_signature[64];
@@ -49,7 +49,7 @@ void bootloader() {
 	//*sanctum_sm_size = 0x200;
   // Reserve stack space for secrets
   byte scratchpad[128];
-  sha3_ctx_t hash_ctx;
+  SHA256_CTX hash_ctx;
 
   // TODO: on real device, copy boot image from memory. In simulator, HTIF writes boot image
   // ... SD card to beginning of memory.
@@ -79,29 +79,28 @@ void bootloader() {
   //ed25519_create_keypair(sanctum_dev_public_key, sanctum_dev_secret_key, scratchpad);
 
   // Measure SM
-  sha3_init(&hash_ctx, 64);
-  sha3_update(&hash_ctx, (void*)DRAM_BASE, sanctum_sm_size);
-  sha3_final(sanctum_sm_hash, &hash_ctx);
+  sha256_init(&hash_ctx);
+  sha256_update(&hash_ctx, (void*)DRAM_BASE, sanctum_sm_size);
+  sha256_final(&hash_ctx, sanctum_sm_hash);
 
   // Combine SK_D and H_SM via a hash
   // sm_key_seed <-- H(SK_D, H_SM), truncate to 32B
-  sha3_init(&hash_ctx, 64);
-  sha3_update(&hash_ctx, sanctum_dev_secret_key, sizeof(*sanctum_dev_secret_key));
-  sha3_update(&hash_ctx, sanctum_sm_hash, sizeof(*sanctum_sm_hash));
-  sha3_final(scratchpad, &hash_ctx);
+  sha256_init(&hash_ctx);
+  sha256_update(&hash_ctx, sanctum_dev_secret_key, sizeof(*sanctum_dev_secret_key));
+  sha256_update(&hash_ctx, sanctum_sm_hash, sizeof(*sanctum_sm_hash));
+  sha256_final(&hash_ctx, scratchpad);
   // Derive {SK_D, PK_D} (device keys) from the first 32 B of the hash (NIST endorses SHA512 truncation as safe)
   ed25519_create_keypair(sanctum_sm_public_key, sanctum_sm_secret_key, scratchpad);
 
   // Endorse the SM
-  memcpy(scratchpad, sanctum_sm_hash, 64);
-  memcpy(scratchpad + 64, sanctum_sm_public_key, 32);
+  memcpy2(scratchpad, sanctum_sm_hash, 32);
+  memcpy2(scratchpad + 32, sanctum_sm_public_key, 32);
   // Sign (H_SM, PK_SM) with SK_D
-  ed25519_sign(sanctum_sm_signature, scratchpad, 64 + 32, sanctum_dev_public_key, sanctum_dev_secret_key);
+  ed25519_sign(sanctum_sm_signature, scratchpad, 32 + 32, sanctum_dev_public_key, sanctum_dev_secret_key);
 
   // Clean up
   // Erase SK_D
-  memset((void*)sanctum_dev_secret_key, 0, sizeof(*sanctum_dev_secret_key));
-
+  memset2((void*)sanctum_dev_secret_key, 0, sizeof(*sanctum_sm_secret_key));
   // caller will clean core state and memory (including the stack), and boot.
   return;
 }

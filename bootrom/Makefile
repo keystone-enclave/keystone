@@ -8,7 +8,7 @@ CFLAGS = \
 	-nostdlib -nostartfiles -fno-common -std=gnu11 \
 	-static \
 	-fPIC \
-	-O2 -Wall
+	-O1 -Wall
 O ?=.
 
 # ^ consider taking out -g -Og and putting in -O2
@@ -28,7 +28,8 @@ bootrom_sources = \
 	./bootloader.S \
 	./bootloader.c \
 	./ed25519/*.c \
-	./sha3/*.c
+	./sha3/*.c \
+	./sha256/*.c \
 
 %.elf: $(bootrom_sources) bootloader.lds
 	$(CC) $(CFLAGS) -I./ -L . -T bootloader.lds -o $@ $(bootrom_sources)
