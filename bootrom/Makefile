@@ -30,10 +30,6 @@ bootrom_sources = \
 	./ed25519/*.c \
 	./sha3/*.c \
 	./sha256/*.c \
-<<<<<<< HEAD
-	./string.c
-=======
->>>>>>> dev-rohit-sha256-fix
 
 %.elf: $(bootrom_sources) bootloader.lds
 	$(CC) $(CFLAGS) -I./ -L . -T bootloader.lds -o $@ $(bootrom_sources)
