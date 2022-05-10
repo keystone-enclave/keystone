@@ -40,7 +40,7 @@ Copy this into the buildroot overlay directory
 
 ::
 
-  cp examples/hello-native/hello-native.ke overlay
+  cp examples/hello-native/hello-native.ke overlay/root
 
 Now, running ``make image`` will
 rebuild the qemu image to include our ``hello-native`` packaged binary.
