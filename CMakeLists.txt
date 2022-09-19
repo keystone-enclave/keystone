@@ -68,7 +68,7 @@ set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
-set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu)
+set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
 mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
@@ -120,7 +120,8 @@ add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} qemu_patches)
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
 add_custom_command(OUTPUT ${qemu_system}
   COMMAND $(MAKE) -C ${qemu_srcdir}
-  DEPENDS ${qemu_wrkdir}/config-host.mak ${qemu_patches}
+  DEPENDS ${qemu_wrkdir}/config-host.mak
+#${qemu_patches}
   COMMENT "Building QEMU"
 )
 add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
