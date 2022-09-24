@@ -22,6 +22,8 @@
 /* IMPORTANT: This code assumes Sv39 */
 #include "riscv64.h"
 
+#define PAGE_UP(addr)	(((addr)+((PAGE_SIZE)-1))&(~((PAGE_SIZE)-1)))
+
 typedef uintptr_t vaddr_t;
 typedef uintptr_t paddr_t;
 
