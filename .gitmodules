@@ -1,9 +1,6 @@
 [submodule "riscv-gnu-toolchain"]
 	path = riscv-gnu-toolchain
 	url = https://github.com/riscv/riscv-gnu-toolchain
-[submodule "sdk"]
-	path = sdk
-	url = https://github.com/keystone-enclave/keystone-sdk
 [submodule "buildroot"]
 	path = buildroot
 	url = https://github.com/buildroot/buildroot.git
