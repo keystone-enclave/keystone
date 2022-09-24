@@ -105,8 +105,8 @@ set(linux_symvers ${linux_wrkdir}/Modules.symvers)
 set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
-set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.elf)
-set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.bin)
+set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
+set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 
@@ -182,18 +182,18 @@ add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "boo
 
 add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
   COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
+  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv olddefconfig
   COMMENT "Configuring linux"
 )
 add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
 
-if(firesim)
-  add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
-elseif(sifive)
-  add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} linux_patches)
-else()
-  add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
-endif()
+# if(firesim)
+#   add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
+# elseif(sifive)
+#   add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} linux_patches)
+# else()
+#   add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
+# endif()
 
 if(initramfs)
   # linux-initramfs

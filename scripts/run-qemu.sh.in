@@ -25,8 +25,8 @@ done;
  -m 2G \
  -nographic \
  -machine virt \
- -bios @bootrom_wrkdir@/bootrom.bin \
- -kernel @fw_elf@ \
+ -bios @fw_elf@ \
+ -kernel @linux_image@ \
  @extra_qemu_options@ \
  -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::${HOST_PORT}-:22 \
  -device virtio-net-device,netdev=net0 \
