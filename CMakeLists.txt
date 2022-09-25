@@ -11,7 +11,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 macro(add_patch submodule patch working_directory patch_list)
   add_custom_command(OUTPUT ${patch}.applied
     WORKING_DIRECTORY ${working_directory}
-    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch} || true
+    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch}
     COMMAND touch ${CMAKE_BINARY_DIR}/${patch}.applied
     COMMENT "Applying ${patch}")
   list(APPEND ${patch_list} ${patch}.applied)
@@ -115,7 +115,7 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 ###############################################################################
 
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
-add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} qemu_patches)
+add_patch("qemu" "qemu-rom.patch" ${qemu_srcdir} qemu_patches)
 
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
 add_custom_command(OUTPUT ${qemu_system}
@@ -292,7 +292,6 @@ if(initramfs)
   set(extra_qemu_options "")
 else()
   set(extra_qemu_options "\
-      -append \"console=ttyS0 ro root=/dev/vda\" \
       -drive file=${buildroot_wrkdir}/images/rootfs.ext2,format=raw,id=hd0 \
       -device virtio-blk-device,drive=hd0 \
   ")

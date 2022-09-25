@@ -24,7 +24,7 @@ done;
  $DEBUG \
  -m 2G \
  -nographic \
- -machine virt \
+ -machine virt,rom=@bootrom_wrkdir@/bootrom.bin \
  -bios @fw_elf@ \
  -kernel @linux_image@ \
  @extra_qemu_options@ \
