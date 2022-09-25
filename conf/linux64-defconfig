@@ -252,7 +252,8 @@ CONFIG_SCHED_HRTICK=y
 #
 # Boot options
 #
-CONFIG_CMDLINE=""
+CONFIG_CMDLINE_BOOL=y
+CONFIG_CMDLINE="console=ttyS0 ro root=/dev/vda"
 # end of Boot options
 
 #
