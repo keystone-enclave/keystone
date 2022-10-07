@@ -1,4 +1,4 @@
-#include "elf.h"
+#include "env.h"
 #include "tmplib/uaccess.h"
 #include "rt_util.h"
 #include "string.h"
@@ -23,20 +23,21 @@
  *******/
 
 // How many AUX things are we actually defining? Add one for terminator
-#define AUXV_COUNT 11
+#define AUXV_COUNT 13
 
 // Size in number-of-words (argc, argv, null_env, auxv, randombytes
 #define SIZE_OF_SETUP (1+1+1+(2*AUXV_COUNT) + 2)
 
 // We return the new sp
-void* setup_start(void* _sp){
+void* setup_start(void* _sp, ELF(Ehdr) *hdr) {
   // Staging for eventual stack data
 
 
   void** sp = (void**)_sp;
 
 #ifdef ENV_SETUP
-
+  int h;
+  ELF(Phdr) *phdr;
   void* staging[SIZE_OF_SETUP];
 
   sp = sp - SIZE_OF_SETUP;
@@ -80,6 +81,19 @@ void* setup_start(void* _sp){
   auxv[i++] = 1;
   auxv[i++] = AT_EUID;
   auxv[i++] = 1;
+
+  //find virtual base
+  phdr = (void *) hdr + hdr->e_phoff;
+  for(h = 0; h < hdr->e_phnum; h++) {
+    if(phdr[h].p_type == PT_LOAD && phdr[h].p_offset == 0) {
+      auxv[i++] = AT_PHDR;
+      auxv[i++] = phdr[h].p_vaddr + hdr->e_phoff;
+      auxv[i++] = AT_PHNUM;
+      auxv[i++] = hdr->e_phnum;
+      break;
+    }
+  }
+
   auxv[i++] = AT_NULL;
   auxv[i++] = 0;
   // should be that i == AUXV_COUNT*2
@@ -90,8 +104,6 @@ void* setup_start(void* _sp){
   //Assign the ptr
   *at_random_ptr = &sp[i+3];
   i+=2; // fixup i
-
-  // We don't do PHDR or PHNUM etc right now, TLS might need it though
 
   // Copy staging to userstack
   copy_to_user(sp, staging, SIZE_OF_SETUP*sizeof(void*));

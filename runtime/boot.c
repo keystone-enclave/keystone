@@ -82,7 +82,7 @@ init_freemem()
 
 /* initialize user stack */
 void
-init_user_stack_and_env()
+init_user_stack_and_env(ELF(Ehdr) *hdr)
 {
   void* user_sp = (void*) EYRIE_USER_STACK_START;
 
@@ -101,7 +101,7 @@ init_user_stack_and_env()
 #endif // USE_FREEMEM
 
   // setup user stack env/aux
-  user_sp = setup_start(user_sp);
+  user_sp = setup_start(user_sp, hdr);
 
   // prepare user sp
   csr_write(sscratch, user_sp);
@@ -155,7 +155,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 #endif /* USE_FREEMEM */
 
   /* initialize user stack */
-  init_user_stack_and_env();
+  init_user_stack_and_env((ELF(Ehdr) *) __va(user_paddr));
 
   /* set trap vector */
   csr_write(stvec, &encl_trap_handler);
