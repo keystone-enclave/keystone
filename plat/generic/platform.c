@@ -16,18 +16,18 @@
 #include <sbi_utils/fdt/fdt_domain.h>
 #include <sbi_utils/fdt/fdt_fixup.h>
 #include <sbi_utils/fdt/fdt_helper.h>
+#include <sbi_utils/fdt/fdt_pmu.h>
 #include <sbi_utils/irqchip/fdt_irqchip.h>
+#include <sbi_utils/irqchip/imsic.h>
 #include <sbi_utils/serial/fdt_serial.h>
 #include <sbi_utils/timer/fdt_timer.h>
 #include <sbi_utils/ipi/fdt_ipi.h>
 #include <sbi_utils/reset/fdt_reset.h>
 #include "sm.h"
 
-extern const struct platform_override sifive_fu540;
-
-static const struct platform_override *special_platforms[] = {
-	&sifive_fu540,
-};
+/* List of platform override modules generated at compile time */
+extern const struct platform_override *platform_override_modules[];
+extern unsigned long platform_override_modules_size;
 
 static const struct platform_override *generic_plat = NULL;
 static const struct fdt_match *generic_plat_match = NULL;
@@ -38,8 +38,8 @@ static void fw_platform_lookup_special(void *fdt, int root_offset)
 	const struct platform_override *plat;
 	const struct fdt_match *match;
 
-	for (pos = 0; pos < array_size(special_platforms); pos++) {
-		plat = special_platforms[pos];
+	for (pos = 0; pos < platform_override_modules_size; pos++) {
+		plat = platform_override_modules[pos];
 		if (!plat->match_table)
 			continue;
 
@@ -54,6 +54,7 @@ static void fw_platform_lookup_special(void *fdt, int root_offset)
 }
 
 extern struct sbi_platform platform;
+static bool platform_has_mlevel_imsic = false;
 static u32 generic_hart_index2id[SBI_HARTMASK_MAX_BITS] = { 0 };
 
 /*
@@ -86,7 +87,7 @@ unsigned long fw_platform_init(unsigned long arg0, unsigned long arg1,
 
 	model = fdt_getprop(fdt, root_offset, "model", &len);
 	if (model)
-		sbi_strncpy(platform.name, model, sizeof(platform.name));
+		sbi_strncpy(platform.name, model, sizeof(platform.name) - 1);
 
 	if (generic_plat && generic_plat->features)
 		platform.features = generic_plat->features(generic_plat_match);
@@ -103,10 +104,15 @@ unsigned long fw_platform_init(unsigned long arg0, unsigned long arg1,
 		if (SBI_HARTMASK_MAX_BITS <= hartid)
 			continue;
 
+		if (!fdt_node_is_enabled(fdt, cpu_offset))
+			continue;
+
 		generic_hart_index2id[hart_count++] = hartid;
 	}
 
 	platform.hart_count = hart_count;
+
+	platform_has_mlevel_imsic = fdt_check_imsic_mlevel(fdt);
 
 	/* Return original FDT pointer */
 	return arg1;
@@ -116,20 +122,19 @@ fail:
 		wfi();
 }
 
+static int generic_nascent_init(void)
+{
+	if (platform_has_mlevel_imsic)
+		imsic_local_irqchip_init();
+	return 0;
+}
+
 static int generic_early_init(bool cold_boot)
 {
-	int rc;
-
-	if (generic_plat && generic_plat->early_init) {
-		rc = generic_plat->early_init(cold_boot, generic_plat_match);
-		if (rc)
-			return rc;
-	}
-
-	if (!cold_boot)
+	if (!generic_plat || !generic_plat->early_init)
 		return 0;
 
-	return fdt_reset_init();
+	return generic_plat->early_init(cold_boot, generic_plat_match);
 }
 
 static int generic_final_init(bool cold_boot)
@@ -137,18 +142,21 @@ static int generic_final_init(bool cold_boot)
 	void *fdt;
 	int rc;
 
+	if (cold_boot)
+		fdt_reset_init();
+
 	if (generic_plat && generic_plat->final_init) {
 		rc = generic_plat->final_init(cold_boot, generic_plat_match);
 		if (rc)
 			return rc;
 	}
 
-  sm_init(cold_boot);
+	sm_init(cold_boot);
 
 	if (!cold_boot)
 		return 0;
 
-	fdt = sbi_scratch_thishart_arg1_ptr();
+	fdt = fdt_get_address();
 
 	fdt_cpu_fixup(fdt);
 	fdt_fixups(fdt);
@@ -161,6 +169,29 @@ static int generic_final_init(bool cold_boot)
 	}
 
 	return 0;
+}
+
+static int generic_vendor_ext_check(long extid)
+{
+	if (generic_plat && generic_plat->vendor_ext_check)
+		return generic_plat->vendor_ext_check(extid,
+						      generic_plat_match);
+
+	return 0;
+}
+
+static int generic_vendor_ext_provider(long extid, long funcid,
+				       const struct sbi_trap_regs *regs,
+				       unsigned long *out_value,
+				       struct sbi_trap_info *out_trap)
+{
+	if (generic_plat && generic_plat->vendor_ext_provider) {
+		return generic_plat->vendor_ext_provider(extid, funcid, regs,
+							 out_value, out_trap,
+							 generic_plat_match);
+	}
+
+	return SBI_ENOTSUPP;
 }
 
 static void generic_early_exit(void)
@@ -177,7 +208,7 @@ static void generic_final_exit(void)
 
 static int generic_domains_init(void)
 {
-	return fdt_domains_populate(sbi_scratch_thishart_arg1_ptr());
+	return fdt_domains_populate(fdt_get_address());
 }
 
 static u64 generic_tlbr_flush_limit(void)
@@ -187,49 +218,52 @@ static u64 generic_tlbr_flush_limit(void)
 	return SBI_PLATFORM_TLB_RANGE_FLUSH_LIMIT_DEFAULT;
 }
 
-static int generic_system_reset_check(u32 reset_type, u32 reset_reason)
+static int generic_pmu_init(void)
 {
-	if (generic_plat && generic_plat->system_reset_check)
-		return generic_plat->system_reset_check(reset_type,
-							reset_reason,
-							generic_plat_match);
-	return fdt_system_reset_check(reset_type, reset_reason);
+	return fdt_pmu_setup(fdt_get_address());
 }
 
-static void generic_system_reset(u32 reset_type, u32 reset_reason)
+static uint64_t generic_pmu_xlate_to_mhpmevent(uint32_t event_idx,
+					       uint64_t data)
 {
-	if (generic_plat && generic_plat->system_reset) {
-		generic_plat->system_reset(reset_type, reset_reason,
-					   generic_plat_match);
-		return;
+	uint64_t evt_val = 0;
+
+	/* data is valid only for raw events and is equal to event selector */
+	if (event_idx == SBI_PMU_EVENT_RAW_IDX)
+		evt_val = data;
+	else {
+		/**
+		 * Generic platform follows the SBI specification recommendation
+		 * i.e. zero extended event_idx is used as mhpmevent value for
+		 * hardware general/cache events if platform does't define one.
+		 */
+		evt_val = fdt_pmu_get_select_value(event_idx);
+		if (!evt_val)
+			evt_val = (uint64_t)event_idx;
 	}
 
-	fdt_system_reset(reset_type, reset_reason);
+	return evt_val;
 }
 
 const struct sbi_platform_operations platform_ops = {
+	.nascent_init		= generic_nascent_init,
 	.early_init		= generic_early_init,
 	.final_init		= generic_final_init,
 	.early_exit		= generic_early_exit,
 	.final_exit		= generic_final_exit,
 	.domains_init		= generic_domains_init,
-	.console_putc		= fdt_serial_putc,
-	.console_getc		= fdt_serial_getc,
 	.console_init		= fdt_serial_init,
 	.irqchip_init		= fdt_irqchip_init,
 	.irqchip_exit		= fdt_irqchip_exit,
-	.ipi_send		= fdt_ipi_send,
-	.ipi_clear		= fdt_ipi_clear,
 	.ipi_init		= fdt_ipi_init,
 	.ipi_exit		= fdt_ipi_exit,
+	.pmu_init		= generic_pmu_init,
+	.pmu_xlate_to_mhpmevent = generic_pmu_xlate_to_mhpmevent,
 	.get_tlbr_flush_limit	= generic_tlbr_flush_limit,
-	.timer_value		= fdt_timer_value,
-	.timer_event_stop	= fdt_timer_event_stop,
-	.timer_event_start	= fdt_timer_event_start,
 	.timer_init		= fdt_timer_init,
 	.timer_exit		= fdt_timer_exit,
-	.system_reset_check	= generic_system_reset_check,
-	.system_reset		= generic_system_reset,
+	.vendor_ext_check	= generic_vendor_ext_check,
+	.vendor_ext_provider	= generic_vendor_ext_provider,
 };
 
 struct sbi_platform platform = {
