@@ -1,0 +1,69 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+# prebuilt docker images with toolchain
+executors:
+  setup-rv64gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv64gc
+  setup-rv32gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv32gc
+
+
+commands:
+  update-riscv-toolchain-path:
+    steps:
+      - run: echo 'export PATH=/keystone/riscv64/bin:/keystone/riscv32/bin:$PATH' >> $BASH_ENV
+  setup-test:
+    steps:
+      - run:
+          command: |
+              /keystone/sdk/tests/scripts/setup_test.sh
+              apt -y update
+              apt -y install python3-pip clang-format
+              pip3 install cpplint
+
+jobs:
+  build-install-examples-test-format-64:
+    executor: setup-rv64gc
+    working_directory: /keystone/sdk
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - setup-test
+      - run:
+          name: "Build, install, build examples, test, and format check (rv64)"
+          command: |
+              mkdir build64
+              cd build64
+              export KEYSTONE_SDK_DIR=$(pwd)
+              cmake ..
+              make
+              make install
+              make examples
+              make check
+              make uninstall
+              make format
+  build-install-examples-32:
+    executor: setup-rv32gc
+    working_directory: /keystone/sdk
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - run:
+          name: "Build, install, build examples (rv32)"
+          command: |
+              mkdir build32
+              cd build32
+              export KEYSTONE_SDK_DIR=$(pwd)
+              cmake .. -DRISCV32=y
+              make
+              make install
+              make examples
+
+workflows:
+  build-and-test:
+    jobs:
+      - build-install-examples-test-format-64
+      - build-install-examples-32

@@ -11,7 +11,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 macro(add_patch submodule patch working_directory patch_list)
   add_custom_command(OUTPUT ${patch}.applied
     WORKING_DIRECTORY ${working_directory}
-    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch} || true
+    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch}
     COMMAND touch ${CMAKE_BINARY_DIR}/${patch}.applied
     COMMENT "Applying ${patch}")
   list(APPEND ${patch_list} ${patch}.applied)
@@ -68,7 +68,7 @@ set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
-set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu)
+set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
 mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
@@ -105,8 +105,8 @@ set(linux_symvers ${linux_wrkdir}/Modules.symvers)
 set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
-set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.elf)
-set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_payload.bin)
+set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
+set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 
@@ -115,12 +115,13 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 ###############################################################################
 
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
-add_patch("qemu" "qemu-secure-boot.patch" ${qemu_srcdir} qemu_patches)
+add_patch("qemu" "qemu-rom.patch" ${qemu_srcdir} qemu_patches)
 
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
 add_custom_command(OUTPUT ${qemu_system}
   COMMAND $(MAKE) -C ${qemu_srcdir}
-  DEPENDS ${qemu_wrkdir}/config-host.mak ${qemu_patches}
+  DEPENDS ${qemu_wrkdir}/config-host.mak
+  ${qemu_patches}
   COMMENT "Building QEMU"
 )
 add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
@@ -181,18 +182,18 @@ add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "boo
 
 add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
   COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} ARCH=riscv olddefconfig
+  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv olddefconfig
   COMMENT "Configuring linux"
 )
 add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
 
-if(firesim)
-  add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
-elseif(sifive)
-  add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} linux_patches)
-else()
-  add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
-endif()
+# if(firesim)
+#   add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
+# elseif(sifive)
+#   add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} linux_patches)
+# else()
+#   add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
+# endif()
 
 if(initramfs)
   # linux-initramfs

@@ -1,0 +1,175 @@
+diff --git hw/riscv/boot.c hw/riscv/boot.c
+index cae74fcbc..9fd598c7b 100644
+--- hw/riscv/boot.c
++++ hw/riscv/boot.c
+@@ -31,6 +31,7 @@
+ #include "sysemu/device_tree.h"
+ #include "sysemu/qtest.h"
+ #include "sysemu/kvm.h"
++#include "hw/riscv/virt.h"
+
+ #include <libfdt.h>
+
+@@ -290,40 +291,73 @@ void riscv_setup_rom_reset_vec(MachineState *machine, RISCVHartArrayState *harts
+ {
+     int i;
+     uint32_t start_addr_hi32 = 0x00000000;
++    RISCVVirtState *rvs = RISCV_VIRT_MACHINE(machine);
+
+-    if (!riscv_is_32bit(harts)) {
+-        start_addr_hi32 = start_addr >> 32;
+-    }
+-    /* reset vector */
+-    uint32_t reset_vec[10] = {
+-        0x00000297,                  /* 1:  auipc  t0, %pcrel_hi(fw_dyn) */
+-        0x02828613,                  /*     addi   a2, t0, %pcrel_lo(1b) */
+-        0xf1402573,                  /*     csrr   a0, mhartid  */
+-        0,
+-        0,
+-        0x00028067,                  /*     jr     t0 */
+-        start_addr,                  /* start: .dword */
+-        start_addr_hi32,
+-        fdt_load_addr,               /* fdt_laddr: .dword */
+-        0x00000000,
+-                                     /* fw_dyn: */
+-    };
+-    if (riscv_is_32bit(harts)) {
+-        reset_vec[3] = 0x0202a583;   /*     lw     a1, 32(t0) */
+-        reset_vec[4] = 0x0182a283;   /*     lw     t0, 24(t0) */
++    if (rvs->rom) {
++        uint8_t *rom = g_malloc(rom_size);
++        if(!rom) {
++            error_report("could not allocate rom buffer");
++            exit(1);
++        }
++
++        size_t bl_size = load_image_size(rvs->rom, rom, rom_size);
++        if(bl_size == -1) {
++            error_report("could not get rom size");
++            exit(1);
++        }
++
++        rom_add_blob_fixed_as("mrom.reset", rom, bl_size,
++                              rom_base, &address_space_memory);
++        g_free(rom);
++
++        /* we also need the fdt */
++        if(fdt_pack(machine->fdt) ||
++            fdt_totalsize(machine->fdt) >rom_size - bl_size) {
++            error_report("not enough space to store device tree");
++            exit(1);
++        }
++
++        // word-aligned fdt location
++        size_t fdt_loc = rom_base + bl_size;
++        fdt_loc = ((fdt_loc + 0x4 - 1) & ~(0x4 - 1));
++        rom_add_blob_fixed_as("mrom.fdt", machine->fdt, fdt_totalsize(machine->fdt),
++                              fdt_loc, &address_space_memory);
+     } else {
+-        reset_vec[3] = 0x0202b583;   /*     ld     a1, 32(t0) */
+-        reset_vec[4] = 0x0182b283;   /*     ld     t0, 24(t0) */
+-    }
++        if (!riscv_is_32bit(harts)) {
++            start_addr_hi32 = start_addr >> 32;
++        }
+
+-    /* copy in the reset vector in little_endian byte order */
+-    for (i = 0; i < ARRAY_SIZE(reset_vec); i++) {
+-        reset_vec[i] = cpu_to_le32(reset_vec[i]);
++        /* reset vector */
++        uint32_t reset_vec[10] = {
++            0x00000297,                  /* 1:  auipc  t0, %pcrel_hi(fw_dyn) */
++            0x02828613,                  /*     addi   a2, t0, %pcrel_lo(1b) */
++            0xf1402573,                  /*     csrr   a0, mhartid  */
++            0,
++            0,
++            0x00028067,                  /*     jr     t0 */
++            start_addr,                  /* start: .dword */
++            start_addr_hi32,
++            fdt_load_addr,               /* fdt_laddr: .dword */
++            0x00000000,
++                                         /* fw_dyn: */
++        };
++        if (riscv_is_32bit(harts)) {
++            reset_vec[3] = 0x0202a583;   /*     lw     a1, 32(t0) */
++            reset_vec[4] = 0x0182a283;   /*     lw     t0, 24(t0) */
++        } else {
++            reset_vec[3] = 0x0202b583;   /*     ld     a1, 32(t0) */
++            reset_vec[4] = 0x0182b283;   /*     ld     t0, 24(t0) */
++        }
++
++        /* copy in the reset vector in little_endian byte order */
++        for (i = 0; i < ARRAY_SIZE(reset_vec); i++) {
++            reset_vec[i] = cpu_to_le32(reset_vec[i]);
++        }
++        rom_add_blob_fixed_as("mrom.reset", reset_vec, sizeof(reset_vec),
++                              rom_base, &address_space_memory);
++        riscv_rom_copy_firmware_info(machine, rom_base, rom_size, sizeof(reset_vec),
++                                     kernel_entry);
+     }
+-    rom_add_blob_fixed_as("mrom.reset", reset_vec, sizeof(reset_vec),
+-                          rom_base, &address_space_memory);
+-    riscv_rom_copy_firmware_info(machine, rom_base, rom_size, sizeof(reset_vec),
+-                                 kernel_entry);
+
+     return;
+ }
+diff --git hw/riscv/virt.c hw/riscv/virt.c
+index da50cbed4..eaf3b56ee 100644
+--- hw/riscv/virt.c
++++ hw/riscv/virt.c
+@@ -69,7 +69,7 @@
+
+ static const MemMapEntry virt_memmap[] = {
+     [VIRT_DEBUG] =       {        0x0,         0x100 },
+-    [VIRT_MROM] =        {     0x1000,        0xf000 },
++    [VIRT_MROM] =        {     0x1000,        0x40000 },
+     [VIRT_TEST] =        {   0x100000,        0x1000 },
+     [VIRT_RTC] =         {   0x101000,        0x1000 },
+     [VIRT_CLINT] =       {  0x2000000,       0x10000 },
+@@ -1497,6 +1497,21 @@ static void virt_set_aclint(Object *obj, bool value, Error **errp)
+     s->have_aclint = value;
+ }
+
++static char *virt_get_rom(Object *obj, Error **errp)
++{
++    RISCVVirtState *rvs = RISCV_VIRT_MACHINE(obj);
++
++    return g_strdup(rvs->rom);
++}
++
++static void virt_set_rom(Object *obj, const char *value, Error **errp)
++{
++    RISCVVirtState *rvs = RISCV_VIRT_MACHINE(obj);
++
++    g_free(rvs->rom);
++    rvs->rom = g_strdup(value);
++}
++
+ static void virt_machine_class_init(ObjectClass *oc, void *data)
+ {
+     char str[128];
+@@ -1534,6 +1549,11 @@ static void virt_machine_class_init(ObjectClass *oc, void *data)
+     sprintf(str, "Set number of guest MMIO pages for AIA IMSIC. Valid value "
+                  "should be between 0 and %d.", VIRT_IRQCHIP_MAX_GUESTS);
+     object_class_property_set_description(oc, "aia-guests", str);
++
++    object_class_property_add_str(oc, "rom",
++                                  virt_get_rom, virt_set_rom);
++    object_class_property_set_description(oc, "rom",
++                                          "ROM image");
+ }
+
+ static const TypeInfo virt_machine_typeinfo = {
+diff --git include/hw/riscv/virt.h include/hw/riscv/virt.h
+index 78b058ec8..b861cee03 100644
+--- include/hw/riscv/virt.h
++++ include/hw/riscv/virt.h
+@@ -54,6 +54,7 @@ struct RISCVVirtState {
+     bool have_aclint;
+     RISCVVirtAIAType aia_type;
+     int aia_guests;
++    char *rom;
+ };
+
+ enum {
