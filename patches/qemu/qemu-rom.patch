@@ -1,21 +1,21 @@
-diff --git a/hw/riscv/boot.c b/hw/riscv/boot.c
+diff --git hw/riscv/boot.c hw/riscv/boot.c
 index cae74fcbc..9fd598c7b 100644
---- a/hw/riscv/boot.c
-+++ b/hw/riscv/boot.c
+--- hw/riscv/boot.c
++++ hw/riscv/boot.c
 @@ -31,6 +31,7 @@
  #include "sysemu/device_tree.h"
  #include "sysemu/qtest.h"
  #include "sysemu/kvm.h"
 +#include "hw/riscv/virt.h"
- 
+
  #include <libfdt.h>
- 
+
 @@ -290,40 +291,73 @@ void riscv_setup_rom_reset_vec(MachineState *machine, RISCVHartArrayState *harts
  {
      int i;
      uint32_t start_addr_hi32 = 0x00000000;
 +    RISCVVirtState *rvs = RISCV_VIRT_MACHINE(machine);
- 
+
 -    if (!riscv_is_32bit(harts)) {
 -        start_addr_hi32 = start_addr >> 32;
 -    }
@@ -72,7 +72,7 @@ index cae74fcbc..9fd598c7b 100644
 +        if (!riscv_is_32bit(harts)) {
 +            start_addr_hi32 = start_addr >> 32;
 +        }
- 
+
 -    /* copy in the reset vector in little_endian byte order */
 -    for (i = 0; i < ARRAY_SIZE(reset_vec); i++) {
 -        reset_vec[i] = cpu_to_le32(reset_vec[i]);
@@ -111,15 +111,15 @@ index cae74fcbc..9fd598c7b 100644
 -                          rom_base, &address_space_memory);
 -    riscv_rom_copy_firmware_info(machine, rom_base, rom_size, sizeof(reset_vec),
 -                                 kernel_entry);
- 
+
      return;
  }
-diff --git a/hw/riscv/virt.c b/hw/riscv/virt.c
+diff --git hw/riscv/virt.c hw/riscv/virt.c
 index da50cbed4..eaf3b56ee 100644
---- a/hw/riscv/virt.c
-+++ b/hw/riscv/virt.c
+--- hw/riscv/virt.c
++++ hw/riscv/virt.c
 @@ -69,7 +69,7 @@
- 
+
  static const MemMapEntry virt_memmap[] = {
      [VIRT_DEBUG] =       {        0x0,         0x100 },
 -    [VIRT_MROM] =        {     0x1000,        0xf000 },
@@ -130,7 +130,7 @@ index da50cbed4..eaf3b56ee 100644
 @@ -1497,6 +1497,21 @@ static void virt_set_aclint(Object *obj, bool value, Error **errp)
      s->have_aclint = value;
  }
- 
+
 +static char *virt_get_rom(Object *obj, Error **errp)
 +{
 +    RISCVVirtState *rvs = RISCV_VIRT_MACHINE(obj);
@@ -159,17 +159,17 @@ index da50cbed4..eaf3b56ee 100644
 +    object_class_property_set_description(oc, "rom",
 +                                          "ROM image");
  }
- 
+
  static const TypeInfo virt_machine_typeinfo = {
-diff --git a/include/hw/riscv/virt.h b/include/hw/riscv/virt.h
+diff --git include/hw/riscv/virt.h include/hw/riscv/virt.h
 index 78b058ec8..b861cee03 100644
---- a/include/hw/riscv/virt.h
-+++ b/include/hw/riscv/virt.h
+--- include/hw/riscv/virt.h
++++ include/hw/riscv/virt.h
 @@ -54,6 +54,7 @@ struct RISCVVirtState {
      bool have_aclint;
      RISCVVirtAIAType aia_type;
      int aia_guests;
 +    char *rom;
  };
- 
+
  enum {

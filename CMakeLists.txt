@@ -121,7 +121,7 @@ add_custom_target("qemu" ALL DEPENDS ${qemu_system})
 add_custom_command(OUTPUT ${qemu_system}
   COMMAND $(MAKE) -C ${qemu_srcdir}
   DEPENDS ${qemu_wrkdir}/config-host.mak
-#${qemu_patches}
+  ${qemu_patches}
   COMMENT "Building QEMU"
 )
 add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
