@@ -10,6 +10,3 @@
 [submodule "qemu"]
 	path = qemu
 	url = https://github.com/qemu/qemu
-[submodule "sm"]
-	path = sm
-	url = https://github.com/keystone-enclave/sm
