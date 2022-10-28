@@ -2,7 +2,7 @@ FAQ
 ===
 
  Q: What can I run Keystone on?
-    - A: Keystone can be run on real RISC-V hardware, on FGPA, and in
+    - A: Keystone can be run on real RISC-V hardware, on FPGA, and in
       simulation. See `Getting Started <#>`_
 
  Q: What is the difference between the SM and runtime?
