@@ -90,6 +90,11 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
     }
   }
 
+  // TODO(chungmcl): Remove! for debugging fuzzy time stuff
+  // Disables context switching by disabling the timer interrupt
+  // bit (MTIP) in the MIE control and status register
+  csr_clear(CSR_MIE, MIP_MTIP);
+
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
   cpu_enter_enclave_context(eid);
