@@ -24,6 +24,12 @@ extern void save_host_regs(void);
 extern void restore_host_regs(void);
 extern byte dev_public_key[PUBLIC_KEY_SIZE];
 
+// chungmcl
+struct enclave* get_enclave(enclave_id eid) {
+  return &enclaves[eid];
+}
+// chungmcl
+
 /****************************
  *
  * Enclave utility functions

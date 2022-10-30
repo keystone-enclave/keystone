@@ -13,12 +13,18 @@
 #include "sm-sbi.h"
 #include "sm.h"
 #include "cpu.h"
+#include "fuzzy-time.h"
+
+// TODO(chungmcl): For debugging with sbi_timer(); remove when done
+#include <sbi/sbi_timer.h>
 
 static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long funcid,
                      const struct sbi_trap_regs *regs,
                      unsigned long *out_val,
                      struct sbi_trap_info *out_trap)
 {
+  sbi_printf("SM Handler Called @ %lu.\n", sbi_timer_value());
+
   uintptr_t retval;
 
   if (funcid <= FID_RANGE_DEPRECATED) { return SBI_ERR_SM_DEPRECATED; }
@@ -66,6 +72,21 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
       retval = sbi_sm_exit_enclave((struct sbi_trap_regs*) regs, regs->a0);
       __builtin_unreachable();
       break;
+
+    // chungmcl
+    case SBI_SM_PAUSE:
+      retval = sbi_sm_pause((struct sbi_trap_regs*) regs);
+      break;
+    case SBI_SM_PAUSE_MS:
+      retval = sbi_sm_pause_ms((struct sbi_trap_regs*)regs, regs->a0);
+    case SBI_SM_GET_TIME:
+      retval = sbi_sm_get_time((struct sbi_trap_regs*) regs);
+      break;
+    case SBI_SM_GET_INTERVAL_LEN:
+      retval = sbi_sm_get_interval_len((struct sbi_trap_regs*) regs);
+      break;
+    // chungmcl
+
     case SBI_SM_CALL_PLUGIN:
       retval = sbi_sm_call_plugin(regs->a0, regs->a1, regs->a2, regs->a3);
       break;
