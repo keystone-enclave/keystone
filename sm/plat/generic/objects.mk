@@ -18,6 +18,9 @@ platform-objs-y += ../../src/mprv.o
 platform-objs-y += ../../src/sbi_trap_hack.o
 platform-objs-y += ../../src/trap.o
 platform-objs-y += ../../src/ipi.o
+# fuzzy-time: Add fuzzy-time.h + fuzzy-time.c -> fuzzy-time.o
+platform-objs-y += ../../src/fuzzy-time.o
+# fuzzy-time
 
 platform-objs-y += ../../src/sha3/sha3.o
 platform-objs-y += ../../src/ed25519/fe.o

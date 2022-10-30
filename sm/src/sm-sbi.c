@@ -9,8 +9,12 @@
 #include "cpu.h"
 #include "platform-hook.h"
 #include "plugins/plugins.h"
+#include "fuzzy-time.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>
+
+// TODO(chungmcl): For debugging with sbi_timer(); remove when done
+#include <sbi/sbi_timer.h>
 
 unsigned long sbi_sm_create_enclave(unsigned long* eid, uintptr_t create_args)
 {
@@ -55,6 +59,11 @@ unsigned long sbi_sm_resume_enclave(struct sbi_trap_regs *regs, unsigned long ei
 
 unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retval)
 {
+  // fuzzy-time
+  sbi_printf("SM Exited @ %lu.\n", sbi_timer_value());
+  wait_until_epoch();
+  // fuzzy-time
+
   regs->a0 = exit_enclave(regs, cpu_get_enclave_id());
   regs->a1 = retval;
   regs->mepc += 4;
@@ -64,6 +73,11 @@ unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retv
 
 unsigned long sbi_sm_stop_enclave(struct sbi_trap_regs *regs, unsigned long request)
 {
+  // fuzzy-time
+  sbi_printf("SM Stopped @ %lu.\n", sbi_timer_value());
+  wait_until_epoch();
+  // fuzzy-time
+
   regs->a0 = stop_enclave(regs, request, cpu_get_enclave_id());
   regs->mepc += 4;
   sbi_trap_exit(regs);
@@ -97,3 +111,27 @@ unsigned long sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr
   ret = call_plugin(cpu_get_enclave_id(), plugin_id, call_id, arg0, arg1);
   return ret;
 }
+
+// fuzzy-time
+unsigned long sbi_sm_pause(struct sbi_trap_regs *regs) 
+{
+  sbi_printf("SM Paused @ %lu.\n", sbi_timer_value());
+  return wait_until_epoch();
+}
+
+unsigned long sbi_sm_pause_ms(struct sbi_trap_regs *regs, unsigned long ms)
+{
+  wait_for_ms(ms);
+  return 0;
+}
+
+unsigned long sbi_sm_get_time(struct sbi_trap_regs *regs)
+{
+  return get_time_ticks();
+}
+
+unsigned long sbi_sm_get_interval_len(struct sbi_trap_regs *regs)
+{
+  return get_granularity_ticks();
+}
+// fuzzy-time

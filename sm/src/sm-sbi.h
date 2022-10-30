@@ -38,4 +38,20 @@ sbi_sm_random();
 unsigned long
 sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1);
 
+// fuzzy-time
+unsigned long
+sbi_sm_pause(struct sbi_trap_regs *regs);
+
+unsigned long
+sbi_sm_pause_ms(struct sbi_trap_regs *regs, unsigned long ms);
+
+// Gets time in ticks
+unsigned long
+sbi_sm_get_time(struct sbi_trap_regs *regs);
+
+// Gets the length of an interval in terms of ticks
+unsigned long
+sbi_sm_get_interval_len(struct sbi_trap_regs *regs);
+// fuzzy-time
+
 #endif
