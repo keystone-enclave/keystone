@@ -87,7 +87,7 @@ macro(add_eyrie_runtime target_name tag plugins) # the files are passed via ${AR
 
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
-    GIT_REPOSITORY https://github.com/keystone-enclave/keystone-runtime
+    GIT_REPOSITORY https://github.com/chungmcl/keystone-runtime.git
     GIT_TAG ${tag}
     CONFIGURE_COMMAND ""
     UPDATE_COMMAND git fetch

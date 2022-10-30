@@ -33,3 +33,15 @@ get_sealing_key(
       SYSCALL_GET_SEALING_KEY, sealing_key_struct, sealing_key_struct_size,
       key_ident, key_ident_size);
 }
+
+// chungmcl
+int
+write_to_shared(void* src, uintptr_t offset, size_t data_len) {
+  return SYSCALL_3(SYSCALL_SHAREDWRITE, src, offset, data_len);
+}
+
+int
+pause_ms(unsigned long ms) {
+  return SYSCALL_1(SYSCALL_PAUSE_MS, ms);
+}
+// chungmcl
