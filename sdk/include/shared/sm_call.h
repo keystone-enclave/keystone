@@ -40,6 +40,7 @@
 #define STOP_TIMER_INTERRUPT  0
 #define STOP_EDGE_CALL_HOST   1
 #define STOP_EXIT_ENCLAVE     2
+#define STOP_YIELD_ENCLAVE    3
 
 /* Structs for interfacing into the SM */
 struct runtime_va_params_t {

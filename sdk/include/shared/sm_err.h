@@ -19,6 +19,7 @@
 #define SBI_ERR_SM_ENCLAVE_SBI_PROHIBITED              100014
 #define SBI_ERR_SM_ENCLAVE_ILLEGAL_PTE                 100015
 #define SBI_ERR_SM_ENCLAVE_NOT_FRESH                   100016
+#define SBI_ERR_SM_ENCLAVE_YIELDED                     100017
 #define SBI_ERR_SM_DEPRECATED                          100099
 #define SBI_ERR_SM_NOT_IMPLEMENTED                     100100
 

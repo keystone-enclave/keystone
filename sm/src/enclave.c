@@ -588,6 +588,8 @@ unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave
       return SBI_ERR_SM_ENCLAVE_INTERRUPTED;
     case(STOP_EDGE_CALL_HOST):
       return SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST;
+    case(STOP_YIELD_ENCLAVE):
+      return SBI_ERR_SM_ENCLAVE_YIELDED;
     default:
       return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
   }

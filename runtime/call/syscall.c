@@ -250,6 +250,11 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = sbi_release_mmio(devstr_release_pa);
     break;
 
+  case(RUNTIME_SYSCALL_YIELD_MAIN_THREAD):
+    // Give up our current time slice and report back to the SDK
+    ret = sbi_stop_enclave(STOP_YIELD_ENCLAVE);
+    break;
+
 #ifdef USE_LINUX_SYSCALL
   case(SYS_clock_gettime):
     ret = linux_clock_gettime((__clockid_t)arg0, (struct timespec*)arg1);

@@ -55,5 +55,6 @@ get_sealing_key(
 
 int claim_mmio(const char *devname, size_t namelen);
 int release_mmio(const char *devname, size_t namelen);
+int yield_thread();
 
 #endif /* syscall.h */

@@ -41,3 +41,7 @@ int claim_mmio(const char *devname, size_t namelen) {
 int release_mmio(const char *devname, size_t namelen) {
   return SYSCALL_2(RUNTIME_SYSCALL_RELEASE_MMIO, devname, namelen);
 }
+
+int yield_thread() {
+  return SYSCALL_0(RUNTIME_SYSCALL_YIELD_MAIN_THREAD);
+}
