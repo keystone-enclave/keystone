@@ -3,12 +3,12 @@ set(eapp_src eapp/eapp_native.c)
 set(host_bin hello-native-runner)
 set(host_src host/host_native.cpp)
 set(package_name "hello-native.ke")
-set(package_script "./hello-native-runner hello-native eyrie-rt")
+set(package_script "./hello-native-runner hello-native eyrie-rt loader.bin")
 
 if(RISCV32)
-  set(eyrie_plugins "rv32 freemem")
+  set(eyrie_plugins "rv32 freemem debug")
 else()
-  set(eyrie_plugins "freemem")
+  set(eyrie_plugins "freemem debug")
 endif()
 
 # eapp
@@ -36,18 +36,24 @@ target_include_directories(${host_bin}
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(${eapp_bin}-eyrie
-  "origin/dev-opensbi-v1.0"
+  "origin/dev-cathy-dll"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 
+# add target for loader
+
+set(loader_files_to_copy loader.bin)
+add_loader(${eapp_bin}-loader
+  "1ed2b55fa0bf70067e7ad578affc5b49badbdb20"
+  ${loader_files_to_copy})
 # add target for packaging (see keystone.cmake)
 
 add_keystone_package(${eapp_bin}-package
   ${package_name}
   ${package_script}
-  ${eyrie_files_to_copy} ${eapp_bin} ${host_bin})
+  ${eyrie_files_to_copy} ${eapp_bin} ${host_bin} ${loader_files_to_copy})
 
-add_dependencies(${eapp_bin}-package ${eapp_bin}-eyrie)
+add_dependencies(${eapp_bin}-package ${eapp_bin}-eyrie ${eapp_bin}-loader)
 
 # add package to the top-level target
 add_dependencies(examples ${eapp_bin}-package)

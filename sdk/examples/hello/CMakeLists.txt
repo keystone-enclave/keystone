@@ -5,6 +5,7 @@ set(host_src host/host.cpp)
 set(package_name "hello.ke")
 set(package_script "./hello-runner hello eyrie-rt loader.bin")
 
+
 if(RISCV32)
   set(eyrie_plugins "freemem untrusted_io_syscall linux_syscall env_setup rv32 debug")
 else()
@@ -25,7 +26,7 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE})
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(${eapp_bin}-eyrie
-  "origin/dev-opensbi-v1.0"
+  "origin/dev-cathy-dll"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 
@@ -33,7 +34,7 @@ add_eyrie_runtime(${eapp_bin}-eyrie
 
 set(loader_files_to_copy loader.bin)
 add_loader(${eapp_bin}-loader
-  "origin/dev-page-tables"
+  "1ed2b55fa0bf70067e7ad578affc5b49badbdb20"
   ${loader_files_to_copy})
 
 # add target for packaging (see keystone.cmake)

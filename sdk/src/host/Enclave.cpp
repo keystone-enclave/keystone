@@ -219,6 +219,7 @@ Enclave::run(uintptr_t* retval) {
     if (ret == Error::EdgeCallHost && oFuncDispatch != NULL) {
       oFuncDispatch(getSharedBuffer());
     }
+    printf("Resuming enclave from sdk\n");
     ret = pDevice->resume(retval);
   }
 
