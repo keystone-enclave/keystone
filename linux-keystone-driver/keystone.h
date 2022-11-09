@@ -90,13 +90,6 @@ int utm_destroy(struct utm* utm);
 int utm_init(struct utm* utm, size_t untrusted_size);
 paddr_t epm_va_to_pa(struct epm* epm, vaddr_t addr);
 
-
-unsigned long calculate_required_pages(
-		unsigned long eapp_sz,
-		unsigned long eapp_stack_sz,
-		unsigned long rt_sz,
-		unsigned long rt_stack_sz);
-
 #define keystone_info(fmt, ...) \
   pr_info("keystone_enclave: " fmt, ##__VA_ARGS__)
 #define keystone_err(fmt, ...) \

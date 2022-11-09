@@ -11,25 +11,6 @@ DEFINE_MUTEX(idr_enclave_lock);
 #define ENCLAVE_IDR_MIN 0x1000
 #define ENCLAVE_IDR_MAX 0xffff
 
-unsigned long calculate_required_pages(
-    unsigned long eapp_sz,
-    unsigned long eapp_stack_sz,
-    unsigned long rt_sz,
-    unsigned long rt_stack_sz)
-{
-  unsigned long req_pages = 0;
-
-  req_pages += PAGE_UP(eapp_sz)/PAGE_SIZE;
-  req_pages += PAGE_UP(eapp_stack_sz)/PAGE_SIZE;
-  req_pages += PAGE_UP(rt_sz)/PAGE_SIZE;
-  req_pages += PAGE_UP(rt_stack_sz)/PAGE_SIZE;
-
-  // FIXME: calculate the required number of pages for the page table.
-  // For now, we must allocate at least 1 (top) + 2 (enclave) + 2 (runtime) pages for pg tables
-  req_pages += 15;
-  return req_pages;
-}
-
 /* Smart destroy, handles partial initialization of epm and utm etc */
 int destroy_enclave(struct enclave* enclave)
 {
