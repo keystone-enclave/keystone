@@ -133,7 +133,7 @@ main(int argc, char** argv) {
     asm volatile("rdcycle %0" : "=r"(cycles3));
   }
 
-  uintptr_t encl_ret;
+  unsigned long encl_ret;
   if (!load_only) enclave.run(&encl_ret);
 
   if (retval_exist && encl_ret != retval) {

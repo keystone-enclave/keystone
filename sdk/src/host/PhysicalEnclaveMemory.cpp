@@ -12,9 +12,8 @@ PhysicalEnclaveMemory::init(
   pDevice = dev;
   // TODO(dayeol): need to set actual EPM size
   epmSize       = PAGE_SIZE * min_pages;
-  rootPageTable = allocMem(PAGE_SIZE);
-  epmFreeList   = phys_addr + PAGE_SIZE;
-  startAddr     = phys_addr;
+  epmFreeList   = 0; 
+	startAddr 		= phys_addr;
 }
 
 uintptr_t
@@ -26,30 +25,34 @@ PhysicalEnclaveMemory::allocUtm(size_t size) {
   return ret;
 }
 
+// TODO: delete this 
+/* Only used to allocate memory for root page table */
 uintptr_t
 PhysicalEnclaveMemory::allocMem(size_t size) {
   uintptr_t ret;
 
   assert(pDevice);
 
-  ret = reinterpret_cast<uintptr_t>(pDevice->map(0, PAGE_SIZE));
+  ret = reinterpret_cast<uintptr_t>(pDevice->map(0, size));
   return ret;
 }
 
+// unused 
 uintptr_t
 PhysicalEnclaveMemory::readMem(uintptr_t src, size_t size) {
   uintptr_t ret;
 
   assert(pDevice);
 
-  ret = reinterpret_cast<uintptr_t>(pDevice->map(src - startAddr, size));
+  ret = reinterpret_cast<uintptr_t>(pDevice->map(src, size));
   return ret;
 }
 
+/* src: virtual address */
 void
-PhysicalEnclaveMemory::writeMem(uintptr_t src, uintptr_t dst, size_t size) {
+PhysicalEnclaveMemory::writeMem(uintptr_t src, uintptr_t offset, size_t size) {
   assert(pDevice);
-  void* va_dst = pDevice->map(dst - startAddr, size);
+  void* va_dst = pDevice->map(offset, size);
   memcpy(va_dst, reinterpret_cast<void*>(src), size);
 }
 

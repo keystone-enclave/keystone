@@ -11,9 +11,8 @@ SimulatedEnclaveMemory::init(
     KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages) {
   pDevice       = dev;
   epmSize       = PAGE_SIZE * min_pages;
-  rootPageTable = allocMem(PAGE_SIZE * min_pages);
-  startAddr     = rootPageTable;
-  epmFreeList   = startAddr + PAGE_SIZE;
+  epmFreeList   = 0; // offset
+	startAddr 		= 0;
 }
 
 void*
@@ -23,6 +22,7 @@ SimulatedEnclaveMemory::allocateAligned(size_t size, size_t alignment) {
   return reinterpret_cast<void*>((mem + mask) & ~mask);
 }
 
+// unused
 uintptr_t
 SimulatedEnclaveMemory::allocMem(size_t size) {
   uintptr_t ret;
@@ -43,6 +43,7 @@ SimulatedEnclaveMemory::readMem(uintptr_t src, size_t size) {
   return src;
 }
 
+// TODO: change write Mem to use addresses relative to start of section rather than absolute addresses
 void
 SimulatedEnclaveMemory::writeMem(uintptr_t src, uintptr_t dst, size_t size) {
   memcpy(reinterpret_cast<void*>(dst), reinterpret_cast<void*>(src), size);

@@ -33,27 +33,23 @@ typedef std::function<void(void*)> OcallFunc;
 class Enclave {
  private:
   Params params;
-  ElfFile* runtimeFile;
-  ElfFile* enclaveFile;
+  uintptr_t runtimeElfAddr;
+  uintptr_t enclaveElfAddr;
   Memory* pMemory;
   KeystoneDevice* pDevice;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
-  uintptr_t runtime_stk_sz;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
-  bool mapUntrusted(size_t size);
-  bool allocPage(uintptr_t va, uintptr_t src, unsigned int mode);
-  bool initStack(uintptr_t start, size_t size, bool is_rt);
-  Error loadUntrusted();
-  bool mapElf(ElfFile* file);
-  Error loadElf(ElfFile* file);
+  uintptr_t copyFile(uintptr_t filePtr, size_t fileSize);
+  void allocUninitialized(ElfFile* elfFile);\
+  void loadElf(ElfFile* elfFile);
   Error validate_and_hash_enclave(struct runtime_params_t args);
 
   bool initFiles(const char*, const char*);
   bool initDevice();
-  bool prepareEnclave(uintptr_t alternatePhysAddr);
+  bool prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr);
   bool initMemory();
 
  public:
@@ -62,18 +58,19 @@ class Enclave {
   const char* getHash();
   void* getSharedBuffer();
   size_t getSharedBufferSize();
+  Memory* getMemory();
+  uintptr_t getRuntimeElfAddr() { return runtimeElfAddr; }
+  uintptr_t getEnclaveElfAddr() { return enclaveElfAddr; }
   Error registerOcallDispatch(OcallFunc func);
-  Error init(const char* filepath, const char* runtime, Params parameters);
+  Error init(const char* filepath, const char* runtime, const char* loaderpath, Params parameters);
   Error init(
-      const char* eapppath, const char* runtimepath, Params _params,
+      const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params,
       uintptr_t alternatePhysAddr);
   Error destroy();
   Error run(uintptr_t* ret = nullptr);
 };
 
 uint64_t
-calculate_required_pages(
-    uint64_t eapp_sz, uint64_t eapp_stack_sz, uint64_t rt_sz,
-    uint64_t rt_stack_sz);
+calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles);
 
 }  // namespace Keystone
