@@ -22,11 +22,14 @@
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 
+#define NAME_MAX 255
+
 typedef enum {
   INVALID = -1,
   DESTROYING = 0,
   ALLOCATED,
   FRESH,
+  LIBRARY, // TODO: how does LIBRARY state relate to other states
   STOPPED,
   RUNNING,
 } enclave_state;
@@ -49,6 +52,7 @@ enum enclave_region_type{
   REGION_INVALID,
   REGION_EPM,
   REGION_UTM,
+  REGION_LIBRARY,
   REGION_OTHER,
 };
 
@@ -80,6 +84,22 @@ struct enclave
   /* enclave execution context */
   unsigned int n_thread;
   struct thread_state threads[MAX_ENCL_THREADS];
+
+  struct platform_enclave_data ped;
+
+  bool is_library; 
+  char library_name[NAME_MAX+1]; 
+};
+
+// TODO: new structs?
+struct library_enclave
+{
+  enclave_id eid; //enclave id
+  enclave_state state; // global state of the enclave
+
+  /* measurement */
+  byte hash[MDSIZE];
+  byte sign[SIGNATURE_SIZE];
 
   struct platform_enclave_data ped;
 };
@@ -116,7 +136,9 @@ struct sealing_key
 /*** SBI functions & external functions ***/
 // callables from the host
 unsigned long create_enclave(unsigned long *eid, struct keystone_sbi_create create_args);
+unsigned long create_library_enclave(unsigned long *eid, struct keystone_sbi_create create_args);
 unsigned long destroy_enclave(enclave_id eid);
+unsigned long destroy_library_enclave(enclave_id eid);
 unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 // callables from the enclave

@@ -26,10 +26,31 @@ unsigned long sbi_sm_create_enclave(unsigned long* eid, uintptr_t create_args)
   return ret;
 }
 
+unsigned long sbi_sm_create_library_enclave(unsigned long* eid, uintptr_t create_args)
+{
+  struct keystone_sbi_create create_args_local;
+  unsigned long ret;
+
+  ret = copy_enclave_create_args(create_args, &create_args_local);
+
+  if (ret)
+    return ret;
+
+  ret = create_library_enclave(eid, create_args_local);
+  return ret;
+}
+
 unsigned long sbi_sm_destroy_enclave(unsigned long eid)
 {
   unsigned long ret;
   ret = destroy_enclave((unsigned int)eid);
+  return ret;
+}
+
+unsigned long sbi_sm_destroy_library_enclave(unsigned long eid)
+{
+  unsigned long ret;
+  ret = destroy_library_enclave((unsigned int)eid);
   return ret;
 }
 

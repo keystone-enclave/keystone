@@ -51,8 +51,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 
   if(load_parameters) {
     // passing parameters for a first run
-    csr_write(sepc, (uintptr_t) enclaves[eid].params.user_entry);
-    regs->mepc = (uintptr_t) enclaves[eid].params.runtime_entry - 4; // regs->mepc will be +4 before sbi_ecall_handler return
+    regs->mepc = (uintptr_t) enclaves[eid].pa_params.dram_base - 4; // regs->mepc will be +4 before sbi_ecall_handler return
     regs->mstatus = (1 << MSTATUS_MPP_SHIFT);
     // $a1: (PA) DRAM base,
     regs->a1 = (uintptr_t) enclaves[eid].pa_params.dram_base;
@@ -69,8 +68,8 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
     // $a7: (size_t) utm size
     regs->a7 = (uintptr_t) enclaves[eid].params.untrusted_size;
 
-    // switch to the initial enclave page table
-    csr_write(satp, enclaves[eid].encl_satp);
+    // enclave will only have physical addresses in the first run
+    csr_write(satp, 0);
   }
 
   switch_vector_enclave();
@@ -249,6 +248,18 @@ unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
+// TODO: add comment
+unsigned long copy_library_name(uintptr_t src, char* dest) {
+
+  int illegal = copy_to_sm(dest, src, NAME_MAX); // TODO: define somewhere
+  dest[NAME_MAX] = '\0'; 
+
+  if(illegal)
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+  else
+    return SBI_ERR_SM_ENCLAVE_SUCCESS;
+}
+
 /* copies data from enclave, source must be inside EPM */
 static unsigned long copy_enclave_data(struct enclave* enclave,
                                           void* dest, uintptr_t source, size_t size) {
@@ -385,6 +396,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
 
   // initialize enclave metadata
   enclaves[eid].eid = eid;
+  enclaves[eid].is_library = false;
 
   enclaves[eid].regions[0].pmp_rid = region;
   enclaves[eid].regions[0].type = REGION_EPM;
@@ -410,7 +422,9 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
 
   /* Validate memory, prepare hash and signature for attestation */
   spin_lock(&encl_lock); // FIXME This should error for second enter.
-  ret = validate_and_hash_enclave(&enclaves[eid]);
+ 
+	// TODO: (Cathy) validation for new loader scheme
+	// ret = validate_and_hash_enclave(&enclaves[eid]);
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
   if (ret)
     goto unlock;
@@ -437,6 +451,74 @@ free_encl_idx:
 error:
   return ret;
 }
+
+unsigned long create_library_enclave(unsigned long *eidptr, struct keystone_sbi_create create_args) {
+   /* EPM parameters */
+  uintptr_t base = create_args.epm_region.paddr;
+  size_t size = create_args.epm_region.size;
+
+  enclave_id eid;
+  unsigned long ret = 0;
+  int region;
+
+  // allocate eid
+  ret = SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
+  if (encl_alloc_eid(&eid) != SBI_ERR_SM_ENCLAVE_SUCCESS)
+    goto error;
+  
+  // create a PMP region bound to the enclave
+  ret = SBI_ERR_SM_ENCLAVE_PMP_FAILURE;
+  if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region, 0))
+    goto free_encl_idx;
+
+  // set pmp registers for private region (not shared)
+  if(pmp_set_global(region, PMP_NO_PERM))
+    goto free_region;
+
+  // initialize enclave metadata
+  enclaves[eid].eid = eid;
+
+  enclaves[eid].regions[0].pmp_rid = region;
+  enclaves[eid].regions[0].type = REGION_LIBRARY;
+
+  // library enclave does not need these fields
+  enclaves[eid].encl_satp = 0;
+  enclaves[eid].n_thread = 0;
+  enclaves[eid].params = (struct runtime_va_params_t) {0};
+  enclaves[eid].pa_params = (struct runtime_pa_params) {0};
+
+  enclaves[eid].is_library = true;
+  sbi_memcpy(enclaves[eid].library_name, create_args.library_name, NAME_MAX);
+
+  /* Init enclave state (regs etc) */ 
+  clean_state(&enclaves[eid].threads[0]); 
+
+  /* Platform create happens as the last thing before hashing/etc since
+     it may modify the enclave struct */
+  ret = platform_create_enclave(&enclaves[eid]); 
+  if (ret)
+    goto unset_region;
+
+
+  spin_lock(&encl_lock); 
+  // TODO: handle validation 
+
+  enclaves[eid].state = LIBRARY;
+  *eidptr = eid;
+  
+  spin_unlock(&encl_lock);
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
+
+unset_region:
+  pmp_unset_global(region);
+free_region:
+  pmp_region_free_atomic(region);
+free_encl_idx:
+  encl_free_eid(eid);
+error: 
+  return ret;
+}
+
 
 /*
  * Fully destroys an enclave
@@ -494,6 +576,72 @@ unsigned long destroy_enclave(enclave_id eid)
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = (struct runtime_va_params_t) {0};
   enclaves[eid].pa_params = (struct runtime_pa_params) {0};
+  for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
+    enclaves[eid].regions[i].type = REGION_INVALID;
+  }
+
+  // 3. release eid
+  encl_free_eid(eid);
+
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
+}
+
+// TODO: start here, edit this
+unsigned long destroy_library_enclave(enclave_id eid)
+{
+  int destroyable;
+
+  spin_lock(&encl_lock);
+  destroyable = (ENCLAVE_EXISTS(eid)
+                 && enclaves[eid].state <= STOPPED);
+  /* update the enclave state first so that
+   * no SM can run the enclave any longer */
+
+
+  // TODO: check references to library
+  // if library has refernces, kill those enclaves as well? or stop library from being destoryed
+
+  if(destroyable)
+    enclaves[eid].state = DESTROYING;
+  spin_unlock(&encl_lock);
+
+  if(!destroyable)
+    return SBI_ERR_SM_ENCLAVE_NOT_DESTROYABLE;
+
+
+  // 0. Let the platform specifics do cleanup/modifications
+  platform_destroy_enclave(&enclaves[eid]);
+
+
+  // 1. clear all the data in the enclave pages
+  // requires no lock (single runner)
+  int i;
+  void* base;
+  size_t size;
+  region_id rid;
+  for(i = 0; i < ENCLAVE_REGIONS_MAX; i++){
+    if(enclaves[eid].regions[i].type == REGION_INVALID ||
+       enclaves[eid].regions[i].type == REGION_UTM)
+      continue;
+    //1.a Clear all pages
+    rid = enclaves[eid].regions[i].pmp_rid;
+    base = (void*) pmp_region_get_addr(rid);
+    size = (size_t) pmp_region_get_size(rid);
+    sbi_memset((void*) base, 0, size);
+
+    //1.b free pmp region
+    pmp_unset_global(rid);
+    pmp_region_free_atomic(rid);
+  }
+
+  enclaves[eid].is_library = false;
+  sbi_memset(enclaves[eid].library_name, 0, NAME_MAX);
+
+  enclaves[eid].encl_satp = 0;
+  enclaves[eid].n_thread = 0;
+  enclaves[eid].params = (struct runtime_va_params_t) {0};
+  enclaves[eid].pa_params = (struct runtime_pa_params) {0};
+
   for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
     enclaves[eid].regions[i].type = REGION_INVALID;
   }
