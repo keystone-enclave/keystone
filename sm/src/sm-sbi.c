@@ -112,6 +112,11 @@ unsigned long sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr
   return ret;
 }
 
+unsigned long sbi_sm_start_management_core() {
+  sbi_printf("!!! sbi_sm_start_management_core() called, %lx.\n", csr_read(mhartid));
+  return 0;
+}
+
 // fuzzy-time
 unsigned long sbi_sm_pause(struct sbi_trap_regs *regs) 
 {

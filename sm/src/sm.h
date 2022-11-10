@@ -20,6 +20,9 @@
 #define SBI_SM_DESTROY_ENCLAVE    2002
 #define SBI_SM_RUN_ENCLAVE        2003
 #define SBI_SM_RESUME_ENCLAVE     2005
+// fuzzy time/management core
+#define SBI_SM_START_MGMT_CORE    2006
+// fuzzy time/management core
 #define FID_RANGE_HOST            2999
 /* 3000-3999 are called by enclave */
 #define SBI_SM_RANDOM             3001
