@@ -19,7 +19,7 @@ The following figure shows the key hierarchy of Keystone:
 .. figure:: /_static/images/keystone_key_hierarchy.png
 
 The root of the key hierarchy is the asymmetric processor key pair (SK_D /
-PK_D). The asymmetric security monitor key pair (SK_SK / PK_SM) is derived from
+PK_D). The asymmetric security monitor key pair (SK_SM / PK_SM) is derived from
 the measurement of the security monitor (H_SM) and the private processor key
 SK_D.
 
