@@ -14,7 +14,9 @@
 #define SBI_SM_RUN_ENCLAVE      2003
 #define SBI_SM_RESUME_ENCLAVE   2005
 
+// management-core
 #define SBI_SM_START_MGMT_CORE  2006
+// management-core
 
 struct keystone_sbi_pregion_t
 {

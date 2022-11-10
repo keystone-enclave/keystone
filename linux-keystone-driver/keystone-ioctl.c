@@ -10,10 +10,12 @@
 
 int __keystone_destroy_enclave(unsigned int ueid);
 
+// management-core
 int keystone_start_management_core(void) {
   sbi_sm_start_mgmt_core();
   return 0;
 }
+// management-core
 
 int keystone_create_enclave(struct file *filep, unsigned long arg)
 {
