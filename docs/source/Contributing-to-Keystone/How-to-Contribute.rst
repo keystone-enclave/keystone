@@ -2,7 +2,7 @@ How to Contribute
 ================================
 
 Keystone is, and will be, fully open source. We hope to see many
-projects both under the Keystone unbrella, and built on-top of it.
+projects both under the Keystone umbrella, and built on-top of it.
 
 We welcome contributions at all levels, from platform specific
 bootloader modifications, to make compilers and toolchains for programming enclaves, to
