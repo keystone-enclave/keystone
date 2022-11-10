@@ -73,10 +73,13 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
       __builtin_unreachable();
       break;
 
-    // fuzzy-time
+    // management-core
     case SBI_SM_START_MGMT_CORE:
       retval = sbi_sm_start_management_core();
       break;
+    // management-core
+
+    // fuzzy-time
     case SBI_SM_PAUSE:
       retval = sbi_sm_pause((struct sbi_trap_regs*) regs);
       break;
