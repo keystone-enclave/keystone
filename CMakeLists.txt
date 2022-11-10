@@ -293,15 +293,16 @@ if(initramfs)
   set(extra_qemu_options "")
 else()
   set(extra_qemu_options "\
-      -append \"console=ttyS0 ro root=/dev/vda\" \
+      -append \"console=ttyS0 ro root=/dev/vda isolcpus=0 nohz_full=0\" \
       -drive file=${buildroot_wrkdir}/images/rootfs.ext2,format=raw,id=hd0 \
       -device virtio-blk-device,drive=hd0 \
   ")
 endif()
 
 # generate the qemu runscript, using the above options
-string(RANDOM LENGTH 4 ALPHABET 0123456789 qemu_ssh_port)
-math(EXPR qemu_ssh_port "3000 + ${qemu_ssh_port}%3000")
+# string(RANDOM LENGTH 4 ALPHABET 0123456789 qemu_ssh_port)
+set(qemu_ssh_port 9822)
+# math(EXPR qemu_ssh_port "3000 + ${qemu_ssh_port}%3000")
 configure_file(
   ${CMAKE_SOURCE_DIR}/scripts/run-qemu.sh.in
   ${scripts}/run-qemu.sh

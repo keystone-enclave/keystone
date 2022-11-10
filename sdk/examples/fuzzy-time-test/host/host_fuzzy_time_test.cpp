@@ -115,9 +115,11 @@ void spy(uintptr_t target, uint64_t times[], int states[], int expected_writes) 
 
 bool test_basic_functionality(uintptr_t expected_dest) {
   string actual = (char*)(expected_dest);
+  cout << actual << endl;
   assert(FISH_STRING.compare(actual) == 0);
 
   actual = (char*)(expected_dest + FISH_SIZE);
+  cout << actual << endl;
   assert(UW_STRING.compare(actual) == 0);
 
   return true;

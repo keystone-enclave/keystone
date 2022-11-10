@@ -10,6 +10,11 @@
 
 int __keystone_destroy_enclave(unsigned int ueid);
 
+int keystone_start_management_core(void) {
+  sbi_sm_start_mgmt_core();
+  return 0;
+}
+
 int keystone_create_enclave(struct file *filep, unsigned long arg)
 {
   /* create parameters */
@@ -237,6 +242,9 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
     return -EFAULT;
 
   switch (cmd) {
+    case KEYSTONE_IOC_START_MGMT_CORE:
+      ret = keystone_start_management_core();
+      break;
     case KEYSTONE_IOC_CREATE_ENCLAVE:
       ret = keystone_create_enclave(filep, (unsigned long) data);
       break;

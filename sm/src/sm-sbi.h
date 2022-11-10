@@ -38,6 +38,11 @@ sbi_sm_random();
 unsigned long
 sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1);
 
+// management-core/fuzzy-time
+unsigned long
+sbi_sm_start_management_core();
+// management-core/fuzzy-time
+
 // fuzzy-time
 unsigned long
 sbi_sm_pause(struct sbi_trap_regs *regs);
