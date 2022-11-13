@@ -85,14 +85,23 @@ macro(add_eyrie_runtime target_name tag plugins) # the files are passed via ${AR
   set(runtime_prefix runtime)
   set (eyrie_src ${CMAKE_CURRENT_BINARY_DIR}/${runtime_prefix}/src/eyrie-${target_name})
 
+  separate_arguments(PLUGIN_ARGS UNIX_COMMAND ${plugins})
+  set(PLUGIN_FLAGS "")
+  foreach(plugin IN ITEMS ${PLUGIN_ARGS})
+    string(TOUPPER ${plugin} PLUGIN_UPPER)
+    list(APPEND PLUGIN_FLAGS "-D${PLUGIN_UPPER}=ON")
+  endforeach()
+
+  list(APPEND PLUGIN_FLAGS "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
     GIT_REPOSITORY https://github.com/keystone-enclave/keystone-runtime
     GIT_TAG ${tag}
-    CONFIGURE_COMMAND ""
     UPDATE_COMMAND git fetch
-    BUILD_COMMAND ./build.sh ${plugins}
+    CMAKE_ARGS ${PLUGIN_FLAGS}
     BUILD_IN_SOURCE TRUE
+    BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
     INSTALL_COMMAND "")
 
   add_custom_target(${target_name} DEPENDS ${ARGN})
