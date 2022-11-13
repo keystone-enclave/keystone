@@ -1,0 +1,118 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+
+# prebuilt docker images with toolchain
+executors:
+  setup-rv64gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv64gc
+  setup-rv32gc:
+    docker:
+      - image: keystoneenclaveorg/keystone:init-rv32gc
+
+# toolchain should be already installed in the docker image
+commands:
+  # Patch opensbi for secure boot parameters.
+  # This will be removed once the secure key locations are moved to the device tree
+  patch-opensbi:
+    steps:
+      - run:
+          command: |
+            cd /keystone
+            source source.sh
+            mkdir build
+            cd build
+            cmake ..
+            make patch
+  patch-opensbi-32:
+    steps:
+      - run:
+          command: |
+            cd /keystone
+            source source.sh
+            mkdir build
+            cd build
+            cmake .. -DRISCV32=y
+            make patch
+  update-riscv-toolchain-path:
+    steps:
+      - run: echo 'export PATH=/keystone/riscv64/bin:/keystone/riscv32/bin:$PATH' >> $BASH_ENV
+  download-qemu-riscv64:
+    steps:
+      - run:
+          name : "download qemu-riscv64"
+          command: |
+            wget https://keystone-enclave.eecs.berkeley.edu/files/qemu-riscv64 -P /keystone/riscv64/bin
+            chmod +x /keystone/riscv64/bin/qemu-riscv64
+  download-qemu-riscv32:
+    steps:
+      - run:
+          name : "download qemu-riscv32"
+          command: |
+            wget https://keystone-enclave.eecs.berkeley.edu/files/qemu-riscv32 -P /keystone/riscv32/bin
+            chmod +x /keystone/riscv64/bin/qemu-riscv32
+
+jobs:
+  build-platform-generic-64:
+    executor: setup-rv64gc
+    working_directory: /keystone/sm
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - patch-opensbi
+      - run:
+          name: "Build for generic platform"
+          command: |
+              make -C opensbi O=$(pwd)/build PLATFORM_DIR=$(pwd)/plat/generic CROSS_COMPILE=riscv64-unknown-elf-
+              make hash -C tools FW_PATH=$(pwd)/build/platform/generic/firmware
+              cat tools/sm_expected_hash.h
+  build-platform-generic-32:
+    executor: setup-rv32gc
+    working_directory: /keystone/sm
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - patch-opensbi-32
+      - run:
+          name: "Build for generic platform"
+          command: |
+              make -C opensbi O=$(pwd)/build PLATFORM_DIR=$(pwd)/plat/generic CROSS_COMPILE=riscv32-unknown-elf- \
+                PLATFORM_RISCV_XLEN=32 PLATFORM_RISCV_ISA=rv32imafd PLATFORM_RISCV_ABI=ilp32d
+              make hash -C tools FW_PATH=$(pwd)/build/platform/generic/firmware
+              cat tools/sm_expected_hash.h
+  build-platform-sifive-fu540:
+    executor: setup-rv64gc
+    working_directory: /keystone/sm
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - patch-opensbi
+      - run:
+          name: "Build for sifive/fu540 platform"
+          command: |
+              make -C opensbi O=$(pwd)/build PLATFORM_DIR=$(pwd)/plat/sifive/fu540 CROSS_COMPILE=riscv64-unknown-elf-
+              make hash -C tools FW_PATH=$(pwd)/build/platform/sifive/fu540/firmware
+              cat tools/sm_expected_hash.h
+  unit-test-rv64:
+    executor: setup-rv64gc
+    working_directory: /keystone/sm
+    steps:
+      - checkout
+      - update-riscv-toolchain-path
+      - download-qemu-riscv64
+      - run:
+          name: "Run cmocka unit tests"
+          command: |
+              cd tests
+              mkdir build
+              cd build
+              cmake ..
+              make
+              make test
+workflows:
+  build-and-test:
+    jobs:
+      - build-platform-generic-64
+      - build-platform-generic-32
+      - build-platform-sifive-fu540
+      - unit-test-rv64

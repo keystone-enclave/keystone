@@ -9,7 +9,7 @@ RUN apt -y install autoconf automake autotools-dev bc \
     gperf libgmp-dev libmpc-dev libmpfr-dev libtool texinfo tmux \
     patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python \
     pkg-config libglib2.0-dev libpixman-1-dev libssl-dev screen \
-    device-tree-compiler expect makeself unzip cpio rsync cmake
+    device-tree-compiler expect makeself unzip cpio rsync cmake ninja
 
 RUN git clone https://github.com/keystone-enclave/keystone /keystone
 RUN cd /keystone && \

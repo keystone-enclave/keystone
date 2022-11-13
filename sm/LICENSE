@@ -1,0 +1,15 @@
+This distribution includes Keystone security monitor and relevant parts.
+The Keystone security monitor as a whole is released under BSD 3-Clause License
+(SPDX Identifier: BSD-3-Clause)
+However, it contains some parts that are compatible with the BSD 3-Clause.
+The following clarifies the license of the distribution:
+
+1) Every source file in ed25519/ directory is under zlib License
+(SPDX Identifier: Zlib)
+
+2) Every source file in sha512/ directory is under MIT License
+(SPDX Identifier: MIT)
+
+3) Everything else is under BSD 3-Clause
+
+Keystone Team

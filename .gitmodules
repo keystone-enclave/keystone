@@ -1,12 +1,6 @@
 [submodule "riscv-gnu-toolchain"]
 	path = riscv-gnu-toolchain
 	url = https://github.com/riscv/riscv-gnu-toolchain
-[submodule "sdk"]
-	path = sdk
-	url = https://github.com/keystone-enclave/keystone-sdk
-[submodule "linux-keystone-driver"]
-	path = linux-keystone-driver
-	url = https://github.com/keystone-enclave/linux-keystone-driver
 [submodule "buildroot"]
 	path = buildroot
 	url = https://github.com/buildroot/buildroot.git
@@ -16,6 +10,6 @@
 [submodule "qemu"]
 	path = qemu
 	url = https://github.com/qemu/qemu
-[submodule "sm"]
-	path = sm
-	url = https://github.com/keystone-enclave/sm
+[submodule "opensbi"]
+	path = sm/opensbi
+	url = https://github.com/riscv/opensbi
