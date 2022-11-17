@@ -44,4 +44,9 @@ int
 pause_ms(unsigned long ms) {
   return SYSCALL_1(SYSCALL_PAUSE_MS, ms);
 }
+
+int
+print_time() {
+  return SYSCALL_0(SYSCALL_PRINT_TIME);
+}
 // chungmcl

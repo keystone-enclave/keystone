@@ -16,6 +16,9 @@
 // TODO(chungmcl): For debugging with sbi_timer(); remove when done
 #include <sbi/sbi_timer.h>
 
+// management-core
+#include "sbi/sbi_timer.h"
+
 unsigned long sbi_sm_create_enclave(unsigned long* eid, uintptr_t create_args)
 {
   struct keystone_sbi_create create_args_local;
@@ -115,6 +118,7 @@ unsigned long sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr
 // management-core
 unsigned long sbi_sm_start_management_core() {
   sbi_printf("!!! sbi_sm_start_management_core() called, %lx.\n", csr_read(mhartid));
+  sbi_timer_event_start(sbi_timer_value() + 0x1000000, SBI_TIMER_SOURCE_MONITOR);
   return 0;
 }
 // management-core

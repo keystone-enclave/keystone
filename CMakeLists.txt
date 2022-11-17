@@ -293,7 +293,7 @@ if(initramfs)
   set(extra_qemu_options "")
 else()
   set(extra_qemu_options "\
-      -append \"console=ttyS0 ro root=/dev/vda isolcpus=0 nohz_full=0\" \
+      -append \"console=ttyS0 ro root=/dev/vda isolcpus=2 nohz=on nohz_full=2\" \
       -drive file=${buildroot_wrkdir}/images/rootfs.ext2,format=raw,id=hd0 \
       -device virtio-blk-device,drive=hd0 \
   ")

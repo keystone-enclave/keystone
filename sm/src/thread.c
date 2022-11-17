@@ -7,13 +7,15 @@
 #include "thread.h"
 
 void switch_vector_enclave(){
-  extern void trap_vector_enclave();
-  csr_write(mtvec, &trap_vector_enclave);
+  // management-core: commented out
+  // extern void trap_vector_enclave();
+  // csr_write(mtvec, &trap_vector_enclave);
 }
 
 void switch_vector_host(){
-  extern void _trap_handler();
-  csr_write(mtvec, &_trap_handler);
+  // management-core: commented out
+  // extern void _trap_handler();
+  // csr_write(mtvec, &_trap_handler);
 }
 
 void swap_prev_mstatus(struct thread_state* thread, struct sbi_trap_regs* regs, uintptr_t current_mstatus) {

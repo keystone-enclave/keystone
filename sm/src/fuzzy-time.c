@@ -6,8 +6,8 @@
 
 #define GRANULARITY_MS 10
 
-unsigned long t_end_ticks = 0;
 unsigned long fuzz_clock_ticks;
+unsigned long t_end_ticks = 0;
 unsigned long granularity_ticks;
 unsigned long ticks_per_ms;
 
@@ -18,6 +18,23 @@ void fuzzy_time_init() {
   granularity_ticks = GRANULARITY_MS * ticks_per_ms;
   unsigned long t = sbi_timer_value();
   t_end_ticks = t - (t % granularity_ticks);
+}
+
+unsigned long prev_time;
+
+unsigned long update_fuzzy_clock() {
+  uint64_t now_ticks = sbi_timer_value();
+
+
+  uint64_t floored_now_ticks = now_ticks - (now_ticks % granularity_ticks);
+  if (fuzz_clock_ticks < floored_now_ticks) {
+    fuzz_clock_ticks = floored_now_ticks;
+    // sbi_printf("!!! fuzz_clock_ticks updated to %lu @ %lu, dif: %lu\n", fuzz_clock_ticks, now_ticks, now_ticks - prev_time);
+    prev_time = now_ticks;
+  }
+
+  // TODO(chungmcl): verify that sbi_sm_random is indeed uniformly random
+  return sbi_sm_random() % (granularity_ticks + 1);
 }
 
 void fix_time_interval(unsigned long t) {
@@ -31,7 +48,6 @@ void fix_time_interval(unsigned long t) {
 
   // may need to have safety mechanism to check for verrrry long gaps
   // between real_time and t_end_ticks? and skip this process
-  // print with sbi_printf("");
   while (t_end_ticks < t) {
     fuzz_clock_ticks = t_end_ticks - (t_end_ticks % granularity_ticks);
     // TODO: ENSURE UNIFORMLY RANDOM! IT ISN'T RIGHT NOW!
@@ -69,7 +85,7 @@ unsigned long get_time_ticks() {
   /*enclave_id eid = cpu_get_enclave_id();
   struct enclave* enclave = get_enclave(eid);
   if (enclave->fuzzy_status == FUZZ_ENABLED)*/ {
-    fix_time_interval(sbi_timer_value());
+    // fix_time_interval(sbi_timer_value());
     return fuzz_clock_ticks;
   }
 }

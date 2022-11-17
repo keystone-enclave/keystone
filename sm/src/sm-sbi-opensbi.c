@@ -23,7 +23,7 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
                      unsigned long *out_val,
                      struct sbi_trap_info *out_trap)
 {
-  sbi_printf("SM Handler Called @ %lu.\n", sbi_timer_value());
+  // sbi_printf("SM Handler Called @ %lu.\n", sbi_timer_value());
 
   uintptr_t retval;
 
