@@ -4,8 +4,6 @@ set(host_bin fuzzy-time-test-runner)
 set(host_src host/host_fuzzy_time_test.cpp)
 set(package_name "fuzzy-time-test.ke")
 set(package_script "./fuzzy-time-test-runner fuzzy-time-test eyrie-rt")
-# run something on the 1st CPU (our management core)
-# set(package_script "taskset 0x1 ./fuzzy-time-test-runner fuzzy-time-test eyrie-rt")
 
 if(RISCV32)
   set(eyrie_plugins "rv32 freemem")

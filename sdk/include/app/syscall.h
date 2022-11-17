@@ -17,6 +17,7 @@
 // chungmcl
 #define SYSCALL_SHAREDWRITE 1005
 #define SYSCALL_PAUSE_MS 1006
+#define SYSCALL_PRINT_TIME 1007
 // chungmcl
 #define SYSCALL_EXIT 1101
 
@@ -68,6 +69,9 @@ write_to_shared(void* src, uintptr_t offset, size_t data_len);
 
 int
 pause_ms(unsigned long ms);
+
+int
+print_time();
 // chungmcl
 
 #endif /* syscall.h */
