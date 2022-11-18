@@ -27,6 +27,9 @@ jobs:
           name: "Build rv64 and run tests"
           command: |
               ./fast-setup.sh
+              cd qemu
+              git reset --hard
+              cd ..
               source ./source.sh
               mkdir build64
               cd build64
