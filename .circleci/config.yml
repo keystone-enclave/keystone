@@ -29,8 +29,8 @@ jobs:
       - run:
           name: "Build rv64 and run tests"
           command: |
-              ./fast-setup.sh
               source ./source.sh
+              ./fast-setup.sh
               mkdir build64
               cd build64
               cmake /keystone
@@ -46,8 +46,8 @@ jobs:
       - run:
           name: "Build rv64 sifive FU540"
           command: |
-              ./fast-setup.sh
               source ./source.sh
+              ./fast-setup.sh
               mkdir build64-fu540
               cd build64-fu540
               cmake /keystone -DLINUX_SIFIVE=y -DSM_PLATFORM=sifive/fu540
@@ -61,9 +61,8 @@ jobs:
       - run:
           name: "Build rv32 and run tests"
           command: |
-              export BITS=32 
-              ./fast-setup.sh
               source ./source.sh
+              BITS=32 ./fast-setup.sh
               mkdir build32
               cd build32
               cmake /keystone -DRISCV32=y
