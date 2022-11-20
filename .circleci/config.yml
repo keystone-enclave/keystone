@@ -12,9 +12,12 @@ executors:
 
 
 commands:
-  update-riscv-toolchain-path:
+  update-riscv-toolchain-path-64:
     steps:
-      - run: echo 'export PATH=/keystone/riscv64/bin:/keystone/riscv32/bin:$PATH' >> $BASH_ENV
+      - run: echo 'export PATH=/keystone/riscv64/bin:$PATH' >> $BASH_ENV
+  update-riscv-toolchain-path-32:
+    steps:
+      - run: echo 'export PATH=/keystone/riscv32/bin:$PATH' >> $BASH_ENV
 
 jobs:
   build-and-test-rv64-qemu:
@@ -22,14 +25,11 @@ jobs:
     working_directory: /keystone
     steps:
       - checkout
-      - update-riscv-toolchain-path
+      - update-riscv-toolchain-path-64
       - run:
           name: "Build rv64 and run tests"
           command: |
               ./fast-setup.sh
-              cd qemu
-              git reset --hard
-              cd ..
               source ./source.sh
               mkdir build64
               cd build64
@@ -42,7 +42,7 @@ jobs:
     working_directory: /keystone
     steps:
       - checkout
-      - update-riscv-toolchain-path
+      - update-riscv-toolchain-path-64
       - run:
           name: "Build rv64 sifive FU540"
           command: |
@@ -57,11 +57,12 @@ jobs:
     working_directory: /keystone
     steps:
       - checkout
-      - update-riscv-toolchain-path
+      - update-riscv-toolchain-path-32
       - run:
           name: "Build rv32 and run tests"
           command: |
-              BITS=32 ./fast-setup.sh
+              export BITS=32 
+              ./fast-setup.sh
               source ./source.sh
               mkdir build32
               cd build32
