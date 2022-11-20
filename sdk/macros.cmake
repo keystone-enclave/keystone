@@ -99,7 +99,7 @@ macro(add_eyrie_runtime target_name tag plugins) # the files are passed via ${AR
     GIT_REPOSITORY https://github.com/keystone-enclave/keystone-runtime
     GIT_TAG ${tag}
     UPDATE_COMMAND git fetch
-    CMAKE_ARGS ${PLUGIN_FLAGS}
+    CMAKE_ARGS "${PLUGIN_FLAGS}"
     BUILD_IN_SOURCE TRUE
     BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
     INSTALL_COMMAND "")
