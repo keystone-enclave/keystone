@@ -16,6 +16,7 @@ fi
 
 if [ "$BITS" = "64" ]; then
   TOOLCHAIN_7Z_FILE=riscv-toolchain-lp64d-rv64gc-2021.01.$DIST.7z
+  TOOLCHAIN_MUSL_7Z_FILE=riscv-musl-toolchain-lp64d-rv64gc-2021.04.xenial.7z
 else
   TOOLCHAIN_7Z_FILE=riscv-toolchain-ilp32d-rv32gc-2021.01.$DIST.7z
   SDK_FLAGS="-DRISCV32=y"
@@ -56,6 +57,39 @@ else
   rm $TOOLCHAIN_7Z_FILE
 fi
 
+if ( $(command -v riscv$BITS-unknown-linux-musl-gcc > /dev/null) )
+then
+  echo "RISCV MUSL tools are already installed"
+else
+  echo "Downloading Prebuilt RISC-V MUSL Toolchain... "
+
+  export RISCV_MUSL=$(pwd)/riscv$BITS-musl
+  export PATH=$PATH:$RISCV_MUSL/bin
+
+  if [ -f $TOOLCHAIN_MUSL_7Z_FILE ]; then
+    rm $TOOLCHAIN_MUSL_7Z_FILE;
+  fi
+
+  wget https://keystone-enclave.eecs.berkeley.edu/files/$TOOLCHAIN_MUSL_7Z_FILE
+
+  # Check tool integrity
+  echo "Verifying prebuilt toolchain integrity..."
+
+  sha256sum -c .prebuilt_tools_shasums --status --ignore-missing
+
+  if [[ $? != 0 ]]; then
+    echo "Toolchain binary download incomplete or corrupted. You can build the toolchain locally or try again."
+    exit 1
+  fi
+
+  echo "Extracting Toolchain"
+  7za x -y $TOOLCHAIN_MUSL_7Z_FILE -o./riscv$BITS-musl
+
+  echo "Toolchain has been installed in $RISCV_MUSL"
+
+  rm $TOOLCHAIN_MUSL_7Z_FILE
+fi
+
 echo "Updating and cloning submodules, this may take a long time"
 git config submodule.riscv-gnu-toolchain.update none
 
@@ -91,9 +125,12 @@ fi
 
 # update source.sh
 GCC_PATH=$(which riscv$BITS-unknown-linux-gnu-gcc)
+GCC_MUSL_PATH=$(which riscv$BITS-unknown-linux-musl-gcc)
 RISCV_DIR=$(dirname $(dirname $GCC_PATH))
+RISCV_MUSL_DIR=$(dirname $(dirname $GCC_MUSL_PATH))
 echo "export RISCV=$RISCV_DIR" > ./source.sh
-echo "export PATH=$RISCV/bin:\$PATH" >> ./source.sh
+echo "export RISCV_MUSL=$RISCV_MUSL_DIR" >> ./source.sh
+echo "export PATH=$RISCV/bin:$RISCV_MUSL/bin:\$PATH" >> ./source.sh
 echo "export KEYSTONE_SDK_DIR=$KEYSTONE_SDK_DIR" >> ./source.sh
 
 echo "RISC-V toolchain and Keystone SDK have been fully setup"
