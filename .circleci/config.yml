@@ -74,4 +74,5 @@ workflows:
   build-and-test:
     jobs:
       - build-and-test-rv64-qemu
-      - build-and-test-rv32-qemu
+      # - build-and-test-rv32-qemu
+      # - build-rv64-fu540
