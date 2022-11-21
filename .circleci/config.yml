@@ -37,21 +37,21 @@ jobs:
               make -j$(nproc)
               make run-tests
           no_output_timeout: 120m
-  # build-rv64-fu540:
-  #   executor: setup-rv64gc
-  #   working_directory: /keystone
-  #   steps:
-  #     - checkout
-  #     - update-riscv-toolchain-path-64
-  #     - run:
-  #         name: "Build rv64 sifive FU540"
-  #         command: |
-  #             source ./source.sh
-  #             ./fast-setup.sh
-  #             mkdir build64-fu540
-  #             cd build64-fu540
-  #             cmake /keystone -DLINUX_SIFIVE=y -DSM_PLATFORM=sifive/fu540
-  #             make -j$(nproc)
+  build-rv64-fu540:
+    executor: setup-rv64gc
+    working_directory: /keystone
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - run:
+          name: "Build rv64 sifive FU540"
+          command: |
+              source ./source.sh
+              ./fast-setup.sh
+              mkdir build64-fu540
+              cd build64-fu540
+              cmake /keystone -DLINUX_SIFIVE=y -DSM_PLATFORM=sifive/fu540
+              make -j$(nproc)
   build-and-test-rv32-qemu:
     executor: setup-rv32gc
     working_directory: /keystone
@@ -74,5 +74,4 @@ workflows:
   build-and-test:
     jobs:
       - build-and-test-rv64-qemu
-      - build-rv64-fu540
       - build-and-test-rv32-qemu
