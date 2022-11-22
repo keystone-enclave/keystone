@@ -6,3 +6,6 @@
 *~
 *_entry.h
 bins/
+build/
+build64/
+build32/
