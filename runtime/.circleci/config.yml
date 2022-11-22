@@ -20,6 +20,7 @@ commands:
     steps:
       - run: |
           cd /keystone/sdk
+          rm -rf build
           mkdir build
           cd build
           KEYSTONE_SDK_DIR=$(pwd) cmake ..
