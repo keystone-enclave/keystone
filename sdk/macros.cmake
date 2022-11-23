@@ -93,6 +93,7 @@ macro(add_eyrie_runtime target_name tag plugins) # the files are passed via ${AR
   endforeach()
 
   list(APPEND PLUGIN_FLAGS "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+  list(APPEND PLUGIN_FLAGS "-DCMAKE_OBJCOPY=${CMAKE_OBJCOPY}")
 
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
