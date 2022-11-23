@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 
-#include "../merkle.h"
+#include "crypto/merkle.h"
 
 #include <math.h>
 #include <stddef.h>
@@ -8,7 +8,7 @@
 #include <sys/mman.h>
 
 #define MERK_SILENT
-#include "../merkle.c"
+#include "../crypto/merkle.c"
 #include "mock.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

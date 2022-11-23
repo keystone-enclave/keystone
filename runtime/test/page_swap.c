@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 
-#include "../page_swap.c"
+#include "../mm/page_swap.c"
 
 #include <math.h>
 #include <stddef.h>

@@ -31,7 +31,37 @@ commands:
           git submodule sync
           git submodule update --init
 
+  build-runtime:
+    parameters:
+      build-name:
+        type: string
+      build-dir:
+        type: string
+        default: build
+      build-args:
+        type: string
+        default: ''
+
+    steps:
+      - run:
+          name: << parameters.build-name >>
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              mkdir -p << parameters.build-dir >>
+              cd << parameters.build-dir >>
+              cmake -DCMAKE_C_COMPILER=$(which riscv64-unknown-linux-gnu-gcc) \
+                     -DCMAKE_OBJCOPY=$(which riscv64-unknown-linux-gnu-objcopy) \
+                     << parameters.build-args >> ..
+              make
+          no-output-timeout: 120m
+
 jobs:
+  # The format job essentially runs clang-format against the Eyrie codebase. To
+  # do so, we first query which clang-format git prefers. Then, we run git with
+  # this clang-format. This ensures that the tool only checks files that have
+  # been modified. Finally, we check the output of the tool and return an error
+  # if some formatting changes are necessary.
   format:
     executor: setup-rv64gc
     steps:
@@ -44,8 +74,11 @@ jobs:
           environment:
             KEYSTONE_SDK_DIR: /keystone/sdk/build
           command: |
-              make format
+              FORMAT=$(git help -a | grep clang-format | tail -n1)
+              FORMAT_RESULT=$(git $FORMAT)
+              [ "$FORMAT_RESULT" = "no modified files to format" ] || [ "$FORMAT_RESULT" = "clang-format did not modify any files" ]
           no_output_timeout: 120m
+
   default-build:
     executor: setup-rv64gc
     steps:
@@ -53,13 +86,8 @@ jobs:
       - checkout-runtime
       - update-riscv-toolchain-path
       - build-sdk
-      - run:
-          name: "Default build"
-          environment:
-            KEYSTONE_SDK_DIR: /keystone/sdk/build
-          command: |
-              ./build.sh
-          no_output_timeout: 120m
+      - build-runtime:
+          build-name: "Default build"
   use-freemem:
     executor: setup-rv64gc
     steps:
@@ -67,13 +95,10 @@ jobs:
       - checkout-runtime
       - update-riscv-toolchain-path
       - build-sdk
-      - run:
-          name: "USE_FREEMEM"
-          environment:
-            KEYSTONE_SDK_DIR: /keystone/sdk/build
-          command: |
-              ./build.sh freemem
-          no_output_timeout: 120m
+      - build-runtime:
+          build-name: "USE_FREEMEM"
+          build-dir: build_freemem
+          build-args: -DFREEMEM=on
   use_linux_syscall_use_freemem:
     executor: setup-rv64gc
     steps:
@@ -81,13 +106,10 @@ jobs:
       - checkout-runtime
       - update-riscv-toolchain-path
       - build-sdk
-      - run:
-          name: "USE_LINUX_SYSCALL + USE_FREEMEM"
-          environment:
-            KEYSTONE_SDK_DIR: /keystone/sdk/build
-          command: |
-              ./build.sh linux_syscall freemem
-          no_output_timeout: 120m
+      - build-runtime:
+          build-name: "USE_LINUX_SYSCALL + USE_FREEMEM"
+          build-dir: build_syscall_freemem
+          build-args: -DLINUX_SYSCALL=on -DFREEMEM=on
   use_paging:
     executor: setup-rv64gc
     steps:
@@ -95,13 +117,10 @@ jobs:
       - checkout-runtime
       - update-riscv-toolchain-path
       - build-sdk
-      - run:
-          name: "USE_PAGING"
-          environment:
-            KEYSTONE_SDK_DIR: /keystone/sdk/build
-          command: |
-              ./build.sh paging
-          no_output_timeout: 120m
+      - build-runtime:
+          build-name: "USE_PAGING"
+          build-dir: build_paging
+          build-args: -DFREEMEM=on -DPAGING=on
   use_package_crypto:
     executor: setup-rv64gc
     steps:
@@ -109,13 +128,10 @@ jobs:
       - checkout-runtime
       - update-riscv-toolchain-path
       - build-sdk
-      - run:
-          name: "USE_PAGE_CRYPTO"
-          environment:
-            KEYSTONE_SDK_DIR: /keystone/sdk/build
-          command: |
-              ./build.sh paging page_crypto
-          no_output_timeout: 120m
+      - build-runtime:
+          build-name: "USE_PAGE_CRYPTO"
+          build-dir: build_paging_crypto
+          build-args: -DFREEMEM=on -DPAGING=on -DPAGE_CRYPTO=on
   use_page_hash:
     executor: setup-rv64gc
     steps:
@@ -123,13 +139,10 @@ jobs:
       - checkout-runtime
       - update-riscv-toolchain-path
       - build-sdk
-      - run:
-          name: "USE_PAGE_HASH"
-          environment:
-            KEYSTONE_SDK_DIR: /keystone/sdk/build
-          command: |
-              ./build.sh paging page_hash
-          no_output_timeout: 120m
+      - build-runtime:
+          build-name: "USE_PAGE_HASH"
+          build-dir: build_paging_hash
+          build-args: -DFREEMEM=on -DPAGING=on -DPAGE_HASH=on
   use_page_crypto_use_page_hash:
     executor: setup-rv64gc
     steps:
@@ -137,13 +150,11 @@ jobs:
       - checkout-runtime
       - update-riscv-toolchain-path
       - build-sdk
-      - run:
-          name: "USE_PAGE_CRYPTO + USE_PAGE_HASH"
-          environment:
-            KEYSTONE_SDK_DIR: /keystone/sdk/build
-          command: |
-              ./build.sh paging page_crypto page_hash
-          no_output_timeout: 120m
+      - build-runtime:
+          build-name: "USE_PAGE_CRYPTO + USE_PAGE_HASH"
+          build-dir: build_paging_crypto_hash
+          build-args: -DFREEMEM=on -DPAGING=on -DPAGE_CRYPTO=on -DPAGE_HASH=on
+
   test:
     executor: setup-rv64gc
     steps:
@@ -176,6 +187,9 @@ workflows:
           requires:
             - default-build
       - use_package_crypto:
+          requires:
+            - default-build
+      - use_paging:
           requires:
             - default-build
       - use_page_hash:
