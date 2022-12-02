@@ -77,6 +77,9 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
     case SBI_SM_START_MGMT_CORE:
       retval = sbi_sm_start_management_core();
       break;
+    case SBI_SM_REG_CLOCK_IPI:
+      retval = sbi_sm_reg_clock_ipi((struct sbi_trap_regs*) regs, (void (*)(struct sbi_scratch *scratch))regs->a0);
+      break;
     // management-core
 
     // fuzzy-time

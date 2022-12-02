@@ -11,4 +11,11 @@ unsigned long wait_until_epoch();
 unsigned long get_time_ticks();
 unsigned long get_granularity_ticks();
 
+void reg_clock_ipi(void (* process)(struct sbi_scratch *scratch));
+
+// static struct sbi_ipi_event_ops fuzzy_time_ipi_event = {
+//   .name = "FUZZY_TIME_IPI",
+//   .process = fuzzy_time_process_ipi
+// };
+
 #endif

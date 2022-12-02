@@ -7,6 +7,7 @@
 
 #include <sbi/sbi_types.h>
 #include <sbi/sbi_trap.h>
+#include <sbi/sbi_scratch.h>
 
 unsigned long
 sbi_sm_create_enclave(unsigned long *out_val, uintptr_t create_args);
@@ -39,6 +40,9 @@ unsigned long
 sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1);
 
 // management-core/fuzzy-time
+unsigned long
+sbi_sm_reg_clock_ipi(struct sbi_trap_regs *regs, void (* process)(struct sbi_scratch *scratch));
+
 unsigned long
 sbi_sm_start_management_core();
 // management-core/fuzzy-time
