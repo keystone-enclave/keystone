@@ -116,8 +116,13 @@ unsigned long sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr
 }
 
 // management-core
+unsigned long sbi_sm_reg_clock_ipi(struct sbi_trap_regs *regs, void (* process)(struct sbi_scratch *scratch)) {
+  reg_clock_ipi(process);
+  return 0;
+}
+
 unsigned long sbi_sm_start_management_core() {
-  sbi_printf("!!! sbi_sm_start_management_core() called, %lx.\n", csr_read(mhartid));
+  sbi_printf("!!! sbi_sm_start_management_core(): running on core %lx.\n", csr_read(mhartid));
   sbi_timer_event_start(sbi_timer_value() + 0x1000000, SBI_TIMER_SOURCE_MONITOR);
   return 0;
 }

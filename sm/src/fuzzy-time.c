@@ -4,12 +4,23 @@
 #include "cpu.h"
 #include <sbi/sbi_console.h> // for sbi_printf() for debugging
 
+#include "sbi/sbi_ipi.h"
+
 #define GRANULARITY_MS 10
+
+// TODO(chungmcl): Remove! For debugging
+#define FUZZ_ON 0
 
 unsigned long fuzz_clock_ticks;
 unsigned long t_end_ticks = 0;
 unsigned long granularity_ticks;
 unsigned long ticks_per_ms;
+
+void reg_clock_ipi(void (* process)(struct sbi_scratch *scratch)) {
+  int hart_id = csr_read(mhartid);
+  sbi_printf("reg_clock_ipi called!\n\tmhartid: %d\n\tprocess: %p\n", hart_id, process);
+  process(NULL);
+}
 
 void fuzzy_time_init() {
   // (ticks / second) * (seconds / milliseconds) = (ticks / milliseconds)
@@ -18,23 +29,32 @@ void fuzzy_time_init() {
   granularity_ticks = GRANULARITY_MS * ticks_per_ms;
   unsigned long t = sbi_timer_value();
   t_end_ticks = t - (t % granularity_ticks);
+
+  sbi_printf("Fuzzy Clock initialized with granularity_ticks == %lu\n", granularity_ticks);
 }
 
 unsigned long prev_time;
 
 unsigned long update_fuzzy_clock() {
+#if FUZZ_ON
+  // Fuzz On
   uint64_t now_ticks = sbi_timer_value();
-
-
+  
   uint64_t floored_now_ticks = now_ticks - (now_ticks % granularity_ticks);
   if (fuzz_clock_ticks < floored_now_ticks) {
     fuzz_clock_ticks = floored_now_ticks;
     // sbi_printf("!!! fuzz_clock_ticks updated to %lu @ %lu, dif: %lu\n", fuzz_clock_ticks, now_ticks, now_ticks - prev_time);
     prev_time = now_ticks;
   }
-
+  
   // TODO(chungmcl): verify that sbi_sm_random is indeed uniformly random
   return sbi_sm_random() % (granularity_ticks + 1);
+#else
+  // Fuzz Off
+  uint64_t now_ticks = sbi_timer_value();
+  fuzz_clock_ticks = now_ticks - (now_ticks % granularity_ticks);
+  return granularity_ticks;
+#endif
 }
 
 void fix_time_interval(unsigned long t) {
