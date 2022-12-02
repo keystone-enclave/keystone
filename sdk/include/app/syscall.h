@@ -65,35 +65,6 @@ get_sealing_key(
     void* key_ident, size_t key_ident_size);
 
 // chungmcl
-/** Representation of per-HART scratch space */
-struct sbi_scratch {
-	/** Start (or base) address of firmware linked to OpenSBI library */
-	unsigned long fw_start;
-	/** Size (in bytes) of firmware linked to OpenSBI library */
-	unsigned long fw_size;
-	/** Arg1 (or 'a1' register) of next booting stage for this HART */
-	unsigned long next_arg1;
-	/** Address of next booting stage for this HART */
-	unsigned long next_addr;
-	/** Priviledge mode of next booting stage for this HART */
-	unsigned long next_mode;
-	/** Warm boot entry point address for this HART */
-	unsigned long warmboot_addr;
-	/** Address of sbi_platform */
-	unsigned long platform_addr;
-	/** Address of HART ID to sbi_scratch conversion function */
-	unsigned long hartid_to_scratch;
-	/** Address of trap exit function */
-	unsigned long trap_exit;
-	/** Temporary storage */
-	unsigned long tmp0;
-	/** Options for OpenSBI library */
-	unsigned long options;
-};
-
-int
-reg_clock_ipi(void (* process)(struct sbi_scratch *scratch));
-
 int
 write_to_shared(void* src, uintptr_t offset, size_t data_len);
 

@@ -3,8 +3,11 @@
 #include "enclave.h"
 #include "cpu.h"
 #include <sbi/sbi_console.h> // for sbi_printf() for debugging
+#include "string.h"
 
 #include "sbi/sbi_ipi.h"
+#include "sbi/sbi_hsm.h"
+#include "sbi/sbi_domain.h"
 
 #define GRANULARITY_MS 10
 
@@ -16,10 +19,30 @@ unsigned long t_end_ticks = 0;
 unsigned long granularity_ticks;
 unsigned long ticks_per_ms;
 
+void asdf(struct sbi_scratch *scratch) {
+  sbi_printf("!!! asdf\n");
+}
+
 void reg_clock_ipi(void (* process)(struct sbi_scratch *scratch)) {
-  int hart_id = csr_read(mhartid);
-  sbi_printf("reg_clock_ipi called!\n\tmhartid: %d\n\tprocess: %p\n", hart_id, process);
-  process(NULL);
+  ulong hart_id = current_hartid();
+  sbi_printf("reg_clock_ipi called 1\n\tmhartid: %ld\n\tprocess: %p\n", hart_id, process);
+
+  ulong mask = 0;
+  sbi_hsm_hart_interruptible_mask(sbi_domain_thishart_ptr(), 0, &mask);
+  sbi_printf("mask: %ld\n", mask);
+
+  struct sbi_ipi_event_ops ipi_event_ops;
+  
+  ipi_event_ops.name[0] = 'a';
+  ipi_event_ops.name[1] = '\0';
+  ipi_event_ops.process = asdf;
+  int event = sbi_ipi_event_create(&ipi_event_ops);
+  sbi_printf("event created: %d\n", event);
+
+  // sbi_ipi_send_smode(hart_id, 0);
+  sbi_ipi_send_many(mask, 0, event, NULL);
+
+  // sbi_ipi_send_smode(0b1 << hart_id, 0b1 << hart_id);
 }
 
 void fuzzy_time_init() {
