@@ -34,12 +34,6 @@ get_sealing_key(
       key_ident, key_ident_size);
 }
 
-// chungmcl
-int
-reg_clock_ipi(void (* process)(struct sbi_scratch *scratch)) {
-  return SYSCALL_1(SYSCALL_REG_CLOCK_IPI, process);
-}
-
 int
 write_to_shared(void* src, uintptr_t offset, size_t data_len) {
   return SYSCALL_3(SYSCALL_SHAREDWRITE, src, offset, data_len);
