@@ -13,7 +13,7 @@
 #include "sm-sbi.h"
 #include "sm.h"
 #include "cpu.h"
-#include "fuzzy-time.h"
+#include "fuzzy-clock.h"
 
 // TODO(chungmcl): For debugging with sbi_timer(); remove when done
 #include <sbi/sbi_timer.h>
@@ -82,7 +82,7 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
       break;
     // management-core
 
-    // fuzzy-time
+    // fuzzy-clock
     case SBI_SM_PAUSE:
       retval = sbi_sm_pause((struct sbi_trap_regs*) regs);
       break;
@@ -94,7 +94,7 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
     case SBI_SM_GET_INTERVAL_LEN:
       retval = sbi_sm_get_interval_len((struct sbi_trap_regs*) regs);
       break;
-    // fuzzy-time
+    // fuzzy-clock
 
     case SBI_SM_CALL_PLUGIN:
       retval = sbi_sm_call_plugin(regs->a0, regs->a1, regs->a2, regs->a3);

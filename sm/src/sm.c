@@ -9,7 +9,7 @@
 #include "enclave.h"
 #include "platform-hook.h"
 #include "sm-sbi-opensbi.h"
-#include "fuzzy-time.h"
+#include "fuzzy-clock.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/riscv_barrier.h>
@@ -181,7 +181,7 @@ void sm_init(bool cold_boot)
 
   sm_print_hash();
 
-  fuzzy_time_init();
+  fuzzy_clock_init();
 
   return;
   // for debug
