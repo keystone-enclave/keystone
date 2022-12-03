@@ -29,7 +29,7 @@
 #include "sbi/sbi_console.h"
 #include "sbi/sbi_timer.h"
 #include "cpu.h"
-#include "fuzzy-time.h"
+#include "fuzzy-clock.h"
 
 /* List of platform override modules generated at compile time */
 extern const struct platform_override *platform_override_modules[];

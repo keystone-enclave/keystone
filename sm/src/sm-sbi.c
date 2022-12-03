@@ -9,7 +9,7 @@
 #include "cpu.h"
 #include "platform-hook.h"
 #include "plugins/plugins.h"
-#include "fuzzy-time.h"
+#include "fuzzy-clock.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>
 
@@ -62,10 +62,10 @@ unsigned long sbi_sm_resume_enclave(struct sbi_trap_regs *regs, unsigned long ei
 
 unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retval)
 {
-  // fuzzy-time
+  // fuzzy-clock
   sbi_printf("SM Exited @ %lu.\n", sbi_timer_value());
   wait_until_epoch();
-  // fuzzy-time
+  // fuzzy-clock
 
   regs->a0 = exit_enclave(regs, cpu_get_enclave_id());
   regs->a1 = retval;
@@ -76,10 +76,10 @@ unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retv
 
 unsigned long sbi_sm_stop_enclave(struct sbi_trap_regs *regs, unsigned long request)
 {
-  // fuzzy-time
+  // fuzzy-clock
   sbi_printf("SM Stopped @ %lu.\n", sbi_timer_value());
   wait_until_epoch();
-  // fuzzy-time
+  // fuzzy-clock
 
   regs->a0 = stop_enclave(regs, request, cpu_get_enclave_id());
   regs->mepc += 4;
@@ -128,7 +128,7 @@ unsigned long sbi_sm_start_management_core() {
 }
 // management-core
 
-// fuzzy-time
+// fuzzy-clock
 unsigned long sbi_sm_pause(struct sbi_trap_regs *regs) 
 {
   sbi_printf("SM Paused @ %lu.\n", sbi_timer_value());
@@ -150,4 +150,4 @@ unsigned long sbi_sm_get_interval_len(struct sbi_trap_regs *regs)
 {
   return get_granularity_ticks();
 }
-// fuzzy-time
+// fuzzy-clock

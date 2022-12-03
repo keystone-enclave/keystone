@@ -1,5 +1,5 @@
 #include <sbi/sbi_timer.h>
-#include "fuzzy-time.h"
+#include "fuzzy-clock.h"
 #include "enclave.h"
 #include "cpu.h"
 #include <sbi/sbi_console.h> // for sbi_printf() for debugging
@@ -33,7 +33,7 @@ void handle_clock_ipi(struct sbi_scratch *scratch) {
     sbi_printf("!!! cpu_is_enclave_context == true && hart_id: %d\n", hart_id);
     short is_enclave_registered = (clock_ipi_registered_enclaves >> eid) & 0b1;
     if (is_enclave_registered) {
-      sbi_printf("!!! is enclave %d on hart %d registered?: %d\n", eid, hart_id, (int)is_enclave_registered);
+      sbi_printf("!!! enclave %d on hart %d registered!\n", eid, hart_id);
       // csr_set(CSR_MIP, MIP_SSIP);
     }
   }
@@ -54,7 +54,7 @@ void send_clock_ipi() {
   // sbi_printf("send_clock_ipi with mask: %ld and event_id: %d\n", mask, clock_ipi_event_id);
 }
 
-void fuzzy_time_init() {
+void fuzzy_clock_init() {
   // (ticks / second) * (seconds / milliseconds) = (ticks / milliseconds)
   ticks_per_ms = sbi_timer_get_device()->timer_freq / 1000;
   // milliseconds * (ticks / milliseconds) = ticks
