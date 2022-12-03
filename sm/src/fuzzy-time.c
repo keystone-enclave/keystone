@@ -19,30 +19,39 @@ unsigned long t_end_ticks = 0;
 unsigned long granularity_ticks;
 unsigned long ticks_per_ms;
 
-void asdf(struct sbi_scratch *scratch) {
-  sbi_printf("!!! asdf\n");
+int clock_ipi_event_id = -1;
+static struct sbi_ipi_event_ops clock_ipi_event_ops;
+// bitmask of enclaves registered for fuzzy clock IPIs
+short clock_ipi_registered_enclaves;
+
+void handle_clock_ipi(struct sbi_scratch *scratch) {
+  unsigned int hart_id = current_hartid();
+  enclave_id eid = cpu_get_enclave_id() + 1;
+  // sbi_printf("!!! handle_clock_ipi on core %d\n", hart_id);
+
+  if (cpu_is_enclave_context()) {
+    sbi_printf("!!! cpu_is_enclave_context == true && hart_id: %d\n", hart_id);
+    short is_enclave_registered = (clock_ipi_registered_enclaves >> eid) & 0b1;
+    if (is_enclave_registered) {
+      sbi_printf("!!! is enclave %d on hart %d registered?: %d\n", eid, hart_id, (int)is_enclave_registered);
+      // csr_set(CSR_MIP, MIP_SSIP);
+    }
+  }
 }
 
 void reg_clock_ipi(void (* process)(struct sbi_scratch *scratch)) {
-  ulong hart_id = current_hartid();
-  sbi_printf("reg_clock_ipi called 1\n\tmhartid: %ld\n\tprocess: %p\n", hart_id, process);
+  enclave_id eid = cpu_get_enclave_id() + 1;
 
+  clock_ipi_registered_enclaves = clock_ipi_registered_enclaves | (0b1 << eid);
+
+  sbi_printf("reg_clock_ipi called:\n\tmhartid: %d\n\teid: %d\n\tprocess: %p\n", current_hartid(), eid, process);
+}
+
+void send_clock_ipi() {
   ulong mask = 0;
   sbi_hsm_hart_interruptible_mask(sbi_domain_thishart_ptr(), 0, &mask);
-  sbi_printf("mask: %ld\n", mask);
-
-  struct sbi_ipi_event_ops ipi_event_ops;
-  
-  ipi_event_ops.name[0] = 'a';
-  ipi_event_ops.name[1] = '\0';
-  ipi_event_ops.process = asdf;
-  int event = sbi_ipi_event_create(&ipi_event_ops);
-  sbi_printf("event created: %d\n", event);
-
-  // sbi_ipi_send_smode(hart_id, 0);
-  sbi_ipi_send_many(mask, 0, event, NULL);
-
-  // sbi_ipi_send_smode(0b1 << hart_id, 0b1 << hart_id);
+  sbi_ipi_send_many(mask, 0, clock_ipi_event_id, NULL);
+  // sbi_printf("send_clock_ipi with mask: %ld and event_id: %d\n", mask, clock_ipi_event_id);
 }
 
 void fuzzy_time_init() {
@@ -53,11 +62,19 @@ void fuzzy_time_init() {
   unsigned long t = sbi_timer_value();
   t_end_ticks = t - (t % granularity_ticks);
 
+  if (clock_ipi_event_id == -1) {
+    clock_ipi_registered_enclaves = 0;
+    clock_ipi_event_ops.name[0] = 'x';
+    clock_ipi_event_ops.name[1] = '\0';
+    clock_ipi_event_ops.process = handle_clock_ipi;
+    clock_ipi_event_id = sbi_ipi_event_create(&clock_ipi_event_ops);
+    sbi_printf("Fuzzy Clock IPI event created with ID: %d\n", clock_ipi_event_id);
+  }
+
   sbi_printf("Fuzzy Clock initialized with granularity_ticks == %lu\n", granularity_ticks);
 }
 
-unsigned long prev_time;
-
+unsigned long prev_time; // TODO(chungmcl): remove! for debugging
 unsigned long update_fuzzy_clock() {
 #if FUZZ_ON
   // Fuzz On
@@ -76,6 +93,9 @@ unsigned long update_fuzzy_clock() {
   // Fuzz Off
   uint64_t now_ticks = sbi_timer_value();
   fuzz_clock_ticks = now_ticks - (now_ticks % granularity_ticks);
+
+  send_clock_ipi();
+
   return granularity_ticks;
 #endif
 }
