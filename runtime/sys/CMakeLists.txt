@@ -13,7 +13,8 @@ add_dependencies(eyrie-build rt_linkscript)
 
 add_custom_target(eyrie-rt ALL
         DEPENDS options_log eyrie-build
-        COMMAND ${CMAKE_OBJCOPY} --add-section .options_log=${CMAKE_BINARY_DIR}/.options_log
+        COMMAND ${CMAKE_OBJCOPY} -I binary
+            --add-section .options_log=${CMAKE_BINARY_DIR}/.options_log
             --set-section-flags .options_log=noload,readonly
             ${CMAKE_CURRENT_BINARY_DIR}/eyrie-build)
 
