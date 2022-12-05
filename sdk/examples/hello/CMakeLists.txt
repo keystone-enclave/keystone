@@ -6,9 +6,9 @@ set(package_name "hello.ke")
 set(package_script "./hello-runner hello eyrie-rt")
 
 if(RISCV32)
-  set(eyrie_plugins "freemem untrusted_io_syscall linux_syscall env_setup rv32")
+  set(eyrie_plugins "freemem io_syscall linux_syscall env_setup rv32")
 else()
-  set(eyrie_plugins "freemem untrusted_io_syscall linux_syscall env_setup")
+  set(eyrie_plugins "freemem io_syscall linux_syscall env_setup")
 endif()
 
 # eapp
@@ -25,7 +25,7 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE})
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(${eapp_bin}-eyrie
-  "v1.1.0"
+  "v1.2.1"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 

@@ -36,7 +36,7 @@ target_include_directories(${host_bin}
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(${eapp_bin}-eyrie
-  "v1.1.0"
+  "v1.2.1"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 
