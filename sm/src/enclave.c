@@ -52,7 +52,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
   swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
   swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
 
-  uintptr_t interrupts = 0;
+  uintptr_t interrupts = MIP_SSIP;
   csr_write(mideleg, interrupts);
 
   if(load_parameters) {

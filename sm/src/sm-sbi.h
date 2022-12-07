@@ -41,7 +41,7 @@ sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintp
 
 // management-core/fuzzy-clock
 unsigned long
-sbi_sm_reg_clock_ipi(struct sbi_trap_regs *regs, void (* process)(struct sbi_scratch *scratch));
+sbi_sm_reg_clock_ipi();
 
 unsigned long
 sbi_sm_start_management_core();
