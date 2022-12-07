@@ -21,17 +21,17 @@ These tools generally just copy paste the entire interpreter and libraries and r
 
 ### [Cython --embed](https://cython.readthedocs.io/en/latest/src/tutorial/embedding.html) (not to be confused with the CPython interpreter).
 
-    - Cython is not primarily a packaging tool. Does not have great support for properly packaging and Python-importing all libraries used by the Python code being packaged.
-    - Written in Python, meaning its native functionality is equivalent on RISC-V and anything else!
-    - Embeds into the C language.
+- Cython is not primarily a packaging tool. Does not have great support for properly packaging and Python-importing all libraries used by the Python code being packaged.
+- Written in Python, meaning its native functionality is equivalent on RISC-V and anything else!
+- Embeds into the C language.
 
 ### [PyOxidizer](https://pyoxidizer.readthedocs.io/en/stable/index.html)
 
-    - Actively developed for this purpose, supports packaging Python libraries, has documentation for how to add libraries not automatically detected.
-    - Written in Rust, so it needs
-    - Embeds into Rust.
-        - Technically, you can cross-compile Rust but cross-compilation is very bad and should be avoided. Also, Rust std lib may not be fully implemented for some targets.
-    - Supposed to use a custom build of the CPython interpreter.
+- Actively developed for this purpose, supports packaging Python libraries, has documentation for how to add libraries not automatically detected.
+- Written in Rust, so it needs
+- Embeds into Rust.
+    - Technically, you can cross-compile Rust but cross-compilation is very bad and should be avoided. Also, Rust std lib may not be fully implemented for some targets.
+- Supposed to use a custom build of the CPython interpreter.
 
 ## Challenges
 
