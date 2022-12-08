@@ -2,6 +2,7 @@
 // Copyright (c) 2020, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
+#pragma once
 
 #include <chrono>
 #include <ctime>
