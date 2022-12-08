@@ -80,7 +80,7 @@ enum class FormatMethod { Pretty, JSON, Default };
 template <typename T>
 class Formattable {
  public:
-  /* Inherit from this class, using the class as T and override this method
+  /* Inherit from this class, using the class as T, and override this method
      to support formatted prints. It's recommended to account for the METHOD
      (see above). The formatted output should be written to OS. */
   virtual void Format(std::ostream& os, FormatMethod method) const = 0;
