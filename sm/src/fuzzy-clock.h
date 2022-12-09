@@ -3,6 +3,8 @@
 #ifndef _FUZZY_CLOCK_H_
 #define _FUZZY_CLOCK_H_
 
+#define FUZZ_ON 1
+
 unsigned long update_fuzzy_clock();
 void fuzzy_clock_init();
 void wait_for_ms(unsigned long ms);

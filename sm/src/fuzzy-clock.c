@@ -11,7 +11,6 @@
 
 #define GRANULARITY_MS 10
 // TODO(chungmcl): Remove! For debugging
-#define FUZZ_ON 0
 
 volatile unsigned long fuzz_clock_ticks;
 unsigned long granularity_ticks;
@@ -77,6 +76,7 @@ void wait_for_ms(unsigned long ms) {
 unsigned long wait_until_epoch() {
   unsigned long current_time = fuzz_clock_ticks;
   while (current_time == fuzz_clock_ticks) { /* no-op */}
+  // sbi_printf("finished wait_until_epoch\n");
   return fuzz_clock_ticks;
 }
 
@@ -103,23 +103,21 @@ int get_clock_ipi_event_id() {
 }
 
 void handle_clock_ipi(struct sbi_scratch *scratch) {
-  enclave_id eid = cpu_get_enclave_id() + 1;
-  // sbi_printf("!!! handle_clock_ipi on core %d\n", current_hartid());
+  enclave_id eid = cpu_get_enclave_id();
 
   if (cpu_is_enclave_context()) {
-    // sbi_printf("\tcpu_is_enclave_context == true && hart_id: %d\n", current_hartid());
     short is_enclave_registered = (clock_ipi_registered_enclaves >> eid) & 0b1;
     if (is_enclave_registered) {
-      // sbi_printf("\tenclave %d on hart %d is registered!\n", eid, current_hartid());
+      // Trigger an S-Mode interrupt
       csr_set(CSR_MIP, MIP_SSIP);
     }
   }
 }
 
 void reg_clock_ipi() {
-  enclave_id eid = cpu_get_enclave_id() + 1;
+  enclave_id eid = cpu_get_enclave_id();
   clock_ipi_registered_enclaves = clock_ipi_registered_enclaves | (0b1 << eid);
-  sbi_printf("\treg_clock_ipi called:\n\t\tmhartid: %d\n\t\teid: %d\n\t\t\n", current_hartid(), eid);
+  // sbi_printf("\treg_clock_ipi called:\n\t\tmhartid: %d\n\t\teid: %d\n\t\t\n", current_hartid(), eid);
 }
 
 void send_clock_ipi() {
