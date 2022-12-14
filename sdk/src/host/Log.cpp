@@ -9,7 +9,12 @@
    successful. */
 bool
 Logger::DirectToFile(const std::string& path) {
-  return ResetOutputStream_(new std::ofstream{path});
+  auto ofs = new std::ofstream{path};
+  const auto success = ResetOutputStream_(ofs);
+  if (!success) {
+    delete ofs;  
+  }
+  return success;
 }
 
 /* Direct all logging to STDOUT. Returns whether it was successful. */
