@@ -6,6 +6,8 @@
 #include <keystone.h>
 #include <cstdio>
 #include <iostream>
+#include <string>
+
 #include "gtest/gtest.h"
 
 #define EYRIE_RT "eyrie-rt"
@@ -85,6 +87,90 @@ TEST(Enclave_Run, RunTest) {
 
   EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), Error::Success);
   EXPECT_EQ(enclave.run(), Error::Success);
+}
+
+TEST(LoggingTest, RedirectsToSTD) {
+  Keystone::Logger logger{};
+  EXPECT_TRUE(logger.DirectToSTDOUT());
+  EXPECT_TRUE(logger.DirectToSTDERR());
+}
+
+TEST(LoggingTest, RedirectsToFile) {
+  const std::string file_name = "log.txt";
+
+  {
+    Keystone::Logger log{};
+    EXPECT_TRUE(log.DirectToFile(file_name));
+    log << "Hello, here's a number: " << 17;
+  }
+
+  std::ifstream fin{file_name};
+  std::string buf{};
+  std::getline(fin, buf);
+  EXPECT_EQ("Hello, here's a number: 17", buf);
+  fin.close();
+}
+
+TEST(LoggingTest, RedirectsAwayFromFile) {
+  const std::string file_name = "log.txt";
+
+  {
+    Keystone::Logger log{};
+
+    EXPECT_TRUE(log.DirectToFile(file_name));
+    log << "[file]";
+
+    EXPECT_TRUE(log.DirectToSTDOUT());
+    log << "[cout]";
+
+    EXPECT_TRUE(log.DirectToSTDERR());
+    log << "[cerr]";
+  }
+
+  std::ifstream fin{file_name};
+  std::string buf{};
+  fin >> buf;
+  EXPECT_EQ("[file]", buf);
+}
+
+TEST(LoggingTest, RespondsToDisableEnable) {
+  const std::string file_name = "log.txt";
+
+  {
+    Keystone::Logger log{};
+    EXPECT_TRUE(log.DirectToFile(file_name));
+    log << "a";
+    log.Disable();
+    log << "b";
+    log.Enable();
+    log << "c";
+  }
+
+  std::ifstream fin{file_name};
+  std::string buf{};
+  fin >> buf;
+  EXPECT_EQ("ac", buf);
+}
+
+TEST(LoggingTest, AppendsFile) {
+  const std::string file_name = "log.txt";
+
+  {
+    std::ofstream fout{ file_name };
+    fout << "logs:";
+    fout.flush();
+  }
+  
+  {
+    Keystone::Logger log{};
+    EXPECT_TRUE(log.DirectToFile(file_name, true));
+    log << "my log";
+  }
+
+  std::ifstream fin{ file_name };
+  std::string buf{};
+  std::getline(fin, buf);
+  EXPECT_EQ("logs:my log", buf);
 }
 
 int

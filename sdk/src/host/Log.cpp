@@ -2,43 +2,40 @@
 
 namespace Keystone {
 
-bool
-Logger::DirectToFile(const std::string& path) {
-  return ResetOutputStream_(new std::ofstream{path});
+/* Close and free the ofstream if applicable. */
+static void
+DestroyIfFile(std::ostream* os) {
+  if (os != &std::cout && os != &std::cerr) {
+    dynamic_cast<std::ofstream*>(os)->close();
+    delete os;
+  }
 }
 
-bool
-Logger::DirectToSTDOUT() {
-  return ResetOutputStream_(&std::cout);
-}
-
-bool
-Logger::DirectToSTDERR() {
-  return ResetOutputStream_(&std::cerr);
-}
-
-Logger&
-Logger::Enable() {
-  enabled_ = true;
-  return *this;
-}
-
-Logger&
-Logger::Disable() {
-  enabled_ = false;
-  return *this;
+Logger::~Logger() {
+  ForceWrite();
+  DestroyIfFile(os_);
 }
 
 bool
 Logger::ResetOutputStream_(std::ostream* replacement) {
-  if (!replacement || replacement->fail()) {
+  if (!replacement) {
     return false;
   }
-  if (os_ != &std::cout && os_ != &std::cerr) {
-    dynamic_cast<std::ofstream*>(os_)->close();
-    delete os_;
+
+  if (replacement->fail()) {
+    DestroyIfFile(replacement);
+    return false;
   }
+
+  ForceWrite();
+  DestroyIfFile(os_);
   os_ = replacement;
   return true;
 }
+
+Logger LogDebug = Logger{}.Disable();
+Logger LogInfo  = Logger{}.Enable();
+Logger LogWarn  = Logger{}.Enable();
+Logger LogError = Logger{}.Enable();
+
 }  // namespace Keystone
