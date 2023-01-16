@@ -1,3 +1,7 @@
+//******************************************************************************
+// Copyright (c) 2020, The Regents of the University of California (Regents).
+// All Rights Reserved. See LICENSE for license details.
+//------------------------------------------------------------------------------
 #include "Log.hpp"
 
 namespace Keystone {
@@ -12,7 +16,7 @@ DestroyIfFile(std::ostream* os) {
 }
 
 Logger::~Logger() {
-  ForceWrite();
+  ForceWrite_();
   DestroyIfFile(os_);
 }
 
@@ -27,15 +31,15 @@ Logger::ResetOutputStream_(std::ostream* replacement) {
     return false;
   }
 
-  ForceWrite();
+  ForceWrite_();
   DestroyIfFile(os_);
   os_ = replacement;
   return true;
 }
 
-Logger LogDebug = Logger{}.Disable();
-Logger LogInfo  = Logger{}.Enable();
-Logger LogWarn  = Logger{}.Enable();
-Logger LogError = Logger{}.Enable();
+Logger LogDebug{false};
+Logger LogInfo{};
+Logger LogWarn{};
+Logger LogError{};
 
 }  // namespace Keystone
