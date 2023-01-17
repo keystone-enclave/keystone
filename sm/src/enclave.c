@@ -695,3 +695,44 @@ unsigned long get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
+
+unsigned long claim_mmio(uintptr_t dev_string, enclave_id eid) {
+    int i;
+    region_id rid;
+
+    for(i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
+        if(enclaves[eid].regions[i].type == REGION_INVALID) {
+            // Find the region now that we know we have a slot for it
+            rid = sm_claim_secure_device((const char *) dev_string);
+            if(rid < 0) {
+                return rid;
+            }
+
+            // Register this region
+            enclaves[eid].regions[i].pmp_rid = rid;
+            enclaves[eid].regions[i].type = REGION_MMIO;
+            return 0;
+        }
+    }
+
+    // No free regions found
+    return -1;
+}
+
+unsigned long release_mmio(uintptr_t dev_string, enclave_id eid) {
+    int i;
+    region_id rid = region_from_device_name((const char *) dev_string);
+
+    for(i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
+        if(enclaves[eid].regions[i].type == REGION_MMIO && enclaves[eid].regions[i].pmp_rid == rid) {
+            // This is the correct region to deregister
+            sm_release_secure_device((const char *) dev_string);
+            enclaves[eid].regions[i].pmp_rid = -1;
+            enclaves[eid].regions[i].type = REGION_INVALID;
+            return 0;
+        }
+    }
+
+    // Could not find the region to release
+    return -1;
+}
