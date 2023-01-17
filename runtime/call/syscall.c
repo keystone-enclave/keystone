@@ -209,6 +209,29 @@ void handle_syscall(struct encl_ctx* ctx)
 
     break;
 
+  case(RUNTIME_SYSCALL_CLAIM_MMIO):
+    if(arg1 > sizeof(rt_copy_buffer_1)) {
+      ret = -1;
+      break;
+    }
+
+    uintptr_t devstr_claim_pa = kernel_va_to_pa(rt_copy_buffer_1);
+    copy_from_user(rt_copy_buffer_1, (void *) arg0, arg1);
+
+    ret = sbi_claim_mmio(devstr_claim_pa);
+    break;
+
+  case(RUNTIME_SYSCALL_RELEASE_MMIO):
+    if(arg1 > sizeof(rt_copy_buffer_1)) {
+      ret = -1;
+      break;
+    }
+
+    uintptr_t devstr_release_pa = kernel_va_to_pa(rt_copy_buffer_1);
+    copy_from_user(rt_copy_buffer_1, (void *) arg0, arg1);
+
+    ret = sbi_release_mmio(devstr_release_pa);
+    break;
 
 #ifdef USE_LINUX_SYSCALL
   case(SYS_clock_gettime):
