@@ -81,7 +81,7 @@ macro(add_files FILE_LIST DIRWORK)
 endmacro()
 
 # CMake macro for Eyrie runtime and Keystone Package
-macro(add_eyrie_runtime target_name tag plugins) # the files are passed via ${ARGN}
+macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   set(runtime_prefix runtime)
   set (eyrie_src ${CMAKE_CURRENT_BINARY_DIR}/${runtime_prefix}/src/eyrie-${target_name})
 
@@ -97,9 +97,7 @@ macro(add_eyrie_runtime target_name tag plugins) # the files are passed via ${AR
 
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
-    GIT_REPOSITORY https://github.com/keystone-enclave/keystone-runtime
-    GIT_TAG ${tag}
-    UPDATE_COMMAND git fetch
+    DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${CMAKE_SOURCE_DIR}/runtime ${eyrie_src}
     CMAKE_ARGS "${PLUGIN_FLAGS}"
     BUILD_IN_SOURCE TRUE
     BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log

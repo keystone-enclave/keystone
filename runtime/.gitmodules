@@ -1,3 +1,0 @@
-[submodule "runtime/test/cmocka"]
-	path = runtime/test/cmocka
-	url = https://gitlab.com/cmocka/cmocka
