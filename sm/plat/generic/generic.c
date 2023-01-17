@@ -6,7 +6,7 @@
 #include "sm.h"
 
 static int generic_final_init(bool cold_boot, const struct fdt_match *match) {
-        sm_init(cold_boot);
+        sm_init(cold_boot, sbi_scratch_thishart_arg1_ptr());
         return 0;
 }
 
