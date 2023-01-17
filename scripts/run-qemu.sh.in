@@ -23,7 +23,7 @@ done;
 @qemu_system@ \
  $DEBUG \
  -m 2G \
- -nographic \
+ -display none \
  -machine virt,rom=@bootrom_wrkdir@/bootrom.bin \
  -bios @fw_elf@ \
  -kernel @linux_image@ \
@@ -31,4 +31,6 @@ done;
  -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::${HOST_PORT}-:22 \
  -device virtio-net-device,netdev=net0 \
  -device virtio-rng-pci \
+ -serial stdio \
+ -serial file:/tmp/serial.out \
  -smp $SMP
