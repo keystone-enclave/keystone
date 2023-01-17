@@ -1,5 +1,5 @@
 diff --git a/application/crt.S b/application/crt.S
-index 1475373..80f8c58 100644
+index 1475373..b47fa95 100644
 --- a/application/crt.S
 +++ b/application/crt.S
 @@ -158,6 +158,7 @@ _start_hang:
@@ -11,9 +11,9 @@ index 1475373..80f8c58 100644
  	// Swap TP and MSCRATCH
  	csrrw	tp, CSR_MSCRATCH, tp
 @@ -305,6 +306,52 @@ _trap_handler_all_mode:
-
+ 
  	mret
-
+ 
 +_trap_exit:
 +        /* Restore all general regisers except A0 and T0 */
 +        REG_L   ra, SBI_TRAP_REGS_OFFSET(ra)(a0)
@@ -87,9 +87,9 @@ diff --git a/services/opensbi/Makefile b/services/opensbi/Makefile
 index 829c28a..acf19fd 100644
 --- a/services/opensbi/Makefile
 +++ b/services/opensbi/Makefile
-@@ -92,6 +92,27 @@ services/opensbi/opensbi_ecall_exts.c: $(OPENSBI_SRC_DIR)/lib/sbi/sbi_ecall_exts
- 	echo " CARRAY    $<"
- 	$(OPENSBI_SRC_DIR)/scripts/carray.sh -i $< -l "$(carray-sbi_ecall_exts-y)" > $@
+@@ -72,6 +72,27 @@ SRCS-$(CONFIG_SERVICE_OPENSBI) += \
+ 	thirdparty/opensbi/lib/utils/timer/aclint_mtimer.c \
+ 	thirdparty/opensbi/lib/utils/ipi/aclint_mswi.c \
  
 +ifneq ($(KEYSTONE_SM),)
 +
@@ -115,7 +115,7 @@ index 829c28a..acf19fd 100644
  ifdef CONFIG_USE_IHC
  SRCS-$(CONFIG_SERVICE_OPENSBI_IHC) += \
  	services/opensbi/opensbi_ihc_ecall.c \
-@@ -128,7 +149,7 @@ endif
+@@ -108,7 +129,7 @@ endif
  
  services/opensbi/opensbi_service.o: CFLAGS=$(CFLAGS_GCCEXT)
  services/opensbi/opensbi_ihc_ecall.o: CFLAGS=$(CFLAGS_GCCEXT)
@@ -131,31 +131,37 @@ index f8bb9f0..e72dba5 100644
 @@ -84,6 +84,8 @@ static void opensbi_scratch_setup(enum HSSHartId hartid)
      pScratches[hartid].scratch.fw_start = (unsigned long)&_hss_start;
      pScratches[hartid].scratch.fw_size = (unsigned long)&_hss_end - (unsigned long)&_hss_start;
-
+ 
 +    extern void _trap_exit(const struct sbi_trap_regs *regs);
 +    pScratches[hartid].scratch.trap_exit = (unsigned long) &_trap_exit;
      sbi_hsm_set_device(&mpfs_hsm);
  }
-
+ 
 diff --git a/services/opensbi/platform.c b/services/opensbi/platform.c
-index c31fe12..33ca22d 100644
+index b03f878..161b449 100644
 --- a/services/opensbi/platform.c
 +++ b/services/opensbi/platform.c
 @@ -69,6 +69,8 @@
  #include "reboot_service.h"
  #include "clocks/hw_mss_clks.h"    // LIBERO_SETTING_MSS_RTC_TOGGLE_CLK
-
+ 
 +#include "sm.h"
 +
  #define MPFS_HART_COUNT            5
  #define MPFS_HART_STACK_SIZE       8192
-
-@@ -197,6 +199,8 @@ static int mpfs_early_init(bool cold_boot)
-
+ 
+@@ -197,11 +199,13 @@ static int mpfs_early_init(bool cold_boot)
+ 
  static int mpfs_final_init(bool cold_boot)
  {
-+    sm_init(cold_boot);
++    void *fdt = sbi_scratch_thishart_arg1_ptr();
++    sm_init(cold_boot, fdt);
 +
      if (!cold_boot) {
          return 0;
+     }
+ 
+-    void *fdt = sbi_scratch_thishart_arg1_ptr();
+     if (fdt) {
+         mpfs_modify_dt(fdt);
      }

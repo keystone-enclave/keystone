@@ -36,6 +36,7 @@ typedef unsigned int enclave_id;
 /* Metadata around memory regions associate with this enclave
  * EPM is the 'home' for the enclave, contains runtime code/etc
  * UTM is the untrusted shared pages
+ * MMIO is secure device space managed by the SM
  * OTHER is managed by some other component (e.g. platform_)
  * INVALID is an unused index
  */
@@ -43,6 +44,7 @@ enum enclave_region_type{
   REGION_INVALID,
   REGION_EPM,
   REGION_UTM,
+  REGION_MMIO,
   REGION_OTHER,
 };
 
