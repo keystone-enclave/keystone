@@ -12,6 +12,10 @@ executors:
 
 
 commands:
+  ######################
+  ## General commands ##
+  ######################
+
   update-riscv-toolchain-path-64:
     steps:
       - run: echo 'export PATH=/keystone/riscv64/bin:$PATH' >> $BASH_ENV
@@ -19,7 +23,49 @@ commands:
     steps:
       - run: echo 'export PATH=/keystone/riscv32/bin:$PATH' >> $BASH_ENV
 
+  ######################
+  ## Runtime commands ##
+  ######################
+
+  build-sdk:
+    steps:
+      - run: |
+          cd /keystone/sdk
+          rm -rf build
+          mkdir build
+          cd build
+          KEYSTONE_SDK_DIR=$(pwd) cmake ..
+          make install
+  build-runtime:
+    parameters:
+      build-name:
+        type: string
+      build-dir:
+        type: string
+        default: build
+      build-args:
+        type: string
+        default: ''
+    steps:
+      - run:
+          name: << parameters.build-name >>
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              cd runtime
+              mkdir -p << parameters.build-dir >>
+              cd << parameters.build-dir >>
+              cmake -DCMAKE_C_COMPILER=$(which riscv64-unknown-linux-gnu-gcc) \
+                     -DCMAKE_OBJCOPY=$(which riscv64-unknown-linux-gnu-objcopy) \
+                     << parameters.build-args >> ..
+              make
+          no-output-timeout: 120m
+
 jobs:
+  ######################
+  ## Full stack tests ##
+  ######################
+
   build-and-test-rv64-qemu:
     executor: setup-rv64gc
     working_directory: /keystone
@@ -70,9 +116,149 @@ jobs:
               make run-tests
           no_output_timeout: 120m
 
+  ###################
+  ## Runtime tests ##
+  ###################
+
+  # The format job essentially runs clang-format against the Eyrie codebase. To
+  # do so, we first query which clang-format git prefers. Then, we run git with
+  # this clang-format. This ensures that the tool only checks files that have
+  # been modified. Finally, we check the output of the tool and return an error
+  # if some formatting changes are necessary.
+
+  format:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - run: apt-get install clang-format -y
+      - run:
+          name: "test"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              FORMAT=$(git help -a | grep clang-format | tail -n1)
+              FORMAT_RESULT=$(git $FORMAT)
+              [ "$FORMAT_RESULT" = "no modified files to format" ] || [ "$FORMAT_RESULT" = "clang-format did not modify any files" ]
+          no_output_timeout: 120m
+  default-build:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - build-runtime:
+          build-name: "Default build"
+  use-freemem:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - build-runtime:
+          build-name: "USE_FREEMEM"
+          build-dir: build_freemem
+          build-args: -DFREEMEM=on
+  use_linux_syscall_use_freemem:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - build-runtime:
+          build-name: "USE_LINUX_SYSCALL + USE_FREEMEM"
+          build-dir: build_syscall_freemem
+          build-args: -DLINUX_SYSCALL=on -DFREEMEM=on
+  use_paging:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - build-runtime:
+          build-name: "USE_PAGING"
+          build-dir: build_paging
+          build-args: -DFREEMEM=on -DPAGING=on
+  use_package_crypto:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - build-runtime:
+          build-name: "USE_PAGE_CRYPTO"
+          build-dir: build_paging_crypto
+          build-args: -DFREEMEM=on -DPAGING=on -DPAGE_CRYPTO=on
+  use_page_hash:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - build-runtime:
+          build-name: "USE_PAGE_HASH"
+          build-dir: build_paging_hash
+          build-args: -DFREEMEM=on -DPAGING=on -DPAGE_HASH=on
+  use_page_crypto_use_page_hash:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - build-runtime:
+          build-name: "USE_PAGE_CRYPTO + USE_PAGE_HASH"
+          build-dir: build_paging_crypto_hash
+          build-args: -DFREEMEM=on -DPAGING=on -DPAGE_CRYPTO=on -DPAGE_HASH=on
+  test:
+    executor: setup-rv64gc
+    steps:
+      - checkout
+      - update-riscv-toolchain-path-64
+      - build-sdk
+      - run:
+          name: "test"
+          environment:
+            KEYSTONE_SDK_DIR: /keystone/sdk/build
+          command: |
+              cd runtime
+              git submodule sync
+              git submodule update --init ./test/cmocka
+              mkdir -p obj/test
+              pushd obj/test
+              cmake ../../test
+              make
+              ctest -VV || ( cat obj/test/Testing/Temporary/LastTest.log && false )
+              popd
+          no_output_timeout: 120m
+
 workflows:
-  build-and-test:
+  build-and-test-system:
     jobs:
       - build-and-test-rv64-qemu
       # - build-and-test-rv32-qemu
       # - build-rv64-fu540
+  build-and-test-runtime:
+    jobs:
+      - default-build
+      - format
+      - use-freemem:
+          requires:
+            - default-build
+      - use_linux_syscall_use_freemem:
+          requires:
+            - default-build
+      - use_package_crypto:
+          requires:
+            - default-build
+      - use_paging:
+          requires:
+            - default-build
+      - use_page_hash:
+          requires:
+            - default-build
+      - use_page_crypto_use_page_hash:
+          requires:
+            - default-build
+      - test:
+          requires:
+            - default-build
