@@ -4,7 +4,12 @@
 //------------------------------------------------------------------------------
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>
+#include <sbi/sbi_string.h>
 #include "thread.h"
+
+#define MSTATUS_MASK ((uintptr_t) (MSTATUS_SIE | MSTATUS_SPIE | MSTATUS_SPP | \
+                        MSTATUS_MPP | MSTATUS_FS | MSTATUS_SUM | \
+                        MSTATUS_MXR))
 
 void switch_vector_enclave(void){
   csr_write(mtvec, &trap_vector_enclave);
@@ -14,74 +19,73 @@ void switch_vector_host(void){
   csr_write(mtvec, &_trap_handler);
 }
 
-void swap_prev_mstatus(struct thread_state* thread, struct sbi_trap_regs* regs, uintptr_t current_mstatus) {
-  //Time interrupts can occur in either user mode or supervisor mode
-  uintptr_t mstatus_mask = MSTATUS_SIE | MSTATUS_SPIE | MSTATUS_SPP |
-                            MSTATUS_MPP | MSTATUS_FS | MSTATUS_SUM |
-                            MSTATUS_MXR;
+void stash_prev_state(struct thread_state *state, struct sbi_trap_regs *regs, int return_on_resume) {
+  uintptr_t *target = (uintptr_t *) &state->prev_state;
 
-  uintptr_t tmp = thread->prev_mstatus;
-  thread->prev_mstatus = (current_mstatus & ~mstatus_mask) | (current_mstatus & mstatus_mask);
-  regs->mstatus = (current_mstatus & ~mstatus_mask) | tmp;
+  sbi_memcpy(&state->prev_state, regs, 32 * sizeof(uintptr_t));
+  target[0] = !return_on_resume;
+  stash_prev_smode_csrs(&state->prev_csrs);
 }
 
-/* Swaps the entire s-mode visible state, general registers and then csrs */
-void swap_prev_state(struct thread_state* thread, struct sbi_trap_regs* regs, int return_on_resume)
-{
-  int i;
-
-  uintptr_t* prev = (uintptr_t*) &thread->prev_state;
-  for(i=0; i<32; i++)
-  {
-    /* swap state */
-    uintptr_t tmp = prev[i];
-    prev[i] = ((unsigned long *)regs)[i];
-    ((unsigned long *)regs)[i] = tmp;
-  }
-
-  prev[0] = !return_on_resume;
-
-  swap_prev_smode_csrs(thread);
-
-  return;
+void stash_prev_mepc(struct thread_state *state, struct sbi_trap_regs *regs) {
+  state->prev_mepc = regs->mepc;
 }
 
-/* Swaps all s-mode csrs defined in 1.10 standard */
-/* TODO: Right now we are only handling the ones that our test
-   platforms support. Realistically we should have these behind
-   defines for extensions (ex: N extension)*/
-void swap_prev_smode_csrs(struct thread_state*
-thread){
+void stash_prev_mstatus(struct thread_state *state, struct sbi_trap_regs *regs) {
+  state->prev_mstatus = (regs->mstatus & ~MSTATUS_MASK) | (regs->mstatus & MSTATUS_MASK);
+}
 
-  uintptr_t tmp;
+void stash_prev_smode_csrs(struct csrs *csrs) {
+#define LOCAL_STASH_CSR(csrname) \
+  csrs->csrname = csr_read(csrname)
 
-#define LOCAL_SWAP_CSR(csrname) \
-  tmp = thread->prev_csrs.csrname;                 \
-  thread->prev_csrs.csrname = csr_read(csrname);   \
-  csr_write(csrname, tmp);
-
-  LOCAL_SWAP_CSR(sstatus);
+  LOCAL_STASH_CSR(sstatus);
   // These only exist with N extension.
-  //LOCAL_SWAP_CSR(sedeleg);
-  //LOCAL_SWAP_CSR(sideleg);
-  LOCAL_SWAP_CSR(sie);
-  LOCAL_SWAP_CSR(stvec);
-  LOCAL_SWAP_CSR(scounteren);
-  LOCAL_SWAP_CSR(sscratch);
-  LOCAL_SWAP_CSR(sepc);
-  LOCAL_SWAP_CSR(scause);
-  LOCAL_SWAP_CSR(sbadaddr);
-  LOCAL_SWAP_CSR(sip);
-  LOCAL_SWAP_CSR(satp);
-
-#undef LOCAL_SWAP_CSR
+  //LOCAL_STASH_CSR(sedeleg);
+  //LOCAL_STASH_CSR(sideleg);
+  LOCAL_STASH_CSR(sie);
+  LOCAL_STASH_CSR(stvec);
+  LOCAL_STASH_CSR(scounteren);
+  LOCAL_STASH_CSR(sscratch);
+  LOCAL_STASH_CSR(sepc);
+  LOCAL_STASH_CSR(scause);
+  LOCAL_STASH_CSR(sbadaddr);
+  LOCAL_STASH_CSR(sip);
+  LOCAL_STASH_CSR(satp);
+#undef LOCAL_STASH_CSR
 }
 
-void swap_prev_mepc(struct thread_state* thread, struct sbi_trap_regs* regs, uintptr_t current_mepc)
-{
-  uintptr_t tmp = thread->prev_mepc;
-  thread->prev_mepc = current_mepc;
-  regs->mepc = tmp;
+void pop_prev_state(struct thread_state *state, struct sbi_trap_regs *regs) {
+  sbi_memcpy(regs, &state->prev_state, 32 * sizeof(uintptr_t));
+  pop_prev_smode_csrs(&state->prev_csrs);
+}
+
+void pop_prev_mepc(struct thread_state *state, struct sbi_trap_regs *regs) {
+  regs->mepc = state->prev_mepc;
+}
+
+void pop_prev_mstatus(struct thread_state *state, struct sbi_trap_regs *regs) {
+  regs->mstatus = (state->prev_mstatus & ~MSTATUS_MASK) | state->prev_mstatus;
+}
+
+void pop_prev_smode_csrs(struct csrs *csrs) {
+#define LOCAL_POP_CSR(csrname) \
+    csr_write(csrname, csrs->csrname)
+
+  LOCAL_POP_CSR(sstatus);
+  // These only exist with N extension.
+  //LOCAL_POP_CSR(sedeleg);
+  //LOCAL_POP_CSR(sideleg);
+  LOCAL_POP_CSR(sie);
+  LOCAL_POP_CSR(stvec);
+  LOCAL_POP_CSR(scounteren);
+  LOCAL_POP_CSR(sscratch);
+  LOCAL_POP_CSR(sepc);
+  LOCAL_POP_CSR(scause);
+  LOCAL_POP_CSR(sbadaddr);
+  LOCAL_POP_CSR(sip);
+  LOCAL_POP_CSR(satp);
+#undef LOCAL_POP_CSR
 }
 
 

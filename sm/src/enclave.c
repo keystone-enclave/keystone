@@ -9,6 +9,7 @@
 #include "page.h"
 #include "cpu.h"
 #include "platform-hook.h"
+#include "assert.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
@@ -44,9 +45,12 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
                                                 enclave_id eid,
                                                 int load_parameters){
   /* save host context */
-  swap_prev_state(&enclaves[eid].threads[0], regs, 1);
-  swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
-  swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
+  cpu_enter_enclave_context(eid, regs);
+
+  /* restore thread context */
+  pop_prev_state(&enclaves[eid].threads[0], regs);
+  pop_prev_mepc(&enclaves[eid].threads[0], regs);
+  pop_prev_mstatus(&enclaves[eid].threads[0], regs);
 
   uintptr_t interrupts = 0;
   csr_write(mideleg, interrupts);
@@ -114,9 +118,10 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
   csr_write(mideleg, interrupts);
 
   /* restore host context */
-  swap_prev_state(&enclaves[eid].threads[0], regs, return_on_resume);
-  swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
-  swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
+  stash_prev_state(&enclaves[eid].threads[0], regs, return_on_resume);
+  stash_prev_mepc(&enclaves[eid].threads[0], regs);
+  stash_prev_mstatus(&enclaves[eid].threads[0], regs);
+  cpu_exit_enclave_context(regs);
 
   switch_vector_host();
 
@@ -137,9 +142,6 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
 
   // Reconfigure platform specific defenses
   platform_switch_from_enclave(&(enclaves[eid]));
-
-  cpu_exit_enclave_context();
-
   return;
 }
 
