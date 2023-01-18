@@ -2,27 +2,38 @@
 
 #include "mm/vm_defs.h"
 
-#define SBI_CALL(___ext, ___which, ___arg0, ___arg1, ___arg2)    \
+#define SBI_CALL(___ext, ___which, ___arg0, ___arg1,             \
+                 ___arg2, ___arg3, ___arg4, ___arg5)             \
   ({                                                             \
     register uintptr_t a0 __asm__("a0") = (uintptr_t)(___arg0);  \
     register uintptr_t a1 __asm__("a1") = (uintptr_t)(___arg1);  \
     register uintptr_t a2 __asm__("a2") = (uintptr_t)(___arg2);  \
+    register uintptr_t a3 __asm__("a3") = (uintptr_t)(___arg3);  \
+    register uintptr_t a4 __asm__("a4") = (uintptr_t)(___arg4);  \
+    register uintptr_t a5 __asm__("a5") = (uintptr_t)(___arg5);  \
     register uintptr_t a6 __asm__("a6") = (uintptr_t)(___which); \
     register uintptr_t a7 __asm__("a7") = (uintptr_t)(___ext);   \
     __asm__ volatile("ecall"                                     \
                      : "+r"(a0)                                  \
-                     : "r"(a1), "r"(a2), "r"(a6), "r"(a7)        \
+                     : "r"(a1), "r"(a2), "r"(a3), "r"(a4),       \
+                       "r"(a5), "r"(a6), "r"(a7)                 \
                      : "memory");                                \
     a0;                                                          \
   })
 
 /* Lazy implementations until SBI is finalized */
-#define SBI_CALL_0(___ext, ___which) SBI_CALL(___ext, ___which, 0, 0, 0)
-#define SBI_CALL_1(___ext, ___which, ___arg0) SBI_CALL(___ext, ___which, ___arg0, 0, 0)
+#define SBI_CALL_0(___ext, ___which) SBI_CALL(___ext, ___which, 0, 0, 0, 0, 0, 0)
+#define SBI_CALL_1(___ext, ___which, ___arg0) SBI_CALL(___ext, ___which, ___arg0, 0, 0, 0, 0, 0)
 #define SBI_CALL_2(___ext, ___which, ___arg0, ___arg1) \
-  SBI_CALL(___ext, ___which, ___arg0, ___arg1, 0)
+  SBI_CALL(___ext, ___which, ___arg0, ___arg1, 0, 0, 0, 0)
 #define SBI_CALL_3(___ext, ___which, ___arg0, ___arg1, ___arg2) \
-  SBI_CALL(___ext, ___which, ___arg0, ___arg1, ___arg2)
+  SBI_CALL(___ext, ___which, ___arg0, ___arg1, ___arg2, 0, 0, 0)
+#define SBI_CALL_4(___ext, ___which, ___arg0, ___arg1, ___arg2, ___arg3) \
+  SBI_CALL(___ext, ___which, ___arg0, ___arg1, ___arg2, ___arg3, 0, 0)
+#define SBI_CALL_5(___ext, ___which, ___arg0, ___arg1, ___arg2, ___arg3, ___arg4) \
+  SBI_CALL(___ext, ___which, ___arg0, ___arg1, ___arg2, ___arg3, __arg4, 0)
+#define SBI_CALL_6(___ext, ___which, ___arg0, ___arg1, ___arg2, ___arg3, ___arg4, ___arg5) \
+  SBI_CALL(___ext, ___which, ___arg0, ___arg1, ___arg2, ___arg3, ___arg4, ___arg5)
 
 void
 sbi_putchar(char character) {
