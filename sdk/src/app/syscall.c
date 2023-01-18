@@ -42,6 +42,10 @@ int release_mmio(const char *devname, size_t namelen) {
   return SYSCALL_2(RUNTIME_SYSCALL_RELEASE_MMIO, devname, namelen);
 }
 
+int register_handler(uintptr_t argbuf, int arglen, uintptr_t arglock) {
+  return SYSCALL_3(RUNTIME_SYSCALL_REGISTER_HANDLER, argbuf, arglen, arglock);
+}
+
 int yield_thread() {
   return SYSCALL_0(RUNTIME_SYSCALL_YIELD_MAIN_THREAD);
 }

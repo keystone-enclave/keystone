@@ -13,4 +13,8 @@ if(NET_SYSCALL)
     list(APPEND CALL_SOURCES net_wrap.c)
 endif()
 
+if(CALLEE)
+    list(APPEND CALL_SOURCES callee.c callee.S)
+endif()
+
 add_library(rt_call STATIC ${CALL_SOURCES})

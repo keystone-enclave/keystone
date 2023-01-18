@@ -9,7 +9,7 @@
 #include "page.h"
 #include "cpu.h"
 #include "platform-hook.h"
-#include "assert.h"
+#include "sm_assert.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
@@ -44,6 +44,9 @@ extern byte dev_public_key[PUBLIC_KEY_SIZE];
 static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
                                                 enclave_id eid,
                                                 int load_parameters){
+  enclave_id called_eid;
+  struct enclave_call *deepest_call;
+
   /* save host context */
   cpu_enter_enclave_context(eid, regs);
 
@@ -81,12 +84,15 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 
   switch_vector_enclave();
 
-  // set PMP
+  // set PMP based on deepest call stack
+  deepest_call = &enclaves[eid].call_stack[0][enclaves[eid].call_depth[0] - 1];
+  called_eid = deepest_call->to_encl;
+
   osm_pmp_set(PMP_NO_PERM);
   int memid;
   for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
-    if(enclaves[eid].regions[memid].type != REGION_INVALID) {
-      pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_ALL_PERM);
+    if(enclaves[called_eid].regions[memid].type != REGION_INVALID) {
+      pmp_set_keystone(enclaves[called_eid].regions[memid].pmp_rid, PMP_ALL_PERM);
     }
   }
 
@@ -95,21 +101,27 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
-  cpu_enter_enclave_context(eid);
 }
 
 static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     enclave_id eid,
     int return_on_resume){
 
+  enclave_id called_eid;
+  struct enclave_call *deepest_call;
+
   // ensure nonsecure-only devices are remapped
   device_switch_to_host();
 
   // set PMP
+  deepest_call = &enclaves[eid].call_stack[0][enclaves[eid].call_depth[0] - 1];
+  called_eid = deepest_call->to_encl;
+
   int memid;
   for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
-    if(enclaves[eid].regions[memid].type != REGION_INVALID) {
-      pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
+    // Disable callee enclave's PMP regions
+    if(enclaves[called_eid].regions[memid].type != REGION_INVALID) {
+      pmp_set_keystone(enclaves[called_eid].regions[memid].pmp_rid, PMP_NO_PERM);
     }
   }
   osm_pmp_set(PMP_ALL_PERM);
@@ -355,7 +367,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
 
   enclave_id eid;
   unsigned long ret;
-  int region, shared_region;
+  int region, shared_region, i, j;
 
   /* Runtime parameters */
   if(!is_create_args_valid(&create_args))
@@ -409,8 +421,16 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
   enclaves[eid].params = params;
   enclaves[eid].pa_params = pa_params;
 
-  /* Init enclave state (regs etc) */
-  clean_state(&enclaves[eid].threads[0]);
+  /* Init callable state */
+  enclaves[eid].handler = 0;
+  for(i = 0; i < MAX_ENCL_THREADS; i++) {
+    /* Init enclave state (regs etc) */
+    clean_state(&enclaves[eid].threads[i]);
+    enclaves[eid].call_depth[i] = 0;
+    for(j = 0; j < ENCLAVE_CALLS_MAX; j++) {
+        enclaves[eid].call_stack[i][j].source = CALL_NONE;
+    }
+  }
 
   /* Platform create happens as the last thing before hashing/etc since
      it may modify the enclave struct */
@@ -539,6 +559,11 @@ unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid)
   if(!runable) {
     return SBI_ERR_SM_ENCLAVE_NOT_FRESH;
   }
+
+  // Call into this enclave from the host
+  enclaves[eid].call_stack[0][0].to_encl = eid;
+  enclaves[eid].call_stack[0][0].source = CALL_HOST;
+  enclaves[eid].call_depth[0]++;
 
   // Enclave is OK to run, context switch to it
   context_switch_to_enclave(regs, eid, 1);
@@ -740,4 +765,123 @@ unsigned long release_mmio(uintptr_t dev_string, enclave_id eid) {
 
     // Could not find the region to release
     return -1;
+}
+
+unsigned long call_enclave(struct sbi_trap_regs *regs, enclave_id from, enclave_id to, int type) {
+  int depth, memid;
+  struct enclave_call *entry;
+
+  spin_lock(&encl_lock);
+
+  // Check that the target enclave has a handler registered
+  if(!enclaves[to].handler) {
+    spin_unlock(&encl_lock);
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+  }
+
+  depth = enclaves[from].call_depth[0];
+  if(depth == ENCLAVE_CALLS_MAX) {
+    spin_unlock(&encl_lock);
+    return SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
+  }
+
+  // Register a call in the enclave struct
+  entry = &enclaves[from].call_stack[0][depth];
+  entry->source = CALL_ENCLAVE;
+  entry->from_encl = from;
+  entry->to_encl = to;
+
+  // Stash the existing state
+  stash_prev_state(&entry->stashed_state, regs, 0);
+  stash_prev_mepc(&entry->stashed_state, regs);
+  stash_prev_mstatus(&entry->stashed_state, regs);
+
+  // Apply the necessary call state
+  regs->mepc = enclaves[to].handler - 4;
+  pop_prev_smode_csrs(&enclaves[to].handler_csrs);
+  enclaves[from].call_depth[0]++;
+  spin_unlock(&encl_lock);
+
+  // Clean the register state, and copy out the argument registers.
+  sbi_memset(regs, 0, offsetof(struct sbi_trap_regs, mepc));
+  regs->a0 = type;
+  sbi_memcpy(&regs->a1, &entry->stashed_state.prev_state.a2, 4 * sizeof(uintptr_t));
+
+  // Switch out PMP regions
+  for(memid = 0; memid < ENCLAVE_REGIONS_MAX; memid++) {
+    if(enclaves[from].regions[memid].type != REGION_INVALID) {
+      pmp_set_keystone(enclaves[from].regions[memid].pmp_rid, PMP_NO_PERM);
+    }
+  }
+
+  for(memid = 0; memid < ENCLAVE_REGIONS_MAX; memid++) {
+    if(enclaves[to].regions[memid].type != REGION_INVALID) {
+      pmp_set_keystone(enclaves[to].regions[memid].pmp_rid, PMP_ALL_PERM);
+    }
+  }
+
+  return SBI_ERR_SM_ENCLAVE_SUCCESS;
+}
+
+unsigned long ret_enclave(struct sbi_trap_regs *regs)
+{
+  int depth, memid;
+  unsigned long retval;
+  enclave_id from, to;
+  struct enclave_call *entry;
+
+  // Figure out which enclave we are returning to
+  spin_lock(&encl_lock);
+  from = cpu_get_enclave_id();
+  depth = enclaves[from].call_depth[0] - 1;
+  entry = &enclaves[from].call_stack[0][depth];
+  sm_assert(entry->from_encl == from);
+
+  // Pop the execution state back to expected
+  retval = regs->a0;
+  pop_prev_state(&entry->stashed_state, regs);
+  pop_prev_mepc(&entry->stashed_state, regs);
+  pop_prev_mstatus(&entry->stashed_state, regs);
+
+  // Delete this last entry in the call stack
+  to = entry->to_encl;
+  sbi_memset(entry, 0, sizeof(struct enclave_call));
+  enclaves[from].call_depth[0]--;
+  spin_unlock(&encl_lock);
+
+  // Switch out pmp regions
+  for(memid = 0; memid < ENCLAVE_REGIONS_MAX; memid++) {
+    if(enclaves[to].regions[memid].type != REGION_INVALID) {
+      pmp_set_keystone(enclaves[to].regions[memid].pmp_rid, PMP_NO_PERM);
+    }
+  }
+
+  for(memid = 0; memid < ENCLAVE_REGIONS_MAX; memid++) {
+    if(enclaves[from].regions[memid].type != REGION_INVALID) {
+      pmp_set_keystone(enclaves[from].regions[memid].pmp_rid, PMP_ALL_PERM);
+    }
+  }
+
+  return retval;
+}
+
+unsigned long register_handler(uintptr_t handler, enclave_id eid)
+{
+  int ret = SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
+  spin_lock(&encl_lock);
+
+  // Don't allow registering a duplicate handler
+  if(!enclaves[eid].handler)
+  {
+    enclaves[eid].handler = handler;
+
+    // Back up a copy of the smode registers. These will be used
+    // as the base registers when creating new threads calling
+    // this handler.
+    stash_prev_smode_csrs(&enclaves[eid].handler_csrs);
+    ret = SBI_ERR_SM_ENCLAVE_SUCCESS;
+  }
+
+  spin_unlock(&encl_lock);
+  return ret;
 }

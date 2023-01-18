@@ -39,6 +39,15 @@ unsigned long
 sbi_sm_release_mmio(uintptr_t dev_string);
 
 unsigned long
+sbi_sm_call_enclave(struct sbi_trap_regs *regs, unsigned long eid, int type);
+
+unsigned long
+sbi_sm_ret_enclave(struct sbi_trap_regs *regs);
+
+unsigned long
+sbi_sm_register_handler(uintptr_t handler);
+
+unsigned long
 sbi_sm_random(void);
 
 unsigned long

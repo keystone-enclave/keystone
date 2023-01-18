@@ -30,6 +30,10 @@
 #include "drivers/drivers.h"
 #endif
 
+#ifdef USE_CALLEE
+#include "call/callee.h"
+#endif // USE_CALLEE
+
 extern void exit_enclave(uintptr_t arg0);
 
 uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr, size_t data_len){
@@ -161,9 +165,15 @@ void handle_syscall(struct encl_ctx* ctx)
   uintptr_t arg4 = ctx->regs.a4;
 
   // We only use arg5 in these for now, keep warnings happy.
-#if defined(USE_LINUX_SYSCALL) || defined(USE_IO_SYSCALL)
+#if defined(USE_LINUX_SYSCALL) || defined(USE_IO_SYSCALL) || defined(USE_CALLEE)
   uintptr_t arg5 = ctx->regs.a5;
 #endif /* IO_SYSCALL */
+
+  // Similarly with stack tracking
+#if defined(USE_LINUX_SYSCALL)
+  void *stack = (void *) ctx + sizeof(struct encl_ctx);
+#endif
+
   uintptr_t ret = 0;
 
   ctx->regs.sepc += 4;
@@ -250,6 +260,16 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = sbi_release_mmio(devstr_release_pa);
     break;
 
+#ifdef USE_CALLEE
+  case(RUNTIME_SYSCALL_CALL_ENCLAVE):
+    ret = sbi_call_enclave(arg0, arg1, arg2, arg3, arg4, arg5);
+    break;
+
+  case(RUNTIME_SYSCALL_REGISTER_HANDLER):
+    ret = initialize_call_handler(arg0, (int) arg1, arg2);
+    break;
+#endif // USE_CALLEE
+
   case(RUNTIME_SYSCALL_YIELD_MAIN_THREAD):
     // Give up our current time slice and report back to the SDK
     ret = sbi_stop_enclave(STOP_YIELD_ENCLAVE);
@@ -281,7 +301,7 @@ void handle_syscall(struct encl_ctx* ctx)
     break;
 
   case(SYS_set_tid_address):
-    ret = linux_set_tid_address((int*) arg0);
+    ret = linux_set_tid_address(stack, ctx->regs.tp, (int*) arg0);
     break;
 
   case(SYS_brk):
@@ -301,10 +321,26 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = syscall_mprotect((void *) arg0, (size_t) arg1, (int) arg2);
     break;
 
+#ifdef USE_CALLEE
+  case(SYS_clone):
+    ret = syscall_clone(arg0, arg1, (int *) arg2, arg3, (int *) arg4, ctx->regs.gp);
+    break;
+#endif // USE_CALLEE
+
   case(SYS_exit):
   case(SYS_exit_group):
     print_strace("[runtime] exit or exit_group (%lu)\r\n",n);
-    sbi_exit_enclave(arg0);
+#ifdef USE_CALLEE
+    // Is this a callee kernel stack?
+    if(is_callee(stack)) {
+      free_thread_entry(ctx->regs.tp, (uintptr_t) stack);
+      sbi_ret_enclave(arg0);
+    } else
+#endif // USE_CALLEE
+    {
+      // Regular exit
+      sbi_exit_enclave(arg0);
+    }
     break;
 #endif /* USE_LINUX_SYSCALL */
 

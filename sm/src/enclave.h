@@ -16,9 +16,9 @@
 
 // Special target platform header, set by configure script
 #include TARGET_PLATFORM_HEADER
+#include "sbi/riscv_locks.h"
 
 #define ATTEST_DATA_MAXLEN  1024
-/* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 
 typedef enum {
@@ -54,6 +54,22 @@ struct enclave_region
   enum enclave_region_type type;
 };
 
+typedef enum {
+    CALL_NONE,
+    CALL_HOST,
+    CALL_ENCLAVE
+} call_source;
+
+struct enclave_call
+{
+    // Tracking information
+    call_source source;
+    enclave_id from_encl, to_encl;
+
+    // Stashed caller state
+    struct thread_state stashed_state;
+};
+
 /* enclave metadata */
 struct enclave
 {
@@ -64,6 +80,14 @@ struct enclave
 
   /* Physical memory regions associate with this enclave */
   struct enclave_region regions[ENCLAVE_REGIONS_MAX];
+
+  /* Caller infrastructure */
+  int call_depth[MAX_ENCL_THREADS];
+  struct enclave_call call_stack[MAX_ENCL_THREADS][ENCLAVE_CALLS_MAX];
+
+  /* Callee infrastructure */
+  struct csrs handler_csrs;
+  uintptr_t handler;
 
   /* measurement */
   byte hash[MDSIZE];
@@ -130,6 +154,11 @@ uintptr_t get_enclave_region_size(enclave_id eid, int memid);
 unsigned long get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid);
 unsigned long claim_mmio(uintptr_t dev_string, enclave_id eid);
 unsigned long release_mmio(uintptr_t dev_string, enclave_id eid);
+unsigned long call_enclave(struct sbi_trap_regs *regs, enclave_id from, enclave_id to, int type);
+unsigned long ret_enclave(struct sbi_trap_regs *regs);
+unsigned long register_handler(uintptr_t handler, enclave_id eid);
+
 // interrupt handlers
 void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs);
+
 #endif

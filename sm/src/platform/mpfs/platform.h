@@ -10,6 +10,7 @@ struct platform_enclave_data{
 // Enclave configuration
 #define ENCL_MAX                16
 #define ENCLAVE_REGIONS_MAX     8
+#define ENCLAVE_CALLS_MAX       8
 
 // SM configuration
 // todo dont think this is correct

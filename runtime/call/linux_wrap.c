@@ -14,6 +14,10 @@
 #include "call/syscall.h"
 #include "uaccess.h"
 
+#ifdef USE_CALLEE
+#include "call/callee.h"
+#endif // USE_CALLEE
+
 #define CLOCK_FREQ 1000000000
 
 //TODO we should check which clock this is
@@ -31,10 +35,18 @@ uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp){
   return 0;
 }
 
-uintptr_t linux_set_tid_address(int* tidptr_t){
-  //Ignore for now
-  print_strace("[runtime] set_tid_address, not setting address (%p), IGNORING\r\n",tidptr_t);
-  return 1;
+uintptr_t linux_set_tid_address(void *stack, uintptr_t tp, int* tidptr_t){
+#ifdef USE_CALLEE
+  if(is_callee(stack)) {
+    print_strace("[runtime] set_tid_address for callee to %p\r\n", tidptr_t);
+    return syscall_set_tid_address(stack, tp, tidptr_t);
+  } else
+#endif // USE_CALLEE
+  {
+    //Ignore for now
+    print_strace("[runtime] set_tid_address, not setting address (%p), IGNORING\r\n",tidptr_t);
+    return 1;
+  }
 }
 
 uintptr_t linux_rt_sigprocmask(int how, const sigset_t *set, sigset_t *oldset){
@@ -114,7 +126,8 @@ uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
 
   int pte_flags = PTE_U | PTE_A;
 
-  if(flags != (MAP_ANONYMOUS | MAP_PRIVATE) || fd != -1){
+  // ignore stack flag
+  if((flags & ~MAP_STACK) != (MAP_ANONYMOUS | MAP_PRIVATE) || fd != -1){
     // we don't support mmaping any other way yet
     goto done;
   }

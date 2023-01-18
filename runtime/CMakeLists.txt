@@ -34,6 +34,7 @@ rt_option(PAGE_HASH "Enable page integrity" OFF)
 rt_option(LINUX_SYSCALL "Wrap generic Linux syscalls" OFF)
 rt_option(IO_SYSCALL "Wrap Linux IO syscalls" OFF)
 rt_option(NET_SYSCALL "Wrap Linux net syscalls" OFF)
+rt_option(CALLEE "Include callee message-passing infrastructure" OFF)
 
 # System options
 rt_option(ENV_SETUP "Set up stack environments like glibc expects" OFF)

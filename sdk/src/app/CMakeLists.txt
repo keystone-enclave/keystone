@@ -4,6 +4,7 @@ set(CFLAGS      "-Wall -Werror")
 set(LDFLAGS     "-static")
 
 set(SOURCE_FILES
+  callee.c
   encret.s
   string.c
   syscall.c

@@ -97,3 +97,23 @@ uintptr_t
 sbi_release_mmio(uintptr_t dev_string) {
   return SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_RELEASE_MMIO, dev_string);
 }
+
+#ifdef USE_CALLEE
+uintptr_t
+sbi_call_enclave(int eid, int type, uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3) {
+  return SBI_CALL_6(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_CALL_ENCLAVE,
+             eid, type, arg0, arg1, arg2, arg3);
+}
+
+void
+sbi_ret_enclave(uintptr_t ret) {
+  SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_RET_ENCLAVE, ret);
+  __builtin_unreachable();
+}
+
+uintptr_t
+sbi_register_handler(uintptr_t handler) {
+  return SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_REGISTER_HANDLER, handler);
+}
+#endif
+

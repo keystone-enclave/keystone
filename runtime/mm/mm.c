@@ -329,7 +329,7 @@ __map_with_reserved_page_table_64(uintptr_t dram_base,
 {
   uintptr_t offset = 0;
   uintptr_t leaf_level = 3;
-  pte* leaf_pt = l3_pt;
+  pte* leaf_pt = l3_pt, new_pt;
   /* use megapage if l3_pt is null */
   if (!l3_pt) {
     leaf_level = 2;
@@ -354,9 +354,14 @@ __map_with_reserved_page_table_64(uintptr_t dram_base,
        offset < dram_size;
        offset += RISCV_GET_LVL_PGSIZE(leaf_level))
   {
-    leaf_pt[RISCV_GET_PT_INDEX(ptr + offset, leaf_level)] =
-      pte_create(ppn(dram_base + offset),
-          PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+    new_pt = pte_create(ppn(dram_base + offset),
+                        PTE_R | PTE_W | PTE_X | PTE_A | PTE_D);
+
+    if(leaf_pt[RISCV_GET_PT_INDEX(ptr + offset, leaf_level)] & PTE_V) {
+      assert(leaf_pt[RISCV_GET_PT_INDEX(ptr + offset, leaf_level)] == new_pt);
+    }
+
+    leaf_pt[RISCV_GET_PT_INDEX(ptr + offset, leaf_level)] = new_pt;
   }
 
 }

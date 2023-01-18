@@ -13,6 +13,7 @@
 #include "sm-sbi.h"
 #include "sm.h"
 #include "cpu.h"
+#include "sm_assert.h"
 
 static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long funcid,
                      const struct sbi_trap_regs *regs,
@@ -63,6 +64,21 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
       break;
     case SBI_SM_RELEASE_MMIO:
       retval = sbi_sm_release_mmio(regs->a0);
+      break;
+    case SBI_SM_CALL_ENCLAVE:
+      retval = sbi_sm_call_enclave((struct sbi_trap_regs*) regs, regs->a0, (int) regs->a1);
+      sm_assert(retval == SBI_ERR_SM_ENCLAVE_SUCCESS);
+
+      // Make sure we preserve registers, these are modified by the wrapping
+      // ecall infrastructure
+      retval = regs->a0;
+      *out_val = regs->a1;
+      break;
+    case SBI_SM_RET_ENCLAVE:
+      retval = sbi_sm_ret_enclave((struct sbi_trap_regs*) regs);
+      break;
+    case SBI_SM_REGISTER_HANDLER:
+      retval = sbi_sm_register_handler(regs->a0);
       break;
     case SBI_SM_STOP_ENCLAVE:
       retval = sbi_sm_stop_enclave((struct sbi_trap_regs*) regs, regs->a0);

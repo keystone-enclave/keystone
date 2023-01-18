@@ -33,4 +33,13 @@ sbi_claim_mmio(uintptr_t dev_string);
 uintptr_t
 sbi_release_mmio(uintptr_t dev_string);
 
+#ifdef USE_CALLEE
+uintptr_t
+sbi_call_enclave(int eid, int type, uintptr_t arg0, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3);
+void
+sbi_ret_enclave(uintptr_t ret) __attribute__((noreturn));
+uintptr_t
+sbi_register_handler(uintptr_t handler);
+#endif
+
 #endif
