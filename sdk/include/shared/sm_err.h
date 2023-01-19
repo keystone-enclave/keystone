@@ -31,5 +31,6 @@
 #define SBI_ERR_SM_PMP_REGION_INVALID                  100024
 #define SBI_ERR_SM_PMP_REGION_OVERLAP                  100025
 #define SBI_ERR_SM_PMP_REGION_IMPOSSIBLE_TOR           100026
+#define SBI_ERR_SM_PMP_REGION_NOT_SUBREGION            100027
 
 #endif  // __SM_ERR_H__

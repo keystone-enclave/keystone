@@ -83,17 +83,21 @@ struct pmp_region
   uintptr_t addr;
   int allow_overlap;
   int reg_idx;
+  bool is_subregion, has_subregion;
 };
 
 /* external functions */
 void pmp_init(void);
 int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
+int pmp_region_subregion_atomic(uintptr_t start, uint64_t size, region_id container, region_id *rid);
 int pmp_region_free_atomic(region_id region);
+int pmp_region_subregion_free_atomic(region_id region);
 int pmp_set_keystone(region_id n, uint8_t perm);
 int pmp_set_global(region_id n, uint8_t perm);
 int pmp_unset(region_id n);
 int pmp_unset_global(region_id n);
+int pmp_move(region_id n, pmpreg_id to);
 int pmp_detect_region_overlap_atomic(uintptr_t base, uintptr_t size);
 void handle_pmp_ipi(void);
 

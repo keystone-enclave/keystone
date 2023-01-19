@@ -93,6 +93,8 @@ static void region_clear_all(region_id i)
   regions[i].addrmode = 0;
   regions[i].allow_overlap = 0;
   regions[i].reg_idx = 0;
+  regions[i].is_subregion = false;
+  regions[i].has_subregion = false;
 }
 
 static void region_init(region_id i,
@@ -107,6 +109,8 @@ static void region_init(region_id i,
   regions[i].addrmode = addrmode;
   regions[i].allow_overlap = allow_overlap;
   regions[i].reg_idx = (addrmode == PMP_A_TOR && reg_idx > 0 ? reg_idx + 1 : reg_idx);
+  regions[i].is_subregion = false;
+  regions[i].has_subregion = false;
 }
 
 static int is_pmp_region_valid(region_id region_idx)
@@ -236,23 +240,9 @@ void pmp_init(void)
   }
 }
 
-int pmp_set_keystone(int region_idx, uint8_t perm)
-{
-  if(!is_pmp_region_valid(region_idx))
-    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
-
-  uint8_t perm_bits = perm & PMP_ALL_PERM;
-  pmpreg_id reg_idx = region_register_idx(region_idx);
+static int _pmp_set(int region_idx, uint8_t perm_bits, pmpreg_id reg_idx) {
   uintptr_t pmpcfg = region_pmpcfg_val(region_idx, reg_idx, perm_bits);
-  uintptr_t pmpaddr;
-
-  pmpaddr = region_pmpaddr_val(region_idx);
-
-  //sbi_printf("pmp_set() [hart %d]: reg[%d], mode[%s], range[0x%lx-0x%lx], perm[0x%x]\r\n",
-  //       current_hartid(), reg_idx, (region_is_tor(region_idx) ? "TOR":"NAPOT"),
-  //       region_get_addr(region_idx), region_get_addr(region_idx) + region_get_size(region_idx), perm);
-  //sbi_printf("  pmp[%d] = pmpaddr: 0x%lx, pmpcfg: 0x%lx\r\n", reg_idx, pmpaddr, pmpcfg);
-
+  uintptr_t pmpaddr = region_pmpaddr_val(region_idx);
   int n=reg_idx;
 
   switch(n) {
@@ -278,6 +268,22 @@ int pmp_set_keystone(int region_idx, uint8_t perm)
     }
   }
   return SBI_ERR_SM_PMP_SUCCESS;
+}
+
+int pmp_set_keystone(int region_idx, uint8_t perm)
+{
+  if(!is_pmp_region_valid(region_idx))
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
+
+  uint8_t perm_bits = perm & PMP_ALL_PERM;
+  pmpreg_id reg_idx = region_register_idx(region_idx);
+
+  //sbi_printf("pmp_set() [hart %d]: reg[%d], mode[%s], range[0x%lx-0x%lx], perm[0x%x]\r\n",
+  //       current_hartid(), reg_idx, (region_is_tor(region_idx) ? "TOR":"NAPOT"),
+  //       region_get_addr(region_idx), region_get_addr(region_idx) + region_get_size(region_idx), perm);
+  //sbi_printf("  pmp[%d] = pmpaddr: 0x%lx, pmpcfg: 0x%lx\r\n", reg_idx, pmpaddr, pmpcfg);
+
+  return _pmp_set(region_idx, perm_bits, reg_idx);
 }
 
 int pmp_unset(int region_idx)
@@ -308,6 +314,127 @@ int pmp_unset(int region_idx)
   }
 
   return SBI_ERR_SM_PMP_SUCCESS;
+}
+
+int pmp_move(int region_idx, pmpreg_id to)
+{
+  if(!is_pmp_region_valid(region_idx))
+    PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID,"Invalid PMP region index");
+
+  // First, have to extract the current configuration
+  uintptr_t cfg;
+  int n=region_register_idx(region_idx);;
+
+  switch(n) {
+#define X(n, g) case n: { cfg = csr_read(pmpcfg##g); break; }
+    LIST_OF_PMP_REGS
+#undef X
+    default:
+    sm_assert(FALSE);
+  }
+
+  // Then, unset and move the new register
+  cfg = (cfg >> ((uintptr_t)8*(n%PMP_PER_GROUP))) & 0xff;
+  pmp_unset(region_idx);
+  _pmp_set(region_idx, cfg, to);
+  return SBI_ERR_SM_PMP_SUCCESS;
+}
+
+static int pmp_move_global(int region_idx, pmpreg_id to)
+{
+  if(!is_pmp_region_valid(region_idx))
+      PMP_ERROR(SBI_ERR_SM_PMP_REGION_INVALID, "Invalid PMP region index");
+
+  send_and_sync_pmp_ipi(region_idx, SBI_PMP_IPI_TYPE_MOVE, to);
+
+  return SBI_ERR_SM_PMP_SUCCESS;
+}
+
+int pmp_region_subregion_atomic(uintptr_t start, uint64_t size, region_id container, region_id *rid)
+{
+  int i, ret, reg_tmp;
+  region_id res;
+  pmpreg_id allocated_reg;
+
+  spin_lock(&pmp_lock);
+
+  // Check that this would actually be a subregion. First,
+  // is it actually just identical to the container?
+  if(start == regions[container].addr &&
+     size == regions[container].size)
+  {
+    *rid = container;
+    ret = SBI_ERR_SM_PMP_SUCCESS;
+    goto __done;
+  }
+
+  // Not identical -- is the proposed region contained entirely
+  // within the container region?
+  if((start < regions[container].addr) ||
+     (start + size > regions[container].addr + regions[container].size))
+  {
+    ret = SBI_ERR_SM_PMP_REGION_NOT_SUBREGION;
+    goto __done;
+  }
+
+  // Cannot allocate subregions of subregions
+  if(regions[container].is_subregion)
+  {
+    ret = SBI_ERR_SM_PMP_REGION_NOT_SUBREGION;
+    goto __done;
+  }
+
+  ret = pmp_region_init(start, size, PMP_PRI_ANY, &res, 1);
+  if(ret == SBI_ERR_SM_PMP_SUCCESS)
+  {
+    allocated_reg = regions[res].reg_idx;
+
+    regions[res].is_subregion = true;
+    regions[container].has_subregion = true;
+
+    // Now, we need to make sure that the container has the lowest
+    // priority out of all of its subregions. We maintain the invariant
+    // that, whenever we create a subregion, we move the container region
+    // into the lowest occupied priority. This means that we would only
+    // ever hypothetically need to swap the registers corresponding to the
+    // container and the register we just allocated.
+
+    if(allocated_reg > regions[container].reg_idx)
+    {
+      pmp_move_global(container, allocated_reg);
+
+      reg_tmp = regions[container].reg_idx;
+      regions[container].reg_idx = allocated_reg;
+      regions[res].reg_idx = reg_tmp;
+
+      if(region_needs_two_entries(res))
+      {
+        // We need to find the other region which contains the register
+        for(i = 0; i < PMP_MAX_N_REGION; i++)
+        {
+          if(regions[i].reg_idx == regions[res].reg_idx - 1)
+          {
+            // This is the other register. Can we potentially move this
+            // region to the other register value we have just allocated?
+            sm_assert(!regions[i].has_subregion && !regions[i].is_subregion)
+            sm_assert(!region_needs_two_entries(i));
+
+            // We should be fine, go ahead and swap this as well
+            pmp_move_global(i, allocated_reg - 1);
+            regions[i].reg_idx = allocated_reg - 1;
+            break;
+          }
+        }
+      }
+
+    }
+
+    *rid = res;
+  }
+
+__done:
+  spin_unlock(&pmp_lock);
+  return ret;
 }
 
 int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap)
@@ -427,11 +554,8 @@ static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority p
   return SBI_ERR_SM_PMP_SUCCESS;
 }
 
-int pmp_region_free_atomic(int region_idx)
+static int pmp_region_free(int region_idx)
 {
-
-  spin_lock(&pmp_lock);
-
   if(!is_pmp_region_valid(region_idx))
   {
     spin_unlock(&pmp_lock);
@@ -445,10 +569,58 @@ int pmp_region_free_atomic(int region_idx)
     UNSET_BIT(reg_bitmap, reg_idx - 1);
 
   region_clear_all(region_idx);
+    return SBI_ERR_SM_PMP_SUCCESS;
+}
 
+int pmp_region_free_atomic(int region_idx)
+{
+  int ret;
+  spin_lock(&pmp_lock);
+  ret = pmp_region_free(region_idx);
   spin_unlock(&pmp_lock);
+  return ret;
+}
 
-  return SBI_ERR_SM_PMP_SUCCESS;
+int pmp_region_subregion_free_atomic(region_id region) {
+    int i, ret = SBI_ERR_SM_PMP_SUCCESS;
+    region_id container = -1;
+
+    spin_lock(&pmp_lock);
+
+    // First, find the container of this region
+    for(i = 0; i < PMP_MAX_N_REGION; i++) {
+        // Skip the OSM region
+        if(regions[i].addr == 0 && regions[i].size == -1)
+            continue;
+
+        if(regions[region].addr >= regions[i].addr &&
+            regions[region].addr + regions[region].size <= regions[i].addr + regions[i].size) {
+            // This is the most likely container
+            container = i;
+            break;
+        }
+    }
+
+    if(container < 0) {
+        ret = SBI_ERR_SM_PMP_REGION_NOT_SUBREGION;
+        goto __done;
+    }
+
+    if(!regions[container].has_subregion) {
+        ret = SBI_ERR_SM_PMP_REGION_NOT_SUBREGION;
+        goto __done;
+    }
+
+    // Okay, now we can clear all state. We don't need to move any regions back to
+    // where they came from originally, since the bitmap will be in a consistent
+    // state after this.
+
+    regions[container].has_subregion = false;
+    pmp_region_free(region);
+
+__done:
+    spin_unlock(&pmp_lock);
+    return ret;
 }
 
 int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid, int allow_overlap)

@@ -7,6 +7,7 @@
 
 #define SBI_PMP_IPI_TYPE_SET    0
 #define SBI_PMP_IPI_TYPE_UNSET  1
+#define SBI_PMP_IPI_TYPE_MOVE   2
 
 struct sbi_pmp_ipi_info {
   unsigned long type;
