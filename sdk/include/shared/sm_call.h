@@ -28,6 +28,8 @@
 #define SBI_SM_CALL_ENCLAVE      3009
 #define SBI_SM_RET_ENCLAVE       3010
 #define SBI_SM_REGISTER_HANDLER  3011
+#define SBI_SM_SHARE_REGION      3012
+#define SBI_SM_UNSHARE_REGION    3013
 #define FID_RANGE_ENCLAVE        3999
 
 /* 4000-4999 are experimental */

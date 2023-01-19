@@ -48,6 +48,12 @@ unsigned long
 sbi_sm_register_handler(uintptr_t handler);
 
 unsigned long
+sbi_sm_share_region(uintptr_t addr, size_t size);
+
+unsigned long
+sbi_sm_unshare_region(uintptr_t addr);
+
+unsigned long
 sbi_sm_random(void);
 
 unsigned long

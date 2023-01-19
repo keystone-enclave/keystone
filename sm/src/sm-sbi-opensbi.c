@@ -80,6 +80,12 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
     case SBI_SM_REGISTER_HANDLER:
       retval = sbi_sm_register_handler(regs->a0);
       break;
+    case SBI_SM_SHARE_REGION:
+      retval = sbi_sm_share_region(regs->a0, regs->a1);
+      break;
+    case SBI_SM_UNSHARE_REGION:
+      retval = sbi_sm_unshare_region(regs->a0);
+      break;
     case SBI_SM_STOP_ENCLAVE:
       retval = sbi_sm_stop_enclave((struct sbi_trap_regs*) regs, regs->a0);
       __builtin_unreachable();

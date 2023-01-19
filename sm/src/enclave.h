@@ -41,10 +41,11 @@ typedef unsigned int enclave_id;
  * INVALID is an unused index
  */
 enum enclave_region_type{
-  REGION_INVALID,
+  REGION_INVALID = 0,
   REGION_EPM,
   REGION_UTM,
   REGION_MMIO,
+  REGION_EXPORTED,
   REGION_OTHER,
 };
 
@@ -157,6 +158,8 @@ unsigned long release_mmio(uintptr_t dev_string, enclave_id eid);
 unsigned long call_enclave(struct sbi_trap_regs *regs, enclave_id from, enclave_id to, int type);
 unsigned long ret_enclave(struct sbi_trap_regs *regs);
 unsigned long register_handler(uintptr_t handler, enclave_id eid);
+unsigned long share_region(uintptr_t addr, size_t size, enclave_id eid);
+unsigned long unshare_region(uintptr_t addr, enclave_id eid);
 
 // interrupt handlers
 void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs);

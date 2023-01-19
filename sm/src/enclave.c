@@ -94,6 +94,13 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
     if(enclaves[called_eid].regions[memid].type != REGION_INVALID) {
       pmp_set_keystone(enclaves[called_eid].regions[memid].pmp_rid, PMP_ALL_PERM);
     }
+
+    // Also enable any caller-exported regions
+    if(eid != called_eid) {
+      if(enclaves[eid].regions[memid].type == REGION_EXPORTED) {
+        pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_ALL_PERM);
+      }
+    }
   }
 
   // ensure nonsecure-only devices are unmapped
@@ -122,6 +129,13 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     // Disable callee enclave's PMP regions
     if(enclaves[called_eid].regions[memid].type != REGION_INVALID) {
       pmp_set_keystone(enclaves[called_eid].regions[memid].pmp_rid, PMP_NO_PERM);
+    }
+
+    // Also disable any caller-exported regions
+    if(eid != called_eid) {
+      if(enclaves[eid].regions[memid].type == REGION_EXPORTED) {
+        pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
+      }
     }
   }
   osm_pmp_set(PMP_ALL_PERM);
@@ -809,7 +823,8 @@ unsigned long call_enclave(struct sbi_trap_regs *regs, enclave_id from, enclave_
 
   // Switch out PMP regions
   for(memid = 0; memid < ENCLAVE_REGIONS_MAX; memid++) {
-    if(enclaves[from].regions[memid].type != REGION_INVALID) {
+    if(enclaves[from].regions[memid].type != REGION_INVALID &&
+        enclaves[from].regions[memid].type != REGION_EXPORTED) {
       pmp_set_keystone(enclaves[from].regions[memid].pmp_rid, PMP_NO_PERM);
     }
   }
@@ -817,6 +832,10 @@ unsigned long call_enclave(struct sbi_trap_regs *regs, enclave_id from, enclave_
   for(memid = 0; memid < ENCLAVE_REGIONS_MAX; memid++) {
     if(enclaves[to].regions[memid].type != REGION_INVALID) {
       pmp_set_keystone(enclaves[to].regions[memid].pmp_rid, PMP_ALL_PERM);
+    }
+
+    if(enclaves[from].regions[memid].type == REGION_EXPORTED) {
+      pmp_set_keystone(enclaves[from].regions[memid].pmp_rid, PMP_ALL_PERM);
     }
   }
 
@@ -884,4 +903,109 @@ unsigned long register_handler(uintptr_t handler, enclave_id eid)
 
   spin_unlock(&encl_lock);
   return ret;
+}
+
+unsigned long share_region(uintptr_t addr, size_t size, enclave_id eid)
+{
+  bool done = false;
+  int i, free = -1, epm = -1, ret = SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
+  region_id rid;
+
+  // Identify the EPM region, as well as a free region slot to hold
+  // the new subregion to create. We'll create this shared region as
+  // a PMP subregion of the EPM.
+
+  spin_lock(&encl_lock);
+  for(i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
+    if(enclaves[eid].regions[i].type == REGION_EPM) {
+      epm = i;
+    }
+    else if(enclaves[eid].regions[i].type == REGION_INVALID) {
+      free = i;
+    }
+
+    if(epm >= 0 && free >= 0)
+      break;
+  }
+
+  if(epm < 0 || free < 0) {
+    done = true;
+  }
+
+  spin_unlock(&encl_lock);
+
+  // Kind of a scary thing to do unlocked. Rationale: pmp_region_subregion_atomic will
+  // only ever touch PMP regions owned by this current enclave that we are currently
+  // working on. However, this only works with the following assumptions:
+  //
+  // 1. Subregions cannot themselves have further subregions
+  // 2. There are no cross-enclave subregions
+  //
+  // The reason we have to unlock the enclave lock here is that we may get caught in
+  // a situation where core A has to move a PMP region by sending an IPI, but core B
+  // is currently in the middle of processing an SM call. If we are holding the enclave
+  // lock here, core B will try to acquire it with interrupts disabled and will never
+  // receive our synchronous IPI, and core A will stall because core B never acks the
+  // synchronous IPI.
+
+  if(!done) {
+    if(pmp_region_subregion_atomic(addr, size,
+                                   enclaves[eid].regions[epm].pmp_rid,
+                                   &rid)) {
+      ret = SBI_ERR_SM_ENCLAVE_PMP_FAILURE;
+    } else {
+      spin_lock(&encl_lock);
+      enclaves[eid].regions[free].type = REGION_EXPORTED;
+      enclaves[eid].regions[free].pmp_rid = rid;
+      spin_unlock(&encl_lock);
+
+      // Disable this new region globally, but enable it locally since we
+      // (hypothetically) do want access to our own memory here.
+      pmp_set_global(rid, PMP_NO_PERM);
+      pmp_set_keystone(rid, PMP_ALL_PERM);
+      ret = SBI_ERR_SM_ENCLAVE_SUCCESS;
+    }
+  }
+
+  return ret;
+}
+
+unsigned long unshare_region(uintptr_t addr, enclave_id eid) {
+    int i, rid = -1, ret = SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+    bool done = false;
+
+    spin_lock(&encl_lock);
+
+    // Find the region to unshare
+    for(i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
+        if(enclaves[eid].regions[i].type == REGION_EXPORTED)  {
+            rid = enclaves[eid].regions[i].pmp_rid;
+            if(pmp_region_get_addr(rid) == addr) {
+                break;
+            } else rid = -1;
+        }
+    }
+
+    spin_unlock(&encl_lock);
+    if(rid < 0) {
+        done = true;
+    }
+
+    if(!done) {
+        // Disable access to this region everywhere
+        pmp_set_global(rid, PMP_NO_PERM);
+
+        if(pmp_region_subregion_free_atomic(rid)) {
+            ret = SBI_ERR_SM_ENCLAVE_PMP_FAILURE;
+        } else {
+            spin_lock(&encl_lock);
+            enclaves[eid].regions[i].type = REGION_INVALID;
+            enclaves[eid].regions[i].pmp_rid = 0;
+            spin_unlock(&encl_lock);
+
+            ret = SBI_ERR_SM_ENCLAVE_SUCCESS;
+        }
+    }
+
+    return ret;
 }

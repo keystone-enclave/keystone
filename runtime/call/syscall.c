@@ -270,6 +270,14 @@ void handle_syscall(struct encl_ctx* ctx)
     break;
 #endif // USE_CALLEE
 
+  case(RUNTIME_SYSCALL_SHARE_REGION):
+    ret = sbi_share_region(translate(arg0), arg1);
+    break;
+
+  case(RUNTIME_SYSCALL_UNSHARE_REGION):
+    ret = sbi_unshare_region(translate(arg0));
+    break;
+
   case(RUNTIME_SYSCALL_YIELD_MAIN_THREAD):
     // Give up our current time slice and report back to the SDK
     ret = sbi_stop_enclave(STOP_YIELD_ENCLAVE);

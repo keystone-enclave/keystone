@@ -117,3 +117,12 @@ sbi_register_handler(uintptr_t handler) {
 }
 #endif
 
+uintptr_t
+sbi_share_region(uintptr_t addr, size_t size) {
+  return SBI_CALL_2(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_SHARE_REGION, addr, size);
+}
+
+uintptr_t
+sbi_unshare_region(uintptr_t addr) {
+  return SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_UNSHARE_REGION, addr);
+}
