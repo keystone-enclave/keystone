@@ -95,9 +95,18 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   list(APPEND PLUGIN_FLAGS "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
   list(APPEND PLUGIN_FLAGS "-DCMAKE_OBJCOPY=${CMAKE_OBJCOPY}")
 
+  get_filename_component(SRCDIR ${CMAKE_SOURCE_DIR} NAME)
+  if(${SRCDIR} STREQUAL "sdk")
+    set(EYRIE_SRCDIR ${CMAKE_SOURCE_DIR}/../runtime)
+  elseif(${SRCDIR} STREQUAL "keystone")
+    set(EYRIE_SRCDIR ${CMAKE_SOURCE_DIR}/runtime)
+  else()
+    message(FATAL_ERROR "Don't know how to find runtime from current directory" ${SRCDIR})
+  endif()
+
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
-    DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${CMAKE_SOURCE_DIR}/runtime ${eyrie_src}
+    DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${EYRIE_SRCDIR} ${eyrie_src}
     CMAKE_ARGS "${PLUGIN_FLAGS}"
     BUILD_IN_SOURCE TRUE
     BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
