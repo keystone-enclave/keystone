@@ -93,6 +93,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
   // TODO(chungmcl): Remove! for debugging fuzzy time stuff
   // Disables context switching by disabling the timer interrupt
   // bit (MTIP) in the MIE control and status register
+  // sbi_printf("switch_to_enclave: current_hartid: %d, eid: %d\n", current_hartid(), eid);
   csr_clear(CSR_MIE, MIP_MTIP);
 
   // Setup any platform specific defenses
@@ -123,8 +124,8 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
 
   switch_vector_host();
 
+  // TODO(chungmcl): Comment parts of this out?
   uintptr_t pending = csr_read(mip);
-
   if (pending & MIP_MTIP) {
     csr_clear(mip, MIP_MTIP);
     csr_set(mip, MIP_STIP);

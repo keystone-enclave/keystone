@@ -1,5 +1,7 @@
+#define START_FLAG_OFFSET_ONE 0
+#define START_FLAG_OFFSET_TWO 1
 #define ARBITRARY_OFFSET_ONE 20
-#define ARBITRARY_OFFSET_TWO 700
+#define ARBITRARY_OFFSET_TWO 1000
 
 #define FISH "I'm fish from eapp\n\
         /`·.¸\n\

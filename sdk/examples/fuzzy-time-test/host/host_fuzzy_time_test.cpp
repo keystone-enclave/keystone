@@ -1,27 +1,24 @@
-#include <thread>
-#include <chrono>
 #include <cstdlib>
-#include <string>
-#include <ctime>
-#include <unistd.h>
-#include <assert.h>
-// Keystone
+#include <cstdio>
+#include <iostream>
+#include <fstream>
+
+#include <stdio.h>
 #include <edge_call.h>
 #include <keystone.h>
+#include <sys/mman.h>
+
 #include "../test_consts.h"
 
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
-using std::thread;
 
-string FISH_STRING = FISH;
-string UW_STRING = UW;
+uint64_t* run_trial(char** argv);
+void spy(void* start_flag, void* target, uint64_t loop_counts[], int expected_writes);
+bool test_basic_functionality(void* start_flag, void* expected_dest);
 
-bool test_basic_functionality(uintptr_t sharedBufferPtr);
-void spy(uintptr_t target, uint64_t times[], int states[], int expected_writes);
-uint64_t* test_fuzzing(char** argv);
 unsigned long print_string(char* str);
 void print_string_wrapper(void* buffer);
 #define OCALL_PRINT_STRING 1
@@ -31,31 +28,20 @@ main(int argc, char** argv) {
   for (int i = 0; i < 5; i++) {
     cout << "TRIAL " << i << endl;
     cout << "-------------------------------------------------" << endl;
-    uint64_t* spy_out = test_fuzzing(argv);
+    uint64_t* spy_out = run_trial(argv);
   
     for (int i = 0; i < EXPECTED_WRITES; i++) {
-    cout << "Time point " << i << ": " << spy_out[i] << endl;
-    }
-    for (int i = 0; i < EXPECTED_WRITES-1; i++) {
-      cout << "pt " << i+1 << " - pt " << i << ": ~" << (spy_out[i+1] - spy_out[i]) / 1000000.0 << " ms" << endl;
-    }
-    
-    cout << endl;
-    float loop_const_time = (spy_out[1] - spy_out[0]);
-    cout << LOOP_CONST << " loops took ~" << loop_const_time / 1000000.0 << " ms" << endl;
-    for (int i = 1; i < EXPECTED_WRITES-1; i++) {
-      float factor = (spy_out[i+1] - spy_out[i]) / loop_const_time;
-      cout << "Loop " << i << " looped ~" << factor * LOOP_CONST << " times." << endl;
+      cout << "Loop " << i << ": " << spy_out[i] << " loops" << endl;
     }
   
     cout << "-------------------------------------------------" << endl << endl;
-    free(spy_out);
+    munmap(spy_out, sizeof(uint64_t) * EXPECTED_WRITES);
   }
-
-  return 0;
 }
 
-uint64_t* test_fuzzing(char** argv) {
+uint64_t* run_trial(char** argv) {
+  uint64_t* spy_out = (uint64_t*)mmap(NULL, sizeof(uint64_t) * EXPECTED_WRITES, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
   Keystone::Enclave enclave;
   Keystone::Params params;
   params.setFreeMemSize(1024 * 1024);
@@ -67,63 +53,81 @@ uint64_t* test_fuzzing(char** argv) {
   register_call(OCALL_PRINT_STRING, print_string_wrapper);
   edge_call_init_internals(
     (uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
-
   void* shared_buff = enclave.getSharedBuffer();
   memset(shared_buff, 0x0, 1024 * 1024);
 
-  uintptr_t basic_tests_expected_dst = (uintptr_t)shared_buff + ARBITRARY_OFFSET_ONE;
-  uintptr_t spy_tests_expected_dst = (uintptr_t)shared_buff + ARBITRARY_OFFSET_TWO;
-
-  uint64_t* spy_out = (uint64_t*)malloc(2048);
-  int* spy_states = (int*)malloc(2048);
-
-  memset(spy_out, 0x0, 2048);
-  memset(spy_states, 0x0, 2048);
-
-  thread spy_thread(spy, spy_tests_expected_dst, spy_out, spy_states, EXPECTED_WRITES);
-
-  enclave.run();
-
-  spy_thread.join();
-
-  if (test_basic_functionality((uintptr_t)basic_tests_expected_dst)) {
-    cout << "Basic functionality tests pass." << endl;
+  int fork_result = fork();
+  if (fork_result == -1) {
+    cout << "!!! FORK FAILED !!!" << endl;
+    while (1);
   }
-  cout << "Observed states: ";
-  for (int i = 0; i <= EXPECTED_WRITES; i++) {
-    cout << spy_states[i] << ", ";
+  
+  if (fork_result == 0) {
+    cpu_set_t aset; CPU_ZERO(&aset); CPU_SET(1, &aset);
+    sched_setaffinity(0, sizeof(cpu_set_t), &aset);
+    printf("!!! Spy proc running on CPU %d\n", sched_getcpu());
+
+    test_basic_functionality(
+      shared_buff + START_FLAG_OFFSET_ONE, 
+      shared_buff + ARBITRARY_OFFSET_ONE
+    );
+    
+    spy(
+      shared_buff + START_FLAG_OFFSET_TWO, 
+      shared_buff + ARBITRARY_OFFSET_TWO, 
+      spy_out, 
+      EXPECTED_WRITES
+    );
+
+    sleep(99999);
+  } else {
+    cpu_set_t aset; CPU_ZERO(&aset);CPU_SET(2, &aset);
+    sched_setaffinity(0, sizeof(cpu_set_t), &aset);
+
+    printf("!!! Host proc running on CPU %d\n", sched_getcpu());
+    enclave.run();
+    return spy_out;
   }
-  free(spy_states);
-  return spy_out;
 }
 
-void spy(uintptr_t target, uint64_t times[], int states[], int expected_writes) {
-  times[0] = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-  states[0] = *(int*)target;
+void spy(void* start_flag, void* target, uint64_t loop_counts[], int expected_writes) {
+  volatile char* flag = (volatile char*)start_flag;
+  flag[0] = 1;
+  while (flag[0] == 1);
+  
+  volatile int* cur_target = (volatile int*)target;
   int curr_state = 0;
-
-  for (int i = 1; i <= expected_writes; i++) {
+  for (int i = 0; i < expected_writes; i += 1) {
+    uint64_t loops = 0;
     while (curr_state == 0) {
-      curr_state = *((int*)(target) + (i-1));
+      loops += 1;
+      curr_state = cur_target[i + 1];
     }
-    // cout << "observed: " << curr_state << endl;
-    times[i-1] = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    states[i] = curr_state;
+    loop_counts[i] = loops;
     curr_state = 0;
   }
 }
 
-bool test_basic_functionality(uintptr_t expected_dest) {
-  string actual = (char*)(expected_dest);
-  cout << "actual:\n" << actual << endl;
-  assert(FISH_STRING.compare(actual) == 0);
+bool test_basic_functionality(void* start_flag, void* expected_dest) {
+  ((volatile char*)start_flag)[0] = 1;
+  while (((volatile char*)start_flag)[0] == 1);
 
-  actual = (char*)(expected_dest + FISH_SIZE);
-  cout << "actual:\n" << actual << endl;
-  assert(UW_STRING.compare(actual) == 0);
+  string uw_string = UW;
+  string fish_string = FISH;
+
+  string actual = (char*)(expected_dest);
+  // cout << "actual:\n" << actual << endl;
+  assert(uw_string.compare(actual) == 0);
+
+  actual = (char*)(expected_dest + UW_SIZE);
+  // cout << "actual:\n" << actual << endl;
+  assert(fish_string.compare(actual) == 0);
+
+  cout << "Basic functionality tests passed." << endl;
 
   return true;
 }
+
 
 /***
  * An example call that will be exposed to the enclave application as

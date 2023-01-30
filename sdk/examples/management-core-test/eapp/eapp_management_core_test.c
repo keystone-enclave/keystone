@@ -12,7 +12,7 @@ unsigned long ocall_print_string(char* string);
 // }
 
 int main() {
-  ocall_print_string("Enclave started.\n");
+  ocall_print_string("Enclave started.");
   print_time();
    
   EAPP_RETURN(0); // Will cause RUNTIME_SYSCALL_EXIT condition in SM

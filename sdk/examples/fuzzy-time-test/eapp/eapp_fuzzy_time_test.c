@@ -9,46 +9,35 @@
 unsigned long ocall_print_string(char* string);
 void loop(unsigned long u);
 
-// toread: fuzzying: secure VAX retrospective, "trusted browsers uncertain times," 
-
-// TODO(chungmcl): Add option for turning fuzzy on/off
-// look at keystone/linux-keystone-driver/keystone-ioctl.c, 
-// keystone SDK (have a way for host to turn on flags), 
-// keystone SM (check for flags, turn flags on)
-
-// TODO(chungmcl): Write a test
-// Make a host app that
-// forks into two threads --
-// one thread makes eapp do stuff (write, etc.)
-// other thread watches over shared mem
-// to see that stuff is written as expected
-// at the right time
-
-// We want to run a "failed" test (one which DOESN'T use the timing_buffer)
-// Use that as a "benchmark" to compare a "successful" test against (show that the timing_buffer does indeed hide)
-
 int main() {
   // Basic functionality tests
-  ocall_print_string("ocall_print_string: I'm fish");
-  pause_ms(4000);
-  char* fish = FISH;
+  int start_flag = 0;
+  while (start_flag == 0) {
+    copy_from_shared(&start_flag, START_FLAG_OFFSET_ONE, sizeof(char));
+  }
   char* uw = UW;
-  write_to_shared((void*)fish, (uintptr_t)ARBITRARY_OFFSET_ONE, FISH_SIZE);
-  write_to_shared((void*)uw, (uintptr_t)ARBITRARY_OFFSET_ONE + FISH_SIZE, UW_SIZE);
+  char* fish = FISH;
+  write_to_shared((void*)uw, (uintptr_t)ARBITRARY_OFFSET_ONE, UW_SIZE);
+  write_to_shared((void*)fish, (uintptr_t)ARBITRARY_OFFSET_ONE + UW_SIZE, FISH_SIZE);
+  start_flag = 0;
+  write_to_shared((void*)&start_flag, START_FLAG_OFFSET_ONE, sizeof(char));
 
   // Fuzzing tests
-  pause_ms(1000);
+  while (start_flag == 0) {
+    copy_from_shared(&start_flag, START_FLAG_OFFSET_TWO, sizeof(char));
+  }
+  start_flag = 0;
+  write_to_shared(&start_flag, START_FLAG_OFFSET_TWO, sizeof(char));
   // uint64_t n[] = { 1, 2, 4, 6, 8, 10, 12 };
-  uint64_t n[] = { 1, 2, 4, 8, 16, 32, 64 };
+  uint32_t n[] = { 1, 2, 4, 8, 16, 32, 64 };
   int i = 1;
-  write_to_shared((void*)&i, (uintptr_t)ARBITRARY_OFFSET_TWO + (sizeof(int) * (i-1)), sizeof(int));
+  write_to_shared((void*)&i, (uintptr_t)ARBITRARY_OFFSET_TWO + (sizeof(int) * (i)), sizeof(int));
   i += 1;
-  while (i <= EXPECTED_WRITES) {
+  while (i < EXPECTED_WRITES + 1) {
     loop(LOOP_CONST * n[i - 2]);
-    write_to_shared((void*)&i, (uintptr_t)ARBITRARY_OFFSET_TWO + (sizeof(int) * (i-1)), sizeof(int));
+    write_to_shared((void*)&i, (uintptr_t)ARBITRARY_OFFSET_TWO + (sizeof(int) * (i)), sizeof(int));
     i += 1;
   }
-  
   EAPP_RETURN(0); // Will cause RUNTIME_SYSCALL_EXIT condition in SM
 }
 

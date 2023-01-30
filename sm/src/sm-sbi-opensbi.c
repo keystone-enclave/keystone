@@ -89,6 +89,11 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
     case SBI_SM_PAUSE_MS:
       retval = sbi_sm_pause_ms((struct sbi_trap_regs*)regs, regs->a0);
     case SBI_SM_GET_TIME:
+      // TODO(chungmcl): modify to return with reg a1 instead of a0 (retval)
+      // so we don't overflow a0 and make keystone think we're returning
+      // an error
+      // retval = 0;
+      // a1 = sbi_sm_get_time((struct sbi_trap_regs*) regs);
       retval = sbi_sm_get_time((struct sbi_trap_regs*) regs);
       break;
     case SBI_SM_GET_INTERVAL_LEN:

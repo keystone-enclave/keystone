@@ -3,7 +3,9 @@ set(eapp_src eapp/eapp_fuzzy_time_test.c)
 set(host_bin fuzzy-time-test-runner)
 set(host_src host/host_fuzzy_time_test.cpp)
 set(package_name "fuzzy-time-test.ke")
-set(package_script "./fuzzy-time-test-runner fuzzy-time-test eyrie-rt")
+# set(package_script "./fuzzy-time-test-runner fuzzy-time-test eyrie-rt")
+set(runner_script run.sh)
+set(package_script "./run.sh")
 
 if(RISCV32)
   set(eyrie_plugins "rv32 freemem")
@@ -41,14 +43,16 @@ add_eyrie_runtime(${eapp_bin}-eyrie
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 
-# add target for packaging (see keystone.cmake)
+# add run.sh
+add_custom_target(${eapp_bin}-script BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/${runner_script} DEPENDS ${runner_script} COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${runner_script} ${CMAKE_CURRENT_BINARY_DIR}/${runner_script})
 
+# add target for packaging (see keystone.cmake)
 add_keystone_package(${eapp_bin}-package
   ${package_name}
   ${package_script}
-  ${eyrie_files_to_copy} ${eapp_bin} ${host_bin})
+  ${eyrie_files_to_copy} ${eapp_bin} ${host_bin} ${runner_script})
 
-add_dependencies(${eapp_bin}-package ${eapp_bin}-eyrie)
+add_dependencies(${eapp_bin}-package ${eapp_bin}-eyrie ${eapp_bin}-script)
 
 # add package to the top-level target
 add_dependencies(examples ${eapp_bin}-package)

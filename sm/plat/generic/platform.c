@@ -253,14 +253,16 @@ static uint64_t generic_pmu_xlate_to_mhpmevent(uint32_t event_idx,
 
 static void keystone_ipi_handle(unsigned int event_id) {
   struct sbi_trap_regs *regs;
-  if(cpu_is_enclave_context() && event_id != get_clock_ipi_event_id() /* event_id not meant for keystone */) {
-      // Execute the trap hack
-      regs = (struct sbi_trap_regs *)
-              ((void *) sbi_scratch_thishart_ptr() - SBI_TRAP_REGS_SIZE);
-      regs->mepc -= 4;
-      sbi_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
-      regs->a0 = SBI_ERR_SM_ENCLAVE_INTERRUPTED;
-      regs->mepc += 4;
+	int is_enclave_context = cpu_is_enclave_context();
+	int event_id_is_not_clock_id = event_id != get_clock_ipi_event_id();
+  if (is_enclave_context && event_id_is_not_clock_id) {
+    // Execute the trap hack
+    regs = (struct sbi_trap_regs *)
+            ((void *) sbi_scratch_thishart_ptr() - SBI_TRAP_REGS_SIZE);
+    regs->mepc -= 4;
+    sbi_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
+    regs->a0 = SBI_ERR_SM_ENCLAVE_INTERRUPTED;
+    regs->mepc += 4;
   }
 }
 

@@ -10,7 +10,6 @@
 #include "sbi/sbi_domain.h"
 
 #define GRANULARITY_MS 10
-// TODO(chungmcl): Remove! For debugging
 
 volatile unsigned long fuzz_clock_ticks;
 unsigned long granularity_ticks;
@@ -25,19 +24,17 @@ void handle_clock_ipi(struct sbi_scratch *scratch);
 void send_clock_ipi();
 
 void fuzzy_clock_init() {
-  if (clock_ipi_event_id == -1) {
-    // (ticks / second) * (seconds / milliseconds) = (ticks / milliseconds)
-    ticks_per_ms = sbi_timer_get_device()->timer_freq / 1000;
-    // milliseconds * (ticks / milliseconds) = ticks
-    granularity_ticks = GRANULARITY_MS * ticks_per_ms;
-    clock_ipi_registered_enclaves = 0;
-    clock_ipi_event_ops.name[0] = 'x';
-    clock_ipi_event_ops.name[1] = '\0';
-    clock_ipi_event_ops.process = handle_clock_ipi;
-    clock_ipi_event_id = sbi_ipi_event_create(&clock_ipi_event_ops);
-    sbi_printf("Fuzzy Clock IPI event created with ID: %d\n", clock_ipi_event_id);
-    sbi_printf("Fuzzy Clock initialized with granularity_ticks == %lu\n", granularity_ticks);
-  }
+  // (ticks / second) * (seconds / milliseconds) = (ticks / milliseconds)
+  ticks_per_ms = sbi_timer_get_device()->timer_freq / 1000;
+  // milliseconds * (ticks / milliseconds) = ticks
+  granularity_ticks = GRANULARITY_MS * ticks_per_ms;
+  clock_ipi_registered_enclaves = 0;
+  clock_ipi_event_ops.name[0] = 'x';
+  clock_ipi_event_ops.name[1] = '\0';
+  clock_ipi_event_ops.process = handle_clock_ipi;
+  clock_ipi_event_id = sbi_ipi_event_create(&clock_ipi_event_ops);
+  sbi_printf("Fuzzy Clock IPI event created with ID: %d\n", clock_ipi_event_id);
+  sbi_printf("Fuzzy Clock initialized with granularity_ticks == %lu\n", granularity_ticks);
 }
 
 // unsigned long prev_time; // TODO(chungmcl): remove! for debugging
@@ -81,12 +78,7 @@ unsigned long wait_until_epoch() {
 }
 
 unsigned long get_time_ticks() {
-  /*enclave_id eid = cpu_get_enclave_id();
-  struct enclave* enclave = get_enclave(eid);
-  if (enclave->fuzzy_status == FUZZ_ENABLED)*/ {
-    // fix_time_interval(sbi_timer_value());
-    return fuzz_clock_ticks;
-  }
+  return fuzz_clock_ticks;
 }
 
 unsigned long get_granularity_ticks() {
@@ -95,7 +87,7 @@ unsigned long get_granularity_ticks() {
 
 /**
  * 
- *        Interprocessor Interrupts
+ *    Interprocessor Interrupts
  * 
  */
 int get_clock_ipi_event_id() {
@@ -112,6 +104,8 @@ void handle_clock_ipi(struct sbi_scratch *scratch) {
       csr_set(CSR_MIP, MIP_SSIP);
     }
   }
+
+  csr_clear(CSR_MIP, MIP_MSIP);
 }
 
 void reg_clock_ipi() {
