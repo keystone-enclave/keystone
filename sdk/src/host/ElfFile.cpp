@@ -9,7 +9,7 @@
 
 namespace Keystone {
 
-static size_t
+static std::size_t
 fstatFileSize(int filep) {
   int rc;
   struct stat stat_buf;
@@ -73,38 +73,38 @@ ElfFile::initialize(bool _isRuntime) {
 }
 
 /* Functions below are wrappers for libelf */
-size_t
+std::size_t
 ElfFile::getNumProgramHeaders(void) {
   return elf_getNumProgramHeaders(&elf);
 }
 
-size_t
-ElfFile::getProgramHeaderType(size_t ph) {
+std::size_t
+ElfFile::getProgramHeaderType(std::size_t ph) {
   return elf_getProgramHeaderType(&elf, ph);
 }
 
-size_t
-ElfFile::getProgramHeaderFileSize(size_t ph) {
+std::size_t
+ElfFile::getProgramHeaderFileSize(std::size_t ph) {
   return elf_getProgramHeaderFileSize(&elf, ph);
 }
 
-size_t
-ElfFile::getProgramHeaderMemorySize(size_t ph) {
+std::size_t
+ElfFile::getProgramHeaderMemorySize(std::size_t ph) {
   return elf_getProgramHeaderMemorySize(&elf, ph);
 }
 
-uintptr_t
-ElfFile::getProgramHeaderVaddr(size_t ph) {
+std::uintptr_t
+ElfFile::getProgramHeaderVaddr(std::size_t ph) {
   return elf_getProgramHeaderVaddr(&elf, ph);
 }
 
-uintptr_t
+std::uintptr_t
 ElfFile::getEntryPoint() {
   return elf_getEntryPoint(&elf);
 }
 
 void*
-ElfFile::getProgramSegment(size_t ph) {
+ElfFile::getProgramSegment(std::size_t ph) {
   return elf_getProgramSegment(&elf, ph);
 }
 }  // namespace Keystone
