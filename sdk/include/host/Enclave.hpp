@@ -15,6 +15,7 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <cstdint>
 
 #include "./common.h"
 extern "C" {
@@ -28,7 +29,7 @@ extern "C" {
 
 namespace Keystone {
 
-typedef std::function<void(void*)> OcallFunc;
+using OcallFunc = std::function<void(void*)>;
 
 class Enclave {
  private:
@@ -39,13 +40,13 @@ class Enclave {
   KeystoneDevice* pDevice;
   char hash[MDSIZE];
   hash_ctx_t hash_ctx;
-  uintptr_t runtime_stk_sz;
+  std::uintptr_t runtime_stk_sz;
   void* shared_buffer;
-  size_t shared_buffer_size;
+  std::size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
-  bool mapUntrusted(size_t size);
-  bool allocPage(uintptr_t va, uintptr_t src, unsigned int mode);
-  bool initStack(uintptr_t start, size_t size, bool is_rt);
+  bool mapUntrusted(std::size_t size);
+  bool allocPage(std::uintptr_t va, std::uintptr_t src, unsigned int mode);
+  bool initStack(std::uintptr_t start, std::size_t size, bool is_rt);
   Error loadUntrusted();
   bool mapElf(ElfFile* file);
   Error loadElf(ElfFile* file);
@@ -53,27 +54,27 @@ class Enclave {
 
   bool initFiles(const char*, const char*);
   bool initDevice();
-  bool prepareEnclave(uintptr_t alternatePhysAddr);
+  bool prepareEnclave(std::uintptr_t alternatePhysAddr);
   bool initMemory();
 
  public:
   Enclave();
   ~Enclave();
-  const char* getHash();
-  void* getSharedBuffer();
-  size_t getSharedBufferSize();
+  const char* getHash() const noexcept;
+  void* getSharedBuffer() noexcept;
+  std::size_t getSharedBufferSize() const noexcept;
   Error registerOcallDispatch(OcallFunc func);
   Error init(const char* filepath, const char* runtime, Params parameters);
   Error init(
       const char* eapppath, const char* runtimepath, Params _params,
-      uintptr_t alternatePhysAddr);
+      std::uintptr_t alternatePhysAddr);
   Error destroy();
-  Error run(uintptr_t* ret = nullptr);
+  Error run(std::uintptr_t* ret = nullptr);
 };
 
-uint64_t
+std::uint64_t
 calculate_required_pages(
-    uint64_t eapp_sz, uint64_t eapp_stack_sz, uint64_t rt_sz,
-    uint64_t rt_stack_sz);
+    std::uint64_t eapp_sz, std::uint64_t eapp_stack_sz, std::uint64_t rt_sz,
+    std::uint64_t rt_stack_sz);
 
 }  // namespace Keystone
