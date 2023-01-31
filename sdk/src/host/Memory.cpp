@@ -8,13 +8,6 @@
 
 namespace Keystone {
 
-Memory::Memory() {
-  epmFreeList   = 0;
-  utmFreeList   = 0;
-  rootPageTable = 0;
-  startAddr     = 0;
-}
-
 void
 Memory::startRuntimeMem() {
   runtimePhysAddr = getCurrentEPMAddress();
@@ -31,35 +24,35 @@ Memory::startFreeMem() {
 }
 
 inline pte
-Memory::pte_create(uintptr_t ppn, int type) {
+Memory::pte_create(std::uintptr_t ppn, int type) {
   return __pte((ppn << PTE_PPN_SHIFT) | PTE_V | type);
 }
 
 inline pte
-Memory::ptd_create(uintptr_t ppn) {
+Memory::ptd_create(std::uintptr_t ppn) {
   return pte_create(ppn, PTE_V);
 }
 
-uintptr_t
+std::uintptr_t
 Memory::pte_ppn(pte pte) {
   return pte_val(pte) >> PTE_PPN_SHIFT;
 }
 
-uintptr_t
-Memory::ppn(uintptr_t addr) {
+std::uintptr_t
+Memory::ppn(std::uintptr_t addr) {
   return __pa(addr) >> RISCV_PGSHIFT;
 }
 
-size_t
-Memory::pt_idx(uintptr_t addr, int level) {
-  size_t idx = addr >> (RISCV_PGLEVEL_BITS * level + RISCV_PGSHIFT);
+std::size_t
+Memory::pt_idx(std::uintptr_t addr, int level) {
+  std::size_t idx = addr >> (RISCV_PGLEVEL_BITS * level + RISCV_PGSHIFT);
   return idx & ((1 << RISCV_PGLEVEL_BITS) - 1);
 }
 
 bool
-Memory::allocPage(uintptr_t va, uintptr_t src, unsigned int mode) {
-  uintptr_t page_addr;
-  uintptr_t* pFreeList = (mode == UTM_FULL ? &utmFreeList : &epmFreeList);
+Memory::allocPage(std::uintptr_t va, std::uintptr_t src, unsigned int mode) {
+  std::uintptr_t page_addr;
+  std::uintptr_t* pFreeList = (mode == UTM_FULL ? &utmFreeList : &epmFreeList);
 
   pte* pte = __ept_walk_create(va);
 
@@ -85,13 +78,13 @@ Memory::allocPage(uintptr_t va, uintptr_t src, unsigned int mode) {
     case RT_FULL: {
       *pte =
           pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
-      writeMem(src, (uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
+      writeMem(src, (std::uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     case USER_FULL: {
       *pte = pte_create(
           page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_U | PTE_V);
-      writeMem(src, (uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
+      writeMem(src, (std::uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     case UTM_FULL: {
@@ -109,43 +102,43 @@ Memory::allocPage(uintptr_t va, uintptr_t src, unsigned int mode) {
 }
 
 pte*
-Memory::__ept_continue_walk_create(uintptr_t addr, pte* pte) {
-  uint64_t free_ppn = ppn(epmFreeList);
+Memory::__ept_continue_walk_create(std::uintptr_t addr, pte* pte) {
+  std::uint64_t free_ppn = ppn(epmFreeList);
   *pte              = ptd_create(free_ppn);
   epmFreeList += PAGE_SIZE;
   return __ept_walk_create(addr);
 }
 
 pte*
-Memory::__ept_walk_internal(uintptr_t addr, int create) {
+Memory::__ept_walk_internal(std::uintptr_t addr, int create) {
   pte* t = reinterpret_cast<pte*>(rootPageTable);
 
   int i;
   for (i = (VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS - 1; i > 0; i--) {
-    size_t idx = pt_idx(addr, i);
+    std::size_t idx = pt_idx(addr, i);
     if (!(pte_val(t[idx]) & PTE_V)) {
       return create ? __ept_continue_walk_create(addr, &t[idx]) : 0;
     }
 
     t = reinterpret_cast<pte*>(readMem(
-        reinterpret_cast<uintptr_t>(pte_ppn(t[idx]) << RISCV_PGSHIFT),
+        reinterpret_cast<std::uintptr_t>(pte_ppn(t[idx]) << RISCV_PGSHIFT),
         PAGE_SIZE));
   }
   return &t[pt_idx(addr, 0)];
 }
 
 pte*
-Memory::__ept_walk_create(uintptr_t addr) {
+Memory::__ept_walk_create(std::uintptr_t addr) {
   return __ept_walk_internal(addr, 1);
 }
 
 pte*
-Memory::__ept_walk(uintptr_t addr) {
+Memory::__ept_walk(std::uintptr_t addr) {
   return __ept_walk_internal(addr, 0);
 }
 
-uintptr_t
-Memory::epm_va_to_pa(uintptr_t addr) {
+std::uintptr_t
+Memory::epm_va_to_pa(std::uintptr_t addr) {
   pte* pte = __ept_walk(addr);
   if (pte)
     return pte_ppn(*pte) << RISCV_PGSHIFT;
@@ -155,9 +148,9 @@ Memory::epm_va_to_pa(uintptr_t addr) {
 
 /* This function pre-allocates the required page tables so that
  * the virtual addresses are linearly mapped to the physical memory */
-size_t
-Memory::epmAllocVspace(uintptr_t addr, size_t num_pages) {
-  size_t count;
+std::size_t
+Memory::epmAllocVspace(std::uintptr_t addr, std::size_t num_pages) {
+  std::size_t count;
 
   for (count = 0; count < num_pages; count++, addr += PAGE_SIZE) {
     pte* pte = __ept_walk_create(addr);
@@ -171,8 +164,8 @@ Memory::epmAllocVspace(uintptr_t addr, size_t num_pages) {
    linear at-most-once paddr mappings, and then hashing valid pages */
 int
 Memory::validateAndHashEpm(
-    hash_ctx_t* hash_ctx, int level, pte* tb, uintptr_t vaddr, int contiguous,
-    uintptr_t* runtime_max_seen, uintptr_t* user_max_seen) {
+    hash_ctx_t* hash_ctx, int level, pte* tb, std::uintptr_t vaddr, int contiguous,
+    std::uintptr_t* runtime_max_seen, std::uintptr_t* user_max_seen) {
   pte* walk;
   int i;
 
@@ -183,8 +176,8 @@ Memory::validateAndHashEpm(
       contiguous = 0;
       continue;
     }
-    uintptr_t vpn;
-    uintptr_t phys_addr = (pte_val(*walk) >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
+    std::uintptr_t vpn;
+    std::uintptr_t phys_addr = (pte_val(*walk) >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
     /* Check for blatently invalid mappings */
     int map_in_epm =
         (phys_addr >= startAddr && phys_addr < startAddr + epmSize);
@@ -203,11 +196,11 @@ Memory::validateAndHashEpm(
     else
       vpn = ((vaddr << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
 
-    uintptr_t va_start = vpn << RISCV_PGSHIFT;
+    std::uintptr_t va_start = vpn << RISCV_PGSHIFT;
 
     /* include the first virtual address of a contiguous range */
     if (level == 1 && !contiguous) {
-      hash_extend(hash_ctx, &va_start, sizeof(uintptr_t));
+      hash_extend(hash_ctx, &va_start, sizeof(std::uintptr_t));
       //      printf("user VA hashed: 0x%lx\n", va_start);
       contiguous = 1;
     }
