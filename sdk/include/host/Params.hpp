@@ -34,23 +34,23 @@ namespace Keystone {
 
 class Params {
  public:
-  void setSimulated(bool _simulated) { simulated = _simulated; }
+  void setSimulated(bool _simulated) noexcept { simulated = _simulated; }
 
   void setEnclaveEntry(std::uint64_t) {
     printf("WARN: setEnclaveEntry() is deprecated.\n");
   }
 
-  void setUntrustedMem(std::uint64_t ptr, std::uint64_t size) {
+  void setUntrustedMem(std::uint64_t ptr, std::uint64_t size) noexcept {
     untrusted      = ptr;
     untrusted_size = size;
   }
 
-  void setFreeMemSize(std::uint64_t size) { freemem_size = size; }
-  bool isSimulated() { return simulated; }
-  std::uintptr_t getUntrustedMem() { return untrusted; }
-  std::uintptr_t getUntrustedSize() { return untrusted_size; }
-  std::uintptr_t getUntrustedEnd() { return untrusted + untrusted_size; }
-  std::uintptr_t getFreeMemSize() { return freemem_size; }
+  void setFreeMemSize(std::uint64_t size) noexcept { freemem_size = size; }
+  bool isSimulated() const noexcept { return simulated; }
+  std::uintptr_t getUntrustedMem() const noexcept { return untrusted; }
+  std::uintptr_t getUntrustedSize() const noexcept { return untrusted_size; }
+  std::uintptr_t getUntrustedEnd() const noexcept { return untrusted + untrusted_size; }
+  std::uintptr_t getFreeMemSize() const noexcept { return freemem_size; }
 
  private:
   bool simulated{false};
