@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
+#include <cstdint>
 #include <iostream>
 #include "./common.h"
 #include "./keystone_user.h"
@@ -23,28 +24,27 @@ namespace Keystone {
 
 class KeystoneDevice {
  protected:
-  int eid;
-  uintptr_t physAddr;
+  int eid{ -1 };
+  std::uintptr_t physAddr;
 
  private:
   int fd;
-  Error __run(bool resume, uintptr_t* ret);
+  Error __run(bool resume, std::uintptr_t* ret);
 
  public:
-  virtual uintptr_t getPhysAddr() { return physAddr; }
+  virtual std::uintptr_t getPhysAddr() { return physAddr; }
 
-  KeystoneDevice();
   virtual ~KeystoneDevice() {}
   virtual bool initDevice(Params params);
-  virtual Error create(uint64_t minPages);
-  virtual uintptr_t initUTM(size_t size);
+  virtual Error create(std::uint64_t minPages);
+  virtual std::uintptr_t initUTM(std::size_t size);
   virtual Error finalize(
-      uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
+      std::uintptr_t runtimePhysAddr, std::uintptr_t eappPhysAddr, std::uintptr_t freePhysAddr,
       struct runtime_params_t params);
   virtual Error destroy();
-  virtual Error run(uintptr_t* ret);
-  virtual Error resume(uintptr_t* ret);
-  virtual void* map(uintptr_t addr, size_t size);
+  virtual Error run(std::uintptr_t* ret);
+  virtual Error resume(std::uintptr_t* ret);
+  virtual void* map(std::uintptr_t addr, std::size_t size);
 };
 
 class MockKeystoneDevice : public KeystoneDevice {
@@ -56,15 +56,15 @@ class MockKeystoneDevice : public KeystoneDevice {
   MockKeystoneDevice() {}
   ~MockKeystoneDevice();
   bool initDevice(Params params);
-  Error create(uint64_t minPages);
-  uintptr_t initUTM(size_t size);
+  Error create(std::uint64_t minPages);
+  std::uintptr_t initUTM(std::size_t size);
   Error finalize(
-      uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
+      std::uintptr_t runtimePhysAddr, std::uintptr_t eappPhysAddr, std::uintptr_t freePhysAddr,
       struct runtime_params_t params);
   Error destroy();
-  Error run(uintptr_t* ret);
-  Error resume(uintptr_t* ret);
-  void* map(uintptr_t addr, size_t size);
+  Error run(std::uintptr_t* ret);
+  Error resume(std::uintptr_t* ret);
+  void* map(std::uintptr_t addr, std::size_t size);
 };
 
 }  // namespace Keystone
