@@ -45,7 +45,7 @@ ElfFile::~ElfFile() {
 }
 
 bool
-ElfFile::isValid() {
+ElfFile::isValid() const noexcept {
   return (filep > 0 && fileSize > 0 && ptr != NULL);
 }
 
