@@ -32,10 +32,14 @@
 extern "C" {
 #endif
 
-int uart_putstring(int hartid, const char *p);
-ssize_t uart_getline(char **pBuffer, size_t *pBufLen);
-bool uart_getchar(uint8_t *pbuf, int32_t timeout_sec, bool do_sec_tick);
-void uart_putc(int hartid, const char ch);
+int
+uart_putstring(int hartid, const char* p);
+ssize_t
+uart_getline(char** pBuffer, size_t* pBufLen);
+bool
+uart_getchar(uint8_t* pbuf, int32_t timeout_sec, bool do_sec_tick);
+void
+uart_putc(int hartid, const char ch);
 
 #ifdef __cplusplus
 }

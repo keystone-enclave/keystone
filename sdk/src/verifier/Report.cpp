@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
 #include "ed25519/ed25519.h"
 
 using json11::Json;
@@ -123,12 +124,12 @@ Report::printPretty() {
 
 byte*
 Report::getEnclaveHash() {
-    return report.enclave.hash;
+  return report.enclave.hash;
 }
 
 byte*
 Report::getSmHash() {
-    return report.sm.hash;
+  return report.sm.hash;
 }
 
 int

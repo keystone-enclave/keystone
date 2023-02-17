@@ -4,8 +4,10 @@
 //------------------------------------------------------------------------------
 #include <getopt.h>
 #include <keystone.h>
+
 #include <cstdio>
 #include <iostream>
+
 #include "gtest/gtest.h"
 
 #define EYRIE_RT "eyrie-rt"

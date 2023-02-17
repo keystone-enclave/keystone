@@ -13,4 +13,5 @@
 
 #define OCALL_PRINT_BUFFER 1
 
-unsigned long ocall_print_buffer(char *data, size_t data_len);
+unsigned long
+ocall_print_buffer(char* data, size_t data_len);

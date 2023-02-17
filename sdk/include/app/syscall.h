@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
 #include "sealing.h"
 /* TODO We should be syncing these more explictly with the runtime
    defs */

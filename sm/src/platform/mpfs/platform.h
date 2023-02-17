@@ -1,5 +1,3 @@
 
 // No special data needed for default platform
-struct platform_enclave_data{
-
-};
+struct platform_enclave_data {};

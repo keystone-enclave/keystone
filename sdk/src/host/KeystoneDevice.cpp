@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "KeystoneDevice.hpp"
+
 #include <sys/mman.h>
 
 namespace Keystone {

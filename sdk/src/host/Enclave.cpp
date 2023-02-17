@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "Enclave.hpp"
+
 #include <math.h>
 #include <sys/mman.h>
 #include <sys/stat.h>

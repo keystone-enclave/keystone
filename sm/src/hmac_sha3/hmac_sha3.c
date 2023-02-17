@@ -13,6 +13,7 @@
  */
 
 #include "hmac_sha3.h"
+
 #include <sbi/sbi_string.h>
 
 /*
@@ -33,22 +34,21 @@
  *                  should be written to !(has to be SHA3_512_BLOCK_LEN bytes
  *                  long)!
  */
-static void prepare_key(const unsigned char *key, int key_len,
-                        unsigned char *new_key)
-{
-    sha3_ctx_t ctx;
+static void
+prepare_key(const unsigned char* key, int key_len, unsigned char* new_key) {
+  sha3_ctx_t ctx;
 
-    if (key_len > SHA3_512_BLOCK_LEN) {
-        sha3_init(&ctx, SHA3_512_HASH_LEN);
-        sha3_update(&ctx, (void *)key, key_len);
-        sha3_final(new_key, &ctx);
+  if (key_len > SHA3_512_BLOCK_LEN) {
+    sha3_init(&ctx, SHA3_512_HASH_LEN);
+    sha3_update(&ctx, (void*)key, key_len);
+    sha3_final(new_key, &ctx);
 
-        key_len = SHA3_512_HASH_LEN;
-    } else {
-        sbi_memcpy(new_key, key, key_len);
-    }
+    key_len = SHA3_512_HASH_LEN;
+  } else {
+    sbi_memcpy(new_key, key, key_len);
+  }
 
-    sbi_memset(new_key + key_len, 0x00, SHA3_512_BLOCK_LEN - key_len);
+  sbi_memset(new_key + key_len, 0x00, SHA3_512_BLOCK_LEN - key_len);
 }
 
 /*
@@ -67,14 +67,15 @@ static void prepare_key(const unsigned char *key, int key_len,
  *
  *  Return value: 0 if function has performed correctly
  */
-void hmac_sha3(const unsigned char *key, int key_len,
-               const unsigned char *text, int text_len, unsigned char *hmac)
-{
-    hmac_sha3_ctx_t ctx;
+void
+hmac_sha3(
+    const unsigned char* key, int key_len, const unsigned char* text,
+    int text_len, unsigned char* hmac) {
+  hmac_sha3_ctx_t ctx;
 
-    hmac_sha3_init(&ctx, key, key_len);
-    hmac_sha3_update(&ctx, text, text_len);
-    hmac_sha3_final(&ctx, hmac);
+  hmac_sha3_init(&ctx, key, key_len);
+  hmac_sha3_update(&ctx, text, text_len);
+  hmac_sha3_final(&ctx, hmac);
 }
 
 /*
@@ -88,20 +89,19 @@ void hmac_sha3(const unsigned char *key, int key_len,
  *      key:        Pointer to the key
  *      key_len:    Size of the key
  */
-void hmac_sha3_init(hmac_sha3_ctx_t *ctx,
-                    const unsigned char *key, int key_len)
-{
-    unsigned char temp_key[SHA3_512_BLOCK_LEN];
+void
+hmac_sha3_init(hmac_sha3_ctx_t* ctx, const unsigned char* key, int key_len) {
+  unsigned char temp_key[SHA3_512_BLOCK_LEN];
 
-    prepare_key(key, key_len, ctx->key);
+  prepare_key(key, key_len, ctx->key);
 
-    // XOR with ipad
-    for (int i = 0; i < SHA3_512_BLOCK_LEN; i++) {
-        temp_key[i] = ctx->key[i] ^ 0x36;
-    }
+  // XOR with ipad
+  for (int i = 0; i < SHA3_512_BLOCK_LEN; i++) {
+    temp_key[i] = ctx->key[i] ^ 0x36;
+  }
 
-    sha3_init(&(ctx->sha3_ctx), SHA3_512_HASH_LEN);
-    sha3_update(&(ctx->sha3_ctx), temp_key, SHA3_512_BLOCK_LEN);
+  sha3_init(&(ctx->sha3_ctx), SHA3_512_HASH_LEN);
+  sha3_update(&(ctx->sha3_ctx), temp_key, SHA3_512_BLOCK_LEN);
 }
 
 /*
@@ -115,11 +115,10 @@ void hmac_sha3_init(hmac_sha3_ctx_t *ctx,
  *      text:       Pointer to the message
  *      text_len:   Size of the message
  */
-void hmac_sha3_update(hmac_sha3_ctx_t *ctx,
-                      const unsigned char *text, int text_len)
-{
-    if (text_len > 0)
-        sha3_update(&(ctx->sha3_ctx), text, text_len);
+void
+hmac_sha3_update(
+    hmac_sha3_ctx_t* ctx, const unsigned char* text, int text_len) {
+  if (text_len > 0) sha3_update(&(ctx->sha3_ctx), text, text_len);
 }
 
 /*
@@ -134,20 +133,20 @@ void hmac_sha3_update(hmac_sha3_ctx_t *ctx,
  *      hash:   Pointer to the memory location, where the resulting hash should
  *              be written to !(has to be SHA3_512_HASH_LEN bytes long)!
  */
-void hmac_sha3_final(hmac_sha3_ctx_t *ctx, unsigned char *hash)
-{
-    unsigned char temp_key[SHA3_512_BLOCK_LEN];
-    unsigned char inner_hash[SHA3_512_HASH_LEN];
+void
+hmac_sha3_final(hmac_sha3_ctx_t* ctx, unsigned char* hash) {
+  unsigned char temp_key[SHA3_512_BLOCK_LEN];
+  unsigned char inner_hash[SHA3_512_HASH_LEN];
 
-    sha3_final(inner_hash, &(ctx->sha3_ctx));
+  sha3_final(inner_hash, &(ctx->sha3_ctx));
 
-    // XOR with opad
-    for (int i = 0; i < SHA3_512_BLOCK_LEN; i++) {
-        temp_key[i] = ctx->key[i] ^ 0x5C;
-    }
+  // XOR with opad
+  for (int i = 0; i < SHA3_512_BLOCK_LEN; i++) {
+    temp_key[i] = ctx->key[i] ^ 0x5C;
+  }
 
-    sha3_init(&(ctx->sha3_ctx), SHA3_512_HASH_LEN);
-    sha3_update(&(ctx->sha3_ctx), temp_key, SHA3_512_BLOCK_LEN);
-    sha3_update(&(ctx->sha3_ctx), inner_hash, SHA3_512_HASH_LEN);
-    sha3_final(hash, &(ctx->sha3_ctx));
+  sha3_init(&(ctx->sha3_ctx), SHA3_512_HASH_LEN);
+  sha3_update(&(ctx->sha3_ctx), temp_key, SHA3_512_BLOCK_LEN);
+  sha3_update(&(ctx->sha3_ctx), inner_hash, SHA3_512_HASH_LEN);
+  sha3_final(hash, &(ctx->sha3_ctx));
 }
