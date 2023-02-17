@@ -17,7 +17,7 @@ After the root of trust measures the SM it generates a keypair for remote attest
 See `Chain of Trust <#>`_ for details.
 
 The OS and enclaves may call SM functions using the supervisor binary interface (SBI),
-For detailed specification, see `SBI Documentation <https://github.com/keystone-enclave/sm/tree/master/spec>`_.
+For detailed specification, see `SBI Documentation <https://github.com/keystone-enclave/keystone/blob/master/sm/spec/v1.0.md>`_.
 
 Specific platforms
 ------------------
