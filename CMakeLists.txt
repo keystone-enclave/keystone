@@ -26,6 +26,14 @@ macro(mkdir name dir)
   set(${name}_exists ${dir}/.exists)
 endmacro()
 
+# usage example: create_crypto_symlink(sha256/ sdk/src/)
+macro(add_crypto_symlink target_name crypto_sub_dir destination)
+  add_custom_target(${target_name} ALL DEPENDS ${destination}
+    COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/${crypto_sub_dir} ${destination}/${crypto_sub_dir}
+    COMMENT "Created symlink ${destination/crypto_sub_dir}"
+  )
+endmacro()
+
 
 ###############################################################################
 ## CONFIGURATION/VARIABLES
@@ -115,7 +123,7 @@ set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 ###############################################################################
 
 set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
-add_patch("qemu" "qemu-rom.patch" ${qemu_srcdir} qemu_patches)
+#add_patch("qemu" "qemu-rom.patch" ${qemu_srcdir} qemu_patches)
 
 add_custom_target("qemu" ALL DEPENDS ${qemu_system})
 add_custom_command(OUTPUT ${qemu_system}
@@ -169,6 +177,8 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
 add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
 add_custom_target("bootrom-sync" DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
   COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
+add_crypto_symlink("bootrom-sha3-symlink" sha3 ${bootrom_wrkdir})
+add_crypto_symlink("bootrom-ed25519-symlink" ed25519 ${bootrom_wrkdir})
 add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
   COMMAND $(MAKE) -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA} mabi=${ABI} CC=riscv${BITS}-unknown-elf-gcc
     OBJCOPY=riscv${BITS}-unknown-elf-objcopy
@@ -245,7 +255,7 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 ## COMPONENT: security monitor (sm)
 ###############################################################################
 
-add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
+#add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
 add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
