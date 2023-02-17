@@ -10,5 +10,5 @@
 #define mHSS_DEBUG_PRINTF(...)
 
 #define CRLF "\r\n"
-#define CR   "\r"
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+#define CR "\r"
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))

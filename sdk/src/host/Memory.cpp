@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "Memory.hpp"
+
 #include <keystone_user.h>
 #include <sys/stat.h>
 
@@ -104,7 +105,7 @@ Memory::allocPage(std::uintptr_t va, std::uintptr_t src, unsigned int mode) {
 pte*
 Memory::__ept_continue_walk_create(std::uintptr_t addr, pte* pte) {
   std::uint64_t free_ppn = ppn(epmFreeList);
-  *pte              = ptd_create(free_ppn);
+  *pte                   = ptd_create(free_ppn);
   epmFreeList += PAGE_SIZE;
   return __ept_walk_create(addr);
 }
@@ -164,8 +165,9 @@ Memory::epmAllocVspace(std::uintptr_t addr, std::size_t num_pages) {
    linear at-most-once paddr mappings, and then hashing valid pages */
 int
 Memory::validateAndHashEpm(
-    hash_ctx_t* hash_ctx, int level, pte* tb, std::uintptr_t vaddr, int contiguous,
-    std::uintptr_t* runtime_max_seen, std::uintptr_t* user_max_seen) {
+    hash_ctx_t* hash_ctx, int level, pte* tb, std::uintptr_t vaddr,
+    int contiguous, std::uintptr_t* runtime_max_seen,
+    std::uintptr_t* user_max_seen) {
   pte* walk;
   int i;
 
@@ -177,7 +179,8 @@ Memory::validateAndHashEpm(
       continue;
     }
     std::uintptr_t vpn;
-    std::uintptr_t phys_addr = (pte_val(*walk) >> PTE_PPN_SHIFT) << RISCV_PGSHIFT;
+    std::uintptr_t phys_addr = (pte_val(*walk) >> PTE_PPN_SHIFT)
+                               << RISCV_PGSHIFT;
     /* Check for blatently invalid mappings */
     int map_in_epm =
         (phys_addr >= startAddr && phys_addr < startAddr + epmSize);

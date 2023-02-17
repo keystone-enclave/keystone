@@ -1,15 +1,16 @@
 #ifndef __EDGE_SYSCALL_H_
 #define __EDGE_SYSCALL_H_
 
+#include <sys/select.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
 #include <time.h>
+
 #include "edge_call.h"
 #include "edge_common.h"
-#include "syscall_nums.h"
 #include "sys/epoll.h"
+#include "syscall_nums.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,13 +60,13 @@ typedef struct sargs_SYS_epoll_create1 {
   int size;
 } sargs_SYS_epoll_create1;
 
-typedef struct sargs_SYS_socket{
+typedef struct sargs_SYS_socket {
   int domain;
   int type;
   int protocol;
 } sargs_SYS_socket;
 
-typedef struct sargs_SYS_setsockopt{
+typedef struct sargs_SYS_setsockopt {
   int socket;
   int level;
   int option_name;
@@ -73,24 +74,24 @@ typedef struct sargs_SYS_setsockopt{
   socklen_t option_len;
 } sargs_SYS_setsockopt;
 
-typedef struct sargs_SYS_bind{
+typedef struct sargs_SYS_bind {
   int sockfd;
   struct sockaddr_storage addr;
   socklen_t addrlen;
 } sargs_SYS_bind;
 
-typedef struct sargs_SYS_listen{
+typedef struct sargs_SYS_listen {
   int sockfd;
   int backlog;
 } sargs_SYS_listen;
 
-typedef struct sargs_SYS_accept{
+typedef struct sargs_SYS_accept {
   int sockfd;
   struct sockaddr_storage addr;
   socklen_t addrlen;
 } sargs_SYS_accept;
 
-typedef struct sargs_SYS_epoll_ctl{
+typedef struct sargs_SYS_epoll_ctl {
   int epfd;
   int op;
   int fd;
@@ -109,32 +110,30 @@ typedef struct sargs_SYS_getcwd {
   char buf[];
 } sargs_SYS_getcwd;
 
-typedef struct sargs_SYS_chdir{
+typedef struct sargs_SYS_chdir {
   char path[0];
 } sargs_SYS_chdir;
 
-
-typedef struct sargs_SYS_epoll_pwait{
+typedef struct sargs_SYS_epoll_pwait {
   int epfd;
   struct epoll_event events;
   int maxevents;
   int timeout;
 } sargs_SYS_epoll_pwait;
 
-
-typedef struct sargs_SYS_getpeername{
+typedef struct sargs_SYS_getpeername {
   int sockfd;
   struct sockaddr_storage addr;
   socklen_t addrlen;
 } sargs_SYS_getpeername;
 
-typedef struct sargs_SYS_getsockname{
+typedef struct sargs_SYS_getsockname {
   int sockfd;
   struct sockaddr addr;
   socklen_t addrlen;
 } sargs_SYS_getsockname;
 
-typedef struct sargs_SYS_renameat2{
+typedef struct sargs_SYS_renameat2 {
   int olddirfd;
   char oldpath[128];
   int newdirfd;
@@ -142,9 +141,7 @@ typedef struct sargs_SYS_renameat2{
   unsigned int flags;
 } sargs_SYS_renameat2;
 
-
-
-typedef struct sargs_SYS_umask{
+typedef struct sargs_SYS_umask {
   mode_t mask;
 } sargs_SYS_umask;
 
@@ -166,44 +163,44 @@ typedef struct sargs_SYS_fstat {
 } sargs_SYS_fstat;
 
 typedef struct sargs_SYS_pselect {
-  int nfds; 
-  int readfds_is_null; 
-  int writefds_is_null; 
-  int exceptfds_is_null; 
-  int timeout_is_null; 
-  int sigmask_is_null; 
-  fd_set readfds; 
-  fd_set writefds; 
-  fd_set exceptfds; 
-  struct timespec timeout; 
-  sigset_t sigmask; 
+  int nfds;
+  int readfds_is_null;
+  int writefds_is_null;
+  int exceptfds_is_null;
+  int timeout_is_null;
+  int sigmask_is_null;
+  fd_set readfds;
+  fd_set writefds;
+  fd_set exceptfds;
+  struct timespec timeout;
+  sigset_t sigmask;
 } sargs_SYS_pselect;
 
 typedef struct sargs_SYS_recvfrom {
-  int sockfd; 
-  size_t len; 
-  int flags; 
-  int src_addr_is_null; 
-  struct sockaddr src_addr; 
-  socklen_t addrlen; 
-  char buf[]; 
+  int sockfd;
+  size_t len;
+  int flags;
+  int src_addr_is_null;
+  struct sockaddr src_addr;
+  socklen_t addrlen;
+  char buf[];
 } sargs_SYS_recvfrom;
 
 typedef struct sargs_SYS_sendto {
-  int sockfd; 
-  size_t len; 
-  int flags; 
-  int dest_addr_is_null; 
-  struct sockaddr dest_addr; 
-  socklen_t addrlen; 
-  char buf[]; 
+  int sockfd;
+  size_t len;
+  int flags;
+  int dest_addr_is_null;
+  struct sockaddr dest_addr;
+  socklen_t addrlen;
+  char buf[];
 } sargs_SYS_sendto;
 
 typedef struct sargs_SYS_sendfile {
-  int out_fd; 
-  size_t in_fd; 
+  int out_fd;
+  size_t in_fd;
   int offset_is_null;
-  off_t offset; 
+  off_t offset;
   size_t count;
 } sargs_SYS_sendfile;
 

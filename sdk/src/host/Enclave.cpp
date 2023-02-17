@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "Enclave.hpp"
+
 #include <math.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -67,7 +68,7 @@ Enclave::initStack(std::uintptr_t start, std::size_t size, bool is_rt) {
   };
   std::uintptr_t high_addr    = ROUND_UP(start, PAGE_BITS);
   std::uintptr_t va_start_stk = ROUND_DOWN((high_addr - size), PAGE_BITS);
-  int stk_pages          = (high_addr - va_start_stk) / PAGE_SIZE;
+  int stk_pages               = (high_addr - va_start_stk) / PAGE_SIZE;
 
   for (int i = 0; i < stk_pages; i++) {
     if (!pMemory->allocPage(
@@ -114,8 +115,8 @@ Enclave::loadElf(ElfFile* elf) {
     std::uintptr_t start      = elf->getProgramHeaderVaddr(i);
     std::uintptr_t file_end   = start + elf->getProgramHeaderFileSize(i);
     std::uintptr_t memory_end = start + elf->getProgramHeaderMemorySize(i);
-    char* src            = reinterpret_cast<char*>(elf->getProgramSegment(i));
-    std::uintptr_t va         = start;
+    char* src         = reinterpret_cast<char*>(elf->getProgramSegment(i));
+    std::uintptr_t va = start;
 
     /* FIXME: This is a temporary fix for loading iozone binary
      * which has a page-misaligned program header. */

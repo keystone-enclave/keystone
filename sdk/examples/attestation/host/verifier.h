@@ -17,7 +17,6 @@
 #include "verifier/report.h"
 #include "verifier/test_dev_key.h"
 
-
 class Verifier {
  public:
   Verifier(

@@ -3,8 +3,10 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include <getopt.h>
+
 #include <cstdio>
 #include <iostream>
+
 #include "edge_wrapper.h"
 #include "host/keystone.h"
 #include "verifier/report.h"
@@ -58,7 +60,8 @@ main(int argc, char** argv) {
   if (argc < 3 || argc > 8) {
     printf(
         "Usage: %s <eapp> <runtime> [--utm-size SIZE(K)] [--freemem-size "
-        "SIZE(K)] [--time] [--load-only] [--utm-ptr 0xPTR] [--retval EXPECTED]\n",
+        "SIZE(K)] [--time] [--load-only] [--utm-ptr 0xPTR] [--retval "
+        "EXPECTED]\n",
         argv[0]);
     return 0;
   }
@@ -69,8 +72,8 @@ main(int argc, char** argv) {
   size_t untrusted_size = 2 * 1024 * 1024;
   size_t freemem_size   = 48 * 1024 * 1024;
   uintptr_t utm_ptr     = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
-  bool retval_exist = false;
-  unsigned long retval = 0;
+  bool retval_exist     = false;
+  unsigned long retval  = 0;
 
   static struct option long_options[] = {
       {"time", no_argument, &self_timing, 1},
@@ -105,7 +108,7 @@ main(int argc, char** argv) {
         break;
       case 'r':
         retval_exist = true;
-        retval = atoi(optarg);
+        retval       = atoi(optarg);
         break;
     }
   }
@@ -137,7 +140,9 @@ main(int argc, char** argv) {
   if (!load_only) enclave.run(&encl_ret);
 
   if (retval_exist && encl_ret != retval) {
-    printf("[FAIL] enclave returned a wrong value (%d != %d)\r\n", encl_ret, retval);
+    printf(
+        "[FAIL] enclave returned a wrong value (%d != %d)\r\n", encl_ret,
+        retval);
   }
 
   if (self_timing) {

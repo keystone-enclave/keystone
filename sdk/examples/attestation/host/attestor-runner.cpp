@@ -13,9 +13,8 @@
 #include <string>
 
 #include "host/keystone.h"
-#include "verifier/report.h"
-
 #include "verifier.h"
+#include "verifier/report.h"
 
 int
 main(int argc, char** argv) {
