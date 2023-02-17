@@ -29,7 +29,7 @@ This will download pre-compiled RISC-V tools and extract it to
 The script also installs Keystone SDK if ``KEYSTONE_SDK_DIR`` environment variable is not set.
 The default install directory of Keystone SDK is ``$(pwd)/sdk/build64`` (``$(pwd)/sdk/build32`` for RV32).
 If you want to change the install directory,
-please follow `SDK's README <https://github.com/keystone-enclave/keystone-sdk/blob/master/README.md>`_
+please follow `SDK's README <https://github.com/keystone-enclave/keystone/blob/master/sdk/README.md>`_
 before running ``fast-setup.sh``.
 
 If everything went well, you should see the following message:
