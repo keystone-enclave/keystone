@@ -46,7 +46,7 @@ void
 copy_report(void* buffer) {
   Report report;
 
-  report.fromBytes((unsigned char*)buffer);
+  report.fromBytes(static_cast<unsigned char*>(buffer));
 
   if (report.checkSignaturesOnly(_sanctum_dev_public_key)) {
     printf("Attestation report SIGNATURE is valid\n");
@@ -71,7 +71,7 @@ main(int argc, char** argv) {
 
   size_t untrusted_size = 2 * 1024 * 1024;
   size_t freemem_size   = 48 * 1024 * 1024;
-  uintptr_t utm_ptr     = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
+  uintptr_t utm_ptr     = static_cast<uintptr_t>(DEFAULT_UNTRUSTED_PTR);
   bool retval_exist     = false;
   unsigned long retval  = 0;
 

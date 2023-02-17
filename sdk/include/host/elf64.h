@@ -26,7 +26,7 @@ elf_isElf64(elf_t* elf) {
 
 static inline Elf64_Ehdr
 elf64_getHeader(elf_t* elf) {
-  return *(Elf64_Ehdr*)elf->elfFile;
+  return *static_cast<Elf64_Ehdr*>(elf->elfFile);
 }
 
 static inline uintptr_t

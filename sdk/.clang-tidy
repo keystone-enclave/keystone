@@ -1,0 +1,2 @@
+Checks: '-*,google-*,bugbrone-*,clang-analyzer-*'
+FormatStyle: none

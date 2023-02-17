@@ -124,7 +124,7 @@ SharedBuffer::setup_ret_or_bad_ptr(unsigned long ret_val) {
   // Assuming we are done with the data section for args, use as
   // return region.
   //
-  // TODO safety check?
+  // TODO(ubuntu): safety check?
   uintptr_t data_section = data_ptr();
 
   memcpy((void*)data_section, &ret_val, sizeof(unsigned long));

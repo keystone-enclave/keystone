@@ -30,7 +30,7 @@ void
 print_buffer_wrapper(void* buffer) {
   /* For now we assume the call struct is at the front of the shared
    * buffer. This will have to change to allow nested calls. */
-  struct edge_call* edge_call = (struct edge_call*)buffer;
+  struct edge_call* edge_call = static_cast<struct edge_call*>(buffer);
 
   uintptr_t call_args;
   unsigned long ret_val;
@@ -43,7 +43,7 @@ print_buffer_wrapper(void* buffer) {
   ret_val = print_buffer((char*)call_args);
 
   // We are done with the data section for args, use as return region
-  // TODO safety check?
+  // TODO(ubuntu): safety check?
   uintptr_t data_section = edge_call_data_ptr();
 
   memcpy((void*)data_section, &ret_val, sizeof(unsigned long));
@@ -62,7 +62,7 @@ void
 print_value_wrapper(void* buffer) {
   /* For now we assume the call struct is at the front of the shared
    * buffer. This will have to change to allow nested calls. */
-  struct edge_call* edge_call = (struct edge_call*)buffer;
+  struct edge_call* edge_call = static_cast<struct edge_call*>(buffer);
 
   uintptr_t call_args;
   unsigned long ret_val;
@@ -82,11 +82,11 @@ void
 copy_report_wrapper(void* buffer) {
   /* For now we assume the call struct is at the front of the shared
    * buffer. This will have to change to allow nested calls. */
-  struct edge_call* edge_call = (struct edge_call*)buffer;
+  struct edge_call* edge_call = static_cast<struct edge_call*>(buffer);
 
   uintptr_t data_section;
   unsigned long ret_val;
-  // TODO check the other side of this
+  // TODO(ubuntu): check the other side of this
   if (edge_call_get_ptr_from_offset(
           edge_call->call_arg_offset, sizeof(report_t), &data_section) != 0) {
     edge_call->return_data.call_status = CALL_STATUS_BAD_OFFSET;
@@ -104,7 +104,7 @@ void
 get_host_string_wrapper(void* buffer) {
   /* For now we assume the call struct is at the front of the shared
    * buffer. This will have to change to allow nested calls. */
-  struct edge_call* edge_call = (struct edge_call*)buffer;
+  struct edge_call* edge_call = static_cast<struct edge_call*>(buffer);
 
   uintptr_t call_args;
   unsigned long ret_val;

@@ -79,13 +79,13 @@ Memory::allocPage(std::uintptr_t va, std::uintptr_t src, unsigned int mode) {
     case RT_FULL: {
       *pte =
           pte_create(page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
-      writeMem(src, (std::uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
+      writeMem(src, page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     case USER_FULL: {
       *pte = pte_create(
           page_addr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_U | PTE_V);
-      writeMem(src, (std::uintptr_t)page_addr << PAGE_BITS, PAGE_SIZE);
+      writeMem(src, page_addr << PAGE_BITS, PAGE_SIZE);
       break;
     }
     case UTM_FULL: {
@@ -141,10 +141,11 @@ Memory::__ept_walk(std::uintptr_t addr) {
 std::uintptr_t
 Memory::epm_va_to_pa(std::uintptr_t addr) {
   pte* pte = __ept_walk(addr);
-  if (pte)
+  if (pte) {
     return pte_ppn(*pte) << RISCV_PGSHIFT;
-  else
+  } else {
     return 0;
+}
 }
 
 /* This function pre-allocates the required page tables so that
@@ -194,10 +195,11 @@ Memory::validateAndHashEpm(
     }
 
     /* propagate the highest bit of the VA */
-    if (level == RISCV_PGLEVEL_TOP && i & RISCV_PGTABLE_HIGHEST_BIT)
+    if (level == RISCV_PGLEVEL_TOP && i & RISCV_PGTABLE_HIGHEST_BIT) {
       vpn = ((-1UL << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
-    else
+    } else {
       vpn = ((vaddr << RISCV_PGLEVEL_BITS) | (i & RISCV_PGLEVEL_MASK));
+}
 
     std::uintptr_t va_start = vpn << RISCV_PGSHIFT;
 

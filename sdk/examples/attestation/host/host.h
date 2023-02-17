@@ -18,7 +18,7 @@ class SharedBuffer {
   SharedBuffer(void* buffer, size_t buffer_len)
       /* For now we assume the call struct is at the front of the shared
        * buffer. This will have to change to allow nested calls. */
-      : edge_call_((struct edge_call*)buffer),
+      : edge_call_(static_cast<struct edge_call*>(buffer)),
         buffer_((uintptr_t)buffer),
         buffer_len_(buffer_len) {}
 

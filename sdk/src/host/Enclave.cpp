@@ -73,8 +73,9 @@ Enclave::initStack(std::uintptr_t start, std::size_t size, bool is_rt) {
   for (int i = 0; i < stk_pages; i++) {
     if (!pMemory->allocPage(
             va_start_stk, (std::uintptr_t)nullpage,
-            (is_rt ? RT_NOEXEC : USER_NOEXEC)))
+            (is_rt ? RT_NOEXEC : USER_NOEXEC))) {
       return false;
+}
 
     va_start_stk += PAGE_SIZE;
   }
@@ -126,16 +127,18 @@ Enclave::loadElf(ElfFile* elf) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
       memcpy(page + offset, (const void*)src, length);
-      if (!pMemory->allocPage(PAGE_DOWN(va), (std::uintptr_t)page, mode))
+      if (!pMemory->allocPage(PAGE_DOWN(va), (std::uintptr_t)page, mode)) {
         return Error::PageAllocationFailure;
+}
       va += length;
       src += length;
     }
 
     /* first load all pages that do not include .bss segment */
     while (va + PAGE_SIZE <= file_end) {
-      if (!pMemory->allocPage(va, (std::uintptr_t)src, mode))
+      if (!pMemory->allocPage(va, (std::uintptr_t)src, mode)) {
         return Error::PageAllocationFailure;
+}
 
       src += PAGE_SIZE;
       va += PAGE_SIZE;
@@ -147,15 +150,17 @@ Enclave::loadElf(ElfFile* elf) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
       memcpy(page, (const void*)src, static_cast<std::size_t>(file_end - va));
-      if (!pMemory->allocPage(va, (std::uintptr_t)page, mode))
+      if (!pMemory->allocPage(va, (std::uintptr_t)page, mode)) {
         return Error::PageAllocationFailure;
+}
       va += PAGE_SIZE;
     }
 
     /* finally, load the remaining .bss segments */
     while (va < memory_end) {
-      if (!pMemory->allocPage(va, (std::uintptr_t)nullpage, mode))
+      if (!pMemory->allocPage(va, (std::uintptr_t)nullpage, mode)) {
         return Error::PageAllocationFailure;
+}
       va += PAGE_SIZE;
     }
   }
@@ -259,7 +264,7 @@ Enclave::prepareEnclave(std::uintptr_t alternatePhysAddr) {
 
 Error
 Enclave::init(const char* eapppath, const char* runtimepath, Params _params) {
-  return this->init(eapppath, runtimepath, _params, (std::uintptr_t)0);
+  return this->init(eapppath, runtimepath, _params, static_cast<std::uintptr_t>(0));
 }
 
 const char*

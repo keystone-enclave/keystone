@@ -372,10 +372,11 @@ JsonObject::operator[](const string& key) const {
 }
 const Json&
 JsonArray::operator[](size_t i) const {
-  if (i >= m_value.size())
+  if (i >= m_value.size()) {
     return static_null();
-  else
-    return m_value[i];
+  } else {
+    r
+}eturn m_value[i];
 }
 
 /* * * * * * * * * * * * * * * * * * * *
@@ -455,8 +456,9 @@ struct JsonParser final {
    * Advance until the current character is non-whitespace.
    */
   void consume_whitespace() {
-    while (str[i] == ' ' || str[i] == '\r' || str[i] == '\n' || str[i] == '\t')
+    while (str[i] == ' ' || str[i] == '\r' || str[i] == '\n' || str[i] == '\t') {
       i++;
+}
   }
 
   /* consume_comment()
@@ -467,8 +469,9 @@ struct JsonParser final {
     bool comment_found = false;
     if (str[i] == '/') {
       i++;
-      if (i == str.size())
+      if (i == str.size()) {
         return fail("unexpected end of input after start of comment", false);
+}
       if (str[i] == '/') {  // inline comment
         i++;
         // advance until next line, or end of input
@@ -478,20 +481,23 @@ struct JsonParser final {
         comment_found = true;
       } else if (str[i] == '*') {  // multiline comment
         i++;
-        if (i > str.size() - 2)
+        if (i > str.size() - 2) {
           return fail(
               "unexpected end of input inside multi-line comment", false);
+}
         // advance until closing tokens
         while (!(str[i] == '*' && str[i + 1] == '/')) {
           i++;
-          if (i > str.size() - 2)
+          if (i > str.size() - 2) {
             return fail(
                 "unexpected end of input inside multi-line comment", false);
+}
         }
         i += 2;
         comment_found = true;
-      } else
+      } else {
         return fail("malformed comment", false);
+}
     }
     return comment_found;
   }
@@ -519,8 +525,8 @@ struct JsonParser final {
    */
   char get_next_token() {
     consume_garbage();
-    if (failed) return (char)0;
-    if (i == str.size()) return fail("unexpected end of input", (char)0);
+    if (failed) return static_cast<char>(0);
+    if (i == str.size()) return fail("unexpected end of input", static_cast<char>(0));
 
     return str[i++];
   }
@@ -566,8 +572,9 @@ struct JsonParser final {
         return out;
       }
 
-      if (in_range(ch, 0, 0x1f))
+      if (in_range(ch, 0, 0x1f)) {
         return fail("unescaped " + esc(ch) + " in string", "");
+}
 
       // The usual case: non-escaped characters
       if (ch != '\\') {
@@ -593,8 +600,9 @@ struct JsonParser final {
         }
         for (size_t j = 0; j < 4; j++) {
           if (!in_range(esc[j], 'a', 'f') && !in_range(esc[j], 'A', 'F') &&
-              !in_range(esc[j], '0', '9'))
+              !in_range(esc[j], '0', '9')) {
             return fail("bad \\u escape: " + esc, "");
+}
         }
 
         long codepoint = strtol(esc.data(), nullptr, 16);
@@ -656,8 +664,9 @@ struct JsonParser final {
     // Integer part
     if (str[i] == '0') {
       i++;
-      if (in_range(str[i], '0', '9'))
+      if (in_range(str[i], '0', '9')) {
         return fail("leading 0s not permitted in numbers");
+}
     } else if (in_range(str[i], '1', '9')) {
       i++;
       while (in_range(str[i], '0', '9')) i++;
@@ -674,8 +683,9 @@ struct JsonParser final {
     // Decimal part
     if (str[i] == '.') {
       i++;
-      if (!in_range(str[i], '0', '9'))
+      if (!in_range(str[i], '0', '9')) {
         return fail("at least one digit required in fractional part");
+}
 
       while (in_range(str[i], '0', '9')) i++;
     }
@@ -686,8 +696,9 @@ struct JsonParser final {
 
       if (str[i] == '+' || str[i] == '-') i++;
 
-      if (!in_range(str[i], '0', '9'))
+      if (!in_range(str[i], '0', '9')) {
         return fail("at least one digit required in exponent");
+}
 
       while (in_range(str[i], '0', '9')) i++;
     }
