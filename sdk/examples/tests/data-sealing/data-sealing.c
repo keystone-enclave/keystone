@@ -13,10 +13,11 @@
  *  All Rights Reserved. See LICENSE for license details.
  */
 
+#include "data-sealing.h"
+
 #include "app/eapp_utils.h"
 #include "app/string.h"
 #include "app/syscall.h"
-#include "data-sealing.h"
 
 /*
  *  Function main:
@@ -24,15 +25,16 @@
  *  Description:
  *     Derives the sealing key
  */
-int main()
-{
-  char *key_identifier = "identifier";
+int
+main() {
+  char* key_identifier = "identifier";
   struct sealing_key key_buffer;
   int ret = 0;
 
   /* Derive the sealing key */
-  ret = get_sealing_key(&key_buffer, sizeof(key_buffer),
-                        (void *)key_identifier, strlen(key_identifier));
+  ret = get_sealing_key(
+      &key_buffer, sizeof(key_buffer), (void*)key_identifier,
+      strlen(key_identifier));
 
   if (ret) {
     ocall_print_buffer("Sealing key derivation failed!\n", 32);
@@ -49,11 +51,11 @@ int main()
  *  Description:
  *     Prints the buffer to the console
  */
-unsigned long ocall_print_buffer(char *data, size_t data_len)
-{
+unsigned long
+ocall_print_buffer(char* data, size_t data_len) {
   unsigned long retval;
 
-  ocall(OCALL_PRINT_BUFFER, data, data_len, &retval ,sizeof(unsigned long));
+  ocall(OCALL_PRINT_BUFFER, data, data_len, &retval, sizeof(unsigned long));
 
   return retval;
 }

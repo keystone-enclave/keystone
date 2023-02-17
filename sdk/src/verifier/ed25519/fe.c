@@ -1,4 +1,5 @@
 #include "ed25519/fe.h"
+
 #include "ed25519/fixedint.h"
 
 /*
