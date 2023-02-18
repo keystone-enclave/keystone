@@ -10,6 +10,7 @@
  */
 
 #include "app/sealing.h"
+#include <stddef.h>
 
 #define OCALL_PRINT_BUFFER 1
 

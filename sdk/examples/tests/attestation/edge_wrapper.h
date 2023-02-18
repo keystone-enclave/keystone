@@ -5,6 +5,8 @@
 #ifndef _EDGE_WRAPPER_H_
 #define _EDGE_WRAPPER_H_
 
+#include <stddef.h>
+
 void
 edge_init();
 
