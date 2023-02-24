@@ -31,4 +31,7 @@ done;
  -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::${HOST_PORT}-:22 \
  -device virtio-net-device,netdev=net0 \
  -device virtio-rng-pci \
- -smp $SMP
+ -smp $SMP \
+ -monitor tcp:127.0.0.1:55555,server,nowait 
+ #-monitor unix:/qemu-monitor-socket,server,nowait 
+ 
