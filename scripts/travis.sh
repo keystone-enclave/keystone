@@ -1,25 +1,24 @@
 #!/bin/bash
 
 EXPECTED_LOG_DIR=$1
+MONITOR_SOCKET=qemu-monitor.sock
+ATTEMPTS=10
+ATTEMPT_DELAY=5
 
-# Launch QEMU test
+# Launch QEMU
 screen -L -dmS qemu ./scripts/run-qemu.sh
-sleep 5
+sleep 1
 
-# We check if the VM is running
-attempts=10
-attempt_delay=5
+# Verify VM is running before running tests - abort after 10 failed attempts
 running=0
-for ((i = 0; i < $attempts; ++i)); do
-    #result=$(echo "info status" | socat - unix-connect:/qemu-monitor-socket | grep "VM Status: running")
-    #result=$(echo "info status" | telnet 127.0.0.1 55555 | grep "VM Status: running")
-    result=$((echo "info status" && sleep 1) | netcat -N 127.0.0.1 55555 | grep "VM Status: running")
-    qemu_monitor_result=$((echo "info status" && sleep 1) | netcat -N 127.0.0.1 55555)
-    #qemu_monitor_result=$(echo "info status" | socat - unix-connect:/qemu-monitor-socket)
-    echo "Received from monitor: $qemu_monitor_result"
-    if [ -n $result ]; then
-	echo "VM not yet running. [check $((i + 1)) of $attempts - using delay of $attempt_delay seconds]"
-	sleep $attempt_delay
+for ((i = 0; i < $ATTEMPTS; ++i)); do
+    result=$((echo "info status" && sleep 1) | \
+	    socat - unix-connect:qemu-monitor.sock | \
+	    grep -oF "running")
+    if [[ -z "$result" ]]; then
+	attempt=$((i+1))
+	echo "VM not yet running. (check $attempt/$ATTEMPTS)"
+	[ $attempt -ne $ATTEMPTS ] && sleep $ATTEMPT_DELAY
     else
 	echo "VM confirmed to be running. Proceeding to run test(s)."
 	running=1
@@ -27,10 +26,14 @@ for ((i = 0; i < $attempts; ++i)); do
     fi
 done
 
+# Clean up socket
+rm $MONITOR_SOCKET
+
 if [ $running -eq 0 ]; then
-    echo "[FAIL] VM not confirmed as running in max of $attempts attempts - aborting."
+    echo "[FAIL] VM not confirmed as running after max of $ATTEMPTS attempts - aborting."
     exit 1
 fi
+
 
 ./scripts/test-qemu.sh 2>&1 | grep -v "Warning: Permanently added" | tee output.log
 

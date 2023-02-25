@@ -32,6 +32,4 @@ done;
  -device virtio-net-device,netdev=net0 \
  -device virtio-rng-pci \
  -smp $SMP \
- -monitor tcp:127.0.0.1:55555,server,nowait 
- #-monitor unix:/qemu-monitor-socket,server,nowait 
- 
+ -monitor unix:qemu-monitor.sock,server,nowait  
