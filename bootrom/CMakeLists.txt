@@ -1,32 +1,29 @@
 cmake_minimum_required(VERSION 3.2)
 project(bootrom C ASM)
 
-set(CMAKE_C_COMPILER "riscv64-unknown-elf-gcc")
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "") # to disable use of -rdynamic, which is unrecognized by the compiler we're using 
+set(CMAKE_C_COMPILER "riscv${BITS}-unknown-elf-gcc")
 
-set(MARCH rv64imafdc)
-set(MABI lp64)
-set(OBJCOPY riscv64-unknown-elf-objcopy)
-# TODO: Some check if it's 32 or 64
+# This disables use of -rdynamic, which is unrecognized by the compiler we're
+# using.
+set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+
+#set(MARCH rv64imafdc)
+#set(MABI lp64)
+set(OBJCOPY "riscv${BITS}-unknown-elf-objcopy")
 
 add_executable(keystone_bootrom)
 
-set_property(
-  TARGET keystone_bootrom
-  PROPERTY COMPILE_WARNING_AS_ERROR OFF # We don't want to fail to build when
-                                        # using testing keys (which emits a warning).
-)
-
 target_compile_options(
   keystone_bootrom PRIVATE
-  -march=${MARCH} 
+  -march=${ISA} 
   -mcmodel=medany
-  -mabi=${MABI}
+  -mabi=${ABI}
   -fno-common
   -std=gnu11 
   -fPIC
   -O2
   -Wall
+  -w  # disable warnings for now
 )
 
 target_link_options(
