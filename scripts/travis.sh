@@ -12,7 +12,7 @@ sleep 1
 # Verify VM is running before running tests - abort after 10 failed attempts
 for ((i = 0;;)); do
     result=$( (echo "info status" && sleep 1) | \
-	    socat - unix-connect:$MONITOR_SOCKET | \
+	    nc -U $MONITOR_SOCKET -w 2 | \
 	    grep -oF "running")
     [[ -z "$result" ]] || break
     echo "VM not yet running. (check $((++i))/$ATTEMPTS)"
