@@ -28,12 +28,10 @@ bootrom_sources = \
 	./bootloader.S \
 	./bootloader.c \
 	./ed25519/*.c \
-	./crypto/hash.c \
-	./crypto/sha3/*.c \
-	./crypto/sha256/*.c
+	.crypto/src/*.c
 
 %.elf: $(bootrom_sources) bootloader.lds
-	$(CC) $(CFLAGS) -I./ -L . -T bootloader.lds -o $@ $(bootrom_sources)
+	$(CC) $(CFLAGS) -I./ -I./crypto/include/ -L . -T bootloader.lds -o $@ $(bootrom_sources)
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary --only-section=.text $< $@;
