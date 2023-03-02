@@ -4,35 +4,6 @@
 //------------------------------------------------------------------------------
 #pragma once
 
-#include <assert.h>
-#include <fcntl.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <cerrno>
-#include <cstring>
-#include <iostream>
-#include "./common.h"
-#include "KeystoneDevice.hpp"
-#include "hash_util.hpp"
-
-namespace Keystone {
-
-/*
- * These are used to make use of C type-checking..
- */
-typedef struct {
-  uintptr_t pte;
-} pte;
-
-#define pte_val(x) ((x).pte)
-
-#define __pa(x) ((uintptr_t)(x))
-
-#define __pte(x) ((pte){(x)})
-
 // page table entry (PTE) fields
 #define PTE_V 0x001     // Valid
 #define PTE_R 0x002     // Read
@@ -66,6 +37,37 @@ typedef struct {
 #endif
 
 #define RISCV_PGLEVEL_TOP ((VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS)
+
+#ifndef MEMORY_DEFINES_ONLY
+
+#include <assert.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <cerrno>
+#include <cstring>
+#include <iostream>
+#include "./common.h"
+#include "KeystoneDevice.hpp"
+#include "hash_util.hpp"
+
+namespace Keystone {
+
+/*
+ * These are used to make use of C type-checking..
+ */
+typedef struct {
+  uintptr_t pte;
+} pte;
+
+#define pte_val(x) ((x).pte)
+
+#define __pa(x) ((uintptr_t)(x))
+
+#define __pte(x) ((pte){(x)})
 
 class Memory {
  public:
@@ -154,3 +156,5 @@ class SimulatedEnclaveMemory : public Memory {
 };
 
 }  // namespace Keystone
+
+#endif // MEMORY_DEFINES_ONLY

@@ -34,6 +34,7 @@ macro(use_riscv_toolchain bits)
   set(AR              ${CROSSCOMPILE}ar)
   set(OBJCOPY         ${CROSSCOMPILE}objcopy)
   set(OBJDUMP         ${CROSSCOMPILE}objdump)
+  set(STRIP           ${CROSSCOMPILE}strip)
   set(CFLAGS          "-Wall -Werror")
 
   global_set(CMAKE_C_COMPILER        ${CC}${EXT})
@@ -43,6 +44,7 @@ macro(use_riscv_toolchain bits)
   global_set(CMAKE_AR                ${AR}${EXT})
   global_set(CMAKE_OBJCOPY           ${OBJCOPY}${EXT})
   global_set(CMAKE_OBJDUMP           ${OBJDUMP}${EXT})
+  global_set(CMAKE_STRIP             ${STRIP}${EXT})
   global_set(CMAKE_C_FLAGS           ${CMAKE_C_FLAGS} ${CFLAGS})
 
   check_compiler(${CMAKE_C_COMPILER})
@@ -157,3 +159,62 @@ macro(add_keystone_package target_name package_name package_script) # files are 
     )
 
 endmacro(add_keystone_package)
+
+macro(add_exportable_function target_name scratch_size target_src)
+  # First, we need to compile the executable
+  add_executable(${target_name}_sym ${target_src})
+
+  # Generate a random address to place the exported function at. Note
+  # that this code assumes that the page size to align to is 0x1000.
+  string(RANDOM LENGTH 6 ALPHABET 0123456789ABCDEF ${target_name}_addr)
+  math(EXPR ${target_name}_addr "0x20000000 + (0x${${target_name}_addr} * 0x1000)"
+          OUTPUT_FORMAT HEXADECIMAL)
+
+  target_compile_options(${target_name}_sym PRIVATE
+          -ffunction-sections -fdata-sections -mcmodel=medany)
+
+  # Link with gc-sections to strip out functionality we don't need
+  get_sdk_dir(SDK_SRCDIR)
+  target_link_options(${target_name}_sym PRIVATE --static
+          -nostartfiles -e ${target_name} -Wl,--gc-sections
+          -T ${SDK_SRCDIR}/src/app/export_link.ld
+          -Wl,--section-start=.keystone=${${target_name}_addr})
+
+  # Now strip the program of all its debugging information, and
+  # simultaneously objcopy it into a binary format
+  add_custom_target(${target_name}_bin
+          DEPENDS ${target_name}_sym
+          BYPRODUCTS ${target_name}_bin
+          COMMAND ${CMAKE_STRIP} -R .rela.dyn -O binary -o ${target_name}_bin ${target_name}_sym)
+
+  # Pad the binary to a multiple of the page size (assumed to be 0x1000 here). Also,
+  # append the requested amount of scratch space.
+  add_custom_target(${target_name}_pad
+          DEPENDS ${target_name}_bin
+          BYPRODUCTS ${target_name}_pad
+          COMMAND cp ${target_name}_bin ${target_name}_pad &&
+                  truncate -s $$\(\(
+                            (( $$\(stat --printf="%s" ${target_name}_pad\) + ${scratch_size})
+                                / 0x1000 + 1) * 0x1000\)\) ${target_name}_pad)
+
+  # Hexify the stripped binary
+  add_custom_target(${target_name}_hex
+          DEPENDS ${target_name}_pad
+          BYPRODUCTS ${target_name}_hex
+          COMMAND cat ${target_name}_pad | xxd -i > ${target_name}_hex)
+
+  # Finally, create the shared library target for the raw data. We make this an
+  # OBJECT library, so that the linker symbols __start_keystone_exported and
+  # __stop_keystone_exported are defined correctly in the caller
+  add_library(${target_name} OBJECT ${SDK_SRCDIR}/src/app/export_wrap.c)
+  add_dependencies(${target_name} ${target_name}_hex)
+
+  # These compile definitions parameterize export_wrap.c for a specific
+  # exported function, and pass this info on to the caller
+  target_compile_definitions(${target_name} PRIVATE
+          FUNCNAME=${target_name}
+          FNAME=\"${CMAKE_CURRENT_BINARY_DIR}/${target_name}_hex\"
+          FBASE=${${target_name}_addr}
+          FSCRATCH=${scratch_size})
+
+endmacro(add_exportable_function)
