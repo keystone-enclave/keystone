@@ -670,3 +670,43 @@ uint64_t pmp_region_get_size(region_id i)
     return region_get_size(i);
   return 0;
 }
+
+void pmp_dump(void) {
+	int i, n;
+	uintptr_t cfg, addr;
+
+	sbi_printf("PMP STATE\n");
+	for(i = 0; i < PMP_MAX_N_REGION; i++) {
+		if(is_pmp_region_valid(i)) {
+			sbi_printf("\tregion %i valid\n", i);
+			sbi_printf("\t\taddr %lx, size %lx\n", regions[i].addr, regions[i].size);
+			sbi_printf("\t\taddrmode %x, overlap %i\n", regions[i].addrmode, regions[i].allow_overlap);
+			sbi_printf("\t\tregidx %x\n", regions[i].reg_idx);
+
+			n = regions[i].reg_idx;
+			switch(n) {
+#define X(n, g) case n: { cfg = csr_read(pmpcfg##g); addr = csr_read(pmpaddr##n); break; }
+				LIST_OF_PMP_REGS
+#undef X
+				default:
+				sm_assert(FALSE);
+			}
+
+			cfg = (cfg >> ((uintptr_t)8*(n%PMP_PER_GROUP))) & 0xff;
+			sbi_printf("\t\t\tcfg %lx ", cfg);
+
+			if(cfg & PMP_L)
+				sbi_printf("L");
+			if(cfg & PMP_A)
+				sbi_printf("A");
+			if(cfg & PMP_X)
+				sbi_printf("X");
+			if(cfg & PMP_W)
+				sbi_printf("W");
+			if(cfg & PMP_R)
+				sbi_printf("R");
+
+			sbi_printf("\n\t\t\taddr %lx\n", addr);
+		}
+	}
+}

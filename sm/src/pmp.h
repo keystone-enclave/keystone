@@ -88,6 +88,7 @@ struct pmp_region
 
 /* external functions */
 void pmp_init(void);
+void pmp_dump(void);
 int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_subregion_atomic(uintptr_t start, uint64_t size, region_id container, region_id *rid);
