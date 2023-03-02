@@ -27,11 +27,11 @@ clean:
 bootrom_sources = \
 	./bootloader.S \
 	./bootloader.c \
-	./ed25519/*.c \
-	.crypto/src/*.c
+	./crypto/src/*.c \
+	./crypto/ed25519/*.c
 
 %.elf: $(bootrom_sources) bootloader.lds
-	$(CC) $(CFLAGS) -I./ -I./crypto/include/ -L . -T bootloader.lds -o $@ $(bootrom_sources)
+	$(CC) $(CFLAGS) -I./ -I./crypto/include/ -I./crypto/ed25519/ -L . -T bootloader.lds -o $@ $(bootrom_sources)
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary --only-section=.text $< $@;

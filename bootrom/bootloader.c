@@ -3,7 +3,6 @@
 #define ED25519_NO_SEED 1
 #include "crypto/hash.h"
 
-//#include "sha3/sha3.h"
 /* Adopted from https://github.com/orlp/ed25519
   provides:
   - void ed25519_create_keypair(t_pubkey *public_key, t_privkey *private_key, t_seed *seed);
@@ -14,15 +13,7 @@
                       t_privkey *private_key);
 */
 
-#include "ed25519/ed25519.h"
-/* adopted from
-  provides:
-  - int sha3_init(sha3_context * md);
-  - int sha3_update(sha3_context * md, const unsigned char *in, size_t inlen);
-  - int sha3_final(sha3_context * md, unsigned char *out);
-  types: sha3_context
-*/
-
+#include "crypto/ed25519/ed25519.h"
 #include "string.h"
 /*
   provides memcpy, memset

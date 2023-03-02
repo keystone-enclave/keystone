@@ -1,5 +1,6 @@
 #include "ed25519.h"
-#include "sha3/sha3.h"
+//#include "sha3/sha3.h"
+#include "crypto/hash.h"
 #include "ge.h"
 #include "sc.h"
 
@@ -45,9 +46,9 @@ static int consttime_equal(const unsigned char *x, const unsigned char *y) {
 }
 
 int ed25519_verify(const unsigned char *signature, const unsigned char *message, size_t message_len, const unsigned char *public_key) {
-    unsigned char h[64];
+    unsigned char h[CRYPTO_MD_SIZE_SHA3];
     unsigned char checker[32];
-    sha3_ctx_t hash;
+    crypto_hash hash;
     ge_p3 A;
     ge_p2 R;
 
@@ -59,11 +60,11 @@ int ed25519_verify(const unsigned char *signature, const unsigned char *message,
         return 0;
     }
 
-    sha3_init(&hash, 64);
-    sha3_update(&hash, signature, 32);
-    sha3_update(&hash, public_key, 32);
-    sha3_update(&hash, message, message_len);
-    sha3_final(h, &hash);
+    crypto_hash_init(&hash, CRYPTO_SHA3);
+    crypto_hash_update(&hash, signature, 32);
+    crypto_hash_update(&hash, public_key, 32);
+    crypto_hash_update(&hash, message, message_len);
+    crypto_hash_final(&hash, h);
     
     sc_reduce(h);
     ge_double_scalarmult_vartime(&R, h, &A, signature + 32);

@@ -27,12 +27,19 @@ macro(mkdir name dir)
 endmacro()
 
 # usage example: create_crypto_symlink(sha256/ sdk/src/)
-macro(add_crypto_symlink target_name crypto_sub_dir destination)
-  add_custom_target(${target_name} ALL DEPENDS ${destination}
-    COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/${crypto_sub_dir} ${destination}/${crypto_sub_dir}
-    COMMENT "Created symlink ${destination/crypto_sub_dir}"
+macro(add_symlink target link_name)
+  add_custom_target(${target_name}-symlink ALL DEPENDS ${target}
+    COMMAND ln -s --force --verbose ${target} ${link_name}
+    COMMENT "Created symlink ${link_name} linking to ${target}"
   )
 endmacro()
+  
+#macro(add_crypto_symlink target_name crypto_sub_dir destination)
+#  add_custom_target(${target_name} ALL DEPENDS ${destination}
+#    COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/${crypto_sub_dir} ${destination}/${crypto_sub_dir}
+#    COMMENT "Created symlink ${destination/crypto_sub_dir}"
+#  )
+#endmacro()
 
 
 ###############################################################################
@@ -177,9 +184,12 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
 add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
 add_custom_target("bootrom-sync" DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
   COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
-add_crypto_symlink("bootrom-sha3-symlink" sha3 ${bootrom_wrkdir})
-add_crypto_symlink("bootrom-ed25519-symlink" ed25519 ${bootrom_wrkdir})
+
+#add_symlink(${CMAKE_SOURCE_DIR}/crypto/ ${bootrom_wrkdir})
+#add_crypto_symlink("bootrom-sha3-symlink" sha3 ${bootrom_wrkdir})
+#add_crypto_symlink("bootrom-ed25519-symlink" ed25519 ${bootrom_wrkdir})
 add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
+  COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/ ${bootrom_wrkdir}
   COMMAND $(MAKE) -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA} mabi=${ABI} CC=riscv${BITS}-unknown-elf-gcc
     OBJCOPY=riscv${BITS}-unknown-elf-objcopy
   COMMENT "Building bootrom"
@@ -257,10 +267,10 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 
 add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
 
-add_crypto_symlink("sm-sha3-symlink" sha3 ${sm_wrkdir})
-add_crypto_symlink("sm-hmac_sha3-symlink" hmac_sha3 ${sm_wrkdir})
-add_crypto_symlink("sm-hkdf-sha3_512" hkdf_sha3_512 ${sm_wrkdir})
-add_crypto_symlink("sm-ed25519-symlink" ed25519 ${sm_wrkdir})
+#add_crypto_symlink("sm-sha3-symlink" sha3 ${sm_wrkdir})
+#add_crypto_symlink("sm-hmac_sha3-symlink" hmac_sha3 ${sm_wrkdir})
+#add_crypto_symlink("sm-hkdf-sha3_512" hkdf_sha3_512 ${sm_wrkdir})
+#add_crypto_symlink("sm-ed25519-symlink" ed25519 ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
