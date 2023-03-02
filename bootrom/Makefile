@@ -28,7 +28,9 @@ bootrom_sources = \
 	./bootloader.S \
 	./bootloader.c \
 	./ed25519/*.c \
-	./sha3/*.c
+	./crypto/hash.c \
+	./crypto/sha3/*.c \
+	./crypto/sha256/*.c
 
 %.elf: $(bootrom_sources) bootloader.lds
 	$(CC) $(CFLAGS) -I./ -L . -T bootloader.lds -o $@ $(bootrom_sources)

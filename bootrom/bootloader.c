@@ -1,7 +1,9 @@
 #include <stddef.h>
 
 #define ED25519_NO_SEED 1
-#include "sha3/sha3.h"
+#include "crypto/hash.h"
+
+//#include "sha3/sha3.h"
 /* Adopted from https://github.com/orlp/ed25519
   provides:
   - void ed25519_create_keypair(t_pubkey *public_key, t_privkey *private_key, t_seed *seed);
@@ -49,7 +51,7 @@ void bootloader() {
 	//*sanctum_sm_size = 0x200;
   // Reserve stack space for secrets
   byte scratchpad[128];
-  sha3_ctx_t hash_ctx;
+  crypto_hash hash;
 
   // TODO: on real device, copy boot image from memory. In simulator, HTIF writes boot image
   // ... SD card to beginning of memory.
@@ -79,16 +81,18 @@ void bootloader() {
   //ed25519_create_keypair(sanctum_dev_public_key, sanctum_dev_secret_key, scratchpad);
 
   // Measure SM
-  sha3_init(&hash_ctx, 64);
-  sha3_update(&hash_ctx, (void*)DRAM_BASE, sanctum_sm_size);
-  sha3_final(sanctum_sm_hash, &hash_ctx);
+  crypto_hash_init(&hash, CRYPTO_SHA3);
+  crypto_hash_update(&hash, (void*)DRAM_BASE, sanctum_sm_size);
+  crypto_hash_final(&hash, sanctum_sm_hash);
 
   // Combine SK_D and H_SM via a hash
   // sm_key_seed <-- H(SK_D, H_SM), truncate to 32B
-  sha3_init(&hash_ctx, 64);
-  sha3_update(&hash_ctx, sanctum_dev_secret_key, sizeof(*sanctum_dev_secret_key));
-  sha3_update(&hash_ctx, sanctum_sm_hash, sizeof(*sanctum_sm_hash));
-  sha3_final(scratchpad, &hash_ctx);
+
+  crypto_hash_init(&hash, CRYPTO_SHA3);
+  crypto_hash_update(&hash, sanctum_dev_secret_key, sizeof(*sanctum_dev_public_key));
+  crypto_hash_update(&hash, sanctum_sm_hash, sizeof(*sanctum_sm_hash));
+  crypto_hash_final(&hash, scratchpad);
+  
   // Derive {SK_D, PK_D} (device keys) from the first 32 B of the hash (NIST endorses SHA512 truncation as safe)
   ed25519_create_keypair(sanctum_sm_public_key, sanctum_sm_secret_key, scratchpad);
 
