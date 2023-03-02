@@ -57,6 +57,28 @@ void *dispatch_callee_handler(void *arg) {
       fn_ret = fn(&call_args[1]);
       break;
 
+    // Need to:
+    // 1. Map requested virtual memory from caller
+    // 2. Indicate existing eapp space somehow? Library functionality
+    // 3. Call into the specified function
+    case CALL_MAPPED:
+      fn = (void *) map(call_args[1], call_args[2], call_args[3]);
+      if(!fn) {
+        fn_ret = -ENOMEM;
+        goto __done;
+      }
+
+      if((uintptr_t) fn != call_args[3]) {
+        // Function was mapped to the wrong address
+        unmap((uintptr_t) fn, call_args[2]);
+        fn_ret = -EFAULT;
+        goto __done;
+      }
+
+      fn_ret = fn((void*) call_args[4]);
+      unmap(call_args[3], call_args[2]);
+      break;
+
     default:
       fn_ret = -EINVAL;
       break;
@@ -80,9 +102,12 @@ int spawn_callee_handler(int (*fn) (void *), call_type_t type) {
   int i, ret = -1;
 
   // For functions called in the receiver, we need to ensure that
-  // a function to dispatch to actually exists.
+  // a function to dispatch to actually exists. Otherwise, the
+  // function's virtual address is passed to us at call time and
+  // we will manually map it then.
 
-  if((type == CALL_RECEIVER && !fn)) {
+  if((type == CALL_RECEIVER && !fn) ||
+      (type == CALL_MAPPED && fn)) {
     return -1;
   }
 

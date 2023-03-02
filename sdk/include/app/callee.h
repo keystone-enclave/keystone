@@ -8,6 +8,7 @@
 
 typedef enum {
   CALL_RECEIVER = 0,
+  CALL_MAPPED
 } call_type_t;
 
 int init_callee(void);

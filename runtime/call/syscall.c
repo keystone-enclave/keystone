@@ -283,6 +283,18 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = sbi_stop_enclave(STOP_YIELD_ENCLAVE);
     break;
 
+  case(RUNTIME_SYSCALL_TRANSLATE):
+    ret = translate(arg0);
+    break;
+
+  case(RUNTIME_SYSCALL_MAP):
+    ret = map_with_dynamic_page_table(arg0, arg1, arg2, true);
+    break;
+
+  case(RUNTIME_SYSCALL_UNMAP):
+    unmap_with_any_page_table(arg0, arg1);
+    break;
+
 #ifdef USE_LINUX_SYSCALL
   case(SYS_clock_gettime):
     ret = linux_clock_gettime((__clockid_t)arg0, (struct timespec*)arg1);

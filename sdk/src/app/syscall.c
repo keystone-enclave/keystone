@@ -57,3 +57,15 @@ int unshare_region(uintptr_t addr) {
 int yield_thread() {
   return SYSCALL_0(RUNTIME_SYSCALL_YIELD_MAIN_THREAD);
 }
+
+uintptr_t translate(uintptr_t va) {
+  return SYSCALL_1(RUNTIME_SYSCALL_TRANSLATE, va);
+}
+
+uintptr_t map(uintptr_t pa, size_t size, uintptr_t va) {
+  return SYSCALL_3(RUNTIME_SYSCALL_MAP, pa, size, va);
+}
+
+int unmap(uintptr_t va, size_t size) {
+  return SYSCALL_2(RUNTIME_SYSCALL_UNMAP, va, size);
+}

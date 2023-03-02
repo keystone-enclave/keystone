@@ -17,5 +17,8 @@
 
 // Runtime syscalls
 #define RUNTIME_SYSCALL_YIELD_MAIN_THREAD   2000
+#define RUNTIME_SYSCALL_TRANSLATE           2001
+#define RUNTIME_SYSCALL_MAP                 2002
+#define RUNTIME_SYSCALL_UNMAP               2003
 
 #endif  // __EYRIE_CALL_H__
