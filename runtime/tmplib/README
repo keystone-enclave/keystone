@@ -1,0 +1,13 @@
+This is a temporary way to handle files/features from linux that we need.
+
+Files taken from riscv-linux:
+arch/riscv/lib/uaccess.S -> uaccess.S
+arch/riscv/include/asm/asm.h-> asm/asm.h
+arch/riscv/include/asm/csr.h-> asm/csr.h
+arch/riscv/include/asm/linkage.h -> asm/linkage.h
+include/uapi/linux/const.h -> linux/const.h
+include/linux/linkage.h -> linux/linkage.h
+
+Files containing modified linux bits:
+partial_linkage.h
+uaccess.h

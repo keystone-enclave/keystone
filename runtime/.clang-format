@@ -1,0 +1,10 @@
+BasedOnStyle: Google
+IndentWidth: 2
+TabWidth: 2
+ColumnLimit: 80
+AlignAfterOpenBracket: AlwaysBreak
+AlwaysBreakAfterReturnType: TopLevel
+DerivePointerAlignment: false
+PointerAlignment: Left
+AlignConsecutiveAssignments: true
+SpacesInAngles: false
