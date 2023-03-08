@@ -7,8 +7,8 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 extern "C" {
-#include "./keystone_user.h"
 #include "common/sha3.h"
+#include "shared/keystone_user.h"
 }
 #include "ElfFile.hpp"
 #include "hash_util.hpp"
@@ -163,14 +163,14 @@ Enclave::loadElf(ElfFile* elf) {
 }
 
 Error
-Enclave::validate_and_hash_enclave(struct runtime_params_t args) {
+Enclave::validate_and_hash_enclave(struct runtime_va_params_t args) {
   hash_ctx_t hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
 
   hash_init(&hash_ctx);
 
   // hash the runtime parameters
-  hash_extend(&hash_ctx, &args, sizeof(struct runtime_params_t));
+  hash_extend(&hash_ctx, &args, sizeof(struct runtime_va_params_t));
 
   uintptr_t runtime_max_seen = 0;
   uintptr_t user_max_seen    = 0;
@@ -342,7 +342,7 @@ Enclave::init(
     ERROR("failed to load untrusted");
   }
 
-  struct runtime_params_t runtimeParams;
+  struct runtime_va_params_t runtimeParams;
   runtimeParams.runtime_entry =
       reinterpret_cast<uintptr_t>(runtimeFile->getEntryPoint());
   runtimeParams.user_entry =

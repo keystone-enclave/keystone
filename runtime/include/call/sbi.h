@@ -8,25 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define SBI_SET_TIMER 0
-#define SBI_CONSOLE_PUTCHAR 1
-#define SBI_CONSOLE_GETCHAR 2
-
-#define SBI_SM_CREATE_ENCLAVE    2001
-#define SBI_SM_DESTROY_ENCLAVE   2002
-#define SBI_SM_RUN_ENCLAVE       2003
-#define SBI_SM_RESUME_ENCLAVE    2005
-#define SBI_SM_RANDOM            3001
-#define SBI_SM_ATTEST_ENCLAVE    3002
-#define SBI_SM_GET_SEALING_KEY   3003
-#define SBI_SM_STOP_ENCLAVE      3004
-#define SBI_SM_EXIT_ENCLAVE      3006
-#define SBI_SM_CALL_PLUGIN       4000
-
-/* Plugin IDs and Call IDs */
-#define SM_MULTIMEM_PLUGIN_ID   0x01
-#define SM_MULTIMEM_CALL_GET_SIZE 0x01
-#define SM_MULTIMEM_CALL_GET_ADDR 0x02
+#include "sm_call.h"
 
 void
 sbi_putchar(char c);

@@ -41,7 +41,7 @@ KeystoneDevice::initUTM(size_t size) {
 Error
 KeystoneDevice::finalize(
     uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    struct runtime_params_t params) {
+    struct runtime_va_params_t params) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid           = eid;
   encl.runtime_paddr = runtimePhysAddr;
@@ -95,11 +95,11 @@ KeystoneDevice::__run(bool resume, uintptr_t* ret) {
   }
 
   switch (encl.error) {
-    case KEYSTONE_ENCLAVE_EDGE_CALL_HOST:
+    case SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST:
       return Error::EdgeCallHost;
-    case KEYSTONE_ENCLAVE_INTERRUPTED:
+    case SBI_ERR_SM_ENCLAVE_INTERRUPTED:
       return Error::EnclaveInterrupted;
-    case KEYSTONE_ENCLAVE_DONE:
+    case SBI_ERR_SM_ENCLAVE_SUCCESS:
       if (ret) {
         *ret = encl.value;
       }
@@ -156,7 +156,7 @@ MockKeystoneDevice::initUTM(size_t size) {
 Error
 MockKeystoneDevice::finalize(
     uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    struct runtime_params_t params) {
+    struct runtime_va_params_t params) {
   return Error::Success;
 }
 

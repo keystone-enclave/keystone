@@ -3,8 +3,10 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "Memory.hpp"
-#include <keystone_user.h>
+
 #include <sys/stat.h>
+
+#include "shared/keystone_user.h"
 
 namespace Keystone {
 

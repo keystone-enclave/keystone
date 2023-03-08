@@ -239,9 +239,9 @@ uintptr_t get_enclave_region_base(enclave_id eid, int memid)
  * Does NOT do verification of dest, assumes caller knows what that is.
  * Dest should be inside the SM memory.
  */
-unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest){
+unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create_t* dest){
 
-  int region_overlap = copy_to_sm(dest, src, sizeof(struct keystone_sbi_create));
+  int region_overlap = copy_to_sm(dest, src, sizeof(struct keystone_sbi_create_t));
 
   if (region_overlap)
     return SBI_ERR_SM_ENCLAVE_REGION_OVERLAPS;
@@ -273,7 +273,7 @@ static unsigned long copy_enclave_report(struct enclave* enclave,
     return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
 
-static int is_create_args_valid(struct keystone_sbi_create* args)
+static int is_create_args_valid(struct keystone_sbi_create_t* args)
 {
   uintptr_t epm_start, epm_end;
 
@@ -335,7 +335,7 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
  *
  * This may fail if: it cannot allocate PMP regions, EIDs, etc
  */
-unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create create_args)
+unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t create_args)
 {
   /* EPM and UTM parameters */
   uintptr_t base = create_args.epm_region.paddr;
@@ -353,7 +353,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
 
   /* set va params */
   struct runtime_va_params_t params = create_args.params;
-  struct runtime_pa_params pa_params;
+  struct runtime_pa_params_t pa_params;
   pa_params.dram_base = base;
   pa_params.dram_size = size;
   pa_params.runtime_base = create_args.runtime_paddr;
@@ -493,7 +493,7 @@ unsigned long destroy_enclave(enclave_id eid)
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = (struct runtime_va_params_t) {0};
-  enclaves[eid].pa_params = (struct runtime_pa_params) {0};
+  enclaves[eid].pa_params = (struct runtime_pa_params_t) {0};
   for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
     enclaves[eid].regions[i].type = REGION_INVALID;
   }

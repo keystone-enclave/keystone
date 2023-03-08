@@ -43,7 +43,7 @@ uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr, size_
     return -1;
   }
 
-  ret = sbi_stop_enclave(1);
+  ret = sbi_stop_enclave(STOP_EDGE_CALL_HOST);
 
   if (ret != 0) {
     return -1;
@@ -92,7 +92,7 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
     goto ocall_error;
   }
 
-  ret = sbi_stop_enclave(1);
+  ret = sbi_stop_enclave(STOP_EDGE_CALL_HOST);
 
   if (ret != 0) {
     goto ocall_error;

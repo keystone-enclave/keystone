@@ -8,13 +8,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "sealing.h"
-/* TODO We should be syncing these more explictly with the runtime
-   defs */
-#define SYSCALL_OCALL 1001
-#define SYSCALL_SHAREDCOPY 1002
-#define SYSCALL_ATTEST_ENCLAVE 1003
-#define SYSCALL_GET_SEALING_KEY 1004
-#define SYSCALL_EXIT 1101
+
+#include "shared/eyrie_call.h"
 
 #define SYSCALL(which, arg0, arg1, arg2, arg3, arg4)           \
   ({                                                           \
