@@ -26,22 +26,6 @@ macro(mkdir name dir)
   set(${name}_exists ${dir}/.exists)
 endmacro()
 
-# usage example: create_crypto_symlink(sha256/ sdk/src/)
-macro(add_symlink target link_name)
-  add_custom_target(${target_name}-symlink ALL DEPENDS ${target}
-    COMMAND ln -s --force --verbose ${target} ${link_name}
-    COMMENT "Created symlink ${link_name} linking to ${target}"
-  )
-endmacro()
-  
-#macro(add_crypto_symlink target_name crypto_sub_dir destination)
-#  add_custom_target(${target_name} ALL DEPENDS ${destination}
-#    COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/${crypto_sub_dir} ${destination}/${crypto_sub_dir}
-#    COMMENT "Created symlink ${destination/crypto_sub_dir}"
-#  )
-#endmacro()
-
-
 ###############################################################################
 ## CONFIGURATION/VARIABLES
 ###############################################################################
