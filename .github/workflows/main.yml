@@ -327,7 +327,7 @@ jobs:
     - name: Checkout Keystone
       uses: actions/checkout@v3
       with:
-        submodules: 'recursive'
+        submodules: 'true'
 
     - name: Run ctest
       run: |
