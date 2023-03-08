@@ -13,9 +13,13 @@
 *********************************************************************/
 
 /*************************** HEADER FILES ***************************/
-#include <stdlib.h>
+//#include <stdlib.h>
 //#include <memory.h>
+#if __has_include(<memory.h>)
+#include <memory.h>
+#else
 #include "crypto/string.h"
+#endif
 #include "crypto/sha256.h"
 
 /****************************** MACROS ******************************/

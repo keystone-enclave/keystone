@@ -267,12 +267,12 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 
 add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
 
-#add_crypto_symlink("sm-sha3-symlink" sha3 ${sm_wrkdir})
-#add_crypto_symlink("sm-hmac_sha3-symlink" hmac_sha3 ${sm_wrkdir})
-#add_crypto_symlink("sm-hkdf-sha3_512" hkdf_sha3_512 ${sm_wrkdir})
-#add_crypto_symlink("sm-ed25519-symlink" ed25519 ${sm_wrkdir})
 add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
-  COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
+  COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c
+  COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/ ${sm_srcdir}
+  COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/hmac_sha3 ${sm_srcdir}
+  COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/hkdf_sha3_512 ${sm_srcdir}
+  COMMAND ln -s --force --verbose ${CMAKE_SOURCE_DIR}/crypto/ed25519 ${sm_srcdir}  
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
   CROSS_COMPILE=riscv${BITS}-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
   PLATFORM_RISCV_ISA=${ISA} PLATFORM_RISCV_ABI=${ABI}

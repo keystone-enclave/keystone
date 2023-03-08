@@ -70,7 +70,7 @@ struct enclave
   struct enclave_region regions[ENCLAVE_REGIONS_MAX];
 
   /* measurement */
-  byte hash[MDSIZE];
+  byte hash[CRYPTO_SHA256_DIGEST_SIZE];
   byte sign[SIGNATURE_SIZE];
 
   /* parameters */
@@ -87,14 +87,14 @@ struct enclave
 /* attestation reports */
 struct enclave_report
 {
-  byte hash[MDSIZE];
+  byte hash[CRYPTO_SHA256_DIGEST_SIZE];
   uint64_t data_len;
   byte data[ATTEST_DATA_MAXLEN];
   byte signature[SIGNATURE_SIZE];
 };
 struct sm_report
 {
-  byte hash[MDSIZE];
+  byte hash[CRYPTO_SHA256_DIGEST_SIZE];
   byte public_key[PUBLIC_KEY_SIZE];
   byte signature[SIGNATURE_SIZE];
 };

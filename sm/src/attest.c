@@ -4,13 +4,14 @@
 //------------------------------------------------------------------------------
 #include "enclave.h"
 #include "crypto.h"
+#include "crypto/hash.h"
 #include "page.h"
 #include <sbi/sbi_console.h>
 
 typedef uintptr_t pte_t;
 /* This will walk the entire vaddr space in the enclave, validating
    linear at-most-once paddr mappings, and then hashing valid pages */
-int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
+int validate_and_hash_epm(crypto_sha256_ctx* hash_ctx, int level,
                           pte_t* tb, uintptr_t vaddr, int contiguous,
                           struct enclave* encl,
                           uintptr_t* runtime_max_seen,
@@ -65,7 +66,8 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
     if (level == 1 && !contiguous)
     {
 
-      hash_extend(hash_ctx, &va_start, sizeof(uintptr_t));
+      //      hash_extend(hash_ctx, &va_start, sizeof(uintptr_t));
+      crypto_sha256_update(hash_ctx, &va_start, sizeof(uintptr_t));
       //printm("VA hashed: 0x%lx\n", va_start);
       contiguous = 1;
     }
@@ -131,9 +133,8 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
       /* Page is valid, add it to the hash */
 
       /* if PTE is leaf, extend hash for the page */
-      hash_extend_page(hash_ctx, (void*)phys_addr);
-
-
+      //      hash_extend_page(hash_ctx, (void*)phys_addr);
+      crypto_sha256_update(hash_ctx, (void*)phys_addr, RISCV_PGSIZE);
 
       //printm("PAGE hashed: 0x%lx (pa: 0x%lx)\n", vpn << RISCV_PGSHIFT, phys_addr);
     }
@@ -170,14 +171,13 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
 
 unsigned long validate_and_hash_enclave(struct enclave* enclave){
 
-  hash_ctx hash_ctx;
+  crypto_sha256_ctx hash_ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
 
-  hash_init(&hash_ctx);
+  crypto_sha256_init(&hash_ctx);
 
   // hash the runtime parameters
-  hash_extend(&hash_ctx, &enclave->params, sizeof(struct runtime_va_params_t));
-
+  crypto_sha256_update(&hash_ctx, &enclave->params, sizeof(struct runtime_va_params_t));
 
   uintptr_t runtime_max_seen=0;
   uintptr_t user_max_seen=0;;
@@ -192,7 +192,7 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
     return SBI_ERR_SM_ENCLAVE_ILLEGAL_PTE;
   }
 
-  hash_finalize(enclave->hash, &hash_ctx);
+  crypto_sha256_final(&hash_ctx, enclave->hash);
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }

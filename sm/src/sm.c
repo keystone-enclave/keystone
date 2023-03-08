@@ -19,13 +19,13 @@ static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
 
 /* from Sanctum BootROM */
-extern byte sanctum_sm_hash[MDSIZE];
+extern byte sanctum_sm_hash[CRYPTO_SHA256_DIGEST_SIZE];
 extern byte sanctum_sm_signature[SIGNATURE_SIZE];
 extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
 extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
 extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
 
-byte sm_hash[MDSIZE] = { 0, };
+byte sm_hash[CRYPTO_SHA256_DIGEST_SIZE] = { 0, };
 byte sm_signature[SIGNATURE_SIZE] = { 0, };
 byte sm_public_key[PUBLIC_KEY_SIZE] = { 0, };
 byte sm_private_key[PRIVATE_KEY_SIZE] = { 0, };
@@ -66,10 +66,10 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
                           size_t key_ident_size,
                           const unsigned char *enclave_hash)
 {
-  unsigned char info[MDSIZE + key_ident_size];
+  unsigned char info[CRYPTO_SHA256_DIGEST_SIZE + key_ident_size];
 
-  sbi_memcpy(info, enclave_hash, MDSIZE);
-  sbi_memcpy(info + MDSIZE, key_ident, key_ident_size);
+  sbi_memcpy(info, enclave_hash, CRYPTO_SHA256_DIGEST_SIZE);
+  sbi_memcpy(info + CRYPTO_SHA256_DIGEST_SIZE, key_ident, key_ident_size);
 
   /*
    * The key is derived without a salt because we have no entropy source
@@ -77,12 +77,12 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
    */
   return kdf(NULL, 0,
              (const unsigned char *)sm_private_key, PRIVATE_KEY_SIZE,
-             info, MDSIZE + key_ident_size, key, SEALING_KEY_SIZE);
+             info, CRYPTO_SHA256_DIGEST_SIZE + key_ident_size, key, SEALING_KEY_SIZE);
 }
 
 void sm_copy_key()
 {
-  sbi_memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
+  sbi_memcpy(sm_hash, sanctum_sm_hash, CRYPTO_SHA256_DIGEST_SIZE);
   sbi_memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
   sbi_memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
   sbi_memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
@@ -91,7 +91,7 @@ void sm_copy_key()
 
 void sm_print_hash()
 {
-  for (int i=0; i<MDSIZE; i++)
+  for (int i=0; i<CRYPTO_SHA256_DIGEST_SIZE; i++)
   {
     sbi_printf("%02x", (char) sm_hash[i]);
   }

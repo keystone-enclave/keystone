@@ -19,15 +19,19 @@ platform-objs-y += ../../src/sbi_trap_hack.o
 platform-objs-y += ../../src/trap.o
 platform-objs-y += ../../src/ipi.o
 
-platform-objs-y += ../../src/sha3/sha3.o
-platform-objs-y += ../../src/ed25519/fe.o
-platform-objs-y += ../../src/ed25519/ge.o
-platform-objs-y += ../../src/ed25519/keypair.o
-platform-objs-y += ../../src/ed25519/sc.o
-platform-objs-y += ../../src/ed25519/sign.o
+#platform-objs-y += ../../src/sha3/sha3.o
 
-platform-objs-y += ../../src/hkdf_sha3_512/hkdf_sha3_512.o
-platform-objs-y += ../../src/hmac_sha3/hmac_sha3.o
+platform-objs-y += ../../crypto/ed25519/fe.o
+platform-objs-y += ../../crypto/ed25519/ge.o
+platform-objs-y += ../../crypto/ed25519/keypair.o
+platform-objs-y += ../../crypto/ed25519/sc.o
+platform-objs-y += ../../crypto/ed25519/sign.o
+platform-objs-y += ../../crypto/src/hash.o
+platform-objs-y += ../../crypto/src/sha256.o
+
+platform-objs-y += ../../crypto/hkdf_sha3_512/hkdf_sha3_512.o
+platform-objs-y += ../../crypto/hmac_sha3/hmac_sha3.o
+platform-objs-y += ../../crypto/hmac_sha3/sha3.o
 
 platform-objs-y += ../../src/platform/$(PLATFORM)/platform.o
 

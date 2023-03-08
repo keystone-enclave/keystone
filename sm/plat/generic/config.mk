@@ -9,7 +9,7 @@
 
 # Compiler flags
 platform-cppflags-y =
-platform-cflags-y = -I../src
+platform-cflags-y = -I../src -I../crypto/include -I../crypto/
 platform-asflags-y =
 platform-ldflags-y =
 

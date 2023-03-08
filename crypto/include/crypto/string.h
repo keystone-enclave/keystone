@@ -3,7 +3,7 @@
 
 /* TODO: Use actual implementation of these functions. */
 
-void* memcpy(void* dest, const void* src, size_t len)
+void* memcpy(void* dest, const void* src, unsigned int len)
 {
   const char* s = src;
   char *d = dest;
@@ -14,7 +14,7 @@ void* memcpy(void* dest, const void* src, size_t len)
   return d;
 }
 
-void* memset(void* dest, int byte, size_t len)
+void* memset(void* dest, int byte, unsigned int len)
 {
   char* d = dest;
   char* end = dest + len;

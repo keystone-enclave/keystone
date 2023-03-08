@@ -2,30 +2,29 @@
 #define CRYPTO_HASH_H_
 
 #include "sha256.h"
-#include "sha3.h"
 
-typedef union {
-  sha3_ctx_t sha3_ctx;
-  SHA256_CTX sha256_ctx;
-} crypto_hash_ctx_variant;
+typedef SHA256_CTX crypto_sha256_ctx;
+#define CRYPTO_SHA256_DIGEST_SIZE 32
 
-typedef enum { CRYPTO_SHA3 = 0, CRYPTO_SHA256 } crypto_hash_algorithm_t;
+/* We provide thin wrappers over these functions in case we'd like to change the
+   underyling SHA-256 implementation later. */
 
-#define CRYPTO_MD_SIZE_SHA3 64
-#define CRYPTO_MD_SIZE_SHA256 32
+/* Initialize the context, CTX. This must be called before the hash is updated
+   or finalized. */
+void crypto_sha256_init(crypto_sha256_ctx *ctx);
 
-typedef struct {
-  /* The internal context. */
-  crypto_hash_ctx_variant _ctx;
-  crypto_hash_algorithm_t type;
-} crypto_hash;
+/* Update the hash with the specified DATA. */
+void crypto_sha256_update(crypto_sha256_ctx *ctx, const void *data,
+                          unsigned int data_len);
 
-int crypto_hash_init(crypto_hash *hash, crypto_hash_algorithm_t alg);
-int crypto_hash_update(crypto_hash *hash, const void *data, unsigned int len);
-int crypto_hash_final(crypto_hash *hash, unsigned char *md);
-unsigned int crypto_hash_digest_size(crypto_hash *hash);
-int crypto_hash_has_trusted_return(crypto_hash *hash);
-unsigned char *crypto_hash_data(const void *data, unsigned int data_len,
-                                  unsigned char *md, crypto_hash_algorithm_t alg);
+/* Finalize the hash and store it in MESSAGE_DIGEST, which must be large enough
+   to store the hash. For SHA-256, this is 32 bytes (CRYPTO_SHA256_DIGEST_SIZE). */
+void crypto_sha256_final(crypto_sha256_ctx *ctx, unsigned char *message_digest);
+
+/* Hash the specified DATA, storing the hash in MESSAGE_DIGEST, which must be
+   large enough to store the hash. For SHA-256, this is 32 bytes
+   (CRYPTO_SHA256_DIGEST_SIZE). */
+unsigned char *crypto_sha256_hash_data(const void *data, unsigned int data_len,
+                                       unsigned char *message_digest);
 
 #endif /* CRYPTO_HASH_H_ */

@@ -632,10 +632,10 @@ unsigned long attest_enclave(uintptr_t report_ptr, uintptr_t data, uintptr_t siz
   spin_unlock(&encl_lock); // Don't need to wait while signing, which might take some time
 
   sbi_memcpy(report.dev_public_key, dev_public_key, PUBLIC_KEY_SIZE);
-  sbi_memcpy(report.sm.hash, sm_hash, MDSIZE);
+  sbi_memcpy(report.sm.hash, sm_hash, CRYPTO_SHA256_DIGEST_SIZE);
   sbi_memcpy(report.sm.public_key, sm_public_key, PUBLIC_KEY_SIZE);
   sbi_memcpy(report.sm.signature, sm_signature, SIGNATURE_SIZE);
-  sbi_memcpy(report.enclave.hash, enclaves[eid].hash, MDSIZE);
+  sbi_memcpy(report.enclave.hash, enclaves[eid].hash, CRYPTO_SHA256_DIGEST_SIZE);
   sm_sign(report.enclave.signature,
       &report.enclave,
       sizeof(struct enclave_report)

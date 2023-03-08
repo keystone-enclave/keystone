@@ -5,6 +5,7 @@
 #include "crypto.h"
 #include "page.h"
 
+/*
 void hash_init(hash_ctx* hash_ctx)
 {
   sha3_init(hash_ctx, MDSIZE);
@@ -24,6 +25,7 @@ void hash_finalize(void* md, hash_ctx* hash_ctx)
 {
   sha3_final(md, hash_ctx);
 }
+*/
 
 void sign(void* sign, const void* data, size_t len, const unsigned char* public_key, const unsigned char* private_key)
 {

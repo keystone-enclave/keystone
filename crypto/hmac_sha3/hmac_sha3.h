@@ -12,7 +12,7 @@
 #ifndef HMAC_SHA3_H
 #define HMAC_SHA3_H
 
-#include "../sha3/sha3.h"
+#include "sha3.h"
 
 // Internal block length of sha3_512 in bytes
 #define SHA3_512_BLOCK_LEN 72

@@ -46,9 +46,9 @@ static int consttime_equal(const unsigned char *x, const unsigned char *y) {
 }
 
 int ed25519_verify(const unsigned char *signature, const unsigned char *message, size_t message_len, const unsigned char *public_key) {
-    unsigned char h[CRYPTO_MD_SIZE_SHA3];
+    unsigned char h[CRYPTO_SHA256_DIGEST_SIZE];
     unsigned char checker[32];
-    crypto_hash hash;
+    crypto_sha256_ctx hash;
     ge_p3 A;
     ge_p2 R;
 
@@ -60,11 +60,11 @@ int ed25519_verify(const unsigned char *signature, const unsigned char *message,
         return 0;
     }
 
-    crypto_hash_init(&hash, CRYPTO_SHA3);
-    crypto_hash_update(&hash, signature, 32);
-    crypto_hash_update(&hash, public_key, 32);
-    crypto_hash_update(&hash, message, message_len);
-    crypto_hash_final(&hash, h);
+    crypto_sha256_init(&hash);
+    crypto_sha256_update(&hash, signature, 32);
+    crypto_sha256_update(&hash, public_key, 32);
+    crypto_sha256_update(&hash, message, message_len);
+    crypto_sha256_final(&hash, h);
     
     sc_reduce(h);
     ge_double_scalarmult_vartime(&R, h, &A, signature + 32);
