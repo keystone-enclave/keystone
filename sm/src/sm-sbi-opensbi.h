@@ -6,9 +6,12 @@
 #include "sbi/sbi_error.h"
 #include "sbi/sbi_scratch.h"
 #include <sbi/sbi_ecall.h>
+
+#include "sm_call.h"
+
 /* Inbound interfaces */
 extern struct sbi_ecall_extension ecall_keystone_enclave;
-#define SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE 0x08424b45 // BKE (Berkeley Keystone Enclave)
+
 //int sbi_sm_interface(struct sbi_scratch *scratch, unsigned long extension_id,
 //                     struct sbi_trap_regs  *regs,
 //                     unsigned long *out_val,

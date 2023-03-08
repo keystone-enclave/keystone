@@ -47,6 +47,7 @@ if(DEFINED EYRIE_SRCDIR)
 endif()
 
 include_directories($ENV{KEYSTONE_SDK_DIR}/include/edge)
+include_directories($ENV{KEYSTONE_SDK_DIR}/include/shared)
 include_directories(tmplib)
 include_directories(include)
 

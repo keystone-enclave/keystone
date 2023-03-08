@@ -14,5 +14,5 @@ endforeach()
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/common
   DESTINATION ${out_dir}/include)
-
-
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/shared
+  DESTINATION ${out_dir}/include)

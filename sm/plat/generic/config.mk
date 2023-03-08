@@ -7,9 +7,13 @@
 #   Anup Patel <anup.patel@wdc.com>
 #
 
+ifeq ($(KEYSTONE_SDK_DIR),)
+	$(error KEYSTONE_SDK_DIR not defined)
+endif
+
 # Compiler flags
 platform-cppflags-y =
-platform-cflags-y = -I../src
+platform-cflags-y = -I../src -I$(KEYSTONE_SDK_DIR)/include/shared
 platform-asflags-y =
 platform-ldflags-y =
 
