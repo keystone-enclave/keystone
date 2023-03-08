@@ -11,13 +11,15 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <cerrno>
 #include <cstring>
 #include <iostream>
+
 #include "./common.h"
-#include "./keystone_user.h"
 #include "Error.hpp"
 #include "Params.hpp"
+#include "shared/keystone_user.h"
 
 namespace Keystone {
 
@@ -40,7 +42,7 @@ class KeystoneDevice {
   virtual uintptr_t initUTM(size_t size);
   virtual Error finalize(
       uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-      struct runtime_params_t params);
+      struct runtime_va_params_t params);
   virtual Error destroy();
   virtual Error run(uintptr_t* ret);
   virtual Error resume(uintptr_t* ret);
@@ -60,7 +62,7 @@ class MockKeystoneDevice : public KeystoneDevice {
   uintptr_t initUTM(size_t size);
   Error finalize(
       uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-      struct runtime_params_t params);
+      struct runtime_va_params_t params);
   Error destroy();
   Error run(uintptr_t* ret);
   Error resume(uintptr_t* ret);

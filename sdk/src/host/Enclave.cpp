@@ -1,4 +1,4 @@
-//******************************************************************************
+// ******************************************************************************
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
@@ -7,8 +7,8 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 extern "C" {
-#include "./keystone_user.h"
 #include "common/sha3.h"
+#include "shared/keystone_user.h"
 }
 #include "ElfFile.hpp"
 #include "hash_util.hpp"
@@ -203,7 +203,7 @@ Enclave::init(
 
   pMemory->startFreeMem();
 
-  struct runtime_params_t runtimeParams;
+  struct runtime_va_params_t runtimeParams;
   runtimeParams.untrusted_ptr =
       reinterpret_cast<uintptr_t>(utm_free);
   runtimeParams.untrusted_size =
