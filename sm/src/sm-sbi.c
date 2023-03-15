@@ -9,7 +9,7 @@
 #include "cpu.h"
 #include "platform-hook.h"
 #include "plugins/plugins.h"
-#include "fuzzy-clock.h"
+#include "clock.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>
 
@@ -58,9 +58,7 @@ unsigned long sbi_sm_resume_enclave(struct sbi_trap_regs *regs, unsigned long ei
 
 unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retval)
 {
-#if FUZZ_ON
-  wait_until_epoch();
-#endif
+  if (get_is_clock_fuzzy()) wait_until_epoch();
 
   regs->a0 = exit_enclave(regs, cpu_get_enclave_id());
   regs->a1 = retval;
@@ -71,9 +69,7 @@ unsigned long sbi_sm_exit_enclave(struct sbi_trap_regs *regs, unsigned long retv
 
 unsigned long sbi_sm_stop_enclave(struct sbi_trap_regs *regs, unsigned long request)
 {
-#if FUZZ_ON
-  wait_until_epoch();
-#endif
+  if (get_is_clock_fuzzy()) wait_until_epoch();
 
   regs->a0 = stop_enclave(regs, request, cpu_get_enclave_id());
   regs->mepc += 4;
@@ -109,20 +105,22 @@ unsigned long sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr
   return ret;
 }
 
-unsigned long sbi_sm_reg_clock_ipi() {
-  reg_clock_ipi();
-  return 0;
+unsigned long sbi_sm_get_is_clock_fuzzy() {
+  return get_is_clock_fuzzy();
 }
 
 unsigned long sbi_sm_start_management_core() {
-  sbi_printf("sbi_sm_start_management_core(): running on core %lx.\n", csr_read(mhartid));
-  sbi_timer_event_start(sbi_timer_value() + 0x1000000, SBI_TIMER_SOURCE_MONITOR);
+  // sbi_printf("sbi_sm_start_management_core(): running on core %lx.\n", csr_read(mhartid));
+  // sbi_timer_event_start(sbi_timer_value() + 0x1000000, SBI_TIMER_SOURCE_MONITOR);
   return 0;
 }
 
 unsigned long sbi_sm_pause(struct sbi_trap_regs *regs) 
 {
-  return wait_until_epoch();
+  if (get_is_clock_fuzzy())
+    return wait_until_epoch();
+  else
+    return 0;
 }
 
 unsigned long sbi_sm_pause_ms(struct sbi_trap_regs *regs, unsigned long ms)
@@ -133,7 +131,8 @@ unsigned long sbi_sm_pause_ms(struct sbi_trap_regs *regs, unsigned long ms)
 
 unsigned long sbi_sm_get_time(struct sbi_trap_regs *regs)
 {
-  return get_time_ticks();
+  regs->a2 = (uintptr_t)(get_time_ticks());
+  return 0;
 }
 
 unsigned long sbi_sm_get_interval_len(struct sbi_trap_regs *regs)

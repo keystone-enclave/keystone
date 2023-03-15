@@ -22,6 +22,8 @@
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 
+#define SECURITY_EXTENSION_FUZZY_CLOCK 0b1 << 0
+
 typedef enum {
   INVALID = -1,
   DESTROYING = 0,
@@ -82,6 +84,8 @@ struct enclave
   struct thread_state threads[MAX_ENCL_THREADS];
 
   struct platform_enclave_data ped;
+  
+  uint64_t security_extensions;
 };
 
 /* attestation reports */

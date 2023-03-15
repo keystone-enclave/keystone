@@ -8,6 +8,7 @@
 #include "page.h"
 #include "cpu.h"
 #include "platform-hook.h"
+#include "clock.h"
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
@@ -24,11 +25,9 @@ extern void save_host_regs(void);
 extern void restore_host_regs(void);
 extern byte dev_public_key[PUBLIC_KEY_SIZE];
 
-// chungmcl
 struct enclave* get_enclave(enclave_id eid) {
   return &enclaves[eid];
 }
-// chungmcl
 
 /****************************
  *
@@ -93,8 +92,8 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
   // TODO(chungmcl): Remove! for debugging fuzzy time stuff
   // Disables context switching by disabling the timer interrupt
   // bit (MTIP) in the MIE control and status register
-  // sbi_printf("switch_to_enclave: current_hartid: %d, eid: %d\n", current_hartid(), eid);
   csr_clear(CSR_MIE, MIP_MTIP);
+  sbi_printf("switch_to_enclave on core %d\n", current_hartid());
 
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
@@ -124,7 +123,6 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
 
   switch_vector_host();
 
-  // TODO(chungmcl): Comment parts of this out?
   uintptr_t pending = csr_read(mip);
   if (pending & MIP_MTIP) {
     csr_clear(mip, MIP_MTIP);
@@ -254,7 +252,6 @@ uintptr_t get_enclave_region_base(enclave_id eid, int memid)
 unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest){
 
   int region_overlap = copy_to_sm(dest, src, sizeof(struct keystone_sbi_create));
-
   if (region_overlap)
     return SBI_ERR_SM_ENCLAVE_REGION_OVERLAPS;
   else
@@ -341,6 +338,14 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
  *
  *********************************/
 
+void initialize_security_extensions(enclave_id eid, uint64_t security_extensions_mask) {
+  struct enclave* enclave = get_enclave(eid);
+  enclave->security_extensions = security_extensions_mask;
+
+  if (security_extensions_mask & SECURITY_EXTENSION_FUZZY_CLOCK) {
+    reg_fuzzy_clock_ipi(eid);
+  }
+}
 
 /* This handles creation of a new enclave, based on arguments provided
  * by the untrusted host.
@@ -354,6 +359,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   size_t size = create_args.epm_region.size;
   uintptr_t utbase = create_args.utm_region.paddr;
   size_t utsize = create_args.utm_region.size;
+  uint64_t security_extensions_mask = create_args.security_extensions;
 
   enclave_id eid;
   unsigned long ret;
@@ -431,6 +437,9 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   /* EIDs are unsigned int in size, copy via simple copy */
   *eidptr = eid;
 
+  // if everything about the enclave is initialized correctly,
+  // initialize any security extensions
+  initialize_security_extensions(eid, security_extensions_mask);
   spin_unlock(&encl_lock);
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 

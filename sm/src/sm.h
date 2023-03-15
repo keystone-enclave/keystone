@@ -35,7 +35,7 @@
 #define SBI_SM_PAUSE_MS           3008
 #define SBI_SM_GET_TIME           3009
 #define SBI_SM_GET_INTERVAL_LEN   3010
-#define SBI_SM_REG_CLOCK_IPI      3011
+#define SBI_SM_GET_IS_CLOCK_FUZZY 3011
 // fuzzy time
 #define FID_RANGE_ENCLAVE         3999
 /* 4000-4999 are experimental */
@@ -117,6 +117,7 @@ struct keystone_sbi_create
   uintptr_t free_paddr;
 
   struct runtime_va_params_t params;
+  uint64_t security_extensions;
   unsigned int* eid_pptr;
 };
 

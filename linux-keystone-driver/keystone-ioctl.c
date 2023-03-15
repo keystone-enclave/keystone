@@ -80,6 +80,9 @@ int keystone_finalize_enclave(unsigned long arg)
 
   create_args.params = enclp->params;
 
+  create_args.security_extensions = enclp->security_extensions;
+  keystone_err("security_extensions: %d\n", create_args.security_extensions);
+
   ret = sbi_sm_create_enclave(&create_args);
 
   if (ret.error) {
@@ -96,7 +99,6 @@ error_destroy_enclave:
   destroy_enclave(enclave);
 
   return -EINVAL;
-
 }
 
 int keystone_run_enclave(unsigned long data)

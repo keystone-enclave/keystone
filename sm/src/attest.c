@@ -178,9 +178,12 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
   // hash the runtime parameters
   hash_extend(&hash_ctx, &enclave->params, sizeof(struct runtime_va_params_t));
 
+  // hash the security extensions
+  hash_extend(&hash_ctx, &enclave->security_extensions, sizeof(uint64_t));
 
   uintptr_t runtime_max_seen=0;
-  uintptr_t user_max_seen=0;;
+  
+  uintptr_t user_max_seen=0;
 
   // hash the epm contents including the virtual addresses
   int valid = validate_and_hash_epm(&hash_ctx,

@@ -9,7 +9,8 @@
 #include "enclave.h"
 #include "platform-hook.h"
 #include "sm-sbi-opensbi.h"
-#include "fuzzy-clock.h"
+#include "clock.h"
+#include <sbi/sbi_timer.h>
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/riscv_barrier.h>
@@ -156,7 +157,7 @@ void sm_init(bool cold_boot)
     // Init the enclave metadata
     enclave_init_metadata();
 
-    fuzzy_clock_init();
+    clock_init();
 
     sm_init_done = 1;
     mb();

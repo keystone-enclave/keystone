@@ -37,6 +37,8 @@ struct keystone_sbi_create_t
 
   // Parameters
   struct runtime_params_t params;
+
+  uint64_t security_extensions;
 };
 
 struct sbiret sbi_sm_start_mgmt_core(void);

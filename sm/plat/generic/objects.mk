@@ -19,9 +19,9 @@ platform-objs-y += ../../src/sbi_trap_hack.o
 # management-core: commented out
 # platform-objs-y += ../../src/trap.o
 platform-objs-y += ../../src/ipi.o
-# fuzzy-clock: Add fuzzy-clock.h + fuzzy-clock.c -> fuzzy-clock.o
-platform-objs-y += ../../src/fuzzy-clock.o
-# fuzzy-clock
+# clock: Add clock.h + clock.c -> clock.o
+platform-objs-y += ../../src/clock.o
+# clock
 
 platform-objs-y += ../../src/sha3/sha3.o
 platform-objs-y += ../../src/ed25519/fe.o

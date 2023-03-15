@@ -25,11 +25,10 @@
 #include <sbi_utils/reset/fdt_reset.h>
 #include "sm.h"
 
-// management-core
 #include "sbi/sbi_console.h"
 #include "sbi/sbi_timer.h"
 #include "cpu.h"
-#include "fuzzy-clock.h"
+#include "clock.h"
 
 /* List of platform override modules generated at compile time */
 extern const struct platform_override *platform_override_modules[];

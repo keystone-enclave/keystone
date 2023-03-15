@@ -24,9 +24,6 @@
 #define KEYSTONE_IOC_UTM_INIT \
   _IOR(KEYSTONE_IOC_MAGIC, 0x07, struct keystone_ioctl_create_enclave)
 
-// #define KEYSTONE_IOC_START_MGMT_CORE \
-//   _IOR(KEYSTONE_IOC_MAGIC, 0x08, struct keystone_ioctl_create_enclave)
-
 #define KEYSTONE_IOC_START_MGMT_CORE \
   _IO(KEYSTONE_IOC_MAGIC, 0x08)
 
@@ -68,6 +65,8 @@ struct keystone_ioctl_create_enclave {
 
   // Runtime Parameters
   struct runtime_params_t params;
+
+  uint64_t security_extensions;
 };
 
 struct keystone_ioctl_run_enclave {

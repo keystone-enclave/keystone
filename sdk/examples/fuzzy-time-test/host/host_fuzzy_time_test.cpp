@@ -15,7 +15,10 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-uint64_t* run_trial(char** argv);
+#define TRIAL_COUNT 3
+
+void run_trials(char** argv, int trial_count, bool is_fuzzy_on);
+uint64_t* run_trial(char** argv, bool is_fuzzy_on);
 void spy(void* start_flag, void* target, uint64_t loop_counts[], int expected_writes);
 bool test_basic_functionality(void* start_flag, void* expected_dest);
 
@@ -25,10 +28,18 @@ void print_string_wrapper(void* buffer);
 
 int
 main(int argc, char** argv) {
-  for (int i = 0; i < 5; i++) {
-    cout << "TRIAL " << i << endl;
+  run_trials(argv, TRIAL_COUNT, false);
+  run_trials(argv, TRIAL_COUNT, true);
+}
+
+void run_trials(char** argv, int trial_count, bool is_fuzzy_on) {
+  cout << "============================" << endl;
+  cout << (is_fuzzy_on ? "FUZZY CLOCK ENABLED" : "FUZZY CLOCK DISABLED") << endl;
+  cout << "============================" << endl;
+  for (int i = 0; i < trial_count; i++) {
+    cout << (is_fuzzy_on ? "FUZZY CLOCK ENABLED" : "FUZZY CLOCK DISABLED") << (" TRIAL ") << i << endl;
     cout << "-------------------------------------------------" << endl;
-    uint64_t* spy_out = run_trial(argv);
+    uint64_t* spy_out = run_trial(argv, is_fuzzy_on);
   
     for (int i = 0; i < EXPECTED_WRITES; i++) {
       cout << "Loop " << i << ": " << spy_out[i] << " loops" << endl;
@@ -39,13 +50,15 @@ main(int argc, char** argv) {
   }
 }
 
-uint64_t* run_trial(char** argv) {
+uint64_t* run_trial(char** argv, bool is_fuzzy_on) {
   uint64_t* spy_out = (uint64_t*)mmap(NULL, sizeof(uint64_t) * EXPECTED_WRITES, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
   Keystone::Enclave enclave;
   Keystone::Params params;
   params.setFreeMemSize(1024 * 1024);
   params.setUntrustedMem(DEFAULT_UNTRUSTED_PTR, 1024 * 1024);
+  if (is_fuzzy_on)
+    params.enableSecurityExtensions(SECURITY_EXTENSION_FUZZY_CLOCK);
   enclave.init(argv[1], argv[2], params);
   enclave.registerOcallDispatch(incoming_call_dispatch);
   /* We must specifically register functions we want to export to the
@@ -58,7 +71,7 @@ uint64_t* run_trial(char** argv) {
 
   int fork_result = fork();
   if (fork_result == -1) {
-    cout << "!!! FORK FAILED !!!" << endl;
+    printf("!!! FORK FAILED !!!\n");
     while (1);
   }
   
@@ -86,6 +99,7 @@ uint64_t* run_trial(char** argv) {
 
     printf("!!! Host proc running on CPU %d\n", sched_getcpu());
     enclave.run();
+    // sleep(10000);
     return spy_out;
   }
 }

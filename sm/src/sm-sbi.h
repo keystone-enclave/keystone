@@ -39,15 +39,15 @@ sbi_sm_random();
 unsigned long
 sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1);
 
-// management-core/fuzzy-clock
+// management-core/clock
 unsigned long
-sbi_sm_reg_clock_ipi();
+sbi_sm_get_is_clock_fuzzy();
 
 unsigned long
 sbi_sm_start_management_core();
-// management-core/fuzzy-clock
+// management-core/clock
 
-// fuzzy-clock
+// clock
 unsigned long
 sbi_sm_pause(struct sbi_trap_regs *regs);
 
@@ -61,6 +61,6 @@ sbi_sm_get_time(struct sbi_trap_regs *regs);
 // Gets the length of an interval in terms of ticks
 unsigned long
 sbi_sm_get_interval_len(struct sbi_trap_regs *regs);
-// fuzzy-clock
+// clock
 
 #endif

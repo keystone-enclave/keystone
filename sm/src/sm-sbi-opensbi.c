@@ -13,7 +13,7 @@
 #include "sm-sbi.h"
 #include "sm.h"
 #include "cpu.h"
-#include "fuzzy-clock.h"
+#include "clock.h"
 
 // TODO(chungmcl): For debugging with sbi_timer(); remove when done
 #include <sbi/sbi_timer.h>
@@ -77,29 +77,25 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
     case SBI_SM_START_MGMT_CORE:
       retval = sbi_sm_start_management_core();
       break;
-    case SBI_SM_REG_CLOCK_IPI:
-      retval = sbi_sm_reg_clock_ipi();
-      break;
     // management-core
 
-    // fuzzy-clock
+    // clock
+    case SBI_SM_GET_IS_CLOCK_FUZZY:
+      retval = sbi_sm_get_is_clock_fuzzy();
+      break;
     case SBI_SM_PAUSE:
       retval = sbi_sm_pause((struct sbi_trap_regs*) regs);
       break;
     case SBI_SM_PAUSE_MS:
       retval = sbi_sm_pause_ms((struct sbi_trap_regs*)regs, regs->a0);
     case SBI_SM_GET_TIME:
-      // TODO(chungmcl): modify to return with reg a1 instead of a0 (retval)
-      // so we don't overflow a0 and make keystone think we're returning
-      // an error
-      // retval = 0;
-      // a1 = sbi_sm_get_time((struct sbi_trap_regs*) regs);
+      // time value returned via regs->a2
       retval = sbi_sm_get_time((struct sbi_trap_regs*) regs);
       break;
     case SBI_SM_GET_INTERVAL_LEN:
       retval = sbi_sm_get_interval_len((struct sbi_trap_regs*) regs);
       break;
-    // fuzzy-clock
+    // clock
 
     case SBI_SM_CALL_PLUGIN:
       retval = sbi_sm_call_plugin(regs->a0, regs->a1, regs->a2, regs->a3);
