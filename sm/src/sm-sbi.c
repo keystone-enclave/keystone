@@ -120,15 +120,15 @@ unsigned long sbi_sm_register_handler(uintptr_t handler){
     return ret;
 }
 
-unsigned long sbi_sm_share_region(uintptr_t addr, size_t size) {
+unsigned long sbi_sm_share_region(uintptr_t addr, size_t size, enclave_id with) {
   unsigned long ret;
-  ret = share_region(addr, size, cpu_get_enclave_id());
+  ret = share_region(addr, size, with, cpu_get_enclave_id());
   return ret;
 }
 
-unsigned long sbi_sm_unshare_region(uintptr_t addr) {
+unsigned long sbi_sm_unshare_region(uintptr_t addr, enclave_id with) {
     unsigned long ret;
-    ret = unshare_region(addr, cpu_get_enclave_id());
+    ret = unshare_region(addr, with, cpu_get_enclave_id());
     return ret;
 }
 

@@ -46,12 +46,12 @@ int register_handler(uintptr_t argbuf, int arglen, uintptr_t arglock) {
   return SYSCALL_3(RUNTIME_SYSCALL_REGISTER_HANDLER, argbuf, arglen, arglock);
 }
 
-int share_region(uintptr_t addr, size_t size) {
-  return SYSCALL_2(RUNTIME_SYSCALL_SHARE_REGION, addr, size);
+int share_region(uintptr_t addr, size_t size, int with) {
+  return SYSCALL_3(RUNTIME_SYSCALL_SHARE_REGION, addr, size, with);
 }
 
-int unshare_region(uintptr_t addr) {
-  return SYSCALL_1(RUNTIME_SYSCALL_UNSHARE_REGION, addr);
+int unshare_region(uintptr_t addr, int with) {
+  return SYSCALL_2(RUNTIME_SYSCALL_UNSHARE_REGION, addr, with);
 }
 
 int yield_thread() {

@@ -96,11 +96,11 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
     }
 
     // Also enable any caller-exported regions
-    if(eid != called_eid) {
-      if(enclaves[eid].regions[memid].type == REGION_EXPORTED) {
-        pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_ALL_PERM);
-      }
-    }
+//    if(eid != called_eid) {
+//      if(enclaves[eid].regions[memid].type == REGION_EXPORTED) {
+//        pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_ALL_PERM);
+//      }
+//    }
   }
 
   // ensure nonsecure-only devices are unmapped
@@ -132,11 +132,11 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     }
 
     // Also disable any caller-exported regions
-    if(eid != called_eid) {
-      if(enclaves[eid].regions[memid].type == REGION_EXPORTED) {
-        pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
-      }
-    }
+//    if(eid != called_eid) {
+//      if(enclaves[eid].regions[memid].type == REGION_EXPORTED) {
+//        pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
+//      }
+//    }
   }
   osm_pmp_set(PMP_ALL_PERM);
 
@@ -905,7 +905,7 @@ unsigned long register_handler(uintptr_t handler, enclave_id eid)
   return ret;
 }
 
-unsigned long share_region(uintptr_t addr, size_t size, enclave_id eid)
+unsigned long share_region(uintptr_t addr, size_t size, enclave_id with, enclave_id eid)
 {
   bool done = false;
   int i, free = -1, epm = -1, ret = SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
@@ -920,7 +920,7 @@ unsigned long share_region(uintptr_t addr, size_t size, enclave_id eid)
     if(enclaves[eid].regions[i].type == REGION_EPM) {
       epm = i;
     }
-    else if(enclaves[eid].regions[i].type == REGION_INVALID) {
+    else if(enclaves[with].regions[i].type == REGION_INVALID) {
       free = i;
     }
 
@@ -955,8 +955,8 @@ unsigned long share_region(uintptr_t addr, size_t size, enclave_id eid)
       ret = SBI_ERR_SM_ENCLAVE_PMP_FAILURE;
     } else {
       spin_lock(&encl_lock);
-      enclaves[eid].regions[free].type = REGION_EXPORTED;
-      enclaves[eid].regions[free].pmp_rid = rid;
+      enclaves[with].regions[free].type = REGION_EXPORTED;
+      enclaves[with].regions[free].pmp_rid = rid;
       spin_unlock(&encl_lock);
 
       // Disable this new region globally, but enable it locally since we
@@ -970,7 +970,7 @@ unsigned long share_region(uintptr_t addr, size_t size, enclave_id eid)
   return ret;
 }
 
-unsigned long unshare_region(uintptr_t addr, enclave_id eid) {
+unsigned long unshare_region(uintptr_t addr, enclave_id with, enclave_id eid) {
     int i, rid = -1, ret = SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
     bool done = false;
 
@@ -978,19 +978,23 @@ unsigned long unshare_region(uintptr_t addr, enclave_id eid) {
 
     // Find the region to unshare
     for(i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
-        if(enclaves[eid].regions[i].type == REGION_EXPORTED)  {
-            rid = enclaves[eid].regions[i].pmp_rid;
+        if(enclaves[with].regions[i].type == REGION_EXPORTED)  {
+            rid = enclaves[with].regions[i].pmp_rid;
             if(pmp_region_get_addr(rid) == addr) {
                 break;
             } else rid = -1;
         }
     }
 
-    spin_unlock(&encl_lock);
+    // Go ahead and deregister this from the callee enclave
     if(rid < 0) {
         done = true;
+    } else {
+        enclaves[with].regions[i].type = REGION_INVALID;
+        enclaves[with].regions[i].pmp_rid = 0;
     }
 
+    spin_unlock(&encl_lock);
     if(!done) {
         // Disable access to this region everywhere
         pmp_set_global(rid, PMP_NO_PERM);
@@ -998,11 +1002,6 @@ unsigned long unshare_region(uintptr_t addr, enclave_id eid) {
         if(pmp_region_subregion_free_atomic(rid)) {
             ret = SBI_ERR_SM_ENCLAVE_PMP_FAILURE;
         } else {
-            spin_lock(&encl_lock);
-            enclaves[eid].regions[i].type = REGION_INVALID;
-            enclaves[eid].regions[i].pmp_rid = 0;
-            spin_unlock(&encl_lock);
-
             ret = SBI_ERR_SM_ENCLAVE_SUCCESS;
         }
     }

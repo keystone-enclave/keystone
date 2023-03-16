@@ -158,8 +158,8 @@ unsigned long release_mmio(uintptr_t dev_string, enclave_id eid);
 unsigned long call_enclave(struct sbi_trap_regs *regs, enclave_id from, enclave_id to, int type);
 unsigned long ret_enclave(struct sbi_trap_regs *regs);
 unsigned long register_handler(uintptr_t handler, enclave_id eid);
-unsigned long share_region(uintptr_t addr, size_t size, enclave_id eid);
-unsigned long unshare_region(uintptr_t addr, enclave_id eid);
+unsigned long share_region(uintptr_t addr, size_t size, enclave_id with, enclave_id eid);
+unsigned long unshare_region(uintptr_t addr, enclave_id with, enclave_id eid);
 
 // interrupt handlers
 void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs);

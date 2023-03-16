@@ -43,9 +43,9 @@ sbi_register_handler(uintptr_t handler);
 #endif
 
 uintptr_t
-sbi_share_region(uintptr_t addr, size_t size);
+sbi_share_region(uintptr_t addr, size_t size, int with);
 
 uintptr_t
-sbi_unshare_region(uintptr_t addr);
+sbi_unshare_region(uintptr_t addr, int with);
 
 #endif

@@ -60,8 +60,8 @@ get_sealing_key(
 int claim_mmio(const char *devname, size_t namelen);
 int release_mmio(const char *devname, size_t namelen);
 int register_handler(uintptr_t argbuf, int arglen, uintptr_t arglock);
-int share_region(uintptr_t addr, size_t size);
-int unshare_region(uintptr_t addr);
+int share_region(uintptr_t addr, size_t size, int with);
+int unshare_region(uintptr_t addr, int with);
 
 int yield_thread();
 uintptr_t translate(uintptr_t va);

@@ -271,11 +271,11 @@ void handle_syscall(struct encl_ctx* ctx)
 #endif // USE_CALLEE
 
   case(RUNTIME_SYSCALL_SHARE_REGION):
-    ret = sbi_share_region(translate(arg0), arg1);
+    ret = sbi_share_region(translate(arg0), arg1, arg2);
     break;
 
   case(RUNTIME_SYSCALL_UNSHARE_REGION):
-    ret = sbi_unshare_region(translate(arg0));
+    ret = sbi_unshare_region(translate(arg0), arg1);
     break;
 
   case(RUNTIME_SYSCALL_YIELD_MAIN_THREAD):
