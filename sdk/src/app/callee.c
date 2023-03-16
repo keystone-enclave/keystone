@@ -13,19 +13,65 @@
 /*******************************/
 
 #define MAX_CALLEE_THREADS  8
+typedef int (called_function_t)(void *);
 static struct tinfo {
   int tid;
   call_type_t type;
   pthread_t handle;
-  int (*fn)(void *);
+  called_function_t*fn;
 } callee_threadinfo[MAX_CALLEE_THREADS];
 
 static pthread_attr_t callee_attrs;
 
-
 #define MAX_ARGUMENTS   5
-static uint64_t argbuf[MAX_ARGUMENTS];
-static pthread_spinlock_t arglock;
+static uint64_t argbuf[MAX_ARGUMENTS], asyncbuf[MAX_ARGUMENTS];
+static pthread_spinlock_t arglock, asynclock;
+bool async_running, async_ready;
+
+called_function_t* map_exported_function(uint64_t args[MAX_ARGUMENTS]) {
+  int (*fn)(void *) = (void *) map(args[1], args[2], args[3]);
+  if(!fn) {
+    return NULL;
+  }
+
+  if((uintptr_t) fn != args[3]) {
+    // Function was mapped to the wrong address
+    unmap((uintptr_t) fn, args[2]);
+    return NULL;
+  }
+
+  return fn;
+}
+
+__attribute__((noreturn)) void catch_async_threads() {
+  pthread_spin_init(&asynclock, PTHREAD_PROCESS_PRIVATE);
+
+  uint64_t call_args[MAX_ARGUMENTS];
+  called_function_t *fn;
+  async_running = false;
+  async_ready = false;
+
+  while(1) {
+    pthread_spin_lock(&asynclock);
+
+    if(async_ready) {
+      memcpy(call_args, asyncbuf, sizeof(asyncbuf));
+      memset(asyncbuf, 0, sizeof(asyncbuf));
+
+      fn = map_exported_function(call_args);
+      if(fn) {
+        async_ready = false;
+        async_running = true;
+        pthread_spin_unlock(&asynclock);
+
+        fn((void *) call_args[4]);
+        unmap(call_args[3], call_args[2]);
+      }
+    } else {
+      pthread_spin_unlock(&asynclock);
+    }
+  }
+}
 
 void *dispatch_callee_handler(void *arg) {
   int fn_ret;
@@ -33,7 +79,7 @@ void *dispatch_callee_handler(void *arg) {
   call_type_t call_type;
 
   struct tinfo *tinfo = arg;
-  int (*fn)(void *) = tinfo->fn;
+  called_function_t*fn = tinfo->fn;
 
   // Pull arguments from stack
   memcpy(call_args, argbuf, sizeof(argbuf));
@@ -62,21 +108,27 @@ void *dispatch_callee_handler(void *arg) {
     // 2. Indicate existing eapp space somehow? Library functionality
     // 3. Call into the specified function
     case CALL_MAPPED:
-      fn = (void *) map(call_args[1], call_args[2], call_args[3]);
-      if(!fn) {
+      fn = map_exported_function(call_args);
+      if(fn) {
+        fn_ret = fn((void*) call_args[4]);
+        unmap(call_args[3], call_args[2]);
+      } else {
         fn_ret = -ENOMEM;
-        goto __done;
+      }
+      break;
+
+    case CALL_MAPPED_ASYNC:
+      pthread_spin_lock(&asynclock);
+
+      if(!async_ready) {
+        memcpy(asyncbuf, call_args, sizeof(asyncbuf));
+        async_ready = true;
+        fn_ret = 0;
+      } else {
+        fn_ret = -EBUSY;
       }
 
-      if((uintptr_t) fn != call_args[3]) {
-        // Function was mapped to the wrong address
-        unmap((uintptr_t) fn, call_args[2]);
-        fn_ret = -EFAULT;
-        goto __done;
-      }
-
-      fn_ret = fn((void*) call_args[4]);
-      unmap(call_args[3], call_args[2]);
+      pthread_spin_unlock(&asynclock);
       break;
 
     default:
@@ -98,7 +150,7 @@ __done:
   return (void *) (uintptr_t) fn_ret;
 }
 
-int spawn_callee_handler(int (*fn) (void *), call_type_t type) {
+int spawn_callee_handler(called_function_t*fn, call_type_t type) {
   int i, ret = -1;
 
   // For functions called in the receiver, we need to ensure that
@@ -107,7 +159,7 @@ int spawn_callee_handler(int (*fn) (void *), call_type_t type) {
   // we will manually map it then.
 
   if((type == CALL_RECEIVER && !fn) ||
-      (type == CALL_MAPPED && fn)) {
+      ((type == CALL_MAPPED || type == CALL_MAPPED_ASYNC) && fn)) {
     return -1;
   }
 

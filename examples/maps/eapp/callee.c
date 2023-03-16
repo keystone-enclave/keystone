@@ -30,7 +30,9 @@ int main()
     return -1;
   }
 
-  while(1) {
-    yield_thread();
-  }
+//  while(1) {
+//    yield_thread();
+//  }
+
+  catch_async_threads();
 }
