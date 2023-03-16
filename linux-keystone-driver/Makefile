@@ -25,4 +25,4 @@ default:
 endif
 
 clean:
-	rm -rvf *.o *.ko *.order *.symvers *.mod.c .tmp_versions .*o.cmd
+	rm -rvf *.o *.ko *.order *.symvers *.mod.c .tmp_versions .*o.cmd .*.cmd *.mod
