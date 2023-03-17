@@ -42,6 +42,10 @@ rt_option(ENV_SETUP "Set up stack environments like glibc expects" OFF)
 rt_option(INTERNAL_STRACE "Debug syscalls" OFF)
 rt_option(DEBUG "Enable debugging" OFF)
 
+if(DEFINED EYRIE_SRCDIR)
+    add_compile_options(-fdebug-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=${EYRIE_SRCDIR})
+endif()
+
 include_directories($ENV{KEYSTONE_SDK_DIR}/include/edge)
 include_directories(tmplib)
 include_directories(include)
