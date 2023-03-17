@@ -40,7 +40,7 @@ int epm_init(struct epm* epm, unsigned int min_pages)
   count = 0x1 << order;
 
   /* prevent kernel from complaining about an invalid argument */
-  if (order <= MAX_ORDER)
+  if (order < MAX_ORDER)
     epm_vaddr = (vaddr_t) __get_free_pages(GFP_HIGHUSER, order);
 
 #ifdef CONFIG_CMA
