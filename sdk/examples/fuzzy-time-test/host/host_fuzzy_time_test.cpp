@@ -72,12 +72,17 @@ uint64_t* run_trial(char** argv, bool is_fuzzy_on) {
   int fork_result = fork();
   if (fork_result == -1) {
     printf("!!! FORK FAILED !!!\n");
-    while (1);
+    printf("!!! errno: %d\n", errno);
+    while (1) { };
   }
   
   if (fork_result == 0) {
     cpu_set_t aset; CPU_ZERO(&aset); CPU_SET(1, &aset);
-    sched_setaffinity(0, sizeof(cpu_set_t), &aset);
+    int set_affinity_result = sched_setaffinity(0, sizeof(cpu_set_t), &aset);
+    if (set_affinity_result != 0) {
+      printf("!!! Spy proc failed to set affinity!\n");
+    }
+    
     printf("!!! Spy proc running on CPU %d\n", sched_getcpu());
 
     test_basic_functionality(
@@ -94,8 +99,11 @@ uint64_t* run_trial(char** argv, bool is_fuzzy_on) {
 
     sleep(99999);
   } else {
-    cpu_set_t aset; CPU_ZERO(&aset);CPU_SET(2, &aset);
-    sched_setaffinity(0, sizeof(cpu_set_t), &aset);
+    cpu_set_t aset; CPU_ZERO(&aset); CPU_SET(2, &aset);
+    int set_affinity_result = sched_setaffinity(0, sizeof(cpu_set_t), &aset);
+    if (set_affinity_result != 0) {
+      printf("!!! Host proc failed to set affinity!\n");
+    }
 
     printf("!!! Host proc running on CPU %d\n", sched_getcpu());
     enclave.run();

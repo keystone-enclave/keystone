@@ -93,7 +93,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
   // Disables context switching by disabling the timer interrupt
   // bit (MTIP) in the MIE control and status register
   csr_clear(CSR_MIE, MIP_MTIP);
-  sbi_printf("switch_to_enclave on core %d\n", current_hartid());
+  sbi_printf("context_switch_to_enclave() on core %d\n", current_hartid());
 
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));

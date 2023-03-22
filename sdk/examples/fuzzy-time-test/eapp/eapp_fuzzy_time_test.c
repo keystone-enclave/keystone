@@ -13,6 +13,7 @@ int main() {
   // Basic functionality tests
   int start_flag = 0;
   while (start_flag == 0) {
+    // door stucc
     copy_from_shared(&start_flag, START_FLAG_OFFSET_ONE, sizeof(char));
   }
   char* uw = UW;
