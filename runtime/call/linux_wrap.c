@@ -170,11 +170,17 @@ uintptr_t syscall_brk(void* addr){
   uintptr_t req_break = (uintptr_t)addr;
 
   uintptr_t current_break = get_program_break();
-  uintptr_t ret = current_break;
+  uintptr_t ret;
   int req_page_count = 0;
 
   // Return current break if null or current break
-  if( req_break == 0  || req_break <= current_break){
+  if (req_break == 0) {
+    ret = current_break;
+    goto done;
+  }
+
+  if(req_break <= current_break){
+    ret = req_break;
     goto done;
   }
 
@@ -196,7 +202,7 @@ uintptr_t syscall_brk(void* addr){
   }
 
   // Success
-  set_program_break(req_break);
+  set_program_break(PAGE_UP(req_break));
   ret = req_break;
 
 
