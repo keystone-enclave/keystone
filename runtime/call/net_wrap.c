@@ -280,6 +280,9 @@ uintptr_t io_syscall_getsockname(int sockfd, uintptr_t addr,
   size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_getsockname);
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
+  copy_to_user((void *) addr, &args->addr, args->addrlen);
+  copy_to_user((void *) addrlen, &args->addrlen, sizeof(socklen_t));
+
   print_strace("[runtime] proxied getsockname: fd: %d, ret: %d\r\n", args->sockfd, ret);
   return ret;
 }
