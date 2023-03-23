@@ -80,6 +80,17 @@ macro(add_files FILE_LIST DIRWORK)
   endforeach()
 endmacro()
 
+macro(get_runtime_dir var)
+  get_filename_component(SRCDIR ${CMAKE_SOURCE_DIR} NAME)
+  if(${SRCDIR} STREQUAL "sdk")
+    get_filename_component(${var} ../runtime REALPATH BASE_DIR "${CMAKE_SOURCE_DIR}")
+  elseif(${SRCDIR} STREQUAL "keystone")
+    get_filename_component(${var} ./runtime REALPATH BASE_DIR "${CMAKE_SOURCE_DIR}")
+  else()
+    message(FATAL_ERROR "Don't know how to find runtime from current directory" ${SRCDIR})
+  endif()
+endmacro()
+
 # CMake macro for Eyrie runtime and Keystone Package
 macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   set(runtime_prefix runtime)
@@ -95,19 +106,12 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   list(APPEND PLUGIN_FLAGS "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
   list(APPEND PLUGIN_FLAGS "-DCMAKE_OBJCOPY=${CMAKE_OBJCOPY}")
 
-  get_filename_component(SRCDIR ${CMAKE_SOURCE_DIR} NAME)
-  if(${SRCDIR} STREQUAL "sdk")
-    set(EYRIE_SRCDIR ${CMAKE_SOURCE_DIR}/../runtime)
-  elseif(${SRCDIR} STREQUAL "keystone")
-    set(EYRIE_SRCDIR ${CMAKE_SOURCE_DIR}/runtime)
-  else()
-    message(FATAL_ERROR "Don't know how to find runtime from current directory" ${SRCDIR})
-  endif()
+  get_runtime_dir(EYRIE_SRCDIR)
 
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
     DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${EYRIE_SRCDIR} ${eyrie_src}
-    CMAKE_ARGS "${PLUGIN_FLAGS}"
+    CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${EYRIE_SRCDIR}
     BUILD_IN_SOURCE TRUE
     BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
     INSTALL_COMMAND "")
