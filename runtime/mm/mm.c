@@ -87,7 +87,7 @@ alloc_page(uintptr_t vpn, int flags)
   }
 
 	/* otherwise, allocate one from the freemem */
-  page = spa_get();
+  page = spa_get_zero();
   assert(page);
 
   *pte = pte_create(ppn(__pa(page)), flags | PTE_V);
