@@ -186,20 +186,36 @@ Enclave::init(
     destroy();
     return Error::DeviceError;
   }
-//  if (!mapUntrusted(params.getUntrustedSize())) {
-//    ERROR(
-//        "failed to finalize enclave - cannot obtain the untrusted buffer "
-//        "pointer \n");
-//    destroy();
-//    return Error::DeviceMemoryMapError;
-//  }
-//  //}
+  if (!mapUntrusted(params.getUntrustedSize())) {
+    ERROR(
+        "failed to finalize enclave - cannot obtain the untrusted buffer "
+        "pointer \n");
+    destroy();
+    return Error::DeviceMemoryMapError;
+  }
 
   /* ELF files are no longer needed */
   delete enclaveFile;
   delete runtimeFile;
   delete loaderFile;
   return Error::Success;
+}
+
+bool
+Enclave::mapUntrusted(size_t size) {
+  if (size == 0) {
+    return true;
+  }
+
+  shared_buffer = pDevice->map(0, size);
+
+  if (shared_buffer == NULL) {
+    return false;
+  }
+
+  shared_buffer_size = size;
+
+  return true;
 }
 
 Error
