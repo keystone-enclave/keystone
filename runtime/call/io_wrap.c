@@ -124,7 +124,7 @@ uintptr_t io_syscall_read(int fd, void* buf, size_t len){
   copy_to_user(buf, args->buf, ret > len? len: ret);
 
  done:
-  print_strace("[runtime] proxied read (size: %lu) = %li\r\n",len, ret);
+  print_strace("[runtime] proxied read from %i (size: %lu) = %li\r\n",fd, len, ret);
   return ret;
 }
 
@@ -160,7 +160,7 @@ uintptr_t io_syscall_write(int fd, void* buf, size_t len){
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
  done:
-  print_strace("[runtime] proxied write (size: %lu) = %li\r\n",len, ret);
+  print_strace("[runtime] proxied write to %i (size: %lu) = %li\r\n",fd, len, ret);
   return ret;
 }
 
