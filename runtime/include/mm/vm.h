@@ -85,5 +85,4 @@ extern size_t freemem_size;
 extern uintptr_t shared_buffer;
 extern uintptr_t shared_buffer_size;
 
-
 #endif

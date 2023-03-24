@@ -15,12 +15,17 @@
 #define RUNTIME_SYSCALL_SHAREDCOPY          1002
 #define RUNTIME_SYSCALL_ATTEST_ENCLAVE      1003
 #define RUNTIME_SYSCALL_GET_SEALING_KEY     1004
+
+#define RUNTIME_SYSCALL_SHARED_WRITE        1005
+#define RUNTIME_SYSCALL_PAUSE_MS            1006
+#define RUNTIME_SYSCALL_PRINT_TIME          1008
+
 #define RUNTIME_SYSCALL_EXIT                1101
 
-void handle_syscall(struct encl_ctx* ctx);
+void handle_syscall(struct encl_ctx* ctx); // (3), (4) [dispatch_edgecall_ocall() above handle_syscall() @ :64]
 void init_edge_internals(void);
 uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr,
-                                    size_t data_len);
+                                    size_t data_len, bool pause);
 
 // Define this to enable printing of a large amount of syscall information
 //#define USE_INTERNAL_STRACE 1
@@ -32,3 +37,4 @@ uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr,
 #endif
 
 #endif /* syscall.h */
+

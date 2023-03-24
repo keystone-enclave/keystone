@@ -1,5 +1,5 @@
 #include "call/sbi.h"
-
+#include "fuzzy_buff.h"
 #include "mm/vm_defs.h"
 
 #define SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE 0x08424b45
@@ -40,15 +40,50 @@ sbi_set_timer(uint64_t stime_value) {
 #endif
 }
 
+// fuzzy time / management core
+uintptr_t
+sbi_get_is_clock_fuzzy() {
+  return SBI_CALL_0(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_GET_IS_CLOCK_FUZZY);
+}
+
+uintptr_t
+sbi_pause() {
+  return SBI_CALL_0(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_PAUSE);
+}
+
+uintptr_t
+sbi_pause_ms(unsigned long ms) {
+  return SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_PAUSE_MS, ms);
+}
+
+unsigned long
+sbi_get_time() {
+  SBI_CALL_0(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_GET_TIME);
+  register uintptr_t a2 __asm__("a2");
+  return (unsigned long)a2;
+}
+
+unsigned long
+sbi_get_interval_len() {
+  return SBI_CALL_0(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_GET_INTERVAL_LEN);
+}
+
 uintptr_t
 sbi_stop_enclave(uint64_t request) {
+  if (use_fuzzy_buff) {
+    fuzzy_buff_flush();
+  }
   return SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_STOP_ENCLAVE, request);
 }
 
 void
 sbi_exit_enclave(uint64_t retval) {
+  if (use_fuzzy_buff) {
+    fuzzy_buff_flush();
+  }
   SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_EXIT_ENCLAVE, retval);
 }
+// fuzzy time / management core
 
 uintptr_t
 sbi_random() {
