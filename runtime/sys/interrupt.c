@@ -8,7 +8,7 @@
 #include "sys/interrupt.h"
 #include "util/printf.h"
 #include <asm/csr.h>
-#include "fuzzy_buff.h"
+#include "sys/fuzzy_buff.h"
 
 #define DEFAULT_CLOCK_DELAY 10000
 #include "syscall.h" // for debugging w/ print_strace() calls

@@ -11,7 +11,7 @@
 #include "uaccess.h"
 #include "mm/mm.h"
 #include "util/rt_util.h"
-#include "fuzzy_buff.h"
+#include "sys/fuzzy_buff.h" // TODO(chungmcl): adjust location of files
 
 #include "call/syscall_nums.h"
 
@@ -155,24 +155,24 @@ uintptr_t handle_copy_from_shared(void* dst, uintptr_t offset, size_t size){
 void handle_print_time() {
   // 1000 takes about 12 real time seconds
   // 2000 takes about 22 real time seconds
-  int DATA_POINTS = 2000;
-  int data[DATA_POINTS];
-
-  for (int i = 0; i < DATA_POINTS; i++) {
-    int prev_time = sbi_get_time();
-    int time      = prev_time;
-    int j         = 0;
-    while (time == prev_time) {
-      j += 1;
-      prev_time = time;
-      time = sbi_get_time();
-    }
-    data[i] = j;
-  }
-
-  for (int i = 0; i < DATA_POINTS; i++) {
-    print_strace("%d\n", data[i]);
-  }
+  // int DATA_POINTS = 2000;
+  // int data[DATA_POINTS];
+  // 
+  // for (int i = 0; i < DATA_POINTS; i++) {
+  //   int prev_time = sbi_get_time();
+  //   int time      = prev_time;
+  //   int j         = 0;
+  //   while (time == prev_time) {
+  //     j += 1;
+  //     prev_time = time;
+  //     time = sbi_get_time();
+  //   }
+  //   data[i] = j;
+  // }
+  // 
+  // for (int i = 0; i < DATA_POINTS; i++) {
+  //   print_strace("%d\n", data[i]);
+  // }
 }
 
 // TODO(chungmcl): syscall to copy/write to shared memory

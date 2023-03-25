@@ -10,7 +10,7 @@
 #include "mm/mm.h"
 #include "sys/env.h"
 #include "mm/paging.h"
-#include "fuzzy_buff.h"
+#include "sys/fuzzy_buff.h"
 
 /* defined in vm.h */
 extern uintptr_t shared_buffer;

@@ -1,5 +1,5 @@
 #include "call/sbi.h"
-#include "fuzzy_buff.h"
+#include "sys/fuzzy_buff.h" // TODO(chungmcl): adjust location of files
 #include "mm/vm_defs.h"
 
 #define SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE 0x08424b45

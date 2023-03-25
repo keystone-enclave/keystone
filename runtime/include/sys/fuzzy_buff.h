@@ -1,7 +1,8 @@
 #ifndef __FUZZY_BUFF_H__
 #define __FUZZY_BUFF_H__
 
-#include "vm.h"
+#include "mm/vm.h"
+
 
 // Whether or not the fuzzy buff is enabled.
 // Set at runtime boot.

@@ -10,7 +10,7 @@ set(package_script "./run.sh")
 if(RISCV32)
   set(eyrie_plugins "rv32 freemem")
 else()
-  set(eyrie_plugins "freemem strace_debug")
+  set(eyrie_plugins "freemem internal_strace")
 endif()
 
 # eapp
@@ -39,7 +39,6 @@ target_include_directories(${host_bin}
 
 set(eyrie_files_to_copy .options_log eyrie-rt)
 add_eyrie_runtime(${eapp_bin}-eyrie
-  "origin/chungmcl"
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 

@@ -1,9 +1,9 @@
-#include "fuzzy_buff.h"
+#include "sys/fuzzy_buff.h"
 #include "string.h"  // for memcpy()
-#include "vm.h"
-#include "mm.h"
+#include "mm/vm.h" 
+#include "mm/mm.h" 
 
-#include "syscall.h" // for debugging w/ print_strace() calls
+#include "call/syscall.h" // for debugging w/ print_strace() calls
 
 bool use_fuzzy_buff;
 
@@ -16,9 +16,9 @@ buff_entry* head;
 buff_entry* tail;
 
 bool fuzzy_buff_init() {
+  print_strace("fuzzy_buff_init !!!!\n");
   /* initialize timing buffer memory */
   // size of page defined by RISCV_PAGE_SIZE in vm_defs.h
-
   uintptr_t starting_vpn = vpn(EYRIE_ANON_REGION_START);
   int pte_flags = PTE_R | PTE_W | PTE_D | PTE_A;
   uintptr_t valid_pages;
