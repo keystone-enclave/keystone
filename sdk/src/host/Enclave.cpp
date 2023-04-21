@@ -92,7 +92,7 @@ Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
       memcpy(page, (const void*) filePtr + bytesWritten, (size_t)(bytesToWrite));
-      pMemory->writeMem(filePtr + bytesWritten, currOffset, bytesToWrite);
+      pMemory->writeMem(page, currOffset, bytesToWrite);
     } else {
 		  pMemory->writeMem(filePtr + bytesWritten, currOffset, bytesToWrite);
     }
