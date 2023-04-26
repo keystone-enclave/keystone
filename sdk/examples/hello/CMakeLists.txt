@@ -34,7 +34,7 @@ add_eyrie_runtime(${eapp_bin}-eyrie
 
 set(loader_files_to_copy loader.bin)
 add_loader(${eapp_bin}-loader
-  "1ed2b55fa0bf70067e7ad578affc5b49badbdb20"
+  "dev-page-tables"
   ${loader_files_to_copy})
 
 # add target for packaging (see keystone.cmake)
