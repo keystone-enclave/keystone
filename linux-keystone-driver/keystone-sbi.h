@@ -13,6 +13,8 @@
 #define SBI_SM_DESTROY_ENCLAVE  2002
 #define SBI_SM_RUN_ENCLAVE      2003
 #define SBI_SM_RESUME_ENCLAVE   2005
+#define SBI_SM_CREATE_LIBRARY_ENCLAVE 2006
+#define SBI_SM_DESTROY_LIBRARY_ENCLAVE 2007
 
 
 struct keystone_sbi_pregion_t
@@ -34,10 +36,14 @@ struct keystone_sbi_create_t
 
   // Parameters
   struct runtime_params_t params;
+
+  char library_name[256]; // TODO: define somewhere
 };
 
 struct sbiret sbi_sm_create_enclave(struct keystone_sbi_create_t* args);
+struct sbiret sbi_sm_create_library_enclave(struct keystone_sbi_create_t* args);
 struct sbiret sbi_sm_destroy_enclave(unsigned long eid);
+struct sbiret sbi_sm_destroy_library_enclave(unsigned long eid);
 struct sbiret sbi_sm_run_enclave(unsigned long eid);
 struct sbiret sbi_sm_resume_enclave(unsigned long eid);
 

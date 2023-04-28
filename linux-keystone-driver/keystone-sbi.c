@@ -6,6 +6,12 @@ struct sbiret sbi_sm_create_enclave(struct keystone_sbi_create_t* args) {
       (unsigned long) args, 0, 0, 0, 0, 0);
 }
 
+struct sbiret sbi_sm_create_library_enclave(struct keystone_sbi_create_t* args) {
+  return sbi_ecall(KEYSTONE_SBI_EXT_ID,
+      SBI_SM_CREATE_LIBRARY_ENCLAVE,
+      (unsigned long) args, 0, 0, 0, 0, 0);
+}
+
 struct sbiret sbi_sm_run_enclave(unsigned long eid) {
   return sbi_ecall(KEYSTONE_SBI_EXT_ID,
       SBI_SM_RUN_ENCLAVE,
@@ -15,6 +21,12 @@ struct sbiret sbi_sm_run_enclave(unsigned long eid) {
 struct sbiret sbi_sm_destroy_enclave(unsigned long eid) {
   return sbi_ecall(KEYSTONE_SBI_EXT_ID,
       SBI_SM_DESTROY_ENCLAVE,
+      eid, 0, 0, 0, 0, 0);
+}
+
+struct sbiret sbi_sm_destroy_library_enclave(unsigned long eid) {
+  return sbi_ecall(KEYSTONE_SBI_EXT_ID,
+      SBI_SM_DESTROY_LIBRARY_ENCLAVE,
       eid, 0, 0, 0, 0, 0);
 }
 

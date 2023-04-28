@@ -23,10 +23,12 @@ class ElfFile {
   ~ElfFile();
   size_t getFileSize() { return fileSize; }
   bool isValid();
+  void* getPtr() { return ptr; }
 
   uintptr_t getMinVaddr() { return minVaddr; }
   size_t getTotalMemorySize() { return maxVaddr - minVaddr; }
   bool initialize(bool isRuntime);
+  bool parseElf(bool isRuntime);
 
   unsigned int getPageMode() { return (isRuntime ? RT_FULL : USER_FULL); }
 

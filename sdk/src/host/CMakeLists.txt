@@ -11,6 +11,7 @@ set(SOURCE_FILES
   ElfFile.cpp
   KeystoneDevice.cpp
   Enclave.cpp
+  LibraryEnclave.cpp
   Memory.cpp
   PhysicalEnclaveMemory.cpp
   SimulatedEnclaveMemory.cpp
