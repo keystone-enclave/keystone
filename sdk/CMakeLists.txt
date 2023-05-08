@@ -1,7 +1,7 @@
+cmake_minimum_required(VERSION 3.10)
+project(keystone_sdk C CXX ASM)
 include(macros.cmake)
 
-cmake_minimum_required(VERSION 3.10)
-enable_language(C CXX ASM)
 #-------------------------------------------------------------------------------
 # BASIC SETUP
 #-------------------------------------------------------------------------------
