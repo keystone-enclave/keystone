@@ -12,9 +12,9 @@ Ubuntu
   sudo apt install autoconf automake autotools-dev bc \
   bison build-essential curl expat libexpat1-dev flex gawk gcc git \
   gperf libgmp-dev libmpc-dev libmpfr-dev libtool texinfo tmux \
-  patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python \
+  patchutils zlib1g-dev wget bzip2 patch vim-common lbzip2 python3 \
   pkg-config libglib2.0-dev libpixman-1-dev libssl-dev screen \
-  device-tree-compiler expect makeself unzip cpio rsync cmake p7zip-full
+  device-tree-compiler expect makeself unzip cpio rsync cmake ninja-build p7zip-full
 
 .. note::
   You need Git version >= 2.11.0 to use ``./fast-setup.sh``, because the script uses
@@ -28,4 +28,3 @@ In order to use the Rust version of the security monitor (only available for 0.X
   rustup +nightly component add rust-src
   rustup +nightly target add riscv64gc-unknown-none-elf
   cargo +nightly install cargo-xbuild
-
