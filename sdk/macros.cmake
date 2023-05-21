@@ -86,7 +86,7 @@ macro(get_runtime_dir var)
   elseif("${PROJECT_NAME}" STREQUAL "keystone")
     get_filename_component(${var} ./runtime REALPATH BASE_DIR "${CMAKE_SOURCE_DIR}")
   else()
-    message(FATAL_ERROR "Don't know how to find runtime from current directory" ${SRCDIR})
+    message(FATAL_ERROR "Don't know how to find runtime from current directory" "${CMAKE_SOURCE_DIR}")
   endif()
 endmacro()
 
