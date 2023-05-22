@@ -166,15 +166,8 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
 ## component: bootrom
 ###############################################################################
 
-add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
-add_custom_target("bootrom-sync" DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
-  COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
-add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
-  COMMAND $(MAKE) -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA} mabi=${ABI} CC=riscv${BITS}-unknown-elf-gcc
-    OBJCOPY=riscv${BITS}-unknown-elf-objcopy
-  COMMENT "Building bootrom"
-)
-
+file(MAKE_DIRECTORY ${bootrom_wrkdir})
+add_subdirectory(${bootrom_srcdir}) # consider adding build files to bootrom_wrkdir 
 
 ###############################################################################
 ## COMPONENT: linux kernel
