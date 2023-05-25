@@ -17,6 +17,14 @@ macro(add_patch submodule patch working_directory patch_list)
   list(APPEND ${patch_list} ${patch}.applied)
 endmacro()
 
+function(create_directory directory)
+  add_custom_command(
+    OUTPUT "${directory}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${directory}"
+    COMMENT "Creating directory ${directory}"
+  )
+endfunction(create_directory)  
+
 ###############################################################################
 ## CONFIGURATION/VARIABLES
 ###############################################################################
@@ -58,19 +66,23 @@ set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
+create_directory(${bootrom_wrkdir})
 
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
 set(sm_wrkdir "${CMAKE_BINARY_DIR}/sm.build")
-file(MAKE_DIRECTORY sm_wrkdir)
+create_directory(${sm_wrkdir})
 
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
 set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
+create_directory(${buildroot_wrkdir})
+
 set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
+create_directory(${overlay_dir})
 
 if(firesim)
   message(STATUS "Using Linux defconfig: ${linux_defconfig}")
@@ -95,16 +107,18 @@ endif()
 
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 set(linux_wrkdir "${CMAKE_BINARY_DIR}/linux.build")
-
 file(MAKE_DIRECTORY ${linux_wrkdir})
 
 set(linux_symvers ${linux_wrkdir}/Modules.symvers)
 set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
+
 set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
 set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
+
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
+file(MAKE_DIRECTORY ${initramfs_sysroot})
 
 
 ###############################################################################
@@ -132,7 +146,7 @@ add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
 ## COMPONENT: buildroot
 ###############################################################################
 
-file(MAKE_DIRECTORY ${overlay_dir})
+
 #add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
 add_custom_command(DEPENDS ${overlay_dir}
   OUTPUT ${overlay_root}
@@ -144,7 +158,6 @@ add_custom_command(DEPENDS ${overlay_dir}
   COMMAND cp ${overlay_root}/.ssh/id_rsa.pub ${overlay_root}/.ssh/authorized_keys)
 
 #add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
-file(MAKE_DIRECTORY ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
   COMMENT "Building buildroot"
@@ -165,7 +178,6 @@ add_custom_command(DEPENDS ${buildroot_config} ${buildroot_wrkdir} OUTPUT ${buil
 ###############################################################################
 
 #add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
-file(MAKE_DIRECTORY ${bootrom_wrkdir})
 add_custom_target("bootrom-sync" DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
   COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
 add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
@@ -200,7 +212,7 @@ if(initramfs)
   string(STRIP ${uid} uid)
   execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
   string(STRIP ${gid} gid)
-  file(MAKE_DIRECTORY ${initramfs_sysroot})
+
   #add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
   add_custom_command(OUTPUT ${linux_image} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
     COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
