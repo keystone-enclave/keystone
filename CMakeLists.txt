@@ -61,7 +61,8 @@ set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
-mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
+file(MAKE_DIRECTORY sm_wrkdir)
+# mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
 set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
@@ -241,7 +242,7 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 ###############################################################################
 
 add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
-add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
+add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
   CROSS_COMPILE=riscv${BITS}-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
