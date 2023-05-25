@@ -63,7 +63,7 @@ set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
-set(sm_wrkdir "${CMAKE_BINARY_DIR/sm.build")
+set(sm_wrkdir "${CMAKE_BINARY_DIR}/sm.build")
 file(MAKE_DIRECTORY sm_wrkdir)
 
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
