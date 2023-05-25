@@ -107,19 +107,19 @@ endif()
 
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
 set(linux_wrkdir "${CMAKE_BINARY_DIR}/linux.build")
-file(MAKE_DIRECTORY ${linux_wrkdir})
+create_directory(${linux_wrkdir})
 
 set(linux_symvers ${linux_wrkdir}/Modules.symvers)
 set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
+create_directory(${driver_wrkdir})
 
 set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
 set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
 
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
-file(MAKE_DIRECTORY ${initramfs_sysroot})
-
+create_directory(${linux_wrkdir})
 
 ###############################################################################
 ## COMPONENT: QEMU
@@ -244,7 +244,6 @@ add_custom_target("linux" ALL DEPENDS ${linux_image})
 ###############################################################################
 
 #add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
-file(MAKE_DIRECTORY ${driver_wrkdir})
 add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
 	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
 add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync"
@@ -299,7 +298,7 @@ add_custom_target("patch" DEPENDS ${qemu_patches} ${linux_patches} ${sm_patches}
 ###############################################################################
 
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
-file(MAKE_DIRECTORY ${scripts})
+create_directory(${scripts})
 #add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
 # if initramfs is false, we need to tell qemu where to find the block device
