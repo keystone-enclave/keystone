@@ -58,11 +58,14 @@ set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
+
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
+
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
+set(sm_wrkdir "${CMAKE_BINARY_DIR/sm.build")
 file(MAKE_DIRECTORY sm_wrkdir)
-# mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
+
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
 set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
@@ -91,7 +94,7 @@ if(NOT DEFINED linux_defconfig)
 endif()
 
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
-set(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
+set(linux_wrkdir "${CMAKE_BINARY_DIR}/linux.build")
 
 file(MAKE_DIRECTORY ${linux_wrkdir})
 
