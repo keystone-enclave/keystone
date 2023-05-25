@@ -100,7 +100,10 @@ if(NOT DEFINED linux_defconfig)
 endif()
 
 set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
-mkdir(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
+set(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
+
+file(MAKE_DIRECTORY ${linux_wrkdir})
+
 set(linux_symvers ${linux_wrkdir}/Modules.symvers)
 set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
@@ -135,7 +138,8 @@ add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
 ## COMPONENT: buildroot
 ###############################################################################
 
-add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
+file(MAKE_DIRECTORY ${overlay_dir})
+#add_custom_command(OUTPUT ${overlay_dir} COMMAND mkdir -p ${overlay_dir})
 add_custom_command(DEPENDS ${overlay_dir}
   OUTPUT ${overlay_root}
   ${overlay_root}/.ssh/id_rsa ${overlay_root}/.ssh/id_rsa.pub
@@ -145,15 +149,15 @@ add_custom_command(DEPENDS ${overlay_dir}
   COMMAND ssh-keygen -C 'root@keystone' -t rsa -f ${overlay_root}/.ssh/id_rsa -N ''
   COMMAND cp ${overlay_root}/.ssh/id_rsa.pub ${overlay_root}/.ssh/authorized_keys)
 
-add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
+#add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
+file(MAKE_DIRECTORY ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
   COMMENT "Building buildroot"
 )
 
 string(REPLACE "/" "\\/" overlay_dir_stripped ${overlay_dir})
-add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.config
-  COMMAND mkdir -p ${buildroot_wrkdir}
+add_custom_command(DEPENDS ${buildroot_config} ${buildroot_wrkdir} OUTPUT ${buildroot_wrkdir}/.config
   COMMAND cp ${buildroot_config} ${buildroot_wrkdir}/.config
   COMMAND sed \"s/^BR2_ROOTFS_OVERLAY=.*/BR2_ROOTFS_OVERLAY=\\\"${overlay_dir_stripped}\\\"/g\" -i ${buildroot_wrkdir}/.config
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH}
@@ -166,7 +170,8 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
 ## component: bootrom
 ###############################################################################
 
-add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
+#add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
+file(MAKE_DIRECTORY ${bootrom_wrkdir})
 add_custom_target("bootrom-sync" DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
   COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
 add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
@@ -180,7 +185,7 @@ add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "boo
 ## COMPONENT: linux kernel
 ###############################################################################
 
-add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
+add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir}
   COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
   COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv olddefconfig
   COMMENT "Configuring linux"
@@ -286,7 +291,8 @@ add_custom_target("patch" DEPENDS ${qemu_patches} ${linux_patches} ${sm_patches}
 ###############################################################################
 
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
-add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
+file(MAKE_DIRECTORY ${scripts})
+#add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
 # if initramfs is false, we need to tell qemu where to find the block device
 if(initramfs)
