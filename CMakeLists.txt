@@ -200,7 +200,8 @@ if(initramfs)
   string(STRIP ${uid} uid)
   execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
   string(STRIP ${gid} gid)
-  add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
+  file(MAKE_DIRECTORY ${initramfs_sysroot})
+  #add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
   add_custom_command(OUTPUT ${linux_image} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
     COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
     COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
@@ -230,7 +231,8 @@ add_custom_target("linux" ALL DEPENDS ${linux_image})
 ## COMPONENT: linux driver
 ###############################################################################
 
-add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
+#add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
+file(MAKE_DIRECTORY ${driver_wrkdir})
 add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
 	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
 add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync"
