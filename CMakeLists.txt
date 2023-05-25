@@ -17,16 +17,6 @@ macro(add_patch submodule patch working_directory patch_list)
   list(APPEND ${patch_list} ${patch}.applied)
 endmacro()
 
-macro(mkdir name dir)
-  add_custom_command(OUTPUT ${dir}/.exists
-    COMMAND mkdir -p ${dir}
-    COMMAND touch ${dir}/.exists
-  )
-  set(${name} ${dir})
-  set(${name}_exists ${dir}/.exists)
-endmacro()
-
-
 ###############################################################################
 ## CONFIGURATION/VARIABLES
 ###############################################################################
