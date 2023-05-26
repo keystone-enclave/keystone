@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
+
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/riscv-toolchain.cmake)
+message(STATUS "Loading toolchain file ${CMAKE_CURRENT_LIST_FILE}")
+message(STATUS "Building for ${BITS}-bit RISC-V (riscv${BITS} toolchain)")
+
 project(keystone C)
 include(ProcessorCount)
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -60,23 +65,25 @@ if((CMAKE_BUILD_TYPE MATCHES "Debug") OR (CMAKE_BUILD_TYPE MATCHES
   set(CFLAGS -g)
 endif()
 
-set(RISCV32
-    OFF
-    CACHE BOOL "Build in 32-bit mode")
-if(RISCV32)
-  message(STATUS "riscv32")
-  set(BITS 32)
-  set(ABI ilp32d)
-else()
-  message(STATUS "riscv64")
-  set(BITS 64)
-  set(ABI lp64d)
-endif()
+##########################################
+# set(RISCV32				 #
+#     OFF				 #
+#     CACHE BOOL "Build in 32-bit mode") #
+# if(RISCV32)				 #
+#   message(STATUS "riscv32")		 #
+#   set(BITS 32)			 #
+#   set(ABI ilp32d)			 #
+# else()				 #
+#   message(STATUS "riscv64")		 #
+#   set(BITS 64)			 #
+#   set(ABI lp64d)			 #
+# endif()				 #
+##########################################
 
-set(ISA rv${BITS}imafdc)
+#set(ISA rv${BITS}imafdc)
 set(confdir ${CMAKE_SOURCE_DIR}/conf)
 set(patchdir ${CMAKE_SOURCE_DIR}/patches)
-set(cross_compile riscv${BITS}-unknown-linux-gnu-)
+#set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
