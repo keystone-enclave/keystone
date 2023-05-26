@@ -187,7 +187,7 @@ add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "boo
 ###############################################################################
 
 add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir}
-  COMMAND ${CMAKE_COMMAND} ${linux_defconfig} ${linux_wrkdir}/.config
+  COMMAND ${CMAKE_COMMAND} -E copy ${linux_defconfig} ${linux_wrkdir}/.config
   COMMAND ${CMAKE_MAKE_PROGRAM} -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv olddefconfig
   COMMENT "Configuring linux"
 )
