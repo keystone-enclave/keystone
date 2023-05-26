@@ -204,19 +204,21 @@ add_custom_command(
 # COMPONENT: bootrom
 # -------------------------------------------------------------------------------
 
-add_custom_target(
-  "bootrom-sync"
-  DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
-  COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
+add_subdirectory(${bootrom_srcdir})
 
-add_custom_target(
-  "bootrom" ALL
-  DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
-  COMMAND
-    ${CMAKE_MAKE_PROGRAM} -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA}
-    mabi=${ABI} CC=riscv${BITS}-unknown-elf-gcc
-    OBJCOPY=riscv${BITS}-unknown-elf-objcopy
-  COMMENT "Building bootrom")
+#add_custom_target(
+#  "bootrom-sync"
+#  DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
+#  COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
+
+#add_custom_target(
+#  "bootrom" ALL
+#  DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
+#  COMMAND
+#    ${CMAKE_MAKE_PROGRAM} -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA}
+#    mabi=${ABI} CC=riscv${BITS}-unknown-elf-gcc
+#    OBJCOPY=riscv${BITS}-unknown-elf-objcopy
+#  COMMENT "Building bootrom")
 
 # -------------------------------------------------------------------------------
 # COMPONENT: linux kernel
