@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
+# The toolchain file must be set before `project()` is called. 
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/riscv-toolchain.cmake)
-message(STATUS "Loading toolchain file ${CMAKE_CURRENT_LIST_FILE}")
+message(STATUS "Loading toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 message(STATUS "Building for ${BITS}-bit RISC-V (riscv${BITS} toolchain)")
 
 project(keystone C)
@@ -12,7 +13,6 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 # MACROS
 # -------------------------------------------------------------------------------
 
-# add patch macro
 macro(add_patch submodule patch working_directory patch_list)
   add_custom_command(
     OUTPUT ${patch}.applied
@@ -87,7 +87,8 @@ set(patchdir ${CMAKE_SOURCE_DIR}/patches)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
-create_directory(${bootrom_wrkdir})
+# We create the directory ${bootrom_wrkdir} in bootrom/CMakeLists.txt as custom
+# commands are scoped to the file in which they are created. 
 
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)

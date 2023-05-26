@@ -58,6 +58,8 @@ target_sources(
 # endif()										 #
 ##########################################################################################
 
+create_directory(${bootrom_wrkdir})
+
 add_custom_target(
   "${PROJECT_NAME}-objcopy" ALL
   DEPENDS ${bootrom_wrkdir} ${PROJECT_NAME}
