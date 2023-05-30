@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-# The toolchain file must be set before `project()` is called. 
+# The toolchain file must be set before `project()` is called.
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/riscv-toolchain.cmake)
 message(STATUS "Loading toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 message(STATUS "Building for ${BITS}-bit RISC-V (riscv${BITS} toolchain)")
@@ -65,30 +65,14 @@ if((CMAKE_BUILD_TYPE MATCHES "Debug") OR (CMAKE_BUILD_TYPE MATCHES
   set(CFLAGS -g)
 endif()
 
-##########################################
-# set(RISCV32				 #
-#     OFF				 #
-#     CACHE BOOL "Build in 32-bit mode") #
-# if(RISCV32)				 #
-#   message(STATUS "riscv32")		 #
-#   set(BITS 32)			 #
-#   set(ABI ilp32d)			 #
-# else()				 #
-#   message(STATUS "riscv64")		 #
-#   set(BITS 64)			 #
-#   set(ABI lp64d)			 #
-# endif()				 #
-##########################################
-
-#set(ISA rv${BITS}imafdc)
 set(confdir ${CMAKE_SOURCE_DIR}/conf)
 set(patchdir ${CMAKE_SOURCE_DIR}/patches)
-#set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
+
 # We create the directory ${bootrom_wrkdir} in bootrom/CMakeLists.txt as custom
-# commands are scoped to the file in which they are created. 
+# commands are scoped to the file in which they are created.
 
 set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
 set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
@@ -177,14 +161,6 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy ${overlay_root}/.ssh/id_rsa.pub
           ${overlay_root}/.ssh/authorized_keys)
 
-add_custom_target(
-  "buildroot" ALL
-  DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root}
-          ${buildroot_wrkdir}
-  COMMAND ${CMAKE_MAKE_PROGRAM} -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV}
-          PATH=$ENV{PATH} O=${buildroot_wrkdir}
-  COMMENT "Building buildroot")
-
 string(REPLACE "/" "\\/" overlay_dir_stripped ${overlay_dir})
 add_custom_command(
   DEPENDS ${buildroot_config} ${buildroot_wrkdir}
@@ -201,25 +177,24 @@ add_custom_command(
     olddefconfig
   COMMENT "Configuring buildroot (overlay = ${overlay_dir})")
 
+set(buildroot_done_flag ${buildroot_wrkdir}/.buildroot_done)
+
+add_custom_command(
+  DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root}
+          ${buildroot_wrkdir}
+  OUTPUT ${buildroot_done_flag}
+  COMMAND ${CMAKE_MAKE_PROGAM} -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV}
+          PATH=$ENV{PATH} O=${buildroot_wrkdir}
+  COMMAND ${CMAKE_COMMAND} -E touch ${buildroot_done_flag}
+  COMMENT "Building buildroot")
+
+add_custom_target("buildroot" ALL DEPENDS ${buildroot_done_flag})
+
 # -------------------------------------------------------------------------------
 # COMPONENT: bootrom
 # -------------------------------------------------------------------------------
 
 add_subdirectory(${bootrom_srcdir})
-
-#add_custom_target(
-#  "bootrom-sync"
-#  DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
-#  COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
-
-#add_custom_target(
-#  "bootrom" ALL
-#  DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
-#  COMMAND
-#    ${CMAKE_MAKE_PROGRAM} -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA}
-#    mabi=${ABI} CC=riscv${BITS}-unknown-elf-gcc
-#    OBJCOPY=riscv${BITS}-unknown-elf-objcopy
-#  COMMENT "Building bootrom")
 
 # -------------------------------------------------------------------------------
 # COMPONENT: linux kernel
