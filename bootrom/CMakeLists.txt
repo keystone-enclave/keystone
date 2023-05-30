@@ -8,13 +8,12 @@ project(keystone_bootrom C ASM)
 # remove -rdynamic, which is unsupported by the compiler we're using.
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
-# Consider naming .elf for consistency with previous Makefile.
-# set(keystone_bootrom_exe "${PROJECT_NAME}.elf")
+set(bootrom_elf bootrom.elf)
 
-add_executable(${PROJECT_NAME})
+add_executable(${bootrom_elf})
 
 target_compile_options(
-  ${PROJECT_NAME}
+  ${bootrom_elf}
   PRIVATE -march=${ISA}
           -mcmodel=medany
           -mabi=${ABI}
@@ -26,16 +25,16 @@ target_compile_options(
 	  -w # Disable warnings for now
 	)
 
-target_link_options(${PROJECT_NAME} PRIVATE -nostdlib -nostartfiles -static
+target_link_options(${bootrom_elf} PRIVATE -nostdlib -nostartfiles -static
                     "SHELL:-T bootloader.lds")
 
-target_include_directories(${PROJECT_NAME}
+target_include_directories(${bootrom_elf}
                            PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_link_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_directories(${bootrom_elf} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_sources(
-  ${PROJECT_NAME}
+  ${bootrom_elf}
   PRIVATE bootloader.S
           bootloader.c
           sha3/sha3.c
@@ -60,9 +59,13 @@ target_sources(
 
 create_directory(${bootrom_wrkdir})
 
-add_custom_target(
-  "${PROJECT_NAME}-objcopy" ALL
-  DEPENDS ${bootrom_wrkdir} ${PROJECT_NAME}
+set(bootrom_bin ${bootrom_wrkdir}/bootrom.bin)
+
+add_custom_command(
+  DEPENDS ${bootrom_wrkdir} ${bootrom_elf}
+  OUTPUT ${bootrom_bin}
   COMMAND ${OBJCOPY} --output-target=binary --only-section=.text
-          $<TARGET_FILE:${PROJECT_NAME}> ${bootrom_wrkdir}/bootrom.bin
+  $<TARGET_FILE:${bootrom_elf}> ${bootrom_bin}
   COMMENT "Creating bootrom.bin from bootrom.elf")
+
+add_custom_target(${PROJECT_NAME} ALL DEPENDS ${bootrom_bin})
