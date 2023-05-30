@@ -45,18 +45,6 @@ target_sources(
           ed25519/sign.c
           ed25519/verify.c)
 
-##########################################################################################
-# check_symbol_exists(TEST_DEVICE_ROOT_KEY						 #
-#   "${CMAKE_CURRENT_SOURCE_DIR}/test_dev_key.h" USING_TEST_KEY)			 #
-# 											 #
-# message(WARNING "Looking in ${CMAKE_CURRENT_SOURCE_DIR}; result: '${USING_TEST_KEY}'") #
-# if(USING_TEST_KEY)									 #
-#   message(WARNING "Using TEST device root key. No integrity guarantee!")		 #
-# else()										 #
-#   message(WARNING "Test")								 #
-# endif()										 #
-##########################################################################################
-
 create_directory(${bootrom_wrkdir})
 
 set(bootrom_bin ${bootrom_wrkdir}/bootrom.bin)
