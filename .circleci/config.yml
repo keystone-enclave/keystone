@@ -65,11 +65,12 @@ jobs:
 
   update-dockerhub:
     docker:
-      - image: "circleci/python:3.7"
+      - image: "cimg/base:2022.09"
     working_directory: "~/project/keystone"
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           name: "Build and push Docker image"
           command: |
