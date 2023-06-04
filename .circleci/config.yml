@@ -62,9 +62,24 @@ commands:
           no-output-timeout: 120m
 
 jobs:
+
+  update-dockerhub:
+    docker:
+      - image: "circleci/python:3.7"
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: "Build and push Docker image"
+          command: |
+            docker login -u "$DOCKER_USERNAME" -p "$DOCKER_ACCESS_TOKEN"
+            docker build -t keystoneenclaveorg/keystone:citest --build-arg CHECKOUT=master . --platform linux/x86_64 -f Dockerfile.nobuild
+            docker push keystoneenclaveorg/keystone:citest
+
   ######################
   ## Full stack tests ##
   ######################
+
 
   build-and-test-rv64-qemu:
     executor: setup-rv64gc
@@ -262,3 +277,6 @@ workflows:
       - test:
           requires:
             - default-build
+  build-image-and-update-dockerhub:
+    jobs:
+      - update-dockerhub
