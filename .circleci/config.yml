@@ -66,13 +66,14 @@ jobs:
   update-dockerhub:
     docker:
       - image: "circleci/python:3.7"
-    working_directory: /keystone/docker
+    working_directory: "~/project/keystone"
     steps:
       - checkout
       - setup_remote_docker
       - run:
           name: "Build and push Docker image"
           command: |
+            cd "docker"
             docker login -u "$DOCKER_USERNAME" -p "$DOCKER_ACCESS_TOKEN"
             docker build -t keystoneenclaveorg/keystone:citest --build-arg CHECKOUT=master . --platform linux/x86_64 -f Dockerfile.nobuild
             docker push keystoneenclaveorg/keystone:citest
