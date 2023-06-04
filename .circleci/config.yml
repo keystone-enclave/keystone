@@ -282,33 +282,33 @@ workflows:
           tag: citest0 #init-rv64gc
           filters:
             branches:
-              only: master
+              only: dev-circle-ci
       - update-dockerhub-image:
           name: update-dockerhub-image-rv32
           dockerfile: Dockerfile.32.nobuild
           tag: citest1 # init-rv32gc
           filters:
             branches:
-              only: master
+              only: dev-circle-ci
       - update-dockerhub-image:
-          name: update-dockerhub-image-master
+          name: update-dockerhub-image-dev-circle-ci
           dockerfile: Dockerfile
           tag: citest2 #master
           filters:
             branches:
-              only: master
+              only: dev-circle-ci
       - build-and-test-rv64-qemu:
           requires:
             - update-dockerhub-image-rv64
           filters:
             branches:
-              only: master
+              only: dev-circle-ci
       - default-build:
           requires:
             - update-dockerhub-image-rv64
           filters:
             branches:
-              only: master
+              only: dev-circle-ci
       - use-freemem:
           requires:
             - default-build
@@ -336,11 +336,11 @@ workflows:
       - build-and-test-rv64-qemu:
           filters:
             branches:
-              ignore: master
+              ignore: dev-circle-ci
       - default-build:
           filters:
             branches:
-              ignore: master
+              ignore: dev-circle-ci
       - use-freemem:
           requires:
             - default-build
