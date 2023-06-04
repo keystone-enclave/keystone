@@ -271,7 +271,9 @@ jobs:
 #
 # We accomplish this by filtering by branch, but CircleCI only allows filtering
 # by job, so we have repetitions of `only: master` and `ignore: master` for
-# `master` and non-`master` branches, respectively. 
+# `master` and non-`master` branches, respectively. Also note that the `requires`
+# key can only refer to jobs in the same workflow. This is why jobs such as
+# `use-freemem` need to be duplicated in both workflows.
 workflows:
   # For the `master` branch only.
   update-dockerhub-then-build-and-test:
@@ -279,36 +281,36 @@ workflows:
       - update-dockerhub-image:
           name: update-dockerhub-image-rv64
           dockerfile: Dockerfile.nobuild
-          tag: citest0 #init-rv64gc
+          tag: init-rv64gc
           filters:
             branches:
-              only: dev-circle-ci
+              only: master
       - update-dockerhub-image:
           name: update-dockerhub-image-rv32
           dockerfile: Dockerfile.32.nobuild
-          tag: citest1 # init-rv32gc
+          tag: init-rv32gc
           filters:
             branches:
-              only: dev-circle-ci
+              only: master
       - update-dockerhub-image:
-          name: update-dockerhub-image-dev-circle-ci
+          name: update-dockerhub-image-master
           dockerfile: Dockerfile
-          tag: citest2 #master
+          tag: master
           filters:
             branches:
-              only: dev-circle-ci
+              only: master
       - build-and-test-rv64-qemu:
           requires:
             - update-dockerhub-image-rv64
           filters:
             branches:
-              only: dev-circle-ci
+              only: master
       - default-build:
           requires:
             - update-dockerhub-image-rv64
           filters:
             branches:
-              only: dev-circle-ci
+              only: master
       - use-freemem:
           requires:
             - default-build
@@ -336,11 +338,11 @@ workflows:
       - build-and-test-rv64-qemu:
           filters:
             branches:
-              ignore: dev-circle-ci
+              ignore: master
       - default-build:
           filters:
             branches:
-              ignore: dev-circle-ci
+              ignore: master
       - use-freemem:
           requires:
             - default-build
