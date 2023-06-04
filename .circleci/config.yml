@@ -63,7 +63,12 @@ commands:
 
 jobs:
 
-  update-dockerhub-rv64:
+  update-dockerhub-image:
+    parameters:
+      dockerfile:
+        type: string
+      tag:
+        type: string
     docker:
       - image: "cimg/base:2022.09"
     working_directory: "~/project/keystone"
@@ -78,12 +83,12 @@ jobs:
             echo "$DOCKER_ACCESS_TOKEN" | \
               docker login -u "$DOCKER_USERNAME" --password-stdin
             docker build \
-              -t keystoneenclaveorg/keystone:citest \
+              -t keystoneenclaveorg/keystone:<< parameters.tag >> \
               --build-arg CHECKOUT=master \
               . \
               --platform linux/x86_64 \
-              -f Dockerfile.nobuild
-            docker push keystoneenclaveorg/keystone:citest
+              -f << parameters.dockerfile >>
+            docker push keystoneenclaveorg/keystone:<< parameters.tag >>
 
   ######################
   ## Full stack tests ##
@@ -287,4 +292,12 @@ workflows:
             - default-build
   build-image-and-update-dockerhub:
     jobs:
-      - update-dockerhub-rv64
+      - update-dockerhub-image:
+          dockerfile: Dockerfile.nobuild
+          tag: citest0
+      - update-dockerhub-image:
+          dockerfile: Dockerfile.32.nobuild
+          tag: citest1
+      - update-dockerhub-image:
+          dockerfile: Dockerfile
+          tag: citest2
