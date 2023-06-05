@@ -98,6 +98,16 @@ macro(get_runtime_dir var)
   endif()
 endmacro()
 
+macro(get_sdk_dir var)
+  if (DEFINED ENV{KEYSTONE_SDK})
+    set(${var} $ENV{KEYSTONE_SDK})
+  elseif (DEFINED KEYSTONE_SDK)
+    set(${var} ${KEYSTONE_SDK})
+  else()
+    message(FATAL_ERROR "Dont know how to find the SDK sources")
+  endif()
+endmacro()
+
 # CMake macro for Eyrie runtime and Keystone Package
 macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   set(runtime_prefix runtime)
