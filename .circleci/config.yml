@@ -77,6 +77,8 @@ jobs:
             if [ -n "$CIRCLE_PULL_REQUEST" ]; then
               tag="<< parameters.tag >>"
 
+              echo "Commit belongs to a PR, so building Docker image"
+
               docker build \
                 -t $tag \
                 --build-arg CHECKOUT=$CIRCLE_BRANCH \
@@ -86,17 +88,20 @@ jobs:
             else
               tag="keystoneenclaveorg/keystone:<< parameters.tag >>"
 
-
+              # In this case, we also need to run build! 
               if [ "$CIRCLE_BRANCH" == "master" ]; then
                 echo "$DOCKER_ACCESS_TOKEN" | \
                   docker login -u "$DOCKER_USERNAME" --password-stdin
                 docker push $tag
               fi
 
+              echo "Pulling $tag from Dockerhub"
+
               docker pull $tag
             fi
 
             if [ -n "<< parameters.runtime-build-name >>" ]; then
+              echo "Running generated script << parameters.runtime-build-name >>.sh"
               docker run -v $(pwd):/scripts $tag bash -c "/scripts/<< parameters.runtime-build-name>>.sh"
             else
               docker run $tag
