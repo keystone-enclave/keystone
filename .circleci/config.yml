@@ -302,7 +302,7 @@ workflows:
   use-page-hash:
     jobs:
       - run-docker-image:
-          dockerfile: Dockerfile.64.nobuild
+          dockerfile: Dockerfile.nobuild
           tag: "init-rv64gc"
           runtime-build-name: "USE_PAGE_HASH"
           runtime-build-dir: "build_paging_hash"
