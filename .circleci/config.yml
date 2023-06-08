@@ -27,8 +27,8 @@ commands:
             sed -e 's|__BUILD_DIR__|<< parameters.build-dir >>|g' \
                 -e 's|__BUILD_ARGS__|<< parameters.build-args >>|g' \
                 -e 's|__BRANCH__|$CIRCLE_BRANCH|g' \
-                .circleci/test-template.sh > << parameters.build-name>>.sh
-            chmod +x << parameters.build-name >>.sh
+                .circleci/test-template.sh > scripts/<< parameters.build-name >>.sh
+            chmod +x scripts/<< parameters.build-name >>.sh
   
   
   ######################
@@ -100,8 +100,10 @@ jobs:
               docker pull $tag
             fi
 
+            # Where is the script generated? Where is the `scripts` working directory generated? 
             if [ -n "<< parameters.runtime-build-name >>" ]; then
               echo "Running generated script << parameters.runtime-build-name >>.sh"
+              cat scripts/<< parameters.runtime-build-name >>.sh
               docker run -v $(pwd):/scripts $tag bash -c "/scripts/<< parameters.runtime-build-name>>.sh"
             else
               docker run $tag
