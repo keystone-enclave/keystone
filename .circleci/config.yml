@@ -87,7 +87,7 @@ jobs:
               tag="keystoneenclaveorg/keystone:<< parameters.tag >>"
 
 
-              if [ "$CIRCLE_BRANCH == "master" ]; then
+              if [ "$CIRCLE_BRANCH" == "master" ]; then
                 echo "$DOCKER_ACCESS_TOKEN" | \
                   docker login -u "$DOCKER_USERNAME" --password-stdin
                 docker push $tag
