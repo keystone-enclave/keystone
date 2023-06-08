@@ -76,23 +76,24 @@ jobs:
 
             if [ -n "$CIRCLE_PULL_REQUEST" ]; then
               tag="<< parameters.tag >>"
-              checkout_branch=$CIRCLE_BRANCH
+
+              docker build \
+                -t $tag \
+                --build-arg CHECKOUT=$CIRCLE_BRANCH \
+                . \
+                --platform linux/x86_64 \
+                -f << parameters.dockerfile >>
             else
-              echo "$DOCKER_ACCESS_TOKEN" | \
-              docker login -u "$DOCKER_USERNAME" --password-stdin
               tag="keystoneenclaveorg/keystone:<< parameters.tag >>"
-              checkout_branch="master"
-            fi
 
-            docker build \
-              -t $tag \
-              --build-arg CHECKOUT=$checkout_branch \
-              . \
-              --platform linux/x86_64 \
-              -f << parameters.dockerfile >>
 
-            if [ "$CIRCLE_BRANCH" == "master" ]; then
-              docker push $tag
+              if [ "$CIRCLE_BRANCH == "master" ]; then
+                echo "$DOCKER_ACCESS_TOKEN" | \
+                  docker login -u "$DOCKER_USERNAME" --password-stdin
+                docker push $tag
+              fi
+
+              docker pull $tag
             fi
 
             if [ -n "<< parameters.runtime-build-name >>" ]; then
