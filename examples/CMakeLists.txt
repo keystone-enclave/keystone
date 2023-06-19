@@ -1,6 +1,14 @@
-enable_language(C CXX ASM)
+cmake_minimum_required(VERSION 3.10)
+project(keystone_examples C CXX ASM)
 
-include(../macros.cmake)
+# check if SDK has been built and KEYSTONE_SDK_DIR environment variable exists
+if (NOT DEFINED ENV{KEYSTONE_SDK_DIR})
+  message(FATAL_ERROR "Please set KEYSTONE_SDK_DIR environment variable to an installed SDK path")
+endif()
+
+set(KEYSTONE_SDK_DIR $ENV{KEYSTONE_SDK_DIR})
+
+include(${KEYSTONE_SDK_DIR}/cmake/macros.cmake)
 include(ExternalProject)
 find_package(Git REQUIRED)
 
@@ -13,13 +21,6 @@ else()
 endif()
 
 use_riscv_toolchain(${BITS})
-
-# check if SDK has been built and KEYSTONE_SDK_DIR environment variable exists
-if (NOT DEFINED ENV{KEYSTONE_SDK_DIR})
-  message(FATAL_ERROR "Please set KEYSTONE_SDK_DIR environment variable to an installed SDK path")
-endif()
-
-set(KEYSTONE_SDK_DIR $ENV{KEYSTONE_SDK_DIR})
 
 # export include directory
 include_directories(AFTER ${KEYSTONE_SDK_DIR}/include)

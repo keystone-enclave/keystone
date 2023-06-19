@@ -258,7 +258,7 @@ add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WOR
 ## COMPONENT: tests
 ###############################################################################
 set(example_wrkdir examples)
-add_subdirectory(sdk/examples ${example_wrkdir})
+add_subdirectory(examples ${example_wrkdir})
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 
 add_custom_target("tests" DEPENDS examples)
