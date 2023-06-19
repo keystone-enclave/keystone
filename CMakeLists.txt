@@ -12,7 +12,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 macro(add_patch submodule patch working_directory patch_list)
   add_custom_command(OUTPUT ${patch}.applied
     WORKING_DIRECTORY ${working_directory}
-    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch} || true
+    COMMAND patch --forward -p1 < ${patchdir}/${submodule}/${patch} || true
     COMMAND touch ${CMAKE_BINARY_DIR}/${patch}.applied
     COMMENT "Applying ${patch}")
   list(APPEND ${patch_list} ${patch}.applied)
@@ -63,8 +63,8 @@ else()
 endif()
 
 set(ISA rv${BITS}imafdc)
-set(confdir ${CMAKE_SOURCE_DIR}/conf)
-set(patchdir ${CMAKE_SOURCE_DIR}/patches)
+set(confdir ${CMAKE_SOURCE_DIR}/overlays/keystone/configs)
+set(patchdir ${CMAKE_SOURCE_DIR}/overlays/keystone/patches)
 set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
@@ -78,6 +78,7 @@ set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
 set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
+set(external_dir ${CMAKE_SOURCE_DIR}/overlays)
 
 if(firesim)
   message(STATUS "Using Linux defconfig: ${linux_defconfig}")
@@ -148,7 +149,7 @@ add_custom_command(DEPENDS ${overlay_dir}
 
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir}
+  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
   COMMENT "Building buildroot"
 )
 
@@ -158,7 +159,7 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
   COMMAND cp ${buildroot_config} ${buildroot_wrkdir}/.config
   COMMAND sed \"s/^BR2_ROOTFS_OVERLAY=.*/BR2_ROOTFS_OVERLAY=\\\"${overlay_dir_stripped}\\\"/g\" -i ${buildroot_wrkdir}/.config
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH}
-    O=${buildroot_wrkdir} CROSS_COMPILE=${cross_compile} olddefconfig
+    O=${buildroot_wrkdir} CROSS_COMPILE=${cross_compile} BR2_EXTERNAL=${external_dir}/keystone olddefconfig
   COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
 )
 
@@ -187,14 +188,6 @@ add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${l
   COMMENT "Configuring linux"
 )
 add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
-
-# if(firesim)
-#   add_patch("linux" "linux${BITS}.firesim.patch" ${linux_srcdir} linux_patches)
-# elseif(sifive)
-#   add_patch("linux" "linux${BITS}.sifive.patch" ${linux_srcdir} linux_patches)
-# else()
-#   add_patch("linux" "linux${BITS}.patch" ${linux_srcdir} linux_patches)
-# endif()
 
 if(initramfs)
   # linux-initramfs
@@ -246,7 +239,7 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 ## COMPONENT: security monitor (sm)
 ###############################################################################
 
-add_patch("sm/opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
+add_patch("opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
 add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}

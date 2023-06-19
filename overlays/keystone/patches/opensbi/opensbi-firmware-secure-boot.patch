@@ -1,7 +1,7 @@
 diff --git firmware/fw_base.ldS firmware/fw_base.ldS
 index 0ac75f2..9aa9c1a 100644
---- firmware/fw_base.ldS
-+++ firmware/fw_base.ldS
+--- a/firmware/fw_base.ldS
++++ b/firmware/fw_base.ldS
 @@ -79,3 +79,39 @@
  	. = ALIGN(0x1000); /* Need this to create proper sections */
  
