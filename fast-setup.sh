@@ -66,9 +66,6 @@ fi
 if [ ! -e buildroot/.git ]; then
   git clone --shallow-since=2020-04-15 https://github.com/buildroot/buildroot.git buildroot
 fi
-if [ ! -e qemu/.git ]; then
-  git clone --shallow-since=2020-11-15 https://github.com/qemu/qemu.git qemu
-fi
 
 git submodule sync --recursive
 git submodule update --init --recursive
