@@ -69,8 +69,6 @@ set(cross_compile riscv${BITS}-unknown-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
-set(qemu_wrkdir ${CMAKE_SOURCE_DIR}/qemu/build)
-set(qemu_srcdir ${CMAKE_SOURCE_DIR}/qemu)
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
 mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
@@ -110,28 +108,6 @@ set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
 set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
 set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
-
-
-###############################################################################
-## COMPONENT: QEMU
-###############################################################################
-
-set(qemu_system ${qemu_wrkdir}/riscv${BITS}-softmmu/qemu-system-riscv${BITS})
-add_patch("qemu" "qemu-rom.patch" ${qemu_srcdir} qemu_patches)
-
-add_custom_target("qemu" ALL DEPENDS ${qemu_system})
-add_custom_command(OUTPUT ${qemu_system}
-  COMMAND $(MAKE) -C ${qemu_srcdir}
-  DEPENDS ${qemu_wrkdir}/config-host.mak
-  ${qemu_patches}
-  COMMENT "Building QEMU"
-)
-add_custom_command(OUTPUT ${qemu_wrkdir}/config-host.mak
-  WORKING_DIRECTORY ${qemu_srcdir}
-  COMMAND ./configure --target-list=riscv${BITS}-softmmu,riscv${BITS}-linux-user
-  COMMENT "Configuring QEMU"
-)
-
 
 ###############################################################################
 ## COMPONENT: buildroot
@@ -287,13 +263,14 @@ add_dependencies("buildroot" "image-deps")
 ###############################################################################
 ## PATCH
 ###############################################################################
-add_custom_target("patch" DEPENDS ${qemu_patches} ${linux_patches} ${sm_patches})
+add_custom_target("patch" DEPENDS ${linux_patches} ${sm_patches})
 
 ###############################################################################
 ## QEMU scripts
 ###############################################################################
 
 set(scripts ${CMAKE_BINARY_DIR}/scripts)
+set(qemu_system ${buildroot_wrkdir}/host/bin//qemu-system-riscv${BITS})
 add_custom_command(OUTPUT ${scripts} COMMAND mkdir -p ${scripts})
 
 # if initramfs is false, we need to tell qemu where to find the block device
