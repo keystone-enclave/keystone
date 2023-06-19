@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(keystone C)
 include(ProcessorCount)
+include(ExternalProject)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ###############################################################################
@@ -255,12 +256,26 @@ add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WOR
   )
 
 ###############################################################################
+## Component: SDK
+###############################################################################
+set(sdk_wrkdir sdk)
+ExternalProject_Add(sdk
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/sdk
+  DOWNLOAD_COMMAND ""
+)
+
+###############################################################################
 ## COMPONENT: tests
 ###############################################################################
 set(example_wrkdir examples)
-add_subdirectory(examples ${example_wrkdir})
+ExternalProject_Add(examples
+  DEPENDS sdk
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/examples
+  DOWNLOAD_COMMAND ""
+  BUILD_COMMAND make examples
+  INSTALL_COMMAND ""
+)
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
-
 add_custom_target("tests" DEPENDS examples)
 
 ###############################################################################
