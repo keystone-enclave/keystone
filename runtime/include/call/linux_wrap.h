@@ -19,6 +19,7 @@ uintptr_t linux_RET_BAD_wrap(unsigned long which);
 uintptr_t syscall_munmap(void *addr, size_t length);
 uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
                   int fd, __off_t offset);
+uintptr_t syscall_mprotect(void *addr, size_t len, int prot);
 uintptr_t syscall_brk(void* addr);
 #endif /* _LINUX_WRAP_H_ */
 #endif /* USE_LINUX_SYSCALL */

@@ -17,8 +17,8 @@ endmacro()
 ## Set up global options ##
 ###########################
 
-if(NOT DEFINED ENV{KEYSTONE_SDK_DIR})
-    message(FATAL_ERROR "Set KEYSTONE_SDK_DIR in environment")
+if(NOT DEFINED KEYSTONE_SDK_DIR)
+    message(FATAL_ERROR "Set KEYSTONE_SDK_DIR in configuration")
 endif()
 
 add_custom_target(options_log
@@ -46,7 +46,7 @@ if(DEFINED EYRIE_SRCDIR)
     add_compile_options(-fdebug-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=${EYRIE_SRCDIR})
 endif()
 
-include_directories($ENV{KEYSTONE_SDK_DIR}/include/edge)
+include_directories(${KEYSTONE_SDK_DIR}/include/edge)
 include_directories(tmplib)
 include_directories(include)
 

@@ -32,10 +32,6 @@ endmacro()
 ## CONFIGURATION/VARIABLES
 ###############################################################################
 
-if(NOT DEFINED ENV{RISCV})
-	message(FATAL_ERROR "set RISCV environment variable. \n Try `cd ${CMAKE_SOURCE_DIR}; source source.sh`")
-endif()
-
 set(USE_RUST_SM FALSE CACHE BOOL "Use Rust version of the security monitor.")
 set(SM_CONFIGURE_ARGS --enable-opt=2 CACHE STRING "Security Monitor configure script arguments")
 set(SM_PLATFORM "generic" CACHE STRING "Board name for SM hardware-specific functions")
@@ -62,10 +58,12 @@ else()
   set(ABI lp64d)
 endif()
 
+set(KEYSTONE_SDK_DIR ${CMAKE_SOURCE_DIR}/sdk/build${BITS})
+
 set(ISA rv${BITS}imafdc)
 set(confdir ${CMAKE_SOURCE_DIR}/overlays/keystone/configs)
 set(patchdir ${CMAKE_SOURCE_DIR}/overlays/keystone/patches)
-set(cross_compile riscv${BITS}-unknown-linux-gnu-)
+set(cross_compile riscv${BITS}-buildroot-linux-gnu-)
 
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
@@ -77,6 +75,7 @@ set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
 set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
 set(external_dir ${CMAKE_SOURCE_DIR}/overlays)
+set(toolchain_dir ${buildroot_wrkdir}/per-package/host-gcc-final/host/bin)
 
 if(firesim)
   message(STATUS "Using Linux defconfig: ${linux_defconfig}")
@@ -124,9 +123,14 @@ add_custom_command(DEPENDS ${overlay_dir}
   COMMAND cp ${overlay_root}/.ssh/id_rsa.pub ${overlay_root}/.ssh/authorized_keys)
 
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
-add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir}
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
+add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir} "buildroot_toolchain"
+  COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
   COMMENT "Building buildroot"
+)
+
+add_custom_target("buildroot_toolchain" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config
+  COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone toolchain
+  COMMENT "Building buildroot toolchain"
 )
 
 string(REPLACE "/" "\\/" overlay_dir_stripped ${overlay_dir})
@@ -134,8 +138,7 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
   COMMAND mkdir -p ${buildroot_wrkdir}
   COMMAND cp ${buildroot_config} ${buildroot_wrkdir}/.config
   COMMAND sed \"s/^BR2_ROOTFS_OVERLAY=.*/BR2_ROOTFS_OVERLAY=\\\"${overlay_dir_stripped}\\\"/g\" -i ${buildroot_wrkdir}/.config
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} RISCV=$ENV{RISCV} PATH=$ENV{PATH}
-    O=${buildroot_wrkdir} CROSS_COMPILE=${cross_compile} BR2_EXTERNAL=${external_dir}/keystone olddefconfig
+  COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone olddefconfig
   COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
 )
 
@@ -147,9 +150,9 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
 add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
 add_custom_target("bootrom-sync" DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
   COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
-add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync"
-  COMMAND $(MAKE) -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA} mabi=${ABI} CC=riscv${BITS}-unknown-elf-gcc
-    OBJCOPY=riscv${BITS}-unknown-elf-objcopy
+add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync" "buildroot_toolchain"
+  COMMAND $(MAKE) -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA} mabi=${ABI} PATH=${toolchain_dir}:$ENV{PATH}
+    CC=riscv${BITS}-buildroot-linux-gnu-gcc OBJCOPY=riscv${BITS}-buildroot-linux-gnu-objcopy
   COMMENT "Building bootrom"
 )
 
@@ -158,9 +161,10 @@ add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "boo
 ## COMPONENT: linux kernel
 ###############################################################################
 
-add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists}
+add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists} "buildroot_toolchain"
   COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv olddefconfig
+  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH}
+    CROSS_COMPILE=${cross_compile} ARCH=riscv olddefconfig
   COMMENT "Configuring linux"
 )
 add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
@@ -179,18 +183,19 @@ if(initramfs)
       O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
       CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
       CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
-      CROSS_COMPILE=${cross_compile} ARCH=riscv
+      PATH=${toolchain_dir}:$ENV{PATH} CROSS_COMPILE=${cross_compile} ARCH=riscv
     COMMENT "Building linux (initramfs)"
   )
 else()
   add_custom_command(OUTPUT ${linux_image} DEPENDS ${linux_srcdir} "linux-symvers"
-    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
+    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH} CROSS_COMPILE=${cross_compile} ARCH=riscv
     COMMENT "Building linux"
   )
 endif()
 
-add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config" ${linux_patches}
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv modules
+add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config" ${linux_patches} "buildroot_toolchain"
+  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH}
+    CROSS_COMPILE=${cross_compile} ARCH=riscv modules
   COMMENT "Building linux symvers"
 )
 add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
@@ -204,9 +209,9 @@ add_custom_target("linux" ALL DEPENDS ${linux_image})
 add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
 add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
 	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
-add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync"
-  COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    M=${driver_wrkdir} modules
+add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync" "buildroot_toolchain"
+  COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH}
+    CROSS_COMPILE=${cross_compile} ARCH=riscv M=${driver_wrkdir} modules
   COMMENT "Building driver"
 )
 
@@ -216,10 +221,11 @@ add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-s
 ###############################################################################
 
 add_patch("opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
-add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WORKING_DIRECTORY ${sm_wrkdir}
+add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} "buildroot_toolchain" WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
-  CROSS_COMPILE=riscv${BITS}-unknown-elf- FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
+  PATH=${toolchain_dir}:$ENV{PATH} CROSS_COMPILE=${cross_compile}
+  FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
   PLATFORM_RISCV_ISA=${ISA} PLATFORM_RISCV_ABI=${ABI}
   COMMENT "Building sm"
   )
@@ -229,17 +235,19 @@ add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} WOR
 ###############################################################################
 set(sdk_wrkdir sdk)
 ExternalProject_Add(sdk
+  DEPENDS "buildroot_toolchain"
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/sdk
+  CMAKE_ARGS -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR} -DPATH=${toolchain_dir}:$ENV{PATH}
   DOWNLOAD_COMMAND ""
 )
 
 ###############################################################################
 ## COMPONENT: tests
 ###############################################################################
-set(example_wrkdir examples)
 ExternalProject_Add(examples
   DEPENDS sdk
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/examples
+  CMAKE_ARGS -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR} -DPATH=${toolchain_dir}:$ENV{PATH}
   DOWNLOAD_COMMAND ""
   BUILD_COMMAND make examples
   INSTALL_COMMAND ""

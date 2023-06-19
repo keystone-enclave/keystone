@@ -1,12 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 project(keystone_examples C CXX ASM)
 
-# check if SDK has been built and KEYSTONE_SDK_DIR environment variable exists
-if (NOT DEFINED ENV{KEYSTONE_SDK_DIR})
-  message(FATAL_ERROR "Please set KEYSTONE_SDK_DIR environment variable to an installed SDK path")
+# check if SDK has been built and KEYSTONE_SDK_DIR configuration variable exists
+if (NOT DEFINED KEYSTONE_SDK_DIR)
+  message(FATAL_ERROR "Please set KEYSTONE_SDK_DIR configuration variable to an installed SDK path")
 endif()
 
-set(KEYSTONE_SDK_DIR $ENV{KEYSTONE_SDK_DIR})
+set(ENV{KEYSTONE_SDK_DIR} ${KEYSTONE_SDK_DIR})
+
+if (DEFINED PATH)
+  set(ENV{PATH} ${PATH})
+endif()
 
 include(${KEYSTONE_SDK_DIR}/cmake/macros.cmake)
 include(ExternalProject)
