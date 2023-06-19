@@ -7,9 +7,6 @@
 [submodule "linux"]
 	path = linux
 	url = https://github.com/torvalds/linux
-[submodule "qemu"]
-	path = qemu
-	url = https://github.com/qemu/qemu
 [submodule "opensbi"]
 	path = sm/opensbi
 	url = https://github.com/riscv/opensbi
