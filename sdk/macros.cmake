@@ -10,7 +10,7 @@ macro(global_set Name Value)
 endmacro()
 
 macro(use_riscv_toolchain bits)
-  set(cross_compile riscv${bits}-unknown-linux-gnu-)
+  set(cross_compile riscv${bits}-buildroot-linux-gnu-)
   execute_process(
     COMMAND which ${cross_compile}gcc
     OUTPUT_VARIABLE CROSSCOMPILE
@@ -21,7 +21,9 @@ macro(use_riscv_toolchain bits)
   endif()
 
   string(STRIP ${CROSSCOMPILE} CROSSCOMPILE)
-  string(REPLACE "gcc" "" CROSSCOMPILE ${CROSSCOMPILE})
+  string(LENGTH ${CROSSCOMPILE} CROSSCOMPILE_LEN)
+  math(EXPR CROSSCOMPILE_LEN "${CROSSCOMPILE_LEN} - 3")
+  string(SUBSTRING ${CROSSCOMPILE} 0 ${CROSSCOMPILE_LEN} CROSSCOMPILE)
 
   message(STATUS "Tagret tripplet: ${CROSSCOMPILE}")
 
@@ -117,7 +119,7 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
     DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${KEYSTONE_EYRIE_RUNTIME} ${eyrie_src}
-    CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${KEYSTONE_EYRIE_RUNTIME}
+    CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${KEYSTONE_EYRIE_RUNTIME} -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR}
     BUILD_IN_SOURCE TRUE
     BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
     INSTALL_COMMAND "")

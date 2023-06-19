@@ -98,6 +98,23 @@ alloc_page(uintptr_t vpn, int flags)
   return page;
 }
 
+uintptr_t
+realloc_page(uintptr_t vpn, int flags)
+{
+  assert(flags & PTE_U);
+
+  pte *pte = __walk(root_page_table, vpn << RISCV_PAGE_BITS);
+  if(!pte)
+    return 0;
+
+  if(*pte & PTE_V) {
+    *pte = pte_create(pte_ppn(*pte), flags);
+    return __va(*pte << RISCV_PAGE_BITS);
+  }
+
+  return 0;
+}
+
 void
 free_page(uintptr_t vpn){
 
