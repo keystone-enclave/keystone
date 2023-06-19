@@ -67,7 +67,7 @@ uintptr_t linux_getrandom(void *buf, size_t buflen, unsigned int flags){
 
 #define UNAME_SYSNAME "Linux\0"
 #define UNAME_NODENAME "Encl\0"
-#define UNAME_RELEASE "4.15.0\0"
+#define UNAME_RELEASE "5.16.0\0"
 #define UNAME_VERSION "Eyrie\0"
 #define UNAME_MACHINE "NA\0"
 
@@ -163,6 +163,26 @@ uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
   return ret;
 }
 
+uintptr_t syscall_mprotect(void *addr, size_t len, int prot) {
+  int i, ret;
+  size_t pages = len / RISCV_PAGE_SIZE;
+
+  int pte_flags = PTE_U | PTE_A;
+  if(prot & PROT_READ)
+    pte_flags |= PTE_R;
+  if(prot & PROT_WRITE)
+    pte_flags |= (PTE_W | PTE_D);
+  if(prot & PROT_EXEC)
+    pte_flags |= PTE_X;
+
+  for(i = 0; i < pages; i++) {
+    ret = realloc_page(vpn((uintptr_t) addr) + i, pte_flags);
+    if(!ret)
+      return -1;
+  }
+
+  return 0;
+}
 
 uintptr_t syscall_brk(void* addr){
   // Two possible valid calls to brk we handle:

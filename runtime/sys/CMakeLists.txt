@@ -7,7 +7,7 @@ add_executable(eyrie-build EXCLUDE_FROM_ALL ${SYS_SOURCES})
 
 target_link_libraries(eyrie-build
         rt_call rt_mm rt_crypto rt_tmplib rt_util
-        gcc $ENV{KEYSTONE_SDK_DIR}/lib/libkeystone-edge.a)
+        gcc ${KEYSTONE_SDK_DIR}/lib/libkeystone-edge.a)
 target_link_options(eyrie-build PRIVATE -static -nostdlib -T $<TARGET_OBJECTS:rt_linkscript>)
 add_dependencies(eyrie-build rt_linkscript)
 
