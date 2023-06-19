@@ -1,7 +1,7 @@
 diff --git hw/riscv/boot.c hw/riscv/boot.c
 index cae74fcbc..9fd598c7b 100644
---- hw/riscv/boot.c
-+++ hw/riscv/boot.c
+--- a/hw/riscv/boot.c
++++ b/hw/riscv/boot.c
 @@ -31,6 +31,7 @@
  #include "sysemu/device_tree.h"
  #include "sysemu/qtest.h"
@@ -116,8 +116,8 @@ index cae74fcbc..9fd598c7b 100644
  }
 diff --git hw/riscv/virt.c hw/riscv/virt.c
 index da50cbed4..eaf3b56ee 100644
---- hw/riscv/virt.c
-+++ hw/riscv/virt.c
+--- a/hw/riscv/virt.c
++++ b/hw/riscv/virt.c
 @@ -69,7 +69,7 @@
 
  static const MemMapEntry virt_memmap[] = {
@@ -163,8 +163,8 @@ index da50cbed4..eaf3b56ee 100644
  static const TypeInfo virt_machine_typeinfo = {
 diff --git include/hw/riscv/virt.h include/hw/riscv/virt.h
 index 78b058ec8..b861cee03 100644
---- include/hw/riscv/virt.h
-+++ include/hw/riscv/virt.h
+--- a/include/hw/riscv/virt.h
++++ b/include/hw/riscv/virt.h
 @@ -54,6 +54,7 @@ struct RISCVVirtState {
      bool have_aclint;
      RISCVVirtAIAType aia_type;
