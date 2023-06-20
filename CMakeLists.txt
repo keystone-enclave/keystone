@@ -5,30 +5,6 @@ include(ExternalProject)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 ###############################################################################
-## MACROS
-###############################################################################
-
-# add patch macro
-macro(add_patch submodule patch working_directory patch_list)
-  add_custom_command(OUTPUT ${patch}.applied
-    WORKING_DIRECTORY ${working_directory}
-    COMMAND patch --forward -p1 < ${patchdir}/${submodule}/${patch} || true
-    COMMAND touch ${CMAKE_BINARY_DIR}/${patch}.applied
-    COMMENT "Applying ${patch}")
-  list(APPEND ${patch_list} ${patch}.applied)
-endmacro()
-
-macro(mkdir name dir)
-  add_custom_command(OUTPUT ${dir}/.exists
-    COMMAND mkdir -p ${dir}
-    COMMAND touch ${dir}/.exists
-  )
-  set(${name} ${dir})
-  set(${name}_exists ${dir}/.exists)
-endmacro()
-
-
-###############################################################################
 ## CONFIGURATION/VARIABLES
 ###############################################################################
 
@@ -66,7 +42,6 @@ set(patchdir ${CMAKE_SOURCE_DIR}/overlays/keystone/patches)
 set(cross_compile riscv${BITS}-buildroot-linux-gnu-)
 
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
-mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
 set(buildroot_wrkdir ${CMAKE_BINARY_DIR}/buildroot.build)
 set(buildroot_config ${confdir}/qemu_riscv${BITS}_virt_defconfig)
@@ -90,8 +65,8 @@ endif()
 
 set(linux_image ${buildroot_wrkdir}/images/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
-set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
-set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
+set(fw_elf ${buildroot_wrkdir}/images/fw_jump.elf)
+set(fw_bin ${buildroot_wrkdir}/images/fw_jump.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 
 ###############################################################################
@@ -111,13 +86,13 @@ add_custom_command(DEPENDS ${overlay_dir}
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir} "buildroot_toolchain"
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir}
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir}
   COMMENT "Building buildroot"
 )
 
 add_custom_target("buildroot_toolchain" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} toolchain
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} toolchain
   COMMENT "Building buildroot toolchain"
 )
 
@@ -129,20 +104,6 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone olddefconfig
   COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
 )
-
-###############################################################################
-## COMPONENT: security monitor (sm)
-###############################################################################
-
-add_patch("opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
-add_custom_target("sm" ALL DEPENDS ${sm_wrkdir_exists} ${sm_patches} "buildroot" WORKING_DIRECTORY ${sm_wrkdir}
-  COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
-  COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
-  PATH=${toolchain_dir}:$ENV{PATH} CROSS_COMPILE=${cross_compile}
-  FW_PAYLOAD_PATH=${linux_image} FW_PAYLOAD=y PLATFORM_RISCV_XLEN=${BITS}
-  PLATFORM_RISCV_ISA=${ISA} PLATFORM_RISCV_ABI=${ABI}
-  COMMENT "Building sm"
-  )
 
 ###############################################################################
 ## Component: SDK
@@ -168,11 +129,6 @@ ExternalProject_Add(examples
 )
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 add_custom_target("tests" DEPENDS examples)
-
-###############################################################################
-## PATCH
-###############################################################################
-add_custom_target("patch" DEPENDS ${linux_patches} ${sm_patches})
 
 ###############################################################################
 ## QEMU scripts
