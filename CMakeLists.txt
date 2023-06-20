@@ -70,6 +70,7 @@ set(fw_bin ${buildroot_wrkdir}/images/fw_jump.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
 set(sdk_srcdir ${CMAKE_SOURCE_DIR}/sdk)
 set(runtime_srcdir ${CMAKE_SOURCE_DIR}/runtime)
+set(example_srcdir ${CMAKE_SOURCE_DIR}/examples)
 
 ###############################################################################
 ## COMPONENT: buildroot
@@ -88,13 +89,13 @@ add_custom_command(DEPENDS ${overlay_dir}
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir} "buildroot_toolchain"
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} KEYSTONE_SDK=${sdk_srcdir}
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} KEYSTONE_SDK=${sdk_srcdir} KEYSTONE_EXAMPLES=${example_srcdir} KEYSTONE_RUNTIME=${runtime_srcdir}
   COMMENT "Building buildroot"
 )
 
 add_custom_target("buildroot_toolchain" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} KEYSTONE_SDK=${sdk_srcdir} toolchain
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} KEYSTONE_SDK=${sdk_srcdir} KEYSTONE_EXAMPLES=${example_srcdir} KEYSTONE_RUNTIME=${runtime_srcdir} toolchain
   COMMENT "Building buildroot toolchain"
 )
 
@@ -106,20 +107,6 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone olddefconfig
   COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
 )
-
-###############################################################################
-## COMPONENT: tests
-###############################################################################
-ExternalProject_Add(examples
-  DEPENDS buildroot
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/examples
-  CMAKE_ARGS -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR} -DKEYSTONE_RUNTIME=${runtime_srcdir} -DPATH=${toolchain_dir}:$ENV{PATH}
-  DOWNLOAD_COMMAND ""
-  BUILD_COMMAND make examples
-  INSTALL_COMMAND ""
-)
-set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
-add_custom_target("tests" DEPENDS examples)
 
 ###############################################################################
 ## QEMU scripts
@@ -169,7 +156,7 @@ add_custom_target(
 
 add_custom_target(
   "run-tests"
-  DEPENDS "tests" "tools" "image" "${fw_bin}"
+  DEPENDS "buildroot" "tools" "image" "${fw_bin}"
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   COMMAND
     ./scripts/travis.sh ${CMAKE_SOURCE_DIR}/tests
