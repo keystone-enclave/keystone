@@ -5,3 +5,4 @@ source "$BR2_EXTERNAL_KEYSTONE_PATH/boot/keystone-bootrom/Config.in"
 # Packages
 source "$BR2_EXTERNAL_KEYSTONE_PATH/package/keystone-driver/Config.in"
 source "$BR2_EXTERNAL_KEYSTONE_PATH/package/keystone-sdk/Config.in.host"
+source "$BR2_EXTERNAL_KEYSTONE_PATH/package/keystone-examples/Config.in"
