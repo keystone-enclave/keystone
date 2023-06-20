@@ -1,0 +1,4 @@
+config BR2_PACKAGE_HOST_KEYSTONE_SDK
+        bool "Keystone SDK"
+        help
+          SDK for Keystone enclaves
