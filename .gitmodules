@@ -1,9 +1,6 @@
 [submodule "buildroot"]
 	path = buildroot
 	url = https://github.com/buildroot/buildroot.git
-[submodule "opensbi"]
-	path = sm/opensbi
-	url = https://github.com/riscv/opensbi
 [submodule "runtime/test/cmocka"]
         path = runtime/test/cmocka
         url = https://gitlab.com/cmocka/cmocka
