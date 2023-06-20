@@ -14,7 +14,7 @@ run_in_qemu() {
     ssh ${SSH_OPTIONS} -p @qemu_ssh_port@ root@localhost "$1"
 }
 
-run_in_qemu "insmod keystone-driver.ko"
+run_in_qemu "modprobe keystone-driver"
 
 upload_to_qemu "@CMAKE_BINARY_DIR@/examples-prefix/src/examples-build/tests/tests.ke"
 run_in_qemu "./tests.ke"

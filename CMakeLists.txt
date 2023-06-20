@@ -78,32 +78,18 @@ set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${buildroot_wrkdir}/images/)
 
 if(firesim)
-  message(STATUS "Using Linux defconfig: ${linux_defconfig}")
-	set(initramfs true)
+  message(STATUS "Firesim configs and patches")
+  set(buildroot_config ${confdir}/riscv${BITS}_firesim_defconfig)
 elseif(sifive)
-  message(STATUS "SiFive Unleashed configs and patches. Forcing initramfs=y")
-	set(linux_defconfig ${confdir}/linux64-sifive-defconfig)
-  message(STATUS "Using Linux defconfig: ${linux_defconfig}")
-	set(initramfs true)
+  message(STATUS "SiFive Unleashed configs and patches")
+  set(buildroot_config ${confdir}/riscv${BITS}_sifive_defconfig)
 elseif(cva6)
-  message(STATUS "CVA6 configs and patches. Forcing initramfs=y")
-	set(linux_defconfig ${confdir}/linux64-cva6-defconfig)
-  message(STATUS "Using Linux defconfig: ${linux_defconfig}")
+  message(STATUS "CVA6 configs and patches")
   set(buildroot_config ${confdir}/riscv${BITS}_cva6_defconfig)
-  message(STATUS "Using buildroot defconfig: ${buildroot_config}")
-	set(initramfs true)
 endif()
 
-if(NOT DEFINED linux_defconfig)
-	set(linux_defconfig ${confdir}/linux${BITS}-defconfig)
-endif()
-
-set(linux_srcdir ${CMAKE_SOURCE_DIR}/linux)
-mkdir(linux_wrkdir ${CMAKE_BINARY_DIR}/linux.build)
-set(linux_symvers ${linux_wrkdir}/Modules.symvers)
-set(linux_image ${linux_wrkdir}/arch/riscv/boot/Image)
+set(linux_image ${buildroot_wrkdir}/images/Image)
 set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
-set(driver_wrkdir ${CMAKE_BINARY_DIR}/linux-keystone-driver.build)
 set(fw_elf ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.elf)
 set(fw_bin ${sm_wrkdir}/platform/${platform}/firmware/fw_jump.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
@@ -125,13 +111,13 @@ add_custom_command(DEPENDS ${overlay_dir}
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir} "buildroot_toolchain"
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir}
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir}
   COMMENT "Building buildroot"
 )
 
 add_custom_target("buildroot_toolchain" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir} toolchain
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} toolchain
   COMMENT "Building buildroot toolchain"
 )
 
@@ -145,70 +131,11 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
 )
 
 ###############################################################################
-## COMPONENT: linux kernel
-###############################################################################
-
-add_custom_command(OUTPUT ${linux_wrkdir}/.config DEPENDS ${linux_defconfig} ${linux_wrkdir_exists} "buildroot_toolchain"
-  COMMAND cp ${linux_defconfig} ${linux_wrkdir}/.config
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH}
-    CROSS_COMPILE=${cross_compile} ARCH=riscv olddefconfig
-  COMMENT "Configuring linux"
-)
-add_custom_target("linux-config" DEPENDS ${linux_wrkdir}/.config)
-
-if(initramfs)
-  # linux-initramfs
-  execute_process(COMMAND id -u OUTPUT_VARIABLE uid)
-  string(STRIP ${uid} uid)
-  execute_process(COMMAND id -g OUTPUT_VARIABLE gid)
-  string(STRIP ${gid} gid)
-  add_custom_command(OUTPUT ${initramfs_sysroot} COMMAND mkdir -p ${initramfs_sysroot})
-  add_custom_command(OUTPUT ${linux_image} DEPENDS ${initramfs_sysroot} ${linux_srcdir} "linux-symvers" "buildroot" ${buildroot_wrkdir}/images/rootfs.tar
-    COMMAND tar -xpf ${buildroot_wrkdir}/images/rootfs.tar -C ${initramfs_sysroot} --exclude ./dev --exclude ./usr/share/locale
-    COMMAND echo "::sysinit:/bin/mount -t devtmpfs devtmpfs /dev" >> ${initramfs_sysroot}/etc/inittab
-    COMMAND $(MAKE) -C ${linux_srcdir}
-      O=${linux_wrkdir} CONFIG_INITRAMFS_SOURCE="${confdir}/initramfs.txt ${initramfs_sysroot}"
-      CONFIG_INITRAMFS_ROOT_UID=${uid} CONFIG_INITRAMFS_ROOT_GID=${gid}
-      CONFIG_DEVTMPFS=y CONFIG_DEVTMPFS_MOUNT=y
-      PATH=${toolchain_dir}:$ENV{PATH} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    COMMENT "Building linux (initramfs)"
-  )
-else()
-  add_custom_command(OUTPUT ${linux_image} DEPENDS ${linux_srcdir} "linux-symvers"
-    COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH} CROSS_COMPILE=${cross_compile} ARCH=riscv
-    COMMENT "Building linux"
-  )
-endif()
-
-add_custom_command(OUTPUT ${linux_symvers} DEPENDS ${linux_srcdir} "linux-config" ${linux_patches} "buildroot_toolchain"
-  COMMAND $(MAKE) -C ${linux_srcdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH}
-    CROSS_COMPILE=${cross_compile} ARCH=riscv modules
-  COMMENT "Building linux symvers"
-)
-add_custom_target("linux-symvers" DEPENDS ${linux_symvers})
-add_custom_target("linux" ALL DEPENDS ${linux_image})
-
-
-###############################################################################
-## COMPONENT: linux driver
-###############################################################################
-
-add_custom_command(OUTPUT ${driver_wrkdir} COMMAND mkdir -p ${driver_wrkdir})
-add_custom_target("driver-sync" DEPENDS ${driver_srcdir} ${driver_wrkdir}
-	COMMAND rsync -r ${driver_srcdir}/ ${driver_wrkdir})
-add_custom_target("driver" ALL DEPENDS ${driver_srcdir} ${linux_srcdir} "linux-symvers" "driver-sync" "buildroot_toolchain"
-  COMMAND $(MAKE) -C ${linux_wrkdir} O=${linux_wrkdir} PATH=${toolchain_dir}:$ENV{PATH}
-    CROSS_COMPILE=${cross_compile} ARCH=riscv M=${driver_wrkdir} modules
-  COMMENT "Building driver"
-)
-
-
-###############################################################################
 ## COMPONENT: security monitor (sm)
 ###############################################################################
 
 add_patch("opensbi" "opensbi-firmware-secure-boot.patch" ${sm_srcdir}/opensbi sm_patches)
-add_custom_target("sm" ALL DEPENDS "linux" ${sm_wrkdir_exists} ${sm_patches} "buildroot_toolchain" WORKING_DIRECTORY ${sm_wrkdir}
+add_custom_target("sm" ALL DEPENDS ${sm_wrkdir_exists} ${sm_patches} "buildroot" WORKING_DIRECTORY ${sm_wrkdir}
   COMMAND ${sm_srcdir}/opensbi/scripts/carray.sh -i ${sm_srcdir}/plat/generic/platform_override_modules.carray > ${sm_srcdir}/plat/generic/platform_override_modules.c  
   COMMAND $(MAKE) -C ${sm_srcdir}/opensbi O=${sm_wrkdir} PLATFORM_DIR=${sm_srcdir}/plat/${platform}
   PATH=${toolchain_dir}:$ENV{PATH} CROSS_COMPILE=${cross_compile}
@@ -241,19 +168,6 @@ ExternalProject_Add(examples
 )
 set_target_properties(examples PROPERTIES EXCLUDE_FROM_ALL YES)
 add_custom_target("tests" DEPENDS examples)
-
-###############################################################################
-## COMPONENT: image
-###############################################################################
-
-add_custom_target("image-deps" DEPENDS "driver" ${overlay_root}
-  COMMAND find ${driver_wrkdir} -name "*.ko" -exec cp {} ${overlay_root} \\\\;
-)
-add_custom_target("image" DEPENDS "buildroot" "sm"
-  COMMENT "Generating image"
-)
-
-add_dependencies("buildroot" "image-deps")
 
 ###############################################################################
 ## PATCH
