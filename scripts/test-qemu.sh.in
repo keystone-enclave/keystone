@@ -16,11 +16,9 @@ run_in_qemu() {
 
 run_in_qemu "modprobe keystone-driver"
 
-upload_to_qemu "@CMAKE_BINARY_DIR@/examples-prefix/src/examples-build/tests/tests.ke"
-run_in_qemu "./tests.ke"
+run_in_qemu "/usr/share/keystone/examples/tests.ke"
 
-upload_to_qemu "@CMAKE_BINARY_DIR@/examples-prefix/src/examples-build/attestation/attestor.ke"
 upload_to_qemu "@fw_bin@"
-run_in_qemu "./attestor.ke"
+run_in_qemu "/usr/share/keystone/examples/attestor.ke"
 
 run_in_qemu "poweroff"
