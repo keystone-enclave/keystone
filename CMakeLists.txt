@@ -34,8 +34,6 @@ else()
   set(ABI lp64d)
 endif()
 
-set(KEYSTONE_SDK_DIR ${CMAKE_SOURCE_DIR}/sdk/build${BITS})
-
 set(ISA rv${BITS}imafdc)
 set(confdir ${CMAKE_SOURCE_DIR}/overlays/keystone/configs)
 set(patchdir ${CMAKE_SOURCE_DIR}/overlays/keystone/patches)
@@ -51,6 +49,8 @@ set(external_dir ${CMAKE_SOURCE_DIR}/overlays)
 set(toolchain_dir ${buildroot_wrkdir}/per-package/host-gcc-final/host/bin)
 set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
 set(bootrom_wrkdir ${buildroot_wrkdir}/images/)
+
+set(KEYSTONE_SDK_DIR ${buildroot_wrkdir}/host/usr/share/keystone/sdk)
 
 if(firesim)
   message(STATUS "Firesim configs and patches")
@@ -68,6 +68,8 @@ set(driver_srcdir ${CMAKE_SOURCE_DIR}/linux-keystone-driver)
 set(fw_elf ${buildroot_wrkdir}/images/fw_jump.elf)
 set(fw_bin ${buildroot_wrkdir}/images/fw_jump.bin)
 set(initramfs_sysroot ${CMAKE_BINARY_DIR}/initramfs-sysroot)
+set(sdk_srcdir ${CMAKE_SOURCE_DIR}/sdk)
+set(runtime_srcdir ${CMAKE_SOURCE_DIR}/runtime)
 
 ###############################################################################
 ## COMPONENT: buildroot
@@ -86,13 +88,13 @@ add_custom_command(DEPENDS ${overlay_dir}
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir} "buildroot_toolchain"
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir}
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} KEYSTONE_SDK=${sdk_srcdir}
   COMMENT "Building buildroot"
 )
 
 add_custom_target("buildroot_toolchain" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
-            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} toolchain
+            KEYSTONE_BOOTROM=${bootrom_srcdir} KEYSTONE_DRIVER=${driver_srcdir} KEYSTONE_SM=${sm_srcdir} KEYSTONE_SDK=${sdk_srcdir} toolchain
   COMMENT "Building buildroot toolchain"
 )
 
@@ -106,23 +108,12 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
 )
 
 ###############################################################################
-## Component: SDK
-###############################################################################
-set(sdk_wrkdir sdk)
-ExternalProject_Add(sdk
-  DEPENDS "buildroot_toolchain"
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/sdk
-  CMAKE_ARGS -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR} -DPATH=${toolchain_dir}:$ENV{PATH}
-  DOWNLOAD_COMMAND ""
-)
-
-###############################################################################
 ## COMPONENT: tests
 ###############################################################################
 ExternalProject_Add(examples
-  DEPENDS sdk
+  DEPENDS buildroot
   SOURCE_DIR ${CMAKE_SOURCE_DIR}/examples
-  CMAKE_ARGS -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR} -DPATH=${toolchain_dir}:$ENV{PATH}
+  CMAKE_ARGS -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR} -DKEYSTONE_RUNTIME=${runtime_srcdir} -DPATH=${toolchain_dir}:$ENV{PATH}
   DOWNLOAD_COMMAND ""
   BUILD_COMMAND make examples
   INSTALL_COMMAND ""

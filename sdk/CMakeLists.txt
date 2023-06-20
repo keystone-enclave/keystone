@@ -30,10 +30,6 @@ else()
   set(out_dir    ${CMAKE_BINARY_DIR})
 endif()
 
-if (DEFINED PATH)
-  set(ENV{PATH} ${PATH})
-endif()
-
 if (${out_dir} STREQUAL ${CMAKE_SOURCE_DIR})
   message(FATAL_ERROR "OUTPUT_DIR must be different from the source path")
 endif()
@@ -54,7 +50,6 @@ else()
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DDEBUG=1)
     set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -g)
 endif()
 
@@ -115,5 +110,4 @@ add_custom_target("uninstall"
   rm -rf ${out_dir}/cmake)
 
 add_subdirectory(tests EXCLUDE_FROM_ALL)
-
 add_subdirectory(.post-install)

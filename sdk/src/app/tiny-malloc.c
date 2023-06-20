@@ -454,11 +454,6 @@ mallinfo(void) {
   else
     total_size = (char*)&__malloc_start - (char*)__malloc_end;
 
-#ifdef DEBUG
-/* Fixme: should walk through all the in-use blocks and see if
-   they're valid.  */
-#endif
-
   r.arena    = total_size;
   r.fordblks = free_size;
   r.uordblks = total_size - free_size;
