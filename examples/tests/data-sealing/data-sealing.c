@@ -24,7 +24,7 @@
  *  Description:
  *     Derives the sealing key
  */
-int main()
+int EAPP_ENTRY main()
 {
   char *key_identifier = "identifier";
   struct sealing_key key_buffer;
