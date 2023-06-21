@@ -1,0 +1,62 @@
+From 6a59cb5158bff13b80f116305155fbe4967a5010 Mon Sep 17 00:00:00 2001
+From: Florian Fainelli <florian.fainelli@broadcom.com>
+Date: Wed, 7 Jun 2023 15:13:35 -0700
+Subject: [PATCH] scripts/gdb: fix SB_* constants parsing
+
+--0000000000009a0c9905fd9173ad
+Content-Transfer-Encoding: 8bit
+
+After f15afbd34d8f ("fs: fix undefined behavior in bit shift for
+SB_NOUSER") the constants were changed from plain integers which
+LX_VALUE() can parse to constants using the BIT() macro which causes the
+following:
+
+Reading symbols from build/linux-custom/vmlinux...done.
+Traceback (most recent call last):
+  File "/home/fainelli/work/buildroot/output/arm64/build/linux-custom/vmlinux-gdb.py", line 25, in <module>
+    import linux.constants
+  File "/home/fainelli/work/buildroot/output/arm64/build/linux-custom/scripts/gdb/linux/constants.py", line 5
+    LX_SB_RDONLY = ((((1UL))) << (0))
+
+Use LX_GDBPARSED() which does not suffer from that issue.
+
+f15afbd34d8f ("fs: fix undefined behavior in bit shift for SB_NOUSER")
+Link: https://lkml.kernel.org/r/20230607221337.2781730-1-florian.fainelli@broadcom.com
+Signed-off-by: Florian Fainelli <florian.fainelli@broadcom.com>
+Acked-by: Christian Brauner <brauner@kernel.org>
+Cc: Hao Ge <gehao@kylinos.cn>
+Cc: Jan Kiszka <jan.kiszka@siemens.com>
+Cc: Kieran Bingham <kbingham@kernel.org>
+Cc: Luis Chamberlain <mcgrof@kernel.org>
+Cc: Pankaj Raghav <p.raghav@samsung.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ scripts/gdb/linux/constants.py.in | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/scripts/gdb/linux/constants.py.in b/scripts/gdb/linux/constants.py.in
+index 471300ba176c..50a92c4e9984 100644
+--- a/scripts/gdb/linux/constants.py.in
++++ b/scripts/gdb/linux/constants.py.in
+@@ -48,12 +48,12 @@ if IS_BUILTIN(CONFIG_COMMON_CLK):
+     LX_GDBPARSED(CLK_GET_RATE_NOCACHE)
+ 
+ /* linux/fs.h */
+-LX_VALUE(SB_RDONLY)
+-LX_VALUE(SB_SYNCHRONOUS)
+-LX_VALUE(SB_MANDLOCK)
+-LX_VALUE(SB_DIRSYNC)
+-LX_VALUE(SB_NOATIME)
+-LX_VALUE(SB_NODIRATIME)
++LX_GDBPARSED(SB_RDONLY)
++LX_GDBPARSED(SB_SYNCHRONOUS)
++LX_GDBPARSED(SB_MANDLOCK)
++LX_GDBPARSED(SB_DIRSYNC)
++LX_GDBPARSED(SB_NOATIME)
++LX_GDBPARSED(SB_NODIRATIME)
+ 
+ /* linux/htimer.h */
+ LX_GDBPARSED(hrtimer_resolution)
+-- 
+2.42.0
+

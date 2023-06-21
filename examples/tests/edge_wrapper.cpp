@@ -13,7 +13,7 @@
 #define OCALL_COPY_REPORT 3
 #define OCALL_GET_STRING 4
 
-int
+void
 edge_init(Keystone::Enclave* enclave) {
   enclave->registerOcallDispatch(incoming_call_dispatch);
   register_call(OCALL_PRINT_BUFFER, print_buffer_wrapper);
