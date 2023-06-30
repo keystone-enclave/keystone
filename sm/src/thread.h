@@ -81,10 +81,10 @@ void swap_prev_mepc(struct thread_state* state, struct sbi_trap_regs* regs, uint
 void swap_prev_mstatus(struct thread_state* state, struct sbi_trap_regs* regs, uintptr_t mstatus);
 void swap_prev_smode_csrs(struct thread_state* thread);
 
-void switch_vector_enclave();
-void switch_vector_host();
-extern void trap_vector_enclave();
-extern void trap_vector();
+void switch_vector_enclave(void);
+void switch_vector_host(void);
+extern void trap_vector_enclave(void);
+extern void _trap_handler(void);
 
 /* Clean state generation */
 void clean_state(struct thread_state* state);

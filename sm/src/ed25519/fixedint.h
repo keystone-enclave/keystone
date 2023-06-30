@@ -3,7 +3,19 @@
 
     Not a compatible replacement for <stdint.h>, do not blindly use it as such.
 */
-#include <sbi/sbi_types.h>
+
+typedef int                     int32_t;
+typedef unsigned int            uint32_t;
+
+#if __riscv_xlen == 64
+typedef long                    int64_t;
+typedef unsigned long           uint64_t;
+#elif __riscv_xlen == 32
+typedef long long               int64_t;
+typedef unsigned long long      uint64_t;
+#else
+#error "Unexpected __riscv_xlen"
+#endif
 
 #if ((defined(__STDC__) && __STDC__ && __STDC_VERSION__ >= 199901L) || (defined(__WATCOMC__) && (defined(_STDINT_H_INCLUDED) || __WATCOMC__ >= 1250)) || (defined(__GNUC__) && (defined(_STDINT_H) || defined(_STDINT_H_) || defined(__UINT_FAST64_TYPE__)) )) && !defined(FIXEDINT_H_INCLUDED)
     //#include <stdint.h>
