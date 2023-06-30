@@ -86,7 +86,7 @@ unsigned long sbi_sm_get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
   return ret;
 }
 
-unsigned long sbi_sm_random()
+unsigned long sbi_sm_random(void)
 {
   return (unsigned long) platform_random();
 }

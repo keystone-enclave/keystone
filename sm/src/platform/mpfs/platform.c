@@ -3,7 +3,7 @@
 #include "../../enclave.h"
 #include "../../../plat/mpfs/drivers/mss_sys_services/mss_sys_services.h"
 #include <sbi/riscv_locks.h>
-#include <assert.h>
+#include <sm_assert.h>
 
 unsigned long platform_init_global_once(void){
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
