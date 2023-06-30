@@ -29,6 +29,7 @@ include mkutils/log.mk
 BUILDROOT_CONFIGFILE    ?= qemu_riscv$(KEYSTONE_BITS)_virt_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
 	EXTERNALS += microchip
+	BUILDROOT_CONFIGFILE := riscv64_mpfs_defconfig
 endif
 
 # Highest priority external
@@ -72,6 +73,7 @@ $(BUILDROOT_OVERLAYDIR)/.done: $(BUILDROOT_OVERLAYDIR)
 	mkdir -p $(BUILDROOT_OVERLAYDIR)/root/.ssh
 	ssh-keygen -C 'root@keystone' -t rsa -f $(BUILDROOT_OVERLAYDIR)/root/.ssh/id-rsa -N ''
 	cp $(BUILDROOT_OVERLAYDIR)/root/.ssh/{id-rsa.pub,authorized_keys}
+	-cp -ar $(KEYSTONE)/rootfs/$(KEYSTONE_PLATFORM)/* $(BUILDROOT_OVERLAYDIR)
 	touch $@
 
 # Main build target for buildroot. The specific subtarget to build can be overriden

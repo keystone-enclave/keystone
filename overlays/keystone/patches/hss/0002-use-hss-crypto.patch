@@ -1,0 +1,89 @@
+diff --git a/boards/mpfs-icicle-kit-es/def_config b/boards/mpfs-icicle-kit-es/def_config
+index 6854540..2ceecd9 100644
+--- a/boards/mpfs-icicle-kit-es/def_config
++++ b/boards/mpfs-icicle-kit-es/def_config
+@@ -186,6 +186,13 @@ CONFIG_COMPRESSION_MINIZ=y
+ # Crypto
+ #
+ # CONFIG_CRYPTO_SIGNING is not set
++
++#
++# Signing Configuration
++#
++CONFIG_CRYPTO_LIBECC=y
++# CONFIG_CRYPTO_USER_CRYPTO is not set
++# end of Signing Configuration
+ # end of Crypto
+ 
+ #
+diff --git a/modules/crypto/Kconfig b/modules/crypto/Kconfig
+index 7431bfb..d46ca13 100644
+--- a/modules/crypto/Kconfig
++++ b/modules/crypto/Kconfig
+@@ -10,7 +10,6 @@ config CRYPTO_SIGNING
+ 		If you don't know what to do here, say Y.
+ 
+ menu "Signing Configuration"
+-        visible if CRYPTO_SIGNING
+ 
+ config CRYPTO_SIGNING_KEY_PUBLIC
+         depends on CRYPTO_SIGNING
+@@ -23,14 +22,12 @@ choice
+ 
+ config CRYPTO_LIBECC
+ 	bool "libecc (SHA2 and ECDSA P-384)"
+-	depends on CRYPTO_SIGNING
+ 	help
+ 		This feature enables support for the libecc library for SHA2 hashing
+                 and ECDSA P-384 code signing.
+ 
+ config CRYPTO_USER_CRYPTO
+ 	bool "User Crypto (SHA2 and ECDSA P-384)"
+-	depends on CRYPTO_SIGNING
+ 	help
+ 		This feature enables support for the UserCrypto core for SHA384 hashing
+                 and ECDSA P-384 code signing.
+diff --git a/modules/crypto/Makefile b/modules/crypto/Makefile
+index d000d99..5cdb258 100644
+--- a/modules/crypto/Makefile
++++ b/modules/crypto/Makefile
+@@ -37,15 +37,22 @@ PUBLIC_KEY=$(subst $\",,$(CONFIG_CRYPTO_SIGNING_KEY_PUBLIC))
+ ifeq ("$(wildcard $(PUBLIC_KEY))", "")
+ $(error "Public key file $(PUBLIC_KEY) specified by CONFIG_CRYPTO_SIGNING_KEY_PUBLIC does not exist")
+ endif
++
++SRSC-$(CONFIG_CRYPTO_LIBECC) += modules/crypto/hss_crypto_libecc.c
++
+ x509-ec-sepc384r1-public.h: $(PUBLIC_KEY)
+ 	tools/secure-boot/der_to_c_header.py $(PUBLIC_KEY) x509-ec-secp384r1-public.h
++
++modules/crypto/hss_crypto_libecc.o: x509-ec-sepc384r1-public.h
++
++endif
++
+ #
+ # libecc
+ #
+ 
+ ifdef CONFIG_CRYPTO_LIBECC
+ SRCS-$(CONFIG_CRYPTO_LIBECC) += \
+-	modules/crypto/hss_crypto_libecc.c \
+ 	modules/crypto/random.c \
+ 	thirdparty/libecc/src/curves/aff_pt.c \
+ 	thirdparty/libecc/src/curves/aff_pt_edwards.c \
+@@ -112,7 +119,6 @@ INCLUDES +=\
+ 
+ LIBECC_OVERRIDE_FLAGS=-DWITH_LIBECC_CONFIG_OVERRIDE -DWITH_CURVE_SECP384R1 -DWITH_HASH_SHA384 -DWITH_HASH_SHA512 -DWITH_HASH_SHA512_256 -DWITH_SIG_ECDSA -mabi=$(PLATFORM_RISCV_ABI) -march=$(PLATFORM_RISCV_ISA) -ffunction-sections -fdata-sections
+ 
+-modules/crypto/hss_crypto_libecc.o: x509-ec-sepc384r1-public.h
+ modules/crypto/hss_crypto_libecc.o: CFLAGS=$(LIBECC_OVERRIDE_FLAGS) $(CFLAGS_GCCEXT)
+ thirdparty/libecc/src/external_deps/rand.o: CFLAGS=$(LIBECC_OVERRIDE_FLAGS) $(CFLAGS_GCCEXT)
+ 
+@@ -184,7 +190,5 @@ ifdef CONFIG_CRYPTO_USER_CRYPTO
+ SRCS-$(CONFIG_CRYPTO_USER_CRYPTO) += \
+     modules/crypto/hss_crypto_cal.c
+ 
+-modules/crypto/hss_crypto_cal.o: x509-ec-sepc384r1-public.h
+ modules/crypto/hss_crypto_cal.o: CFLAGS=$(CFLAGS_GCCEXT)
+ endif
+-endif
