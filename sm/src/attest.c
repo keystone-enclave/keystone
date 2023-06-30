@@ -10,7 +10,7 @@
 typedef uintptr_t pte_t;
 /* This will walk the entire vaddr space in the enclave, validating
    linear at-most-once paddr mappings, and then hashing valid pages */
-int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
+static int validate_and_hash_epm(hash_ctx* ctx, int level,
                           pte_t* tb, uintptr_t vaddr, int contiguous,
                           struct enclave* encl,
                           uintptr_t* runtime_max_seen,
@@ -65,7 +65,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
     if (level == 1 && !contiguous)
     {
 
-      hash_extend(hash_ctx, &va_start, sizeof(uintptr_t));
+      hash_extend(ctx, &va_start, sizeof(uintptr_t));
       //printm("VA hashed: 0x%lx\n", va_start);
       contiguous = 1;
     }
@@ -131,7 +131,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
       /* Page is valid, add it to the hash */
 
       /* if PTE is leaf, extend hash for the page */
-      hash_extend_page(hash_ctx, (void*)phys_addr);
+      hash_extend_page(ctx, (void*)phys_addr);
 
 
 
@@ -140,7 +140,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
     else
     {
       /* otherwise, recurse on a lower level */
-      contiguous = validate_and_hash_epm(hash_ctx,
+      contiguous = validate_and_hash_epm(ctx,
                                          level - 1,
                                          (pte_t*) phys_addr,
                                          vpn,
@@ -170,20 +170,20 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, int level,
 
 unsigned long validate_and_hash_enclave(struct enclave* enclave){
 
-  hash_ctx hash_ctx;
+  hash_ctx ctx;
   int ptlevel = RISCV_PGLEVEL_TOP;
 
-  hash_init(&hash_ctx);
+  hash_init(&ctx);
 
   // hash the runtime parameters
-  hash_extend(&hash_ctx, &enclave->params, sizeof(struct runtime_va_params_t));
+  hash_extend(&ctx, &enclave->params, sizeof(struct runtime_va_params_t));
 
 
   uintptr_t runtime_max_seen=0;
   uintptr_t user_max_seen=0;;
 
   // hash the epm contents including the virtual addresses
-  int valid = validate_and_hash_epm(&hash_ctx,
+  int valid = validate_and_hash_epm(&ctx,
                                     ptlevel,
                                     (pte_t*) (enclave->encl_satp << RISCV_PGSHIFT),
                                     0, 0, enclave, &runtime_max_seen, &user_max_seen);
@@ -192,7 +192,7 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
     return SBI_ERR_SM_ENCLAVE_ILLEGAL_PTE;
   }
 
-  hash_finalize(enclave->hash, &hash_ctx);
+  hash_finalize(enclave->hash, &ctx);
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }

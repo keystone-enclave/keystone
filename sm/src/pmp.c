@@ -2,7 +2,7 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "assert.h"
+#include "sm_assert.h"
 #include "pmp.h"
 #include "cpu.h"
 #include "safe_math_util.h"
@@ -131,17 +131,17 @@ static int search_rightmost_unset(uint32_t bitmap, int max, uint32_t mask)
   return -1;
 }
 
-static region_id get_free_region_idx()
+static region_id get_free_region_idx(void)
 {
   return search_rightmost_unset(region_def_bitmap, PMP_MAX_N_REGION, 0x1);
 }
 
-static pmpreg_id get_free_reg_idx()
+static pmpreg_id get_free_reg_idx(void)
 {
   return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x1);
 }
 
-static pmpreg_id get_conseq_free_reg_idx()
+static pmpreg_id get_conseq_free_reg_idx(void)
 {
   return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x3);
 }
@@ -221,7 +221,7 @@ int pmp_set_global(int region_idx, uint8_t perm)
   return SBI_ERR_SM_PMP_SUCCESS;
 }
 
-void pmp_init()
+void pmp_init(void)
 {
   uintptr_t pmpaddr = 0;
   uintptr_t pmpcfg = 0;

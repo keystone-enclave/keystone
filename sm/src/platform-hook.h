@@ -11,9 +11,9 @@
 void platform_init_enclave(struct enclave* enclave);
 
 /* This fires once GLOBALLY before any other platform init */
-unsigned long platform_init_global_once();
+unsigned long platform_init_global_once(void);
 /* Fires once per-hart after global_once */
-unsigned long platform_init_global();
+unsigned long platform_init_global(void);
 
 /* This fires once each time an enclave is created by the sm */
 unsigned long platform_create_enclave(struct enclave* enclave);
@@ -35,6 +35,6 @@ void platform_switch_from_enclave(struct enclave* enclave);
 /* This is a required feature, it must return 64bits of random data on
    demand and never fail. If it would fail it may power off
    instead. */
-uint64_t platform_random();
+uint64_t platform_random(void);
 
 #endif /* _PLATFORM_HOOK_H_ */
