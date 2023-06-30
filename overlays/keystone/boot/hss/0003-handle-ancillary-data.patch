@@ -1,0 +1,43 @@
+commit aee43b8f77d86502fe0624b3941e9b843670e917
+Author: Gregor Haas <gregorhaas1997@gmail.com>
+Date:   Mon Jul 10 15:34:35 2023 -0700
+
+    Re-register harts after downloading image to correctly pass ancillary data
+    
+    Signed-off-by: Gregor Haas <gregorhaas1997@gmail.com>
+
+diff --git a/services/boot/hss_boot_service.c b/services/boot/hss_boot_service.c
+index d187382..f23371d 100644
+--- a/services/boot/hss_boot_service.c
++++ b/services/boot/hss_boot_service.c
+@@ -351,7 +351,7 @@ static void boot_init_handler(struct StateMachine * const pMyMachine)
+ 
+ /////////////////
+ 
+-static void boot_setup_pmp_onEntry(struct StateMachine * const pMyMachine)
++static void register_harts(struct StateMachine * const pMyMachine)
+ {
+     struct HSS_Boot_LocalData * const pInstanceData = pMyMachine->pInstanceData;
+     enum HSSHartId const target = pInstanceData->target;
+@@ -396,6 +396,12 @@ static void boot_setup_pmp_onEntry(struct StateMachine * const pMyMachine)
+     }
+ }
+ 
++static void boot_setup_pmp_onEntry(struct StateMachine * const pMyMachine)
++{
++    /* Initially register harts, so that IPIs work for remainder of boot */
++    register_harts(pMyMachine);
++}
++
+ static void boot_setup_pmp_handler(struct StateMachine * const pMyMachine)
+ {
+     struct HSS_Boot_LocalData * const pInstanceData = pMyMachine->pInstanceData;
+@@ -602,6 +608,8 @@ static void boot_download_chunks_handler(struct StateMachine * const pMyMachine)
+ 
+ static void boot_download_chunks_onExit(struct StateMachine * const pMyMachine)
+ {
++    /* Re-register harts now that we've fully parsed the boot image (ancillary data etc) */
++    register_harts(pMyMachine);
+ }
+ 
+ /////////////////
