@@ -31,9 +31,11 @@ include mkutils/log.mk
 
 BUILDROOT_CONFIGFILE    ?= qemu_riscv$(KEYSTONE_BITS)_virt_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
-	EXTERNALS += microchip
+	EXTERNALS		+= microchip
+	BUILDROOT_CONFIGFILE 	:= riscv64_mpfs_defconfig
+	ADDITIONAL_OVERLAYS  	:= \$$(BR2_EXTERNAL_MCHP_PATH)/board/microchip/icicle/rootfs-overlay
 else ifeq ($(KEYSTONE_PLATFORM),unmatched)
-    BUILDROOT_CONFIGFILE = riscv64_hifive_unmatched_defconfig
+	BUILDROOT_CONFIGFILE = riscv64_hifive_unmatched_defconfig
 endif
 
 # Highest priority external
@@ -68,7 +70,7 @@ $(BUILDROOT_OVERLAYDIR): $(BUILDDIR)
 $(BUILDROOT_BUILDDIR)/.config: $(BUILDROOT_BUILDDIR)
 	$(call log,info,Configuring Buildroot with $(BUILDROOT_CONFIGFILE))
 	$(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_CONFIGFILE)
-	echo "BR2_ROOTFS_OVERLAY=\"$(BUILDROOT_OVERLAYDIR)\"" >> $(BUILDROOT_BUILDDIR)/.config
+	echo "BR2_ROOTFS_OVERLAY=\"$(BUILDROOT_OVERLAYDIR) $(ADDITIONAL_OVERLAYS)\"" >> $(BUILDROOT_BUILDDIR)/.config
 
 # Overlay
 

@@ -4,3 +4,6 @@
 [submodule "runtime/test/cmocka"]
         path = runtime/test/cmocka
         url = https://gitlab.com/cmocka/cmocka
+[submodule "overlays/microchip"]
+	path = overlays/microchip
+	url = https://github.com/linux4microchip/buildroot-external-microchip

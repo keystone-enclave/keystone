@@ -10,7 +10,14 @@ else
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 
-KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk keystone-runtime opensbi
+KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk keystone-runtime
+ifeq ($(KEYSTONE_PLATFORM),mpfs)
+KEYSTONE_EXAMPLES_DEPENDENCIES += hss
+KEYSTONE_EXAMPLES_CONF_OPTS += -Dfw_bin=$(BINARIES_DIR)/hss-l2scratch.bin
+else
+KEYSTONE_EXAMPLES_DEPENDENCIES += opensbi
+endif
+
 KEYSTONE_EXAMPLES_CONF_OPTS += -DKEYSTONE_SDK_DIR=$(HOST_DIR)/usr/share/keystone/sdk \
                                 -DKEYSTONE_EYRIE_RUNTIME=$(KEYSTONE_RUNTIME_BUILDDIR) \
                                 -DKEYSTONE_BITS=${KEYSTONE_BITS}
