@@ -3,7 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "enclave.h"
-#include "crypto.h"
+#include <crypto.h>
 #include "page.h"
 #include <sbi/sbi_console.h>
 

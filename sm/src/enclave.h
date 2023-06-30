@@ -12,7 +12,7 @@
 #include "sm.h"
 #include "pmp.h"
 #include "thread.h"
-#include "crypto.h"
+#include <crypto.h>
 
 // Special target platform header, set by configure script
 #include TARGET_PLATFORM_HEADER

@@ -23,4 +23,7 @@ struct platform_enclave_data{
 // CPU configuration
 #define MAX_HARTS               5
 
+// Initialization functions
+void sm_copy_key(void);
+
 #endif // _PLATFORM_H_
