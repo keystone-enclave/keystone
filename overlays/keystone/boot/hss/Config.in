@@ -1,0 +1,10 @@
+config BR2_TARGET_HSS
+        bool "Microchip HSS"
+
+config BR2_TARGET_HSS_SC_INSTALL_DIR
+        string "SoftConsole install location"
+        depends on BR2_TARGET_HSS
+
+config BR2_TARGET_HSS_FPGENPROG
+        string "fpgenprog location"
+        depends on BR2_TARGET_HSS

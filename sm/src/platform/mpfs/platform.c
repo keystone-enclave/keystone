@@ -1,8 +1,9 @@
-/* Default platform does nothing special here */
+
 #include "platform-hook.h"
-#include "../../enclave.h"
-#include "../../../plat/mpfs/drivers/mss_sys_services/mss_sys_services.h"
+#include "enclave.h"
+#include <mss_sys_services.h>
 #include <sbi/riscv_locks.h>
+#include <sbi/sbi_string.h>
 #include <sm_assert.h>
 
 unsigned long platform_init_global_once(void){
@@ -56,4 +57,17 @@ uint64_t platform_random(void){
 
   spin_unlock(&rand_state_lock);
   return out;
+}
+
+// Initialization functions
+extern byte dev_public_key[PUBLIC_KEY_SIZE];
+
+// Todo secure boot
+void sm_copy_key(void)
+{
+  sbi_memset(sm_hash, 0, MDSIZE);
+  sbi_memset(sm_signature, 0, SIGNATURE_SIZE);
+  sbi_memset(sm_public_key, 0, PUBLIC_KEY_SIZE);
+  sbi_memset(sm_private_key, 0, PRIVATE_KEY_SIZE);
+  sbi_memset(dev_public_key, 0, PUBLIC_KEY_SIZE);
 }
