@@ -5,7 +5,7 @@
 #include "ipi.h"
 #include "sm.h"
 #include "pmp.h"
-#include "crypto.h"
+#include <crypto.h>
 #include "enclave.h"
 #include "platform-hook.h"
 #include "sm-sbi-opensbi.h"
@@ -24,13 +24,6 @@ static int sm_region_id = 0, os_region_id = 0;
 
 // Special target platform header, set by configure script
 #include TARGET_PLATFORM_HEADER
-
-/* from Sanctum BootROM */
-extern byte sanctum_sm_hash[MDSIZE];
-extern byte sanctum_sm_signature[SIGNATURE_SIZE];
-extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
-extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
-extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
 
 byte sm_hash[MDSIZE] = { 0, };
 byte sm_signature[SIGNATURE_SIZE] = { 0, };
@@ -85,15 +78,6 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
   return kdf(NULL, 0,
              (const unsigned char *)sm_private_key, PRIVATE_KEY_SIZE,
              info, MDSIZE + key_ident_size, key, SEALING_KEY_SIZE);
-}
-
-static void sm_copy_key(void)
-{
-  sbi_memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
-  sbi_memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
-  sbi_memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
-  sbi_memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
-  sbi_memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
 }
 
 static void sm_print_hash(void)

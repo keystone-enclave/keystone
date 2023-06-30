@@ -1,5 +1,6 @@
 /* Default platform does nothing special here */
 #include "../../enclave.h"
+#include <sbi/sbi_string.h>
 
 unsigned long platform_init_global_once(){
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
@@ -41,4 +42,28 @@ uint64_t platform_random(){
   x *= x;
   x += (w += s);
   return (x>>32) | (x<<32);
+}
+
+// Initialization functions
+
+/* from Sanctum BootROM */
+extern byte sanctum_sm_hash[MDSIZE];
+extern byte sanctum_sm_signature[SIGNATURE_SIZE];
+extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
+extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
+extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
+
+extern byte sm_hash[MDSIZE];
+extern byte sm_signature[SIGNATURE_SIZE];
+extern byte sm_public_key[PUBLIC_KEY_SIZE];
+extern byte sm_private_key[PRIVATE_KEY_SIZE];
+extern byte dev_public_key[PUBLIC_KEY_SIZE];
+
+void sm_copy_key(void)
+{
+  sbi_memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
+  sbi_memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
+  sbi_memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
+  sbi_memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
+  sbi_memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
 }

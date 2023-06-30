@@ -6,41 +6,21 @@
 # Authors:
 #   Atish Patra <atish.patra@wdc.com>
 #
-PLATFORM = mpfs
-KEYSTONE_SM_REL=../../
-platform-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/$(PLATFORM)/platform.h\""
 
-platform-objs-y += $(KEYSTONE_SM_REL)src/attest.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/cpu.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/crypto.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/enclave.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/pmp.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/sm.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/sm-sbi.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/sm-sbi-opensbi.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/thread.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/mprv.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/sbi_trap_hack.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/trap.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/ipi.o
+ifeq ($(KEYSTONE_SDK_DIR),)
+$(error KEYSTONE_SDK_DIR not defined)
+endif
 
-platform-objs-y += $(KEYSTONE_SM_REL)src/sha3/sha3.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/ed25519/fe.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/ed25519/ge.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/ed25519/keypair.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/ed25519/sc.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/ed25519/sign.o
+# Define our platform
+export PLATFORM=mpfs
 
-platform-objs-y += $(KEYSTONE_SM_REL)src/hkdf_sha3_512/hkdf_sha3_512.o
-platform-objs-y += $(KEYSTONE_SM_REL)src/hmac_sha3/hmac_sha3.o
+# Ensure that standard SM crypto does not get built here
+export KEYSTONE_SM_NO_CRYPTO=y
+include $(KEYSTONE_SM)/src/objects.mk
 
-platform-objs-y += $(KEYSTONE_SM_REL)src/platform/$(PLATFORM)/platform.o
+platform-genflags-y += -I$(KEYSTONE_SM)/plat/$(PLATFORM) -I$(KEYSTONE_SM)/src \
+                        -I$(KEYSTONE_SDK_DIR)/include/shared
+platform-genflags-y += -DTARGET_PLATFORM_HEADER=\"platform/$(PLATFORM)/platform.h\"
 
-platform-objs-y += $(KEYSTONE_SM_REL)src/plugins/plugins.o
-
-platform-objs-y += platform.o
-platform-objs-y += uart_helper.o
-platform-objs-y += csr_helper.o
-platform-objs-y += hss_clock.o
-platform-objs-y += drivers/mss_uart/mss_uart.o
-platform-objs-y += drivers/mss_sys_services/mss_sys_services.o
+platform-objs-y += $(addprefix $(KEYSTONE_SM)/src/,$(subst .c,.o,$(keystone-sm-sources)))
+platform-objs-y += $(KEYSTONE_SM)/plat/$(PLATFORM)/crypto_interpose.o
