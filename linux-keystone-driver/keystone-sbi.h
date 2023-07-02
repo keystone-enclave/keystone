@@ -14,6 +14,10 @@
 #define SBI_SM_RUN_ENCLAVE      2003
 #define SBI_SM_RESUME_ENCLAVE   2005
 
+// management-core(chungmcl)
+#define SBI_SM_START_MGMT_CORE  2006
+// management-core
+
 
 struct keystone_sbi_pregion_t
 {
@@ -34,8 +38,11 @@ struct keystone_sbi_create_t
 
   // Parameters
   struct runtime_params_t params;
+
+  uint64_t security_extensions;
 };
 
+struct sbiret sbi_sm_start_mgmt_core(void);
 struct sbiret sbi_sm_create_enclave(struct keystone_sbi_create_t* args);
 struct sbiret sbi_sm_destroy_enclave(unsigned long eid);
 struct sbiret sbi_sm_run_enclave(unsigned long eid);

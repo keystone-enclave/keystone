@@ -14,6 +14,14 @@
 #define SYSCALL_SHAREDCOPY 1002
 #define SYSCALL_ATTEST_ENCLAVE 1003
 #define SYSCALL_GET_SEALING_KEY 1004
+
+// chungmcl
+#define SYSCALL_SHAREDWRITE 1005
+#define SYSCALL_PAUSE_MS 1006
+#define SYSCALL_REG_CLOCK_IPI 1007
+#define SYSCALL_PRINT_TIME 1008
+// chungmcl
+
 #define SYSCALL_EXIT 1101
 
 #define SYSCALL(which, arg0, arg1, arg2, arg3, arg4)           \
@@ -57,5 +65,16 @@ int
 get_sealing_key(
     struct sealing_key* sealing_key_struct, size_t sealing_key_struct_size,
     void* key_ident, size_t key_ident_size);
+
+// chungmcl
+int
+write_to_shared(void* src, uintptr_t offset, size_t data_len);
+
+int
+pause_ms(unsigned long ms);
+
+int
+print_time();
+// chungmcl
 
 #endif /* syscall.h */

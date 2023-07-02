@@ -2,13 +2,14 @@
 #define _MM_H_
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "mm/vm_defs.h"
 
 uintptr_t translate(uintptr_t va);
 pte* pte_of_va(uintptr_t va);
 #ifdef USE_FREEMEM
-uintptr_t alloc_page(uintptr_t vpn, int flags);
+uintptr_t alloc_page(uintptr_t vpn, int flags, bool is_user_page);
 void free_page(uintptr_t vpn);
 size_t alloc_pages(uintptr_t vpn, size_t count, int flags);
 void free_pages(uintptr_t vpn, size_t count);

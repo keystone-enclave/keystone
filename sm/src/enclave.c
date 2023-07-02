@@ -12,6 +12,7 @@
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
 #include <sbi/sbi_console.h>
+#include "clock.h"
 
 #define ENCL_MAX  16
 
@@ -23,6 +24,10 @@ static spinlock_t encl_lock = SPIN_LOCK_INITIALIZER;
 extern void save_host_regs(void);
 extern void restore_host_regs(void);
 extern byte dev_public_key[PUBLIC_KEY_SIZE];
+
+struct enclave* get_enclave(enclave_id eid) {
+  return &enclaves[eid];
+}
 
 /****************************
  *
@@ -46,7 +51,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
   swap_prev_mepc(&enclaves[eid].threads[0], regs, regs->mepc);
   swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
 
-  uintptr_t interrupts = 0;
+  uintptr_t interrupts = MIP_SSIP; // TODO(chungmcl): why is this needed?
   csr_write(mideleg, interrupts);
 
   if(load_parameters) {
@@ -84,6 +89,14 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
     }
   }
 
+  // TODO(chungmcl): Remove! for debugging fuzzy time stuff
+  // Disables context switching by disabling the timer interrupt
+  // bit (MTIP) in the MIE control and status register
+  enclaves[eid].mie_state = csr_read_clear(CSR_MIE, MIP_MTIP);
+  // old way of doing it
+  // csr_clear(CSR_MIE, MIP_MTIP);
+  sbi_printf("context_switch_to_enclave() on core %d\n", current_hartid());
+
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
   cpu_enter_enclave_context(eid);
@@ -111,9 +124,13 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
   swap_prev_mstatus(&enclaves[eid].threads[0], regs, regs->mstatus);
 
   switch_vector_host();
+  
+  // TODO(chungmcl): Remove! for debugging fuzzy time stuff
+  // see context_switch_to_enclave
+  csr_write(CSR_MIE, enclaves[eid].mie_state);
+  enclaves[eid].mie_state = 0;
 
   uintptr_t pending = csr_read(mip);
-
   if (pending & MIP_MTIP) {
     csr_clear(mip, MIP_MTIP);
     csr_set(mip, MIP_STIP);
@@ -329,6 +346,16 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
  *
  *********************************/
 
+void initialize_security_extensions(enclave_id eid, uint64_t security_extensions_mask) {
+  struct enclave* enclave = get_enclave(eid);
+  enclave->security_extensions = security_extensions_mask;
+
+  if (security_extensions_mask & SECURITY_EXTENSION_FUZZY_CLOCK) {
+    reg_fuzzy_clock_ipi(eid);
+  } else {
+    unreg_fuzzy_clock_ipi(eid);
+  }
+}
 
 /* This handles creation of a new enclave, based on arguments provided
  * by the untrusted host.
@@ -342,6 +369,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   size_t size = create_args.epm_region.size;
   uintptr_t utbase = create_args.utm_region.paddr;
   size_t utsize = create_args.utm_region.size;
+  uint64_t security_extensions_mask = create_args.security_extensions;
 
   enclave_id eid;
   unsigned long ret;
@@ -419,6 +447,9 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   /* EIDs are unsigned int in size, copy via simple copy */
   *eidptr = eid;
 
+  // if everything about the enclave is initialized correctly,
+  // initialize any security extensions
+  initialize_security_extensions(eid, security_extensions_mask);
   spin_unlock(&encl_lock);
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 

@@ -9,8 +9,10 @@
 #include "cpu.h"
 #include "platform-hook.h"
 #include "plugins/plugins.h"
+#include "clock.h"
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>
+
 
 unsigned long sbi_sm_create_enclave(unsigned long* eid, uintptr_t create_args)
 {
@@ -96,4 +98,39 @@ unsigned long sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr
   unsigned long ret;
   ret = call_plugin(cpu_get_enclave_id(), plugin_id, call_id, arg0, arg1);
   return ret;
+}
+
+unsigned long sbi_sm_get_is_clock_fuzzy() {
+  return get_is_clock_fuzzy();
+}
+
+unsigned long sbi_sm_start_management_core() {
+  // sbi_printf("sbi_sm_start_management_core(): running on core %lx.\n", csr_read(mhartid));
+  // sbi_timer_event_start(sbi_timer_value() + 0x1000000, SBI_TIMER_SOURCE_MONITOR);
+  return 0;
+}
+
+unsigned long sbi_sm_pause(struct sbi_trap_regs *regs) 
+{
+  if (get_is_clock_fuzzy())
+    return wait_until_epoch();
+  else
+    return 0;
+}
+
+unsigned long sbi_sm_pause_ms(struct sbi_trap_regs *regs, unsigned long ms)
+{
+  wait_for_ms(ms);
+  return 0;
+}
+
+unsigned long sbi_sm_get_time(struct sbi_trap_regs *regs)
+{
+  regs->a2 = (uintptr_t)(get_time_ticks());
+  return 0;
+}
+
+unsigned long sbi_sm_get_interval_len(struct sbi_trap_regs *regs)
+{
+  return get_granularity_ticks();
 }

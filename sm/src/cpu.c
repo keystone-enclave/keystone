@@ -12,6 +12,10 @@ int cpu_is_enclave_context()
   return cpus[csr_read(mhartid)].is_enclave;
 }
 
+int hartid_is_enclave_context(unsigned int hartid) {
+  return cpus[hartid].is_enclave;
+}
+
 int cpu_get_enclave_id()
 {
   return cpus[csr_read(mhartid)].eid;

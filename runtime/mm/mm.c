@@ -71,12 +71,14 @@ __walk_create(pte* root, uintptr_t addr)
 /* allocate a new page to a given vpn
  * returns VA of the page, (returns 0 if fails) */
 uintptr_t
-alloc_page(uintptr_t vpn, int flags)
+alloc_page(uintptr_t vpn, int flags, bool is_user_page)
 {
   uintptr_t page;
   pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
 
-  assert(flags & PTE_U);
+  if (is_user_page) {
+    assert(flags & PTE_U);
+  }
 
   if (!pte)
     return 0;
@@ -131,7 +133,7 @@ alloc_pages(uintptr_t vpn, size_t count, int flags)
 {
   unsigned int i;
   for (i = 0; i < count; i++) {
-    if(!alloc_page(vpn + i, flags))
+    if(!alloc_page(vpn + i, flags, flags & PTE_U))
       break;
   }
 

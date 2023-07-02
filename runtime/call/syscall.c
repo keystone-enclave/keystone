@@ -11,6 +11,7 @@
 #include "uaccess.h"
 #include "mm/mm.h"
 #include "util/rt_util.h"
+#include "sys/fuzzy_buff.h"
 
 #include "call/syscall_nums.h"
 
@@ -28,8 +29,12 @@
 
 extern void exit_enclave(uintptr_t arg0);
 
-uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr, size_t data_len){
+uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr, size_t data_len, bool pause){
   int ret;
+
+  if (pause) {
+    sbi_pause();
+  }
 
   // Syscall data should already be at the edge_call_data section
   /* For now we assume by convention that the start of the buffer is
@@ -79,7 +84,12 @@ uintptr_t dispatch_edgecall_ocall( unsigned long call_id,
    * region, calculate the offsets to the argument data, and then
    * dispatch the ocall to host */
 
-  edge_call->call_id = call_id;
+  if (use_fuzzy_buff) {
+    fuzzy_buff_push((void*)&edge_call->call_id, &call_id, sizeof(call_id));
+  } else {
+    edge_call->call_id = call_id;
+  }
+
   uintptr_t buffer_data_start = edge_call_data_ptr();
 
   if(data_len > (shared_buffer_size - (buffer_data_start - shared_buffer))){
@@ -143,6 +153,58 @@ uintptr_t handle_copy_from_shared(void* dst, uintptr_t offset, size_t size){
   return copy_to_user(dst, (void*)src_ptr, size);
 }
 
+void handle_print_time() {
+  // 1000 takes about 12 real time seconds
+  // 2000 takes about 22 real time seconds
+  // int DATA_POINTS = 2000;
+  // int data[DATA_POINTS];
+  // 
+  // for (int i = 0; i < DATA_POINTS; i++) {
+  //   int prev_time = sbi_get_time();
+  //   int time      = prev_time;
+  //   int j         = 0;
+  //   while (time == prev_time) {
+  //     j += 1;
+  //     prev_time = time;
+  //     time = sbi_get_time();
+  //   }
+  //   data[i] = j;
+  // }
+  // 
+  // for (int i = 0; i < DATA_POINTS; i++) {
+  //   print_strace("%d\n", data[i]);
+  // }
+}
+
+// TODO(chungmcl): syscall to copy/write to shared memory
+// consider making it a build option?
+bool handle_write_to_shared(void* src, uintptr_t offset, size_t size) {
+  uintptr_t dst_ptr;
+  if (edge_call_get_ptr_from_offset(offset, size,
+  			   &dst_ptr) != 0){
+    return false;
+  }
+
+  if (use_fuzzy_buff) {
+    copy_from_user((void*)rt_copy_buffer_2, src, size);
+    // print_strace("%s", rt_copy_buffer_2);
+    if (!fuzzy_buff_push((void*)dst_ptr, rt_copy_buffer_2, size)) {
+      print_strace("write_to_shared push failed.\n");
+    }
+  }
+  else {
+    // copy directly to memory
+    copy_from_user((void*)(dst_ptr), src, size);
+  }
+
+  return true;
+}
+
+bool handle_pause_ms(unsigned long ms) {
+  sbi_pause_ms(ms);
+  return true;
+}
+
 void init_edge_internals(){
   edge_call_init_internals(shared_buffer, shared_buffer_size);
 }
@@ -155,6 +217,13 @@ void handle_syscall(struct encl_ctx* ctx)
   uintptr_t arg2 = ctx->regs.a2;
   uintptr_t arg3 = ctx->regs.a3;
   uintptr_t arg4 = ctx->regs.a4;
+
+  // TODO(chungmcl): do we still want to do this...?
+  if (use_fuzzy_buff) {
+    if (n != RUNTIME_SYSCALL_EXIT && n != RUNTIME_SYSCALL_OCALL) {
+      fuzzy_buff_flush_due_items(sbi_get_time());
+    }
+  }
 
   // We only use arg5 in these for now, keep warnings happy.
 #if defined(USE_LINUX_SYSCALL) || defined(USE_IO_SYSCALL)
@@ -174,6 +243,17 @@ void handle_syscall(struct encl_ctx* ctx)
   case(RUNTIME_SYSCALL_SHAREDCOPY):
     ret = handle_copy_from_shared((void*)arg0, arg1, arg2);
     break;
+  // chungmcl
+  case(RUNTIME_SYSCALL_PRINT_TIME):
+    handle_print_time();
+    break;
+  case(RUNTIME_SYSCALL_SHARED_WRITE):
+    ret = handle_write_to_shared((void*)arg0, arg1, arg2);
+    break;
+  case(RUNTIME_SYSCALL_PAUSE_MS):
+    ret = handle_pause_ms((unsigned long)arg0);
+    break;
+  // chungmcl
   case(RUNTIME_SYSCALL_ATTEST_ENCLAVE):;
     copy_from_user((void*)rt_copy_buffer_2, (void*)arg1, arg2);
 

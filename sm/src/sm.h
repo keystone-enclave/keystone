@@ -20,6 +20,11 @@
 #define SBI_SM_DESTROY_ENCLAVE    2002
 #define SBI_SM_RUN_ENCLAVE        2003
 #define SBI_SM_RESUME_ENCLAVE     2005
+
+// clock/management core
+#define SBI_SM_START_MGMT_CORE    2006
+// clock/management core
+
 #define FID_RANGE_HOST            2999
 /* 3000-3999 are called by enclave */
 #define SBI_SM_RANDOM             3001
@@ -27,6 +32,15 @@
 #define SBI_SM_GET_SEALING_KEY    3003
 #define SBI_SM_STOP_ENCLAVE       3004
 #define SBI_SM_EXIT_ENCLAVE       3006
+
+// clock
+#define SBI_SM_PAUSE              3007
+#define SBI_SM_PAUSE_MS           3008
+#define SBI_SM_GET_TIME           3009
+#define SBI_SM_GET_INTERVAL_LEN   3010
+#define SBI_SM_GET_IS_CLOCK_FUZZY 3011
+// clock
+
 #define FID_RANGE_ENCLAVE         3999
 /* 4000-4999 are experimental */
 #define SBI_SM_CALL_PLUGIN        4000
@@ -107,6 +121,7 @@ struct keystone_sbi_create
   uintptr_t free_paddr;
 
   struct runtime_va_params_t params;
+  uint64_t security_extensions;
   unsigned int* eid_pptr;
 };
 

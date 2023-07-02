@@ -29,7 +29,7 @@ uintptr_t io_syscall_sync(){
 
   size_t totalsize = (sizeof(struct edge_syscall));
 
-  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
   print_strace("[runtime] proxied sync\r\n");
   return ret;
 }
@@ -45,7 +45,7 @@ uintptr_t io_syscall_ftruncate(int fd, off_t offset){
   size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_ftruncate));
 
-  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
   print_strace("[runtime] proxied ftruncate (%i) = %li\r\n", fd, ret);
   return ret;
 }
@@ -59,7 +59,7 @@ uintptr_t io_syscall_fsync(int fd){
   size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_fsync));
 
-  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
   print_strace("[runtime] proxied fsync (%i) = %li\r\n", fd, ret);
   return ret;
 }
@@ -76,7 +76,7 @@ uintptr_t io_syscall_lseek(int fd, off_t offset, int whence){
   size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_lseek));
 
-  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
   print_strace("[runtime] proxied lseek (on fd:%i to %li from %i) = %li\r\n",
                fd, offset, whence, ret);
   return ret;
@@ -92,7 +92,7 @@ uintptr_t io_syscall_close(int fd){
   size_t totalsize = (sizeof(struct edge_syscall)+
                       sizeof(sargs_SYS_close));
 
-  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  uintptr_t ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
   print_strace("[runtime] proxied close (%i) = %li\r\n", fd, ret);
   return ret;
 }
@@ -114,7 +114,7 @@ uintptr_t io_syscall_read(int fd, void* buf, size_t len){
                       sizeof(sargs_SYS_read) +
                       len);
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   if((int)ret < 0){
     goto done;
@@ -157,7 +157,7 @@ uintptr_t io_syscall_write(int fd, void* buf, size_t len){
                       sizeof(sargs_SYS_write) +
                       len);
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
  done:
   print_strace("[runtime] proxied write to %i (size: %lu) = %li\r\n",fd, len, ret);
@@ -187,7 +187,7 @@ uintptr_t io_syscall_openat(int dirfd, char* path,
                       sizeof(sargs_SYS_openat) +
                       pathlen);
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
 
  done:
@@ -219,7 +219,7 @@ uintptr_t io_syscall_unlinkat(int dirfd, char* path,
                       sizeof(sargs_SYS_unlinkat) +
                       pathlen);
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
 
  done:
@@ -284,7 +284,7 @@ uintptr_t io_syscall_fstatat(int dirfd, char *pathname, struct stat *statbuf,
                       sizeof(sargs_SYS_fstatat) +
                       pathlen);
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   if(ret == 0){
     copy_to_user(statbuf, &args->stats, sizeof(struct stat));
@@ -307,7 +307,7 @@ uintptr_t io_syscall_pipe(int *fds){
 
   size_t totalsize = sizeof(struct edge_syscall);
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   if(ret == 0){
     copy_to_user(fds, args, 2 * sizeof(int));
@@ -329,7 +329,7 @@ uintptr_t io_syscall_epoll_create(int size){
   args->size = 1024; 
 
   size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_epoll_create1);
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   print_strace("[runtime] proxied epoll_create: %d \r\n", ret);
   return ret; 
@@ -349,7 +349,7 @@ uintptr_t io_syscall_epoll_ctl(int epfd, int op, int fd, uintptr_t event){
   copy_from_user(&args->event, (void *) event, sizeof(struct epoll_event));
 
   size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_epoll_ctl);
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   print_strace("[runtime] proxied epoll_create: %d \r\n", ret);
   return ret; 
@@ -386,7 +386,7 @@ uintptr_t io_syscall_fcntl(int fd, int cmd, uintptr_t arg){
 
 
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
  done: 
   print_strace("[runtime] proxied fcntl = %li\r\n", ret);
@@ -403,7 +403,7 @@ uintptr_t io_syscall_getcwd(char* buf, size_t size){
   size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_getcwd));
 
-  dispatch_edgecall_syscall(edge_syscall, totalsize);
+  dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   copy_to_user(buf, &args->buf, size);
   print_strace("[runtime] proxied getcwd\r\n");
@@ -423,7 +423,7 @@ uintptr_t io_syscall_chdir(char* path) {
   copy_from_user(args->path, path, strlen(path) + 1);
 
   size_t totalsize = (sizeof(struct edge_syscall)) + strlen(args->path) + 1;
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   print_strace("[runtime] proxied chdir: %s\r\n", args->path);
   return ret;
@@ -444,7 +444,7 @@ uintptr_t io_syscall_epoll_pwait(int epfd, uintptr_t events, int maxevents, int 
   copy_from_user(&args->events, (void *) events, sizeof(struct epoll_event));  
 
   size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_epoll_pwait);
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   copy_to_user((void *) events, &args->events, sizeof(struct epoll_event));
   print_strace("[runtime] proxied epoll_pwait: epfd: %d, ret: %d\r\n", args->epfd, ret);
@@ -466,7 +466,7 @@ uintptr_t io_syscall_renameat2(int olddirfd,  uintptr_t oldpath, int newdirfd, u
   copy_from_user(&args->newpath, (void *) newpath, 128);  
 
   size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_renameat2);
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   print_strace("[runtime] proxied renameat2: oldpath: %s, newpath: %s, ret: %d\r\n", args->oldpath, args->newpath, ret);
   return ret;
@@ -481,7 +481,7 @@ uintptr_t io_syscall_umask(int mask){
   args->mask = mask;
 
   size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_umask);
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   print_strace("[runtime] proxied umask: mask: %d, ret: %d\r\n", args->mask, ret);
   return ret;
@@ -498,7 +498,7 @@ uintptr_t io_syscall_fstat(int fd, struct stat *statbuf){
   size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_fstat));
 
-  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize, false);
 
   if(ret == 0){
     copy_to_user(statbuf, &args->stats, sizeof(struct stat));

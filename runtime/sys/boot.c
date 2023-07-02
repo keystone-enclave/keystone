@@ -10,6 +10,7 @@
 #include "mm/mm.h"
 #include "sys/env.h"
 #include "mm/paging.h"
+#include "sys/fuzzy_buff.h"
 
 /* defined in vm.h */
 extern uintptr_t shared_buffer;
@@ -168,6 +169,17 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* Enable the FPU */
   csr_write(sstatus, csr_read(sstatus) | 0x6000);
+
+  if (sbi_get_is_clock_fuzzy()) {
+    // TODO(chungmcl):
+    if (!fuzzy_buff_init()) {
+      print_strace("!!! fuzzy_buff failed to initialize !!!\n");
+      // TODO(chungmcl):
+      // make SM call to exit()
+      // (also create an issue for SM on SM repo -- we need a way
+      // for an enclave to exit AND say that it can never be run again)
+    }
+  }
 
   debug("eyrie boot finished. drop to the user land ...");
   /* booting all finished, droping to the user land */

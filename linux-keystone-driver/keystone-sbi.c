@@ -1,5 +1,13 @@
 #include "keystone-sbi.h"
 
+// management-core
+struct sbiret sbi_sm_start_mgmt_core(void) {
+  return sbi_ecall(KEYSTONE_SBI_EXT_ID,
+      SBI_SM_START_MGMT_CORE,
+      0, 0, 0, 0, 0, 0);
+}
+// management-core
+
 struct sbiret sbi_sm_create_enclave(struct keystone_sbi_create_t* args) {
   return sbi_ecall(KEYSTONE_SBI_EXT_ID,
       SBI_SM_CREATE_ENCLAVE,

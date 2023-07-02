@@ -10,6 +10,13 @@
 
 int __keystone_destroy_enclave(unsigned int ueid);
 
+// management-core(chungmcl)
+int keystone_start_management_core(void) {
+  sbi_sm_start_mgmt_core();
+  return 0;
+}
+// management-core
+
 int keystone_create_enclave(struct file *filep, unsigned long arg)
 {
   /* create parameters */
@@ -72,6 +79,9 @@ int keystone_finalize_enclave(unsigned long arg)
   create_args.free_paddr = enclp->free_paddr;
 
   create_args.params = enclp->params;
+
+  create_args.security_extensions = enclp->security_extensions;
+  keystone_err("security_extensions: %d\n", create_args.security_extensions);
 
   ret = sbi_sm_create_enclave(&create_args);
 

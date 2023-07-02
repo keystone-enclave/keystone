@@ -25,6 +25,10 @@
 #include <sbi_utils/reset/fdt_reset.h>
 #include "sm.h"
 
+#include "sbi/sbi_timer.h"
+#include "cpu.h"
+#include "clock.h"
+
 /* List of platform override modules generated at compile time */
 extern const struct platform_override *platform_override_modules[];
 extern unsigned long platform_override_modules_size;
@@ -245,6 +249,48 @@ static uint64_t generic_pmu_xlate_to_mhpmevent(uint32_t event_idx,
 	return evt_val;
 }
 
+static void keystone_ipi_handle(unsigned int event_id) {
+  struct sbi_trap_regs *regs;
+	int is_enclave_context = cpu_is_enclave_context();
+	int event_id_is_not_clock_id = event_id != get_clock_ipi_event_id();
+  if (is_enclave_context && event_id_is_not_clock_id) {
+    // Execute the trap hack
+    regs = (struct sbi_trap_regs *)
+            ((void *) sbi_scratch_thishart_ptr() - SBI_TRAP_REGS_SIZE);
+    regs->mepc -= 4;
+    sbi_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
+    regs->a0 = SBI_ERR_SM_ENCLAVE_INTERRUPTED;
+    regs->mepc += 4;
+  }
+}
+
+static void keystone_timer_event_handle(int source) {
+  struct sbi_trap_regs *regs;
+  switch(source) {
+    case SBI_TIMER_SOURCE_ECALL: // From host OS
+    	if(cpu_is_enclave_context()) {
+    		// Execute the trap hack
+    		regs = (struct sbi_trap_regs *)
+    		    ((void *) sbi_scratch_thishart_ptr() - SBI_TRAP_REGS_SIZE);
+    		regs->mepc -= 4;
+    		sbi_sm_stop_enclave(regs, STOP_TIMER_INTERRUPT);
+    		regs->a0 = SBI_ERR_SM_ENCLAVE_INTERRUPTED;
+    		regs->mepc += 4;
+    	}
+    	break;
+    case SBI_TIMER_SOURCE_MONITOR: {
+			// From SM itself
+      // sbi_printf("[%lx] Handling event for %i\n", sbi_timer_value(), source);
+			unsigned long next_check = update_fuzzy_clock();
+      sbi_timer_event_start(sbi_timer_value() + next_check, SBI_TIMER_SOURCE_MONITOR);
+      break;
+		} 
+    default:
+      // Unhandled interrupt type
+      break;
+  }
+}
+
 const struct sbi_platform_operations platform_ops = {
 	.nascent_init		= generic_nascent_init,
 	.early_init		= generic_early_init,
@@ -257,11 +303,13 @@ const struct sbi_platform_operations platform_ops = {
 	.irqchip_exit		= fdt_irqchip_exit,
 	.ipi_init		= fdt_ipi_init,
 	.ipi_exit		= fdt_ipi_exit,
+	.ipi_handle = keystone_ipi_handle, // management-core
 	.pmu_init		= generic_pmu_init,
 	.pmu_xlate_to_mhpmevent = generic_pmu_xlate_to_mhpmevent,
 	.get_tlbr_flush_limit	= generic_tlbr_flush_limit,
 	.timer_init		= fdt_timer_init,
 	.timer_exit		= fdt_timer_exit,
+	.timer_event_handle = keystone_timer_event_handle, // management-core
 	.vendor_ext_check	= generic_vendor_ext_check,
 	.vendor_ext_provider	= generic_vendor_ext_provider,
 };

@@ -19,6 +19,10 @@ platform-objs-y += ../../src/sbi_trap_hack.o
 platform-objs-y += ../../src/trap.o
 platform-objs-y += ../../src/ipi.o
 
+# clock: Add clock.h + clock.c -> clock.o
+platform-objs-y += ../../src/clock.o
+# clock
+
 platform-objs-y += ../../src/sha3/sha3.o
 platform-objs-y += ../../src/ed25519/fe.o
 platform-objs-y += ../../src/ed25519/ge.o
