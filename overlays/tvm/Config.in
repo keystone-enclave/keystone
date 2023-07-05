@@ -1,0 +1,9 @@
+
+# Packages
+source "$BR2_EXTERNAL_TVM_PATH/package/gcc-target/Config.in"
+source "$BR2_EXTERNAL_TVM_PATH/package/python-cloudpickle/Config.in"
+source "$BR2_EXTERNAL_TVM_PATH/package/tvm/Config.in"
+source "$BR2_EXTERNAL_TVM_PATH/package/vta-driver/Config.in"
+
+config BR2_PACKAGE_PYTHON_NUMPY_ARCH_SUPPORTS
+	default y if BR2_riscv

@@ -1,0 +1,50 @@
+diff --git a/cmake/modules/VTA.cmake b/cmake/modules/VTA.cmake
+index f3fd47325..a1315288f 100644
+--- a/cmake/modules/VTA.cmake
++++ b/cmake/modules/VTA.cmake
+@@ -120,6 +120,9 @@ elseif(PYTHON)
+       tvm_file_glob(GLOB FOCL_SRC ${VTA_HW_PATH}/src/oclfpga/*.cc)
+       list(APPEND FPGA_RUNTIME_SRCS ${FOCL_SRC})
+       list(APPEND FPGA_RUNTIME_SRCS ${VTA_HW_PATH}/src/vmem/virtual_memory.cc ${VTA_HW_PATH}/src/vmem/virtual_memory.h)
++    elseif(${VTA_TARGET} STREQUAL "polarfire") # Polarfire FPGA + RISCV CPU
++      tvm_file_glob(GLOB POLARFIRE_SRC ${VTA_HW_PATH}/src/polarfire/*.cc)
++      list(APPEND FPGA_RUNTIME_SRCS ${POLARFIRE_SRC})
+     endif()
+     # Target lib: vta
+     add_library(vta SHARED ${FPGA_RUNTIME_SRCS})
+@@ -143,6 +146,9 @@ elseif(PYTHON)
+       target_include_directories(vta PUBLIC 3rdparty)
+       set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+       target_link_libraries(vta -lOpenCL)
++    elseif(${VTA_TARGET} STREQUAL "polarfire") # Polarfire FPGA + RISCV CPU
++      target_include_directories(vta SYSTEM PUBLIC ${VTA_HW_PATH}/src/polarfire)
++      target_include_directories(vta SYSTEM PUBLIC 3rdparty)
+     endif()
+   endif()
+ 
+diff --git a/vta/python/vta/environment.py b/vta/python/vta/environment.py
+index 087c7e852..54fda65da 100644
+--- a/vta/python/vta/environment.py
++++ b/vta/python/vta/environment.py
+@@ -234,6 +234,8 @@ class Environment(object):
+             return "llvm -mtriple=armv7-none-linux-gnueabihf"
+         if self.TARGET == "ultra96":
+             return "llvm -mtriple=aarch64-linux-gnu"
++        if self.TARGET == "polarfire":
++            return "llvm -mtriple=riscv64-linux-gnu -mabi=lp64d -mcpu=generic-rv64 -mfloat-abi=hard -mattr=+d"
+         if self.TARGET in ["sim", "tsim", "intelfocl"]:
+             return "llvm"
+         raise ValueError("Unknown target %s" % self.TARGET)
+diff --git a/vta/python/vta/testing/utils.py b/vta/python/vta/testing/utils.py
+index f16335966..2f3d7a9e4 100644
+--- a/vta/python/vta/testing/utils.py
++++ b/vta/python/vta/testing/utils.py
+@@ -52,7 +52,7 @@ def run(run_func):
+                 assert simulator.enabled()
+             run_func(env, rpc.LocalSession())
+ 
+-    elif env.TARGET in ["pynq", "ultra96", "de10nano"]:
++    elif env.TARGET in ["pynq", "ultra96", "de10nano", "polarfire"]:
+         # The environment variables below should be set if we are using
+         # a tracker to obtain a remote for a test device
+         tracker_host = os.environ.get("TVM_TRACKER_HOST", None)

@@ -13,6 +13,7 @@ export KEYSTONE_DRIVER          ?= $(KEYSTONE)/linux-keystone-driver
 export KEYSTONE_EXAMPLES        ?= $(KEYSTONE)/examples
 export KEYSTONE_RUNTIME         ?= $(KEYSTONE)/runtime
 export KEYSTONE_SDK             ?= $(KEYSTONE)/sdk
+export KEYSTONE_TVM             ?= $(KEYSTONE)/tvm
 export KEYSTONE_BOOTROM         ?= $(KEYSTONE)/bootrom
 export KEYSTONE_SM              ?= $(KEYSTONE)/sm
 
@@ -28,8 +29,8 @@ include mkutils/log.mk
 
 BUILDROOT_CONFIGFILE    ?= qemu_riscv$(KEYSTONE_BITS)_virt_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
-	EXTERNALS += microchip
-	BUILDROOT_CONFIGFILE := riscv64_mpfs_defconfig
+        EXTERNALS += microchip tvm
+        BUILDROOT_CONFIGFILE := riscv64_mpfs_defconfig
 endif
 
 # Highest priority external

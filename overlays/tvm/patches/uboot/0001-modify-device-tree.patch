@@ -1,0 +1,120 @@
+diff --git a/arch/riscv/dts/microchip-mpfs-icicle-kit.dts b/arch/riscv/dts/microchip-mpfs-icicle-kit.dts
+index 09722a02a4..bb25bde572 100644
+--- a/arch/riscv/dts/microchip-mpfs-icicle-kit.dts
++++ b/arch/riscv/dts/microchip-mpfs-icicle-kit.dts
+@@ -30,21 +30,15 @@
+ 		timebase-frequency = <RTCCLK_FREQ>;
+ 	};
+ 
+-	kernel: memory@80000000 {
++	ddr_cached_low: memory@90000000 {
+ 		device_type = "memory";
+-		reg = <0x0 0x80000000 0x0 0x4000000>;
+-		label = "kernel";
+-	};
+-
+-	ddr_cached_low: memory@8a000000 {
+-		device_type = "memory";
+-		reg = <0x0 0x8a000000 0x0 0x8000000>;
++		reg = <0x0 0x90000000 0x0 0x10000000>;
+ 		label = "cached-low";
+ 	};
+ 
+-	ddr_non_cached_low: memory@c4000000 {
++	ddr_non_cached_low: memory@c0000000 {
+ 		device_type = "memory";
+-		reg = <0x0 0xc4000000 0x0 0x6000000>;
++		reg = <0x0 0xc0000000 0x0 0x10000000>;
+ 		label = "non-cached-low";
+ 	};
+ 
+@@ -71,15 +65,6 @@
+ 			no-map;
+ 		};
+ 
+-		dma_non_cached_low: non-cached-low-buffer {
+-			compatible = "shared-dma-pool";
+-			size = <0x0 0x4000000>;
+-			no-map;
+-			linux,dma-default;
+-			alloc-ranges = <0x0 0xc4000000 0x0 0x4000000>;
+-			dma-ranges = <0x0 0xc4000000 0x0 0xc4000000 0x0 0x4000000>;
+-		};
+-
+ 		dma_non_cached_high: non-cached-high-buffer {
+ 			compatible = "shared-dma-pool";
+ 			size = <0x0 0x10000000>;
+@@ -89,25 +74,30 @@
+ 			dma-ranges = <0x14 0x12000000 0x14 0x12000000 0x0 0x10000000>;
+ 		};
+ 
++/*
+ 		fabricbuf0ddrc: buffer@88000000 {
+ 			compatible = "shared-dma-pool";
+ 			reg = <0x0 0x88000000 0x0 0x2000000>;
+ 			no-map;
+ 		};
++*/
+ 
+-		fabricbuf1ddrnc: buffer@c8000000 {
++		fabricbuf1ddrnc: buffer@c0000000 {
+ 			compatible = "shared-dma-pool";
+-			reg = <0x0 0xc8000000 0x0 0x2000000>;
++			reg = <0x0 0xc0000000 0x0 0x10000000>;
+ 			no-map;
+ 		};
+ 
++/*
+ 		fabricbuf2ddrncwcb: buffer@d8000000 {
+ 			compatible = "shared-dma-pool";
+ 			reg = <0x0 0xd8000000 0x0 0x2000000>;
+ 			no-map;
+ 		};
++*/
+ 	};
+ 
++/*
+ 	udmabuf0 {
+ 		compatible = "ikwzm,u-dma-buf";
+ 		device-name = "udmabuf-ddr-c0";
+@@ -116,16 +106,18 @@
+ 		memory-region = <&fabricbuf0ddrc>;
+ 		sync-mode = <3>;
+ 	};
++*/
+ 
+ 	udmabuf1 {
+ 		compatible = "ikwzm,u-dma-buf";
+ 		device-name = "udmabuf-ddr-nc0";
+ 		minor-number = <1>;
+-		size = <0x0 0x2000000>;
++		size = <0x0 0x10000000>;
+ 		memory-region = <&fabricbuf1ddrnc>;
+ 		sync-mode = <3>;
+ 	};
+ 
++/*
+ 	udmabuf2 {
+ 		compatible = "ikwzm,u-dma-buf";
+ 		device-name = "udmabuf-ddr-nc-wcb0";
+@@ -134,6 +126,7 @@
+ 		memory-region = <&fabricbuf2ddrncwcb>;
+ 		sync-mode = <3>;
+ 	};
++*/
+ };
+ 
+ &refclk {
+diff --git a/include/configs/microchip_mpfs_icicle.h b/include/configs/microchip_mpfs_icicle.h
+index b795985a1d..7efed8376c 100644
+--- a/include/configs/microchip_mpfs_icicle.h
++++ b/include/configs/microchip_mpfs_icicle.h
+@@ -70,7 +70,7 @@
+ 
+ #define CONFIG_EXTRA_ENV_SETTINGS \
+ 	"bootm_size=0x10000000\0" \
+-	"scriptaddr=0x8e000000\0" \
++	"scriptaddr=0x9e000000\0" \
+ 	BOOTENV_DESIGN_OVERLAYS \
+ 	BOOTENV \
+ 

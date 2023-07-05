@@ -1,0 +1,51 @@
+diff --git a/mpfs_icicle.its b/mpfs_icicle.its
+index 7995ae0..a8ae0e2 100644
+--- a/mpfs_icicle.its
++++ b/mpfs_icicle.its
+@@ -21,8 +21,8 @@
+ 				arch = "riscv";
+ 				os = "linux";
+ 				compression = "gzip";
+-				load = <0x80200000>;
+-				entry = <0x80200000>;
++				load = <0x90200000>;
++				entry = <0x90200000>;
+ 				hash-1 {
+ 					algo = "sha256";
+ 				};
+@@ -33,7 +33,7 @@
+ 				type = "flat_dt";
+ 				arch = "riscv";
+ 				compression = "none";
+-				load = <0x8a000000>;
++				load = <0x94000000>;
+ 				hash-1 {
+ 					algo = "sha256";
+ 				};
+@@ -44,7 +44,7 @@
+ 				type = "flat_dt";
+ 				arch = "riscv";
+ 				compression = "none";
+-				load = <0x8a080000>;
++				load = <0x94004000>;
+ 				hash-1 {
+ 					algo = "sha256";
+ 				};
+@@ -55,7 +55,7 @@
+ 				type = "flat_dt";
+ 				arch = "riscv";
+ 				compression = "none";
+-				load = <0x8a090000>;
++				load = <0x94008000>;
+ 				hash-1 {
+ 					algo = "sha256";
+ 				};
+@@ -66,7 +66,7 @@
+ 				type = "flat_dt";
+ 				arch = "riscv";
+ 				compression = "none";
+-				load = <0x8a0a0000>;
++				load = <0x9400C000>;
+ 				hash-1 {
+ 					algo = "sha256";
+ 				};
