@@ -3,14 +3,13 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "KeystoneDevice.hpp"
+
 #include <sys/mman.h>
 
 namespace Keystone {
 
-KeystoneDevice::KeystoneDevice() { eid = -1; }
-
 Error
-KeystoneDevice::create(uint64_t minPages) {
+KeystoneDevice::create(std::uint64_t minPages) {
   struct keystone_ioctl_create_enclave encl;
   encl.min_pages = minPages;
 
@@ -26,8 +25,8 @@ KeystoneDevice::create(uint64_t minPages) {
   return Error::Success;
 }
 
-uintptr_t
-KeystoneDevice::initUTM(size_t size) {
+std::uintptr_t
+KeystoneDevice::initUTM(std::size_t size) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid                   = eid;
   encl.params.untrusted_size = size;
@@ -40,8 +39,8 @@ KeystoneDevice::initUTM(size_t size) {
 
 Error
 KeystoneDevice::finalize(
-    uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    struct runtime_params_t params) {
+    std::uintptr_t runtimePhysAddr, std::uintptr_t eappPhysAddr,
+    std::uintptr_t freePhysAddr, struct runtime_params_t params) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid           = eid;
   encl.runtime_paddr = runtimePhysAddr;
@@ -75,12 +74,12 @@ KeystoneDevice::destroy() {
 }
 
 Error
-KeystoneDevice::__run(bool resume, uintptr_t* ret) {
+KeystoneDevice::__run(bool resume, std::uintptr_t* ret) {
   struct keystone_ioctl_run_enclave encl;
   encl.eid = eid;
 
   Error error;
-  uint64_t request;
+  std::uint64_t request;
 
   if (resume) {
     error   = Error::IoctlErrorResume;
@@ -113,17 +112,17 @@ KeystoneDevice::__run(bool resume, uintptr_t* ret) {
 }
 
 Error
-KeystoneDevice::run(uintptr_t* ret) {
+KeystoneDevice::run(std::uintptr_t* ret) {
   return __run(false, ret);
 }
 
 Error
-KeystoneDevice::resume(uintptr_t* ret) {
+KeystoneDevice::resume(std::uintptr_t* ret) {
   return __run(true, ret);
 }
 
 void*
-KeystoneDevice::map(uintptr_t addr, size_t size) {
+KeystoneDevice::map(std::uintptr_t addr, std::size_t size) {
   assert(fd >= 0);
   void* ret;
   ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
@@ -143,20 +142,20 @@ KeystoneDevice::initDevice(Params params) {
 }
 
 Error
-MockKeystoneDevice::create(uint64_t minPages) {
+MockKeystoneDevice::create(std::uint64_t minPages) {
   eid = -1;
   return Error::Success;
 }
 
-uintptr_t
-MockKeystoneDevice::initUTM(size_t size) {
+std::uintptr_t
+MockKeystoneDevice::initUTM(std::size_t size) {
   return 0;
 }
 
 Error
 MockKeystoneDevice::finalize(
-    uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    struct runtime_params_t params) {
+    std::uintptr_t runtimePhysAddr, std::uintptr_t eappPhysAddr,
+    std::uintptr_t freePhysAddr, struct runtime_params_t params) {
   return Error::Success;
 }
 
@@ -166,12 +165,12 @@ MockKeystoneDevice::destroy() {
 }
 
 Error
-MockKeystoneDevice::run(uintptr_t* ret) {
+MockKeystoneDevice::run(std::uintptr_t* ret) {
   return Error::Success;
 }
 
 Error
-MockKeystoneDevice::resume(uintptr_t* ret) {
+MockKeystoneDevice::resume(std::uintptr_t* ret) {
   return Error::Success;
 }
 
@@ -181,7 +180,7 @@ MockKeystoneDevice::initDevice(Params params) {
 }
 
 void*
-MockKeystoneDevice::map(uintptr_t addr, size_t size) {
+MockKeystoneDevice::map(std::uintptr_t addr, std::size_t size) {
   sharedBuffer = malloc(size);
   return sharedBuffer;
 }

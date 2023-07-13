@@ -53,7 +53,7 @@ main(int argc, char** argv) {
 void
 print_string_wrapper(void* buffer) {
   /* Parse and validate the incoming call data */
-  struct edge_call* edge_call = (struct edge_call*)buffer;
+  struct edge_call* edge_call = static_cast<struct edge_call*>(buffer);
   uintptr_t call_args;
   unsigned long ret_val;
   size_t arg_len;

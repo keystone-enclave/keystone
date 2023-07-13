@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <string>
+#include <cstdint>
 #include "./common.h"
 #include "./keystone_user.h"
 
@@ -21,33 +22,33 @@ class ElfFile {
  public:
   explicit ElfFile(std::string filename);
   ~ElfFile();
-  size_t getFileSize() { return fileSize; }
-  bool isValid();
+  std::size_t getFileSize() const noexcept { return fileSize; }
+  bool isValid() const noexcept;
 
-  uintptr_t getMinVaddr() { return minVaddr; }
-  size_t getTotalMemorySize() { return maxVaddr - minVaddr; }
+  std::uintptr_t getMinVaddr() const noexcept { return minVaddr; }
+  std::size_t getTotalMemorySize() const noexcept { return maxVaddr - minVaddr; }
   bool initialize(bool isRuntime);
 
-  unsigned int getPageMode() { return (isRuntime ? RT_FULL : USER_FULL); }
+  unsigned int getPageMode() const noexcept { return (isRuntime ? RT_FULL : USER_FULL); }
 
   /* libelf wrapper function */
-  size_t getNumProgramHeaders(void);
-  size_t getProgramHeaderType(size_t ph);
-  size_t getProgramHeaderFileSize(size_t ph);
-  size_t getProgramHeaderMemorySize(size_t ph);
-  uintptr_t getProgramHeaderVaddr(size_t ph);
-  uintptr_t getEntryPoint();
-  void* getProgramSegment(size_t ph);
+  std::size_t getNumProgramHeaders(void);
+  std::size_t getProgramHeaderType(std::size_t ph);
+  std::size_t getProgramHeaderFileSize(std::size_t ph);
+  std::size_t getProgramHeaderMemorySize(std::size_t ph);
+  std::uintptr_t getProgramHeaderVaddr(std::size_t ph);
+  std::uintptr_t getEntryPoint();
+  void* getProgramSegment(std::size_t ph);
 
  private:
   int filep;
 
   /* virtual addresses */
-  uintptr_t minVaddr;
-  uintptr_t maxVaddr;
+  std::uintptr_t minVaddr;
+  std::uintptr_t maxVaddr;
 
   void* ptr;
-  size_t fileSize;
+  std::size_t fileSize;
 
   /* is this runtime binary */
   bool isRuntime;

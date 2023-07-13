@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
+#include <cstdint>
 #include <iostream>
 #include "./common.h"
 #include "KeystoneDevice.hpp"
@@ -24,12 +25,12 @@ namespace Keystone {
  * These are used to make use of C type-checking..
  */
 typedef struct {
-  uintptr_t pte;
+  std::uintptr_t pte;
 } pte;
 
 #define pte_val(x) ((x).pte)
 
-#define __pa(x) ((uintptr_t)(x))
+#define __pa(x) ((std::uintptr_t)(x))
 
 #define __pte(x) ((pte){(x)})
 
@@ -69,88 +70,87 @@ typedef struct {
 
 class Memory {
  public:
-  Memory();
   ~Memory() {}
   virtual void init(
-      KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages)  = 0;
-  virtual uintptr_t readMem(uintptr_t src, size_t size)            = 0;
-  virtual void writeMem(uintptr_t src, uintptr_t dst, size_t size) = 0;
-  virtual uintptr_t allocMem(size_t size)                          = 0;
-  virtual uintptr_t allocUtm(size_t size)                          = 0;
-  bool allocPage(uintptr_t eva, uintptr_t src, unsigned int mode);
-  size_t epmAllocVspace(uintptr_t addr, size_t num_pages);
+      KeystoneDevice* dev, std::uintptr_t phys_addr, std::size_t min_pages)  = 0;
+  virtual std::uintptr_t readMem(std::uintptr_t src, std::size_t size)            = 0;
+  virtual void writeMem(std::uintptr_t src, std::uintptr_t dst, std::size_t size) = 0;
+  virtual std::uintptr_t allocMem(std::size_t size)                          = 0;
+  virtual std::uintptr_t allocUtm(std::size_t size)                          = 0;
+  bool allocPage(std::uintptr_t eva, std::uintptr_t src, unsigned int mode);
+  std::size_t epmAllocVspace(std::uintptr_t addr, std::size_t num_pages);
 
   // getters to be deprecated
-  uintptr_t getStartAddr() { return startAddr; }
-  uintptr_t getCurrentEPMAddress() { return epmFreeList; }
-  uintptr_t getRootPageTable() { return rootPageTable; }
+  std::uintptr_t getStartAddr() const noexcept { return startAddr; }
+  std::uintptr_t getCurrentEPMAddress() const noexcept { return epmFreeList; }
+  std::uintptr_t getRootPageTable() const noexcept { return rootPageTable; }
 
   int validateAndHashEpm(
-      hash_ctx_t* hash_ctx, int level, pte* tb, uintptr_t vaddr, int contiguous,
-      uintptr_t* runtime_max_seen, uintptr_t* user_max_seen);
+      hash_ctx_t* hash_ctx, int level, pte* tb, std::uintptr_t vaddr, int contiguous,
+      std::uintptr_t* runtime_max_seen, std::uintptr_t* user_max_seen);
 
   void startRuntimeMem();
   void startEappMem();
   void startFreeMem();
 
-  uintptr_t getRuntimePhysAddr() { return runtimePhysAddr; }
-  uintptr_t getEappPhysAddr() { return eappPhysAddr; }
-  uintptr_t getFreePhysAddr() { return freePhysAddr; }
+  std::uintptr_t getRuntimePhysAddr() const noexcept { return runtimePhysAddr; }
+  std::uintptr_t getEappPhysAddr() const noexcept { return eappPhysAddr; }
+  std::uintptr_t getFreePhysAddr() const noexcept { return freePhysAddr; }
 
  protected:
-  pte* __ept_walk_create(uintptr_t addr);
-  pte* __ept_continue_walk_create(uintptr_t addr, pte* pte);
-  pte* __ept_walk_internal(uintptr_t addr, int create);
-  pte* __ept_walk(uintptr_t addr);
-  uintptr_t epm_va_to_pa(uintptr_t addr);
+  pte* __ept_walk_create(std::uintptr_t addr);
+  pte* __ept_continue_walk_create(std::uintptr_t addr, pte* pte);
+  pte* __ept_walk_internal(std::uintptr_t addr, int create);
+  pte* __ept_walk(std::uintptr_t addr);
+  std::uintptr_t epm_va_to_pa(std::uintptr_t addr);
 
   KeystoneDevice* pDevice;
-  size_t epmSize;
-  uintptr_t epmFreeList;
-  uintptr_t utmFreeList;
-  uintptr_t rootPageTable;
-  uintptr_t startAddr;
+  std::size_t epmSize;
+  std::uintptr_t epmFreeList{ 0 };
+  std::uintptr_t utmFreeList{ 0 };
+  std::uintptr_t rootPageTable{ 0 };
+  std::uintptr_t startAddr{ 0 };
 
   // for hash calculation
-  uintptr_t runtimePhysAddr;
-  uintptr_t eappPhysAddr;
-  uintptr_t freePhysAddr;
-  uintptr_t utmPhysAddr;
-  uintptr_t untrustedPtr;
-  uintptr_t untrustedSize;
+  std::uintptr_t runtimePhysAddr;
+  std::uintptr_t eappPhysAddr;
+  std::uintptr_t freePhysAddr;
+  std::uintptr_t utmPhysAddr;
+  std::uintptr_t untrustedPtr;
+  std::uintptr_t untrustedSize;
 
  private:
-  pte pte_create(uintptr_t, int);
-  pte ptd_create(uintptr_t);
-  uintptr_t pte_ppn(pte);
-  uintptr_t ppn(uintptr_t);
-  size_t pt_idx(uintptr_t, int);
+  pte pte_create(std::uintptr_t, int);
+  pte ptd_create(std::uintptr_t);
+  std::uintptr_t pte_ppn(pte);
+  std::uintptr_t ppn(std::uintptr_t);
+  std::size_t pt_idx(std::uintptr_t, int);
 };
 
 class PhysicalEnclaveMemory : public Memory {
  public:
   PhysicalEnclaveMemory() {}
   ~PhysicalEnclaveMemory() {}
-  void init(KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages);
-  uintptr_t readMem(uintptr_t src, size_t size);
-  void writeMem(uintptr_t src, uintptr_t dst, size_t size);
-  uintptr_t allocMem(size_t size);
-  uintptr_t allocUtm(size_t size);
+  void init(KeystoneDevice* dev, std::uintptr_t phys_addr, std::size_t min_pages);
+  std::uintptr_t readMem(std::uintptr_t src, std::size_t size);
+  void writeMem(std::uintptr_t src, std::uintptr_t dst, std::size_t size);
+  std::uintptr_t allocMem(std::size_t size);
+  std::uintptr_t allocUtm(std::size_t size);
 };
 
 // Simulated memory reads/writes from calloc'ed memory
 class SimulatedEnclaveMemory : public Memory {
  private:
-  void* allocateAligned(size_t size, size_t alignment);
+  void* allocateAligned(std::size_t size, std::size_t alignment);
 
  public:
   SimulatedEnclaveMemory() {}
   ~SimulatedEnclaveMemory() {}
-  void init(KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages);
-  uintptr_t readMem(uintptr_t src, size_t size);
-  void writeMem(uintptr_t src, uintptr_t dst, size_t size);
-  uintptr_t allocMem(size_t size);
-  uintptr_t allocUtm(size_t size);
+  void init(KeystoneDevice* dev, std::uintptr_t phys_addr, std::size_t min_pages);
+  std::uintptr_t readMem(std::uintptr_t src, std::size_t size);
+  void writeMem(std::uintptr_t src, std::uintptr_t dst, std::size_t size);
+  std::uintptr_t allocMem(std::size_t size);
+  std::uintptr_t allocUtm(std::size_t size);
 };
 
 }  // namespace Keystone

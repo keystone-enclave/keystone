@@ -1,4 +1,5 @@
 #include "ed25519/sc.h"
+
 #include "ed25519/fixedint.h"
 
 static uint64_t

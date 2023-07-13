@@ -2,18 +2,20 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
-#include "ipi.h"
 #include "sm.h"
-#include "pmp.h"
-#include "crypto.h"
-#include "enclave.h"
-#include "platform-hook.h"
-#include "sm-sbi-opensbi.h"
-#include <sbi/sbi_string.h>
-#include <sbi/riscv_locks.h>
+
 #include <sbi/riscv_barrier.h>
+#include <sbi/riscv_locks.h>
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_hart.h>
+#include <sbi/sbi_string.h>
+
+#include "crypto.h"
+#include "enclave.h"
+#include "ipi.h"
+#include "platform-hook.h"
+#include "pmp.h"
+#include "sm-sbi-opensbi.h"
 
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
@@ -25,47 +27,55 @@ extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
 extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
 extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
 
-byte sm_hash[MDSIZE] = { 0, };
-byte sm_signature[SIGNATURE_SIZE] = { 0, };
-byte sm_public_key[PUBLIC_KEY_SIZE] = { 0, };
-byte sm_private_key[PRIVATE_KEY_SIZE] = { 0, };
-byte dev_public_key[PUBLIC_KEY_SIZE] = { 0, };
+byte sm_hash[MDSIZE] = {
+    0,
+};
+byte sm_signature[SIGNATURE_SIZE] = {
+    0,
+};
+byte sm_public_key[PUBLIC_KEY_SIZE] = {
+    0,
+};
+byte sm_private_key[PRIVATE_KEY_SIZE] = {
+    0,
+};
+byte dev_public_key[PUBLIC_KEY_SIZE] = {
+    0,
+};
 
-int osm_pmp_set(uint8_t perm)
-{
+int
+osm_pmp_set(uint8_t perm) {
   /* in case of OSM, PMP cfg is exactly the opposite.*/
   return pmp_set_keystone(os_region_id, perm);
 }
 
-int smm_init()
-{
+int
+smm_init() {
   int region = -1;
   int ret = pmp_region_init_atomic(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region, 0);
-  if(ret)
-    return -1;
+  if (ret) return -1;
 
   return region;
 }
 
-int osm_init()
-{
+int
+osm_init() {
   int region = -1;
-  int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
-  if(ret)
-    return -1;
+  int ret    = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
+  if (ret) return -1;
 
   return region;
 }
 
-void sm_sign(void* signature, const void* data, size_t len)
-{
+void
+sm_sign(void* signature, const void* data, size_t len) {
   sign(signature, data, len, sm_public_key, sm_private_key);
 }
 
-int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
-                          size_t key_ident_size,
-                          const unsigned char *enclave_hash)
-{
+int
+sm_derive_sealing_key(
+    unsigned char* key, const unsigned char* key_ident, size_t key_ident_size,
+    const unsigned char* enclave_hash) {
   unsigned char info[MDSIZE + key_ident_size];
 
   sbi_memcpy(info, enclave_hash, MDSIZE);
@@ -75,13 +85,13 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
    * The key is derived without a salt because we have no entropy source
    * available to generate the salt.
    */
-  return kdf(NULL, 0,
-             (const unsigned char *)sm_private_key, PRIVATE_KEY_SIZE,
-             info, MDSIZE + key_ident_size, key, SEALING_KEY_SIZE);
+  return kdf(
+      NULL, 0, (const unsigned char*)sm_private_key, PRIVATE_KEY_SIZE, info,
+      MDSIZE + key_ident_size, key, SEALING_KEY_SIZE);
 }
 
-void sm_copy_key()
-{
+void
+sm_copy_key() {
   sbi_memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
   sbi_memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
   sbi_memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
@@ -89,11 +99,10 @@ void sm_copy_key()
   sbi_memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
 }
 
-void sm_print_hash()
-{
-  for (int i=0; i<MDSIZE; i++)
-  {
-    sbi_printf("%02x", (char) sm_hash[i]);
+void
+sm_print_hash() {
+  for (int i = 0; i < MDSIZE; i++) {
+    sbi_printf("%02x", (char)sm_hash[i]);
   }
   sbi_printf("\n");
 }
@@ -101,32 +110,32 @@ void sm_print_hash()
 /*
 void sm_print_cert()
 {
-	int i;
+  int i;
 
-	printm("Booting from Security Monitor\n");
-	printm("Size: %d\n", sanctum_sm_size[0]);
+  printm("Booting from Security Monitor\n");
+  printm("Size: %d\n", sanctum_sm_size[0]);
 
-	printm("============ PUBKEY =============\n");
-	for(i=0; i<8; i+=1)
-	{
-		printm("%x",*((int*)sanctum_dev_public_key+i));
-		if(i%4==3) printm("\n");
-	}
-	printm("=================================\n");
+  printm("============ PUBKEY =============\n");
+  for(i=0; i<8; i+=1)
+  {
+    printm("%x",*((int*)sanctum_dev_public_key+i));
+    if(i%4==3) printm("\n");
+  }
+  printm("=================================\n");
 
-	printm("=========== SIGNATURE ===========\n");
-	for(i=0; i<16; i+=1)
-	{
-		printm("%x",*((int*)sanctum_sm_signature+i));
-		if(i%4==3) printm("\n");
-	}
-	printm("=================================\n");
+  printm("=========== SIGNATURE ===========\n");
+  for(i=0; i<16; i+=1)
+  {
+    printm("%x",*((int*)sanctum_sm_signature+i));
+    if(i%4==3) printm("\n");
+  }
+  printm("=================================\n");
 }
 */
 
-void sm_init(bool cold_boot)
-{
-	// initialize SMM
+void
+sm_init(bool cold_boot) {
+  // initialize SMM
   if (cold_boot) {
     /* only the cold-booting hart will execute these */
     sbi_printf("[SM] Initializing ... hart [%lx]\n", csr_read(mhartid));
@@ -134,13 +143,13 @@ void sm_init(bool cold_boot)
     sbi_ecall_register_extension(&ecall_keystone_enclave);
 
     sm_region_id = smm_init();
-    if(sm_region_id < 0) {
+    if (sm_region_id < 0) {
       sbi_printf("[SM] intolerable error - failed to initialize SM memory");
       sbi_hart_hang();
     }
 
     os_region_id = osm_init();
-    if(os_region_id < 0) {
+    if (os_region_id < 0) {
       sbi_printf("[SM] intolerable error - failed to initialize OS memory");
       sbi_hart_hang();
     }
@@ -160,8 +169,7 @@ void sm_init(bool cold_boot)
   }
 
   /* wait until cold-boot hart finishes */
-  while (!sm_init_done)
-  {
+  while (!sm_init_done) {
     mb();
   }
 

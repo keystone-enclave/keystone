@@ -18,8 +18,10 @@
 #include "app/syscall.h"
 #include "data-sealing.h"
 
-int hextostring(const unsigned char *hex_in, size_t hex_in_size,
-                char *str_out, size_t str_out_size);
+int
+hextostring(
+    const unsigned char* hex_in, size_t hex_in_size, char* str_out,
+    size_t str_out_size);
 
 /*
  *  Function main:
@@ -27,24 +29,29 @@ int hextostring(const unsigned char *hex_in, size_t hex_in_size,
  *  Description:
  *     Derives the sealing key
  */
-int main()
-{
-  char *key_identifier = "identifier";
-  char *key_identifier_2 = "identifier2";
+int
+main() {
+  char* key_identifier   = "identifier";
+  char* key_identifier_2 = "identifier2";
   struct sealing_key key_buffer;
   int ret = 0;
 
   /* Derive the sealing key */
-  ret = get_sealing_key(&key_buffer, sizeof(key_buffer),
-                        (void *)key_identifier, strlen(key_identifier));
+  ret = get_sealing_key(
+      &key_buffer, sizeof(key_buffer), (void*)key_identifier,
+      strlen(key_identifier));
 
   size_t string_key_size = SEALING_KEY_SIZE * 2 + 1;
   char string_key[string_key_size];
   size_t string_signature_size = SIGNATURE_SIZE * 2 + 1;
   char string_signature[string_signature_size];
 
-  hextostring((const unsigned char *)&key_buffer.key, SEALING_KEY_SIZE, string_key, string_key_size);
-  hextostring((const unsigned char *)&key_buffer.signature, SIGNATURE_SIZE, string_signature, string_signature_size);
+  hextostring(
+      (const unsigned char*)&key_buffer.key, SEALING_KEY_SIZE, string_key,
+      string_key_size);
+  hextostring(
+      (const unsigned char*)&key_buffer.signature, SIGNATURE_SIZE,
+      string_signature, string_signature_size);
 
   ocall_print_buffer("Key:\n", 6);
   ocall_print_buffer(string_key, string_key_size);
@@ -52,11 +59,16 @@ int main()
   ocall_print_buffer(string_signature, string_signature_size);
   ocall_print_buffer("\n", 2);
 
-  ret = get_sealing_key(&key_buffer, sizeof(key_buffer),
-                        (void *)key_identifier_2, strlen(key_identifier_2));
+  ret = get_sealing_key(
+      &key_buffer, sizeof(key_buffer), (void*)key_identifier_2,
+      strlen(key_identifier_2));
 
-  hextostring((const unsigned char *)&key_buffer.key, SEALING_KEY_SIZE, string_key, string_key_size);
-  hextostring((const unsigned char *)&key_buffer.signature, SIGNATURE_SIZE, string_signature, string_signature_size);
+  hextostring(
+      (const unsigned char*)&key_buffer.key, SEALING_KEY_SIZE, string_key,
+      string_key_size);
+  hextostring(
+      (const unsigned char*)&key_buffer.signature, SIGNATURE_SIZE,
+      string_signature, string_signature_size);
 
   ocall_print_buffer("Key:\n", 6);
   ocall_print_buffer(string_key, string_key_size);
@@ -79,11 +91,11 @@ int main()
  *  Description:
  *     Prints the buffer to the console
  */
-unsigned long ocall_print_buffer(char *data, size_t data_len)
-{
+unsigned long
+ocall_print_buffer(char* data, size_t data_len) {
   unsigned long retval;
 
-  ocall(OCALL_PRINT_BUFFER, data, data_len, &retval ,sizeof(unsigned long));
+  ocall(OCALL_PRINT_BUFFER, data, data_len, &retval, sizeof(unsigned long));
 
   return retval;
 }
@@ -103,10 +115,11 @@ unsigned long ocall_print_buffer(char *data, size_t data_len)
  *
  *  Return value: 0 if function has performed correctly
  */
-int hextostring(const unsigned char *hex_in, size_t hex_in_size,
-                char *str_out, size_t str_out_size)
-{
-  char *hex = "0123456789ABCDEF";
+int
+hextostring(
+    const unsigned char* hex_in, size_t hex_in_size, char* str_out,
+    size_t str_out_size) {
+  char* hex = "0123456789ABCDEF";
   int i;
 
   if (str_out_size < 2 * hex_in_size + 1) {
@@ -114,7 +127,7 @@ int hextostring(const unsigned char *hex_in, size_t hex_in_size,
   }
 
   for (i = 0; i < hex_in_size; i++) {
-    str_out[2 * i] = hex[hex_in[i] >> 4];
+    str_out[2 * i]     = hex[hex_in[i] >> 4];
     str_out[2 * i + 1] = hex[hex_in[i] & 0x0F];
   }
 

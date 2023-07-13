@@ -69,7 +69,7 @@ Verifier::verify_data(Report& report, const std::string& nonce) {
     throw std::runtime_error(error);
   }
 
-  if (0 == strcmp(nonce.c_str(), (char*)report.getDataSection())) {
+  if (0 == strcmp(nonce.c_str(), static_cast<char*>(report.getDataSection()))) {
     printf("Returned data in the report match with the nonce sent.\n");
   } else {
     printf("Returned data in the report do NOT match with the nonce sent.\n");

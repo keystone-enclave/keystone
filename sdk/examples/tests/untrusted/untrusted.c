@@ -3,14 +3,14 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "app/eapp_utils.h"
+#include "app/malloc.h"
 #include "app/string.h"
 #include "app/syscall.h"
-#include "app/malloc.h"
 #include "edge_wrapper.h"
 
-void EAPP_ENTRY eapp_entry(){
-
-  char* msg = "hello world!\n";
+void EAPP_ENTRY
+eapp_entry() {
+  char* msg  = "hello world!\n";
   char* msg2 = "2nd hello world!\n";
 
   edge_init();
@@ -28,8 +28,8 @@ void EAPP_ENTRY eapp_entry(){
 
   int i;
   int ct;
-  for(i = 0; i < pkgstr.size; i++){
-    if( ((char*)host_str)[i] == 'l' ){
+  for (i = 0; i < pkgstr.size; i++) {
+    if (((char*)host_str)[i] == 'l') {
       ct++;
     }
   }

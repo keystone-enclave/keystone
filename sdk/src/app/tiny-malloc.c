@@ -57,6 +57,7 @@
 #endif
 
 #include <stddef.h>
+
 #include "string.h"
 
 void* malloc(size_t);
@@ -469,6 +470,7 @@ mallinfo(void) {
 
 #ifdef DEFINE_MALLOC_STATS
 #include <stdio.h>
+
 #include "malloc.h"
 
 void

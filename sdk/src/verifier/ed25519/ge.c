@@ -1,4 +1,5 @@
 #include "ed25519/ge.h"
+
 #include "ed25519/precomp_data.h"
 
 /*

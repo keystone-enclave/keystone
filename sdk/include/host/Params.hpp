@@ -4,61 +4,61 @@
 //------------------------------------------------------------------------------
 #pragma once
 
+#include <cstdint>
 #include <cstdio>
 
+namespace detail {
+namespace defaults {
+constexpr std::uint64_t untrusted_size = 8192;  // 8 KB
 #if __riscv_xlen == 64
-#define DEFAULT_FREEMEM_SIZE 1024 * 1024  // 1 MB
-#define DEFAULT_UNTRUSTED_PTR 0xffffffff80000000
-#define DEFAULT_STACK_SIZE 1024 * 16  // 16k
-#define DEFAULT_STACK_START 0x0000000040000000
+constexpr std::uint64_t freemem_size  = 1024 * 1024;  // 1 MB
+constexpr std::uint64_t stack_size    = 1024 * 16;    // 16k
+constexpr std::uint64_t stack_start   = 0x0000000040000000;
+constexpr std::uint64_t untrusted_ptr = 0xffffffff80000000;
 #elif __riscv_xlen == 32
-#define DEFAULT_FREEMEM_SIZE 1024 * 512  // 512 KiB
-#define DEFAULT_UNTRUSTED_PTR 0x80000000
-#define DEFAULT_STACK_SIZE 1024 * 8  // 3 KiB
-#define DEFAULT_STACK_START 0x40000000
-#else                                     // for x86 tests
-#define DEFAULT_FREEMEM_SIZE 1024 * 1024  // 1 MB
-#define DEFAULT_UNTRUSTED_PTR 0xffffffff80000000
-#define DEFAULT_STACK_SIZE 1024 * 16  // 16k
-#define DEFAULT_STACK_START 0x0000000040000000
+constexpr std::uint64_t freemem_size  = 1024 * 512;  // 512 KiB
+constexpr std::uint64_t stack_size    = 1024 * 8;    // 3 KiB
+constexpr std::uint64_t stack_start   = 0x40000000;
+constexpr std::uint64_t untrusted_ptr = 0x80000000;
+#else
+constexpr std::uint64_t freemem_size  = 1024 * 1024;  // 1 MB
+constexpr std::uint64_t stack_size    = 1024 * 16;    // 16k
+constexpr std::uint64_t stack_start   = 0x0000000040000000;
+constexpr std::uint64_t untrusted_ptr = 0xffffffff80000000;
 #endif
-
-#define DEFAULT_UNTRUSTED_SIZE 8192  // 8 KB
+}  // namespace defaults
+}  // namespace detail
 
 /* parameters for enclave creation */
 namespace Keystone {
 
 class Params {
  public:
-  Params() {
-    simulated      = false;
-    untrusted      = DEFAULT_UNTRUSTED_PTR;
-    untrusted_size = DEFAULT_UNTRUSTED_SIZE;
-    freemem_size   = DEFAULT_FREEMEM_SIZE;
-  }
+  void setSimulated(bool _simulated) noexcept { simulated = _simulated; }
 
-  void setSimulated(bool _simulated) { simulated = _simulated; }
-  void setEnclaveEntry(uint64_t) {
+  void setEnclaveEntry(std::uint64_t) {
     printf("WARN: setEnclaveEntry() is deprecated.\n");
   }
-  void setUntrustedMem(uint64_t ptr, uint64_t size) {
+
+  void setUntrustedMem(std::uint64_t ptr, std::uint64_t size) noexcept {
     untrusted      = ptr;
     untrusted_size = size;
   }
-  void setFreeMemSize(uint64_t size) { freemem_size = size; }
-  bool isSimulated() { return simulated; }
-  uintptr_t getUntrustedMem() { return untrusted; }
-  uintptr_t getUntrustedSize() { return untrusted_size; }
-  uintptr_t getUntrustedEnd() { return untrusted + untrusted_size; }
-  uintptr_t getFreeMemSize() { return freemem_size; }
+
+  void setFreeMemSize(std::uint64_t size) noexcept { freemem_size = size; }
+  bool isSimulated() const noexcept { return simulated; }
+  std::uintptr_t getUntrustedMem() const noexcept { return untrusted; }
+  std::uintptr_t getUntrustedSize() const noexcept { return untrusted_size; }
+  std::uintptr_t getUntrustedEnd() const noexcept { return untrusted + untrusted_size; }
+  std::uintptr_t getFreeMemSize() const noexcept { return freemem_size; }
 
  private:
-  bool simulated;
-  uint64_t runtime_entry;
-  uint64_t enclave_entry;
-  uint64_t untrusted;
-  uint64_t untrusted_size;
-  uint64_t freemem_size;
+  bool simulated{false};
+  std::uint64_t runtime_entry;
+  std::uint64_t enclave_entry;
+  std::uint64_t untrusted{detail::defaults::untrusted_ptr};
+  std::uint64_t untrusted_size{detail::defaults::untrusted_size};
+  std::uint64_t freemem_size{detail::defaults::freemem_size};
 };
 
 }  // namespace Keystone

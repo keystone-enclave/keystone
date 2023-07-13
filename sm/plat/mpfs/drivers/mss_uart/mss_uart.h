@@ -323,425 +323,418 @@
 extern "C" {
 #endif
 
+/***************************************************************************/ /**
+   Baud rates
+   ==========
+   The following definitions are used to specify standard baud rates as a
+   parameter to the MSS_UART_init() function.
 
-/***************************************************************************//**
-  Baud rates
-  ==========
-  The following definitions are used to specify standard baud rates as a
-  parameter to the MSS_UART_init() function.
+   | Constant             | Description      |
+   |----------------------|------------------|
+   | MSS_UART_110_BAUD    |    110 baud rate |
+   | MSS_UART_300_BAUD    |    300 baud rate |
+   | MSS_UART_600_BAUD    |    600 baud rate |
+   | MSS_UART_1200_BAUD   |   1200 baud rate |
+   | MSS_UART_2400_BAUD   |   2400 baud rate |
+   | MSS_UART_4800_BAUD   |   4800 baud rate |
+   | MSS_UART_9600_BAUD   |   9600 baud rate |
+   | MSS_UART_19200_BAUD  |  19200 baud rate |
+   | MSS_UART_38400_BAUD  |  38400 baud rate |
+   | MSS_UART_57600_BAUD  |  57600 baud rate |
+   | MSS_UART_115200_BAUD | 115200 baud rate |
+   | MSS_UART_230400_BAUD | 230400 baud rate |
+   | MSS_UART_460800_BAUD | 460800 baud rate |
+   | MSS_UART_921600_BAUD | 921600 baud rate |
 
-  | Constant             | Description      |
-  |----------------------|------------------|
-  | MSS_UART_110_BAUD    |    110 baud rate |
-  | MSS_UART_300_BAUD    |    300 baud rate |
-  | MSS_UART_600_BAUD    |    600 baud rate |
-  | MSS_UART_1200_BAUD   |   1200 baud rate |
-  | MSS_UART_2400_BAUD   |   2400 baud rate |
-  | MSS_UART_4800_BAUD   |   4800 baud rate |
-  | MSS_UART_9600_BAUD   |   9600 baud rate |
-  | MSS_UART_19200_BAUD  |  19200 baud rate |
-  | MSS_UART_38400_BAUD  |  38400 baud rate |
-  | MSS_UART_57600_BAUD  |  57600 baud rate |
-  | MSS_UART_115200_BAUD | 115200 baud rate |
-  | MSS_UART_230400_BAUD | 230400 baud rate |
-  | MSS_UART_460800_BAUD | 460800 baud rate |
-  | MSS_UART_921600_BAUD | 921600 baud rate |
+  */
+#define MSS_UART_110_BAUD 110U
+#define MSS_UART_300_BAUD 300U
+#define MSS_UART_600_BAUD 600U
+#define MSS_UART_1200_BAUD 1200U
+#define MSS_UART_2400_BAUD 2400U
+#define MSS_UART_4800_BAUD 4800U
+#define MSS_UART_9600_BAUD 9600U
+#define MSS_UART_19200_BAUD 19200U
+#define MSS_UART_38400_BAUD 38400U
+#define MSS_UART_57600_BAUD 57600U
+#define MSS_UART_115200_BAUD 115200U
+#define MSS_UART_230400_BAUD 230400U
+#define MSS_UART_460800_BAUD 460800U
+#define MSS_UART_921600_BAUD 921600U
 
- */
-#define MSS_UART_110_BAUD       110U
-#define MSS_UART_300_BAUD       300U
-#define MSS_UART_600_BAUD       600U
-#define MSS_UART_1200_BAUD      1200U
-#define MSS_UART_2400_BAUD      2400U
-#define MSS_UART_4800_BAUD      4800U
-#define MSS_UART_9600_BAUD      9600U
-#define MSS_UART_19200_BAUD     19200U
-#define MSS_UART_38400_BAUD     38400U
-#define MSS_UART_57600_BAUD     57600U
-#define MSS_UART_115200_BAUD    115200U
-#define MSS_UART_230400_BAUD    230400U
-#define MSS_UART_460800_BAUD    460800U
-#define MSS_UART_921600_BAUD    921600U
+/***************************************************************************/ /**
+   Data Bits Length
+   ================
+   The following defines are used to build the value of the MSS_UART_init()
+   function line_config parameter.
 
-/***************************************************************************//**
-  Data Bits Length
-  ================
-  The following defines are used to build the value of the MSS_UART_init()
-  function line_config parameter.
+   | Constant             | Description                |
+   |----------------------|----------------------------|
+   | MSS_UART_DATA_5_BITS | 5 bits of data transmitted |
+   | MSS_UART_DATA_6_BITS | 6 bits of data transmitted |
+   | MSS_UART_DATA_7_BITS | 7 bits of data transmitted |
+   | MSS_UART_DATA_8_BITS | 8 bits of data transmitted |
 
-  | Constant             | Description                |
-  |----------------------|----------------------------|
-  | MSS_UART_DATA_5_BITS | 5 bits of data transmitted |
-  | MSS_UART_DATA_6_BITS | 6 bits of data transmitted |
-  | MSS_UART_DATA_7_BITS | 7 bits of data transmitted |
-  | MSS_UART_DATA_8_BITS | 8 bits of data transmitted |
+  */
+#define MSS_UART_DATA_5_BITS ((uint8_t)0x00)
+#define MSS_UART_DATA_6_BITS ((uint8_t)0x01)
+#define MSS_UART_DATA_7_BITS ((uint8_t)0x02)
+#define MSS_UART_DATA_8_BITS ((uint8_t)0x03)
 
- */
-#define MSS_UART_DATA_5_BITS     ((uint8_t) 0x00)
-#define MSS_UART_DATA_6_BITS     ((uint8_t) 0x01)
-#define MSS_UART_DATA_7_BITS     ((uint8_t) 0x02)
-#define MSS_UART_DATA_8_BITS     ((uint8_t) 0x03)
+/***************************************************************************/ /**
+   Parity
+   ======
+   The following defines are used to build the value of the MSS_UART_init()
+   function line_config parameter.
 
-/***************************************************************************//**
-  Parity
-  ======
-  The following defines are used to build the value of the MSS_UART_init()
-  function line_config parameter.
+   | Constant                | Description              |
+   |-------------------------|--------------------------|
+   | MSS_UART_NO_PARITY      | No parity                |
+   | MSS_UART_ODD_PARITY     | Odd Parity               |
+   | MSS_UART_EVEN_PARITY    | Even parity              |
+   | MSS_UART_STICK_PARITY_0 | Stick parity bit to zero |
+   | MSS_UART_STICK_PARITY_1 | Stick parity bit to one  |
 
-  | Constant                | Description              |
-  |-------------------------|--------------------------|
-  | MSS_UART_NO_PARITY      | No parity                |
-  | MSS_UART_ODD_PARITY     | Odd Parity               |
-  | MSS_UART_EVEN_PARITY    | Even parity              |
-  | MSS_UART_STICK_PARITY_0 | Stick parity bit to zero |
-  | MSS_UART_STICK_PARITY_1 | Stick parity bit to one  |
+  */
+#define MSS_UART_NO_PARITY ((uint8_t)0x00)
+#define MSS_UART_ODD_PARITY ((uint8_t)0x08)
+#define MSS_UART_EVEN_PARITY ((uint8_t)0x18)
+#define MSS_UART_STICK_PARITY_0 ((uint8_t)0x38)
+#define MSS_UART_STICK_PARITY_1 ((uint8_t)0x28)
 
- */
-#define MSS_UART_NO_PARITY           ((uint8_t) 0x00)
-#define MSS_UART_ODD_PARITY          ((uint8_t) 0x08)
-#define MSS_UART_EVEN_PARITY         ((uint8_t) 0x18)
-#define MSS_UART_STICK_PARITY_0      ((uint8_t) 0x38)
-#define MSS_UART_STICK_PARITY_1      ((uint8_t) 0x28)
+/***************************************************************************/ /**
+   Number of Stop Bits
+   ===================
+   The following defines are used to build the value of the MSS_UART_init()
+   function line_config parameter.
 
-/***************************************************************************//**
-  Number of Stop Bits
-  ===================
-  The following defines are used to build the value of the MSS_UART_init()
-  function line_config parameter.
+   | Constant                  | Description              |
+   |---------------------------|--------------------------|
+   | MSS_UART_ONE_STOP_BIT     | One stop bit             |
+   | MSS_UART_ONEHALF_STOP_BIT | One and a half stop bits |
+   | MSS_UART_TWO_STOP_BITS    | Two stop bits            |
 
-  | Constant                  | Description              |
-  |---------------------------|--------------------------|
-  | MSS_UART_ONE_STOP_BIT     | One stop bit             |
-  | MSS_UART_ONEHALF_STOP_BIT | One and a half stop bits |
-  | MSS_UART_TWO_STOP_BITS    | Two stop bits            |
+  */
+#define MSS_UART_ONE_STOP_BIT ((uint8_t)0x00)
+#define MSS_UART_ONEHALF_STOP_BIT ((uint8_t)0x04)
+#define MSS_UART_TWO_STOP_BITS ((uint8_t)0x04)
 
- */
-#define MSS_UART_ONE_STOP_BIT        ((uint8_t) 0x00)
-#define MSS_UART_ONEHALF_STOP_BIT    ((uint8_t) 0x04)
-#define MSS_UART_TWO_STOP_BITS       ((uint8_t) 0x04)
-
-/***************************************************************************//**
-  Receiver Error Status
-  =====================
-  The following defines are used to determine the UART receiver error type.
-  These bit mask constants are used with the return value of the
-  MSS_UART_get_rx_status() function to find out if any errors occurred while
-  receiving data.
-
-
-  | Constant               | Description                                |
-  |------------------------|--------------------------------------------|
-  | MSS_UART_NO_ERROR      | No error bit mask (0x00)                   |
-  | MSS_UART_OVERUN_ERROR  | Overrun error bit mask (0x02)              |
-  | MSS_UART_PARITY_ERROR  | Parity error bit mask (0x04)               |
-  | MSS_UART_FRAMING_ERROR | Framing error bit mask (0x08)              |
-  | MSS_UART_BREAK_ERROR   | Break error bit mask (0x10)                |
-  | MSS_UART_FIFO_ERROR    | FIFO error bit mask (0x80)                 |
-  | MSS_UART_INVALID_PARAM | Invalid function parameter bit mask (0xFF) |
-
- */
-#define MSS_UART_INVALID_PARAM    ((uint8_t)0xFF)
-#define MSS_UART_NO_ERROR         ((uint8_t)0x00 )
-#define MSS_UART_OVERUN_ERROR     ((uint8_t)0x02)
-#define MSS_UART_PARITY_ERROR     ((uint8_t)0x04)
-#define MSS_UART_FRAMING_ERROR    ((uint8_t)0x08)
-#define MSS_UART_BREAK_ERROR      ((uint8_t)0x10)
-#define MSS_UART_FIFO_ERROR       ((uint8_t)0x80)
-
-/***************************************************************************//**
-  Transmitter Status
-  ==================
-  The following definitions are used to determine the UART transmitter status.
-  These bit mask constants are used with the return value of the
-  MSS_UART_get_tx_status() function to find out the status of the transmitter.
-
-  | Constant         | Description                                        |
-  |------------------|----------------------------------------------------|
-  | MSS_UART_TX_BUSY | Transmitter busy (0x00)                            |
-  | MSS_UART_THRE    | Transmitter holding register empty bit mask (0x20) |
-  | MSS_UART_TEMT    | Transmitter empty bit mask (0x40)                  |
-
- */
-#define MSS_UART_TX_BUSY          ((uint8_t) 0x00)
-#define MSS_UART_THRE             ((uint8_t) 0x20)
-#define MSS_UART_TEMT             ((uint8_t) 0x40)
-
-/***************************************************************************//**
-  Modem Status
-  ============
-  The following defines are used to determine the modem status. These bit
-  mask constants are used with the return value of the
-  MSS_UART_get_modem_status() function to find out the modem status of
-  the UART.
-
-  | Constant      | Description                                     |
-  |---------------|-------------------------------------------------|
-  | MSS_UART_DCTS | Delta clear to send bit mask (0x01)             |
-  | MSS_UART_DDSR | Delta data set ready bit mask (0x02)            |
-  | MSS_UART_TERI | Trailing edge of ring indicator bit mask (0x04) |
-  | MSS_UART_DDCD | Delta data carrier detect bit mask (0x08)       |
-  | MSS_UART_CTS  | Clear to send bit mask (0x10)                   |
-  | MSS_UART_DSR  | Data set ready bit mask (0x20)                  |
-  | MSS_UART_RI   | Ring indicator bit mask (0x40)                  |
-  | MSS_UART_DCD  | Data carrier detect bit mask (0x80)             |
-
- */
-#define MSS_UART_DCTS             ((uint8_t) 0x01)
-#define MSS_UART_DDSR             ((uint8_t) 0x02)
-#define MSS_UART_TERI             ((uint8_t) 0x04)
-#define MSS_UART_DDCD             ((uint8_t) 0x08)
-#define MSS_UART_CTS              ((uint8_t) 0x10)
-#define MSS_UART_DSR              ((uint8_t) 0x20)
-#define MSS_UART_RI               ((uint8_t) 0x40)
-#define MSS_UART_DCD              ((uint8_t) 0x80)
+/***************************************************************************/ /**
+   Receiver Error Status
+   =====================
+   The following defines are used to determine the UART receiver error type.
+   These bit mask constants are used with the return value of the
+   MSS_UART_get_rx_status() function to find out if any errors occurred while
+   receiving data.
 
 
-/***************************************************************************//**
-  This enumeration specifies the receiver FIFO trigger level. This is the number
-  of bytes that must be received before the UART generates a receive data
-  available interrupt. It provides the allowed values for the
-  MSS_UART_set_rx_handler() function trigger_level parameter.
- */
+   | Constant               | Description                                |
+   |------------------------|--------------------------------------------|
+   | MSS_UART_NO_ERROR      | No error bit mask (0x00)                   |
+   | MSS_UART_OVERUN_ERROR  | Overrun error bit mask (0x02)              |
+   | MSS_UART_PARITY_ERROR  | Parity error bit mask (0x04)               |
+   | MSS_UART_FRAMING_ERROR | Framing error bit mask (0x08)              |
+   | MSS_UART_BREAK_ERROR   | Break error bit mask (0x10)                |
+   | MSS_UART_FIFO_ERROR    | FIFO error bit mask (0x80)                 |
+   | MSS_UART_INVALID_PARAM | Invalid function parameter bit mask (0xFF) |
+
+  */
+#define MSS_UART_INVALID_PARAM ((uint8_t)0xFF)
+#define MSS_UART_NO_ERROR ((uint8_t)0x00)
+#define MSS_UART_OVERUN_ERROR ((uint8_t)0x02)
+#define MSS_UART_PARITY_ERROR ((uint8_t)0x04)
+#define MSS_UART_FRAMING_ERROR ((uint8_t)0x08)
+#define MSS_UART_BREAK_ERROR ((uint8_t)0x10)
+#define MSS_UART_FIFO_ERROR ((uint8_t)0x80)
+
+/***************************************************************************/ /**
+   Transmitter Status
+   ==================
+   The following definitions are used to determine the UART transmitter status.
+   These bit mask constants are used with the return value of the
+   MSS_UART_get_tx_status() function to find out the status of the transmitter.
+
+   | Constant         | Description                                        |
+   |------------------|----------------------------------------------------|
+   | MSS_UART_TX_BUSY | Transmitter busy (0x00)                            |
+   | MSS_UART_THRE    | Transmitter holding register empty bit mask (0x20) |
+   | MSS_UART_TEMT    | Transmitter empty bit mask (0x40)                  |
+
+  */
+#define MSS_UART_TX_BUSY ((uint8_t)0x00)
+#define MSS_UART_THRE ((uint8_t)0x20)
+#define MSS_UART_TEMT ((uint8_t)0x40)
+
+/***************************************************************************/ /**
+   Modem Status
+   ============
+   The following defines are used to determine the modem status. These bit
+   mask constants are used with the return value of the
+   MSS_UART_get_modem_status() function to find out the modem status of
+   the UART.
+
+   | Constant      | Description                                     |
+   |---------------|-------------------------------------------------|
+   | MSS_UART_DCTS | Delta clear to send bit mask (0x01)             |
+   | MSS_UART_DDSR | Delta data set ready bit mask (0x02)            |
+   | MSS_UART_TERI | Trailing edge of ring indicator bit mask (0x04) |
+   | MSS_UART_DDCD | Delta data carrier detect bit mask (0x08)       |
+   | MSS_UART_CTS  | Clear to send bit mask (0x10)                   |
+   | MSS_UART_DSR  | Data set ready bit mask (0x20)                  |
+   | MSS_UART_RI   | Ring indicator bit mask (0x40)                  |
+   | MSS_UART_DCD  | Data carrier detect bit mask (0x80)             |
+
+  */
+#define MSS_UART_DCTS ((uint8_t)0x01)
+#define MSS_UART_DDSR ((uint8_t)0x02)
+#define MSS_UART_TERI ((uint8_t)0x04)
+#define MSS_UART_DDCD ((uint8_t)0x08)
+#define MSS_UART_CTS ((uint8_t)0x10)
+#define MSS_UART_DSR ((uint8_t)0x20)
+#define MSS_UART_RI ((uint8_t)0x40)
+#define MSS_UART_DCD ((uint8_t)0x80)
+
+/***************************************************************************/ /**
+   This enumeration specifies the receiver FIFO trigger level. This is the
+   number of bytes that must be received before the UART generates a receive
+   data available interrupt. It provides the allowed values for the
+   MSS_UART_set_rx_handler() function trigger_level parameter.
+  */
 typedef enum {
-    MSS_UART_FIFO_SINGLE_BYTE    = 0x00,
-    MSS_UART_FIFO_FOUR_BYTES     = 0x40,
-    MSS_UART_FIFO_EIGHT_BYTES    = 0x80,
-    MSS_UART_FIFO_FOURTEEN_BYTES = 0xC0,
-    MSS_UART_FIFO_INVALID_TRIG_LEVEL
+  MSS_UART_FIFO_SINGLE_BYTE    = 0x00,
+  MSS_UART_FIFO_FOUR_BYTES     = 0x40,
+  MSS_UART_FIFO_EIGHT_BYTES    = 0x80,
+  MSS_UART_FIFO_FOURTEEN_BYTES = 0xC0,
+  MSS_UART_FIFO_INVALID_TRIG_LEVEL
 
 } mss_uart_rx_trig_level_t;
 
-/***************************************************************************//**
-  This enumeration specifies the loopback configuration of the UART. It provides
-  the allowed values for the MSS_UART_set_loopback() function's loopback
-  parameter. Use MSS_UART_LOCAL_LOOPBACK_ON to set up the UART to locally
-  loopback its Tx and Rx lines. Use MSS_UART_REMOTE_LOOPBACK_ON to set up the
-  UART in remote loopback mode.
- */
+/***************************************************************************/ /**
+   This enumeration specifies the loopback configuration of the UART. It
+   provides the allowed values for the MSS_UART_set_loopback() function's
+   loopback parameter. Use MSS_UART_LOCAL_LOOPBACK_ON to set up the UART to
+   locally loopback its Tx and Rx lines. Use MSS_UART_REMOTE_LOOPBACK_ON to set
+   up the UART in remote loopback mode.
+  */
 typedef enum {
-    MSS_UART_LOCAL_LOOPBACK_OFF,
-    MSS_UART_LOCAL_LOOPBACK_ON,
-    MSS_UART_REMOTE_LOOPBACK_OFF,
-    MSS_UART_REMOTE_LOOPBACK_ON,
-    MSS_UART_AUTO_ECHO_OFF,
-    MSS_UART_AUTO_ECHO_ON,
-    MSS_UART_INVALID_LOOPBACK
+  MSS_UART_LOCAL_LOOPBACK_OFF,
+  MSS_UART_LOCAL_LOOPBACK_ON,
+  MSS_UART_REMOTE_LOOPBACK_OFF,
+  MSS_UART_REMOTE_LOOPBACK_ON,
+  MSS_UART_AUTO_ECHO_OFF,
+  MSS_UART_AUTO_ECHO_ON,
+  MSS_UART_INVALID_LOOPBACK
 
 } mss_uart_loopback_t;
 
-/***************************************************************************//**
-  IrDA input / output polarity.
-  This enumeration specifies the RZI modem polarity for input and output signals.
-  This is passed as parameters in MSS_UART_irda_init() function.
- */
+/***************************************************************************/ /**
+   IrDA input / output polarity.
+   This enumeration specifies the RZI modem polarity for input and output
+   signals. This is passed as parameters in MSS_UART_irda_init() function.
+  */
 typedef enum {
-    MSS_UART_ACTIVE_LOW = 0u,
-    MSS_UART_ACTIVE_HIGH = 1u,
-    MSS_UART_INVALID_POLARITY
+  MSS_UART_ACTIVE_LOW  = 0u,
+  MSS_UART_ACTIVE_HIGH = 1u,
+  MSS_UART_INVALID_POLARITY
 
 } mss_uart_rzi_polarity_t;
 
-/***************************************************************************//**
-  IrDA input / output pulse width.
-  This enumeration specifies the RZI modem pulse width for input and output
-  signals. This is passed as parameters in MSS_UART_irda_init() function.
- */
+/***************************************************************************/ /**
+   IrDA input / output pulse width.
+   This enumeration specifies the RZI modem pulse width for input and output
+   signals. This is passed as parameters in MSS_UART_irda_init() function.
+  */
 typedef enum {
-    MSS_UART_3_BY_16 = 0u,
-    MSS_UART_1_BY_4 = 1u,
-    MSS_UART_INVALID_PW
+  MSS_UART_3_BY_16 = 0u,
+  MSS_UART_1_BY_4  = 1u,
+  MSS_UART_INVALID_PW
 
 } mss_uart_rzi_pulsewidth_t;
 
-/***************************************************************************//**
-  Tx / Rx endianess.
-  This enumeration specifies the MSB first or LSB first for MSS UART transmitter
-  and receiver. The parameter of this type shall be passed in
-  MSS_UART_set_rx_endian()and MSS_UART_set_tx_endian() functions.
- */
+/***************************************************************************/ /**
+   Tx / Rx endianess.
+   This enumeration specifies the MSB first or LSB first for MSS UART
+   transmitter and receiver. The parameter of this type shall be passed in
+   MSS_UART_set_rx_endian()and MSS_UART_set_tx_endian() functions.
+  */
 typedef enum {
-    MSS_UART_LITTLEEND,
-    MSS_UART_BIGEND,
-    MSS_UART_INVALID_ENDIAN
+  MSS_UART_LITTLEEND,
+  MSS_UART_BIGEND,
+  MSS_UART_INVALID_ENDIAN
 
 } mss_uart_endian_t;
 
-/***************************************************************************//**
-  Glitch filter length.
-  This enumeration specifies the glitch filter length. The function
-  MSS_UART_set_filter_length() accepts the parameter of this type.
- */
+/***************************************************************************/ /**
+   Glitch filter length.
+   This enumeration specifies the glitch filter length. The function
+   MSS_UART_set_filter_length() accepts the parameter of this type.
+  */
 typedef enum {
-    MSS_UART_LEN0 = 0,
-    MSS_UART_LEN1 = 1,
-    MSS_UART_LEN2 = 2,
-    MSS_UART_LEN3 = 3,
-    MSS_UART_LEN4 = 4,
-    MSS_UART_LEN5 = 5,
-    MSS_UART_LEN6 = 6,
-    MSS_UART_LEN7 = 7,
-    MSS_UART_INVALID_FILTER_LENGTH = 8
+  MSS_UART_LEN0                  = 0,
+  MSS_UART_LEN1                  = 1,
+  MSS_UART_LEN2                  = 2,
+  MSS_UART_LEN3                  = 3,
+  MSS_UART_LEN4                  = 4,
+  MSS_UART_LEN5                  = 5,
+  MSS_UART_LEN6                  = 6,
+  MSS_UART_LEN7                  = 7,
+  MSS_UART_INVALID_FILTER_LENGTH = 8
 
 } mss_uart_filter_length_t;
 
-/***************************************************************************//**
-  TXRDY and RXRDY mode.
-  This enumeration specifies the TXRDY and RXRDY signal modes. The function
-  MSS_UART_set_ready_mode() accepts the parameter of this type.
- */
+/***************************************************************************/ /**
+   TXRDY and RXRDY mode.
+   This enumeration specifies the TXRDY and RXRDY signal modes. The function
+   MSS_UART_set_ready_mode() accepts the parameter of this type.
+  */
 typedef enum {
-    MSS_UART_READY_MODE0,
-    MSS_UART_READY_MODE1,
-    MSS_UART_INVALID_READY_MODE
+  MSS_UART_READY_MODE0,
+  MSS_UART_READY_MODE1,
+  MSS_UART_INVALID_READY_MODE
 
 } mss_uart_ready_mode_t;
 
-/***************************************************************************//**
-  USART mode of operation.
-  This enumeration specifies the mode of operation of MSS UART when operating
-  as USART. The function MSS_UART_set_usart_mode() accepts the parameter of this
-  type.
- */
+/***************************************************************************/ /**
+   USART mode of operation.
+   This enumeration specifies the mode of operation of MSS UART when operating
+   as USART. The function MSS_UART_set_usart_mode() accepts the parameter of
+   this type.
+  */
 typedef enum {
-    MSS_UART_ASYNC_MODE               = 0,
-    MSS_UART_SYNC_SLAVE_POS_EDGE_CLK  = 1,
-    MSS_UART_SYNC_SLAVE_NEG_EDGE_CLK  = 2,
-    MSS_UART_SYNC_MASTER_POS_EDGE_CLK = 3,
-    MSS_UART_SYNC_MASTER_NEG_EDGE_CLK = 4,
-    MSS_UART_INVALID_SYNC_MODE        = 5
+  MSS_UART_ASYNC_MODE               = 0,
+  MSS_UART_SYNC_SLAVE_POS_EDGE_CLK  = 1,
+  MSS_UART_SYNC_SLAVE_NEG_EDGE_CLK  = 2,
+  MSS_UART_SYNC_MASTER_POS_EDGE_CLK = 3,
+  MSS_UART_SYNC_MASTER_NEG_EDGE_CLK = 4,
+  MSS_UART_INVALID_SYNC_MODE        = 5
 
 } mss_uart_usart_mode_t;
 
-
 typedef enum {
-    MSS_UART0_LO    = 0,
-    MSS_UART1_LO    = 1,
-    MSS_UART2_LO    = 2,
-    MSS_UART3_LO    = 3,
-    MSS_UART4_LO    = 4,
-    MSS_UART0_HI    = 5,
-    MSS_UART1_HI    = 6,
-    MSS_UART2_HI    = 7,
-    MSS_UART3_HI    = 8,
-    MSS_UAR4_HI     = 9,
+  MSS_UART0_LO = 0,
+  MSS_UART1_LO = 1,
+  MSS_UART2_LO = 2,
+  MSS_UART3_LO = 3,
+  MSS_UART4_LO = 4,
+  MSS_UART0_HI = 5,
+  MSS_UART1_HI = 6,
+  MSS_UART2_HI = 7,
+  MSS_UART3_HI = 8,
+  MSS_UAR4_HI  = 9,
 
 } mss_uart_num_t;
 
-/***************************************************************************//**
-  MSS UART instance type.
-  This is type definition for MSS UART instance. You need to create and
-  maintain a record of this type. This holds all data regarding the MSS UART
-  instance
- */
-typedef struct  mss_uart_instance mss_uart_instance_t;
+/***************************************************************************/ /**
+   MSS UART instance type.
+   This is type definition for MSS UART instance. You need to create and
+   maintain a record of this type. This holds all data regarding the MSS UART
+   instance
+  */
+typedef struct mss_uart_instance mss_uart_instance_t;
 
 /*----------------------------------------------------------------------------*/
 /*----------------------------------- UART -----------------------------------*/
 /*----------------------------------------------------------------------------*/
 
-typedef struct
-{
-    union
-    {
-        volatile const  uint8_t    RBR;
-        volatile uint8_t    THR;
-        volatile uint8_t    DLR;
-             uint32_t   RESERVED0;
-    };
+typedef struct {
+  union {
+    volatile const uint8_t RBR;
+    volatile uint8_t THR;
+    volatile uint8_t DLR;
+    uint32_t RESERVED0;
+  };
 
-    union
-    {
-        volatile uint8_t  DMR;
-        volatile uint8_t  IER;
-             uint32_t RESERVED1;
-    };
+  union {
+    volatile uint8_t DMR;
+    volatile uint8_t IER;
+    uint32_t RESERVED1;
+  };
 
-    union
-    {
-        volatile uint8_t  IIR;
-        volatile uint8_t  FCR;
-             uint32_t RESERVED2;
-    };
+  union {
+    volatile uint8_t IIR;
+    volatile uint8_t FCR;
+    uint32_t RESERVED2;
+  };
 
-    volatile uint8_t  LCR;
-         uint8_t  RESERVED3[3];
+  volatile uint8_t LCR;
+  uint8_t RESERVED3[3];
 
-    volatile uint8_t  MCR;
-         uint8_t  RESERVED4[3];
+  volatile uint8_t MCR;
+  uint8_t RESERVED4[3];
 
-    volatile const  uint8_t  LSR;
-         uint8_t  RESERVED5[3];
+  volatile const uint8_t LSR;
+  uint8_t RESERVED5[3];
 
-    volatile const  uint8_t  MSR;
-         uint8_t  RESERVED6[3];
+  volatile const uint8_t MSR;
+  uint8_t RESERVED6[3];
 
-    volatile uint8_t  SR;
-         uint8_t  RESERVED7[7];
+  volatile uint8_t SR;
+  uint8_t RESERVED7[7];
 
-    volatile uint8_t  IEM;
-         uint8_t  RESERVED8[3];
+  volatile uint8_t IEM;
+  uint8_t RESERVED8[3];
 
-    volatile uint8_t  IIM;
-         uint8_t  RESERVED9[7];
+  volatile uint8_t IIM;
+  uint8_t RESERVED9[7];
 
-    volatile uint8_t  MM0;
-         uint8_t  RESERVED10[3];
+  volatile uint8_t MM0;
+  uint8_t RESERVED10[3];
 
-    volatile uint8_t  MM1;
-         uint8_t  RESERVED11[3];
+  volatile uint8_t MM1;
+  uint8_t RESERVED11[3];
 
-    volatile uint8_t  MM2;
-         uint8_t  RESERVED12[3];
+  volatile uint8_t MM2;
+  uint8_t RESERVED12[3];
 
-    volatile uint8_t  DFR;
-         uint8_t  RESERVED13[7];
+  volatile uint8_t DFR;
+  uint8_t RESERVED13[7];
 
-    volatile uint8_t GFR;
-         uint8_t  RESERVED14[3];
+  volatile uint8_t GFR;
+  uint8_t RESERVED14[3];
 
-    volatile uint8_t TTG;
-         uint8_t  RESERVED15[3];
+  volatile uint8_t TTG;
+  uint8_t RESERVED15[3];
 
-    volatile uint8_t RTO;
-         uint8_t  RESERVED16[3];
+  volatile uint8_t RTO;
+  uint8_t RESERVED16[3];
 
-    volatile uint8_t ADR;
-         uint8_t  RESERVED17[3];
+  volatile uint8_t ADR;
+  uint8_t RESERVED17[3];
 
 } MSS_UART_TypeDef;
 
+/***************************************************************************/ /**
+   mss_uart_instance.
+   There is one instance of this structure for each instance of the
+   microprocessor subsystem's UARTs. Instances of this structure are used to
+   identify a specific UART. A pointer to an initialized instance of the
+   mss_uart_instance_t structure is passed as the first parameter to
+   MSS UART driver functions to identify which UART should perform the
+   requested operation.
+  */
+struct mss_uart_instance {
+  /* CMSIS related defines identifying the UART hardware. */
+  MSS_UART_TypeDef* hw_reg; /*!< Pointer to UART registers. */
+  uint32_t baudrate;        /*!< Operating baud rate. */
+  uint8_t lineconfig;       /*!< Line configuration parameters. */
+  uint8_t status;           /*!< Sticky line status. */
 
-/***************************************************************************//**
-  mss_uart_instance.
-  There is one instance of this structure for each instance of the
-  microprocessor subsystem's UARTs. Instances of this structure are used to
-  identify a specific UART. A pointer to an initialized instance of the
-  mss_uart_instance_t structure is passed as the first parameter to
-  MSS UART driver functions to identify which UART should perform the
-  requested operation.
- */
-struct mss_uart_instance{
-    /* CMSIS related defines identifying the UART hardware. */
-    MSS_UART_TypeDef *      hw_reg;     /*!< Pointer to UART registers. */
-    uint32_t                baudrate;   /*!< Operating baud rate. */
-    uint8_t                 lineconfig; /*!< Line configuration parameters. */
-    uint8_t                 status;     /*!< Sticky line status. */
+  /* transmit related info (used with interrupt driven transmit): */
+  const uint8_t* tx_buffer; /*!< Pointer to transmit buffer. */
+  uint32_t tx_buff_size;    /*!< Transmit buffer size. */
+  uint32_t tx_idx; /*!< Index within transmit buffer of next byte to transmit.*/
 
-    /* transmit related info (used with interrupt driven transmit): */
-    const uint8_t * tx_buffer;          /*!< Pointer to transmit buffer. */
-    uint32_t        tx_buff_size;       /*!< Transmit buffer size. */
-    uint32_t        tx_idx;             /*!< Index within transmit buffer of next byte to transmit.*/
-
-    void* user_data;                          /*!< Pointer to user provided pointer for user specific use. */
-
+  void*
+      user_data; /*!< Pointer to user provided pointer for user specific use. */
 };
 
-/***************************************************************************//**
-  This instance of mss_uart_instance_t holds all data related to the operations
-  performed by the MMUART. The function MSS_UART_init() initializes this structure.
-  A pointer to g_mss_uart0_lo is passed as the first parameter to MSS UART driver
-  functions to indicate that MMUART0 should perform the requested operation.
- */
+/***************************************************************************/ /**
+   This instance of mss_uart_instance_t holds all data related to the operations
+   performed by the MMUART. The function MSS_UART_init() initializes this
+   structure. A pointer to g_mss_uart0_lo is passed as the first parameter to
+   MSS UART driver functions to indicate that MMUART0 should perform the
+   requested operation.
+  */
 
 extern mss_uart_instance_t g_mss_uart0_lo;
 extern mss_uart_instance_t g_mss_uart1_lo;
@@ -755,1584 +748,1510 @@ extern mss_uart_instance_t g_mss_uart2_hi;
 extern mss_uart_instance_t g_mss_uart3_hi;
 extern mss_uart_instance_t g_mss_uart4_hi;
 
-
-/***************************************************************************//**
-  The MSS_UART_init() function initializes and configures one of the PolarFire SoC
-  MSS UARTs with the configuration passed as a parameter. The configuration
-  parameters are the baud_rate which is used to generate the baud value and the
-  line_config which is used to specify the line configuration (bit length,
-  stop bits and parity).
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
-
-  @param baud_rate
-    The baud_rate parameter specifies the baud rate. It can be specified for
-    common baud rates using the following defines:
-    - MSS_UART_110_BAUD
-    - MSS_UART_300_BAUD
-    - MSS_UART_600_BAUD
-    - MSS_UART_1200_BAUD
-    - MSS_UART_2400_BAUD
-    - MSS_UART_4800_BAUD
-    - MSS_UART_9600_BAUD
-    - MSS_UART_19200_BAUD
-    - MSS_UART_38400_BAUD
-    - MSS_UART_57600_BAUD
-    - MSS_UART_115200_BAUD
-    - MSS_UART_230400_BAUD
-    - MSS_UART_460800_BAUD
-    - MSS_UART_921600_BAUD
-
-    Alternatively, any nonstandard baud rate can be specified by simply passing
-    the actual required baud rate as the value for this parameter.
-
-  @param line_config
-    The line_config parameter is the line configuration specifying the bit length,
-    number of stop bits and parity settings.
-
-    This is a bitwise OR of one value from each of the following groups of
-    allowed values:
-
-    One of the following to specify the transmit/receive data bit length:
-     - MSS_UART_DATA_5_BITS
-     - MSS_UART_DATA_6_BITS,
-     - MSS_UART_DATA_7_BITS
-     - MSS_UART_DATA_8_BITS
-
-    One of the following to specify the parity setting:
-     - MSS_UART_NO_PARITY
-     - MSS_UART_EVEN_PARITY
-     - MSS_UART_ODD_PARITY
-     - MSS_UART_STICK_PARITY_0
-     - MSS_UART_STICK_PARITY_1
-
-    One of the following to specify the number of stop bits:
-     - MSS_UART_ONE_STOP_BIT
-     - MSS_UART_ONEHALF_STOP_BIT
-     - MSS_UART_TWO_STOP_BITS
-
-  @return
-    This function does not return a value.
-
-  Example:
-  @code
-  #include "mss_uart.h"
-
-  int main(void)
-  {
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
-
-     return(0);
-  }
-  @endcode
- */
-void
-MSS_UART_init
-(
-    mss_uart_instance_t* this_uart,
-    uint32_t baud_rate,
-    uint8_t line_config
-);
-
-/***************************************************************************//**
- The MSS_UART_lin_init() function is used to initialize the MSS UART for
- LIN mode of operation. The configuration parameters are the baud_rate which is
- used to generate the baud value and the line_config which is used to specify
- the line configuration (bit length, stop bits and parity).
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
-
-  @param baud_rate
-    The baud_rate parameter specifies the baud rate. It can be specified for
-    common baud rates using the following defines:
-    - MSS_UART_110_BAUD
-    - MSS_UART_300_BAUD
-    - MSS_UART_600_BAUD
-    - MSS_UART_1200_BAUD
-    - MSS_UART_2400_BAUD
-    - MSS_UART_4800_BAUD
-    - MSS_UART_9600_BAUD
-    - MSS_UART_19200_BAUD
-    - MSS_UART_38400_BAUD
-    - MSS_UART_57600_BAUD
-    - MSS_UART_115200_BAUD
-    - MSS_UART_230400_BAUD
-    - MSS_UART_460800_BAUD
-    - MSS_UART_921600_BAUD
-
-    Alternatively, any nonstandard baud rate can be specified by simply passing
-    the actual required baud rate as the value for this parameter.
-
-  @param line_config
-    The line_config parameter is the line configuration specifying the bit length,
-    number of stop bits and parity settings.
-
-    This is a bitwise OR of one value from each of the following groups of
-    allowed values:
-
-    One of the following to specify the transmit/receive data bit length:
-     - MSS_UART_DATA_5_BITS
-     - MSS_UART_DATA_6_BITS,
-     - MSS_UART_DATA_7_BITS
-     - MSS_UART_DATA_8_BITS
-
-    One of the following to specify the parity setting:
-     - MSS_UART_NO_PARITY
-     - MSS_UART_EVEN_PARITY
-     - MSS_UART_ODD_PARITY
-     - MSS_UART_STICK_PARITY_0
-     - MSS_UART_STICK_PARITY_1
-
-    One of the following to specify the number of stop bits:
-     - MSS_UART_ONE_STOP_BIT
-     - MSS_UART_ONEHALF_STOP_BIT
-     - MSS_UART_TWO_STOP_BITS
-
-  @return
-    This function does not return a value.
-
-  Example:
-  @code
-  #include "mss_uart.h"
-
-  int main(void)
-  {
-     MSS_UART_lin_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
-
-     return(0);
-  }
-  @endcode
- */
-void
-MSS_UART_lin_init
-(
-    mss_uart_instance_t* this_uart,
-    uint32_t baud_rate,
-    uint8_t line_config
-);
-
-/***************************************************************************//**
-  The MSS_UART_irda_init() function is used to initialize the MSS UART instance
-  referenced by the parameter this_uart  for IrDA mode of operation. This
-  function must be called before calling any other IrDA functionality specific
-  functions.
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
-
-  @param baud_rate
-    The baud_rate parameter specifies the baud rate. It can be specified for
-    common baud rates using the following defines:
-    - MSS_UART_110_BAUD
-    - MSS_UART_300_BAUD
-    - MSS_UART_600_BAUD
-    - MSS_UART_1200_BAUD
-    - MSS_UART_2400_BAUD
-    - MSS_UART_4800_BAUD
-    - MSS_UART_9600_BAUD
-    - MSS_UART_19200_BAUD
-    - MSS_UART_38400_BAUD
-    - MSS_UART_57600_BAUD
-    - MSS_UART_115200_BAUD
-    - MSS_UART_230400_BAUD
-    - MSS_UART_460800_BAUD
-    - MSS_UART_921600_BAUD
-
-    Alternatively, any nonstandard baud rate can be specified by simply passing
-    the actual required baud rate as the value for this parameter.
-
-  @param line_config
-    The line_config parameter is the line configuration specifying the bit
-    length, number of stop bits and parity settings.
-
-    This is a bitwise OR of one value from each of the following groups of
-    allowed values:
-
-    One of the following to specify the transmit/receive data bit length:
-     - MSS_UART_DATA_5_BITS
-     - MSS_UART_DATA_6_BITS,
-     - MSS_UART_DATA_7_BITS
-     - MSS_UART_DATA_8_BITS
-
-    One of the following to specify the parity setting:
-     - MSS_UART_NO_PARITY
-     - MSS_UART_EVEN_PARITY
-     - MSS_UART_ODD_PARITY
-     - MSS_UART_STICK_PARITY_0
-     - MSS_UART_STICK_PARITY_1
-
-    One of the following to specify the number of stop bits:
-     - MSS_UART_ONE_STOP_BIT
-     - MSS_UART_ONEHALF_STOP_BIT
-     - MSS_UART_TWO_STOP_BITS
-
-  @return
-    This function does not return a value.
-
-  Example:
-  @code
-    MSS_UART_irda_init(&g_mss_uart0_lo,
-              MSS_UART_57600_BAUD,
-              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT,
-              MSS_UART_ACTIVE_LOW,
-              MSS_UART_ACTIVE_LOW,
-              MSS_UART_3_BY_16);
-  @endcode
- */
-void
-MSS_UART_irda_init
-(
-    mss_uart_instance_t* this_uart,
-    uint32_t baud_rate,
-    uint8_t line_config,
-    mss_uart_rzi_polarity_t rxpol,
-    mss_uart_rzi_polarity_t txpol,
-    mss_uart_rzi_pulsewidth_t pw
-);
-
-/***************************************************************************//**
-  The MSS_UART_smartcard_init() function is used to initialize the MSS UART
-  for ISO 7816 (smartcard) mode of operation. The configuration parameters are
-  the baud_rate which is used to generate the baud value and the line_config
-  which is used to specify the line configuration (bit length, stop bits and
-  parity). This function disables all other modes of the MSS UART instance
-  pointed by the parameter this_uart.
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
-
-  @param baud_rate
-    The baud_rate parameter specifies the baud rate. It can be specified for
-    common baud rates using the following defines:
-    - MSS_UART_110_BAUD
-    - MSS_UART_300_BAUD
-    - MSS_UART_600_BAUD
-    - MSS_UART_1200_BAUD
-    - MSS_UART_2400_BAUD
-    - MSS_UART_4800_BAUD
-    - MSS_UART_9600_BAUD
-    - MSS_UART_19200_BAUD
-    - MSS_UART_38400_BAUD
-    - MSS_UART_57600_BAUD
-    - MSS_UART_115200_BAUD
-    - MSS_UART_230400_BAUD
-    - MSS_UART_460800_BAUD
-    - MSS_UART_921600_BAUD
-
-    Alternatively, any nonstandard baud rate can be specified by simply passing
-    the actual required baud rate as the value for this parameter.
-
-  @param line_config
-    The line_config parameter is the line configuration specifying the bit
-    length, number of stop bits and parity settings.
-
-    This is a bitwise OR of one value from each of the following groups of
-    allowed values:
-
-    One of the following to specify the transmit/receive data bit length:
-     - MSS_UART_DATA_5_BITS
-     - MSS_UART_DATA_6_BITS,
-     - MSS_UART_DATA_7_BITS
-     - MSS_UART_DATA_8_BITS
-
-    One of the following to specify the parity setting:
-     - MSS_UART_NO_PARITY
-     - MSS_UART_EVEN_PARITY
-     - MSS_UART_ODD_PARITY
-     - MSS_UART_STICK_PARITY_0
-     - MSS_UART_STICK_PARITY_1
-
-    One of the following to specify the number of stop bits:
-     - MSS_UART_ONE_STOP_BIT
-     - MSS_UART_ONEHALF_STOP_BIT
-     - MSS_UART_TWO_STOP_BITS
-
-  @return
-    This function does not return a value.
-
-  Example:
-  @code
-    #include "mss_uart.h"
-
-      int main(void)
-      {
-         MSS_UART_smartcard_init(&g_mss_uart0_lo,
-              MSS_UART_57600_BAUD,
-              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
-
-         return(0);
-      }
-  @endcode
- */
-void
-MSS_UART_smartcard_init
-(
-    mss_uart_instance_t* this_uart,
-    uint32_t baud_rate,
-    uint8_t line_config
-);
-
-/***************************************************************************//**
-  The function MSS_UART_polled_tx() is used to transmit data. It transfers the
-  contents of the transmitter data buffer, passed as a function parameter, into
-  the UART's hardware transmitter FIFO. It returns when the full content of the
-  transmit data buffer has been transferred to the UART's transmit FIFO. It is
-  safe to release or reuse the memory used as the transmitter data buffer once
-  this function returns.
-
-  Note:     This function reads the UART's line status register (LSR) to poll
-  for the active state of the transmitter holding register empty (THRE) bit
-  before transferring data from the data buffer to the transmitter FIFO. It
-  transfers data to the transmitter FIFO in blocks of 16 bytes or less and
-  allows the FIFO to empty before transferring the next block of data.
-
-  Note:     The actual transmission over the serial connection will still be
-  in progress when this function returns. Use the MSS_UART_get_tx_status()
-  function if you need to know when the transmitter is empty.
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-  @param pbuff
-    The pbuff parameter is a pointer to a buffer containing the data to
-    be transmitted.
-
-  @param tx_size
-    The tx_size parameter specifies the size, in bytes, of the data to
-    be transmitted.
-
-  @return
-    This function does not return a value.
-
-  Example:
-  @code
-  #include "mss_uart.h"
-
-  int main(void)
-  {
-     uint8_t message[12] = "Hello World";
-
-     MSS_UART_init(&g_mss_uart0_lo,
-              MSS_UART_57600_BAUD,
-              SS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
-
-     MSS_UART_polled_tx(&g_mss_uart0_lo, message, sizeof(message));
-
-     return(0);
-  }
-  @endcode
- */
-void
-MSS_UART_polled_tx
-(
-    mss_uart_instance_t * this_uart,
-    const uint8_t * pbuff,
-    uint32_t tx_size
-);
-
-/***************************************************************************//**
-  The function MSS_UART_polled_tx_string() is used to transmit a NULL ('\0')
-  terminated string. It transfers the text string, from the buffer starting at
-  the address pointed to by p_sz_string into the UART's hardware transmitter
-  FIFO. It returns when the complete string has been transferred to the UART's
-  transmit FIFO. It is safe to release or reuse the memory used as the string
-  buffer once this function returns.
-
-  Note:     This function reads the UART's line status register (LSR) to poll
-  for the active state of the transmitter holding register empty (THRE) bit
-  before transferring data from the data buffer to the transmitter FIFO. It
-  transfers data to the transmitter FIFO in blocks of 16 bytes or less and
-  allows the FIFO to empty before transferring the next block of data.
-
-  Note:     The actual transmission over the serial connection will still be
-  in progress when this function returns. Use the MSS_UART_get_tx_status()
-  function if you need to know when the transmitter is empty.
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-  @param p_sz_string
-    The p_sz_string parameter is a pointer to a buffer containing the NULL
-    ('\0') terminated string to be transmitted.
-
-  @return
-    This function does not return a value.
-
-  Example:
-  @code
-  #include "mss_uart.h"
-
-  int main(void)
-  {
-     uint8_t message[12] = "Hello World";
-
-     MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
-
-     MSS_UART_polled_tx_string(&g_mss_uart0_lo, message);
-
-     return(0);
-  }
-  @endcode
-
- */
-void
-MSS_UART_polled_tx_string
-(
-    mss_uart_instance_t * this_uart,
-    const uint8_t * p_sz_string
-);
-
-/***************************************************************************//**
-  The MSS_UART_get_rx() function reads the content of the UART receiver's FIFO
-  and stores it in the receive buffer that is passed via the rx_buff function
-  parameter. It copies either the full contents of the FIFO into the receive
-  buffer, or just enough data from the FIFO to fill the receive buffer,
-  dependent upon the size of the receive buffer passed by the buff_size
-  parameter. The MSS_UART_get_rx() function returns the number of bytes copied
-  into the receive buffer .This function is non-blocking and will return 0
-  immediately if no data has been received.
-
-  Note:     The MSS_UART_get_rx() function reads and accumulates the receiver
-  status of the MSS UART instance before reading each byte from the receiver's
-  data register/FIFO. This allows the driver to maintain a sticky record of any
-  receiver errors that occur as the UART receives each data byte; receiver
-  errors would otherwise be lost after each read from the receiver's data
-  register. A call to the MSS_UART_get_rx_status() function returns any receiver
-  errors accumulated during the execution of the MSS_UART_get_rx() function.
-
-  Note:     If you need to read the error status for each byte received, set
-  the buff_size to 1 and read the receive line error status for each byte
-  using the MSS_UART_get_rx_status() function.
-
-  The MSS_UART_get_rx() function can be used in polled mode, where it is called
-  at regular intervals to find out if any data has been received, or in
-  interrupt driven-mode, where it is called as part of a receive handler that is
-  called by the driver as a result of data being received.
-
-  Note:     In interrupt driven mode you should call the MSS_UART_get_rx()
-  function as part of the receive handler function that you register with
-  the MSS UART driver through a call to MSS_UART_set_rx_handler().
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-  @param rx_buff
-    The rx_buff parameter is a pointer to a buffer where the received
-    data is copied.
-
-  @param buff_size
-    The buff_size parameter specifies the size of the receive buffer in bytes.
-
-  @return
-    This function returns the number of bytes that were copied into the
-    rx_buff buffer. It returns 0 if no data has been received.
-
-  Polled mode example:
-  @code
-   int main( void )
+/***************************************************************************/ /**
+   The MSS_UART_init() function initializes and configures one of the PolarFire
+   SoC MSS UARTs with the configuration passed as a parameter. The configuration
+   parameters are the baud_rate which is used to generate the baud value and the
+   line_config which is used to specify the line configuration (bit length,
+   stop bits and parity).
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
+
+   @param baud_rate
+     The baud_rate parameter specifies the baud rate. It can be specified for
+     common baud rates using the following defines:
+     - MSS_UART_110_BAUD
+     - MSS_UART_300_BAUD
+     - MSS_UART_600_BAUD
+     - MSS_UART_1200_BAUD
+     - MSS_UART_2400_BAUD
+     - MSS_UART_4800_BAUD
+     - MSS_UART_9600_BAUD
+     - MSS_UART_19200_BAUD
+     - MSS_UART_38400_BAUD
+     - MSS_UART_57600_BAUD
+     - MSS_UART_115200_BAUD
+     - MSS_UART_230400_BAUD
+     - MSS_UART_460800_BAUD
+     - MSS_UART_921600_BAUD
+
+     Alternatively, any nonstandard baud rate can be specified by simply passing
+     the actual required baud rate as the value for this parameter.
+
+   @param line_config
+     The line_config parameter is the line configuration specifying the bit
+   length, number of stop bits and parity settings.
+
+     This is a bitwise OR of one value from each of the following groups of
+     allowed values:
+
+     One of the following to specify the transmit/receive data bit length:
+      - MSS_UART_DATA_5_BITS
+      - MSS_UART_DATA_6_BITS,
+      - MSS_UART_DATA_7_BITS
+      - MSS_UART_DATA_8_BITS
+
+     One of the following to specify the parity setting:
+      - MSS_UART_NO_PARITY
+      - MSS_UART_EVEN_PARITY
+      - MSS_UART_ODD_PARITY
+      - MSS_UART_STICK_PARITY_0
+      - MSS_UART_STICK_PARITY_1
+
+     One of the following to specify the number of stop bits:
+      - MSS_UART_ONE_STOP_BIT
+      - MSS_UART_ONEHALF_STOP_BIT
+      - MSS_UART_TWO_STOP_BITS
+
+   @return
+     This function does not return a value.
+
+   Example:
+   @code
+   #include "mss_uart.h"
+
+   int main(void)
    {
-      uint8_t rx_buff[RX_BUFF_SIZE];
-      uint32_t rx_idx  = 0;
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
+
+      return(0);
+   }
+   @endcode
+  */
+void
+MSS_UART_init(
+    mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config);
+
+/***************************************************************************/ /**
+  The MSS_UART_lin_init() function is used to initialize the MSS UART for
+  LIN mode of operation. The configuration parameters are the baud_rate which is
+  used to generate the baud value and the line_config which is used to specify
+  the line configuration (bit length, stop bits and parity).
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
+
+   @param baud_rate
+     The baud_rate parameter specifies the baud rate. It can be specified for
+     common baud rates using the following defines:
+     - MSS_UART_110_BAUD
+     - MSS_UART_300_BAUD
+     - MSS_UART_600_BAUD
+     - MSS_UART_1200_BAUD
+     - MSS_UART_2400_BAUD
+     - MSS_UART_4800_BAUD
+     - MSS_UART_9600_BAUD
+     - MSS_UART_19200_BAUD
+     - MSS_UART_38400_BAUD
+     - MSS_UART_57600_BAUD
+     - MSS_UART_115200_BAUD
+     - MSS_UART_230400_BAUD
+     - MSS_UART_460800_BAUD
+     - MSS_UART_921600_BAUD
+
+     Alternatively, any nonstandard baud rate can be specified by simply passing
+     the actual required baud rate as the value for this parameter.
+
+   @param line_config
+     The line_config parameter is the line configuration specifying the bit
+  length, number of stop bits and parity settings.
+
+     This is a bitwise OR of one value from each of the following groups of
+     allowed values:
+
+     One of the following to specify the transmit/receive data bit length:
+      - MSS_UART_DATA_5_BITS
+      - MSS_UART_DATA_6_BITS,
+      - MSS_UART_DATA_7_BITS
+      - MSS_UART_DATA_8_BITS
+
+     One of the following to specify the parity setting:
+      - MSS_UART_NO_PARITY
+      - MSS_UART_EVEN_PARITY
+      - MSS_UART_ODD_PARITY
+      - MSS_UART_STICK_PARITY_0
+      - MSS_UART_STICK_PARITY_1
+
+     One of the following to specify the number of stop bits:
+      - MSS_UART_ONE_STOP_BIT
+      - MSS_UART_ONEHALF_STOP_BIT
+      - MSS_UART_TWO_STOP_BITS
+
+   @return
+     This function does not return a value.
+
+   Example:
+   @code
+   #include "mss_uart.h"
+
+   int main(void)
+   {
+      MSS_UART_lin_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+  MSS_UART_ONE_STOP_BIT);
+
+      return(0);
+   }
+   @endcode
+  */
+void
+MSS_UART_lin_init(
+    mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config);
+
+/***************************************************************************/ /**
+   The MSS_UART_irda_init() function is used to initialize the MSS UART instance
+   referenced by the parameter this_uart  for IrDA mode of operation. This
+   function must be called before calling any other IrDA functionality specific
+   functions.
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
+
+   @param baud_rate
+     The baud_rate parameter specifies the baud rate. It can be specified for
+     common baud rates using the following defines:
+     - MSS_UART_110_BAUD
+     - MSS_UART_300_BAUD
+     - MSS_UART_600_BAUD
+     - MSS_UART_1200_BAUD
+     - MSS_UART_2400_BAUD
+     - MSS_UART_4800_BAUD
+     - MSS_UART_9600_BAUD
+     - MSS_UART_19200_BAUD
+     - MSS_UART_38400_BAUD
+     - MSS_UART_57600_BAUD
+     - MSS_UART_115200_BAUD
+     - MSS_UART_230400_BAUD
+     - MSS_UART_460800_BAUD
+     - MSS_UART_921600_BAUD
+
+     Alternatively, any nonstandard baud rate can be specified by simply passing
+     the actual required baud rate as the value for this parameter.
+
+   @param line_config
+     The line_config parameter is the line configuration specifying the bit
+     length, number of stop bits and parity settings.
+
+     This is a bitwise OR of one value from each of the following groups of
+     allowed values:
+
+     One of the following to specify the transmit/receive data bit length:
+      - MSS_UART_DATA_5_BITS
+      - MSS_UART_DATA_6_BITS,
+      - MSS_UART_DATA_7_BITS
+      - MSS_UART_DATA_8_BITS
+
+     One of the following to specify the parity setting:
+      - MSS_UART_NO_PARITY
+      - MSS_UART_EVEN_PARITY
+      - MSS_UART_ODD_PARITY
+      - MSS_UART_STICK_PARITY_0
+      - MSS_UART_STICK_PARITY_1
+
+     One of the following to specify the number of stop bits:
+      - MSS_UART_ONE_STOP_BIT
+      - MSS_UART_ONEHALF_STOP_BIT
+      - MSS_UART_TWO_STOP_BITS
+
+   @return
+     This function does not return a value.
+
+   Example:
+   @code
+     MSS_UART_irda_init(&g_mss_uart0_lo,
+               MSS_UART_57600_BAUD,
+               MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT, MSS_UART_ACTIVE_LOW, MSS_UART_ACTIVE_LOW,
+               MSS_UART_3_BY_16);
+   @endcode
+  */
+void
+MSS_UART_irda_init(
+    mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config,
+    mss_uart_rzi_polarity_t rxpol, mss_uart_rzi_polarity_t txpol,
+    mss_uart_rzi_pulsewidth_t pw);
+
+/***************************************************************************/ /**
+   The MSS_UART_smartcard_init() function is used to initialize the MSS UART
+   for ISO 7816 (smartcard) mode of operation. The configuration parameters are
+   the baud_rate which is used to generate the baud value and the line_config
+   which is used to specify the line configuration (bit length, stop bits and
+   parity). This function disables all other modes of the MSS UART instance
+   pointed by the parameter this_uart.
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
+
+   @param baud_rate
+     The baud_rate parameter specifies the baud rate. It can be specified for
+     common baud rates using the following defines:
+     - MSS_UART_110_BAUD
+     - MSS_UART_300_BAUD
+     - MSS_UART_600_BAUD
+     - MSS_UART_1200_BAUD
+     - MSS_UART_2400_BAUD
+     - MSS_UART_4800_BAUD
+     - MSS_UART_9600_BAUD
+     - MSS_UART_19200_BAUD
+     - MSS_UART_38400_BAUD
+     - MSS_UART_57600_BAUD
+     - MSS_UART_115200_BAUD
+     - MSS_UART_230400_BAUD
+     - MSS_UART_460800_BAUD
+     - MSS_UART_921600_BAUD
+
+     Alternatively, any nonstandard baud rate can be specified by simply passing
+     the actual required baud rate as the value for this parameter.
+
+   @param line_config
+     The line_config parameter is the line configuration specifying the bit
+     length, number of stop bits and parity settings.
+
+     This is a bitwise OR of one value from each of the following groups of
+     allowed values:
+
+     One of the following to specify the transmit/receive data bit length:
+      - MSS_UART_DATA_5_BITS
+      - MSS_UART_DATA_6_BITS,
+      - MSS_UART_DATA_7_BITS
+      - MSS_UART_DATA_8_BITS
+
+     One of the following to specify the parity setting:
+      - MSS_UART_NO_PARITY
+      - MSS_UART_EVEN_PARITY
+      - MSS_UART_ODD_PARITY
+      - MSS_UART_STICK_PARITY_0
+      - MSS_UART_STICK_PARITY_1
+
+     One of the following to specify the number of stop bits:
+      - MSS_UART_ONE_STOP_BIT
+      - MSS_UART_ONEHALF_STOP_BIT
+      - MSS_UART_TWO_STOP_BITS
+
+   @return
+     This function does not return a value.
+
+   Example:
+   @code
+     #include "mss_uart.h"
+
+       int main(void)
+       {
+          MSS_UART_smartcard_init(&g_mss_uart0_lo,
+               MSS_UART_57600_BAUD,
+               MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
+
+          return(0);
+       }
+   @endcode
+  */
+void
+MSS_UART_smartcard_init(
+    mss_uart_instance_t* this_uart, uint32_t baud_rate, uint8_t line_config);
+
+/***************************************************************************/ /**
+   The function MSS_UART_polled_tx() is used to transmit data. It transfers the
+   contents of the transmitter data buffer, passed as a function parameter, into
+   the UART's hardware transmitter FIFO. It returns when the full content of the
+   transmit data buffer has been transferred to the UART's transmit FIFO. It is
+   safe to release or reuse the memory used as the transmitter data buffer once
+   this function returns.
+
+   Note:     This function reads the UART's line status register (LSR) to poll
+   for the active state of the transmitter holding register empty (THRE) bit
+   before transferring data from the data buffer to the transmitter FIFO. It
+   transfers data to the transmitter FIFO in blocks of 16 bytes or less and
+   allows the FIFO to empty before transferring the next block of data.
+
+   Note:     The actual transmission over the serial connection will still be
+   in progress when this function returns. Use the MSS_UART_get_tx_status()
+   function if you need to know when the transmitter is empty.
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+   @param pbuff
+     The pbuff parameter is a pointer to a buffer containing the data to
+     be transmitted.
+
+   @param tx_size
+     The tx_size parameter specifies the size, in bytes, of the data to
+     be transmitted.
+
+   @return
+     This function does not return a value.
+
+   Example:
+   @code
+   #include "mss_uart.h"
+
+   int main(void)
+   {
+      uint8_t message[12] = "Hello World";
 
       MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+               MSS_UART_57600_BAUD,
+               SS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-      while(1)
-      {
-          rx_size = MSS_UART_get_rx(&g_mss_uart0_lo, rx_buff, sizeof(rx_buff));
-          if(rx_size > 0)
-          {
-              process_rx_data(rx_buff, rx_size);
-          }
-          task_a();
-          task_b();
-      }
-      return 0;
+      MSS_UART_polled_tx(&g_mss_uart0_lo, message, sizeof(message));
+
+      return(0);
    }
-  @endcode
+   @endcode
+  */
+void
+MSS_UART_polled_tx(
+    mss_uart_instance_t* this_uart, const uint8_t* pbuff, uint32_t tx_size);
 
-  Interrupt driven example:
-  @code
-   int main( void )
+/***************************************************************************/ /**
+   The function MSS_UART_polled_tx_string() is used to transmit a NULL ('\0')
+   terminated string. It transfers the text string, from the buffer starting at
+   the address pointed to by p_sz_string into the UART's hardware transmitter
+   FIFO. It returns when the complete string has been transferred to the UART's
+   transmit FIFO. It is safe to release or reuse the memory used as the string
+   buffer once this function returns.
+
+   Note:     This function reads the UART's line status register (LSR) to poll
+   for the active state of the transmitter holding register empty (THRE) bit
+   before transferring data from the data buffer to the transmitter FIFO. It
+   transfers data to the transmitter FIFO in blocks of 16 bytes or less and
+   allows the FIFO to empty before transferring the next block of data.
+
+   Note:     The actual transmission over the serial connection will still be
+   in progress when this function returns. Use the MSS_UART_get_tx_status()
+   function if you need to know when the transmitter is empty.
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+   @param p_sz_string
+     The p_sz_string parameter is a pointer to a buffer containing the NULL
+     ('\0') terminated string to be transmitted.
+
+   @return
+     This function does not return a value.
+
+   Example:
+   @code
+   #include "mss_uart.h"
+
+   int main(void)
    {
-      MSS_UART_init(&g_mss_uart1,
+      uint8_t message[12] = "Hello World";
+
+      MSS_UART_init(&g_mss_uart0_lo,
               MSS_UART_57600_BAUD,
-              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-      MSS_UART_set_rx_handler(&g_mss_uart1,
-                              uart1_rx_handler,
-                              MSS_UART_FIFO_SINGLE_BYTE);
+      MSS_UART_polled_tx_string(&g_mss_uart0_lo, message);
 
-      while(1)
+      return(0);
+   }
+   @endcode
+
+  */
+void
+MSS_UART_polled_tx_string(
+    mss_uart_instance_t* this_uart, const uint8_t* p_sz_string);
+
+/***************************************************************************/ /**
+   The MSS_UART_get_rx() function reads the content of the UART receiver's FIFO
+   and stores it in the receive buffer that is passed via the rx_buff function
+   parameter. It copies either the full contents of the FIFO into the receive
+   buffer, or just enough data from the FIFO to fill the receive buffer,
+   dependent upon the size of the receive buffer passed by the buff_size
+   parameter. The MSS_UART_get_rx() function returns the number of bytes copied
+   into the receive buffer .This function is non-blocking and will return 0
+   immediately if no data has been received.
+
+   Note:     The MSS_UART_get_rx() function reads and accumulates the receiver
+   status of the MSS UART instance before reading each byte from the receiver's
+   data register/FIFO. This allows the driver to maintain a sticky record of any
+   receiver errors that occur as the UART receives each data byte; receiver
+   errors would otherwise be lost after each read from the receiver's data
+   register. A call to the MSS_UART_get_rx_status() function returns any
+   receiver errors accumulated during the execution of the MSS_UART_get_rx()
+   function.
+
+   Note:     If you need to read the error status for each byte received, set
+   the buff_size to 1 and read the receive line error status for each byte
+   using the MSS_UART_get_rx_status() function.
+
+   The MSS_UART_get_rx() function can be used in polled mode, where it is called
+   at regular intervals to find out if any data has been received, or in
+   interrupt driven-mode, where it is called as part of a receive handler that
+   is called by the driver as a result of data being received.
+
+   Note:     In interrupt driven mode you should call the MSS_UART_get_rx()
+   function as part of the receive handler function that you register with
+   the MSS UART driver through a call to MSS_UART_set_rx_handler().
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+   @param rx_buff
+     The rx_buff parameter is a pointer to a buffer where the received
+     data is copied.
+
+   @param buff_size
+     The buff_size parameter specifies the size of the receive buffer in bytes.
+
+   @return
+     This function returns the number of bytes that were copied into the
+     rx_buff buffer. It returns 0 if no data has been received.
+
+   Polled mode example:
+   @code
+    int main( void )
+    {
+       uint8_t rx_buff[RX_BUFF_SIZE];
+       uint32_t rx_idx  = 0;
+
+       MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
+
+       while(1)
+       {
+           rx_size = MSS_UART_get_rx(&g_mss_uart0_lo, rx_buff, sizeof(rx_buff));
+           if(rx_size > 0)
+           {
+               process_rx_data(rx_buff, rx_size);
+           }
+           task_a();
+           task_b();
+       }
+       return 0;
+    }
+   @endcode
+
+   Interrupt driven example:
+   @code
+    int main( void )
+    {
+       MSS_UART_init(&g_mss_uart1,
+               MSS_UART_57600_BAUD,
+               MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
+
+       MSS_UART_set_rx_handler(&g_mss_uart1,
+                               uart1_rx_handler,
+                               MSS_UART_FIFO_SINGLE_BYTE);
+
+       while(1)
+       {
+           task_a();
+           task_b();
+       }
+       return 0;
+    }
+
+    void uart1_rx_handler(mss_uart_instance_t * this_uart)
+    {
+       uint8_t rx_buff[RX_BUFF_SIZE];
+       uint32_t rx_idx  = 0;
+       rx_size = MSS_UART_get_rx(this_uart, rx_buff, sizeof(rx_buff));
+       process_rx_data(rx_buff, rx_size);
+    }
+   @endcode
+  */
+size_t
+MSS_UART_get_rx(
+    mss_uart_instance_t* this_uart, uint8_t* rx_buff, size_t buff_size);
+
+/***************************************************************************/ /**
+   The MSS_UART_set_loopback() function is used to locally loop-back the Tx and
+   Rx lines of a UART. This is not to be confused with the loop-back of UART0
+   to UART1, which can be achieved through the microprocessor subsystem's
+   system registers.
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+   @param loopback
+     The loopback parameter indicates whether or not the UART's transmit and
+     receive lines should be looped back. Allowed values are as follows:
+       - MSS_UART_LOCAL_LOOPBACK_ON
+       - MSS_UART_LOCAL_LOOPBACK_OFF
+       - MSS_UART_REMOTE_LOOPBACK_ON
+       - MSS_UART_REMOTE_LOOPBACK_OFF
+       - MSS_UART_AUTO_ECHO_ON
+       - MSS_UART_AUTO_ECHO_OFF
+
+   @return
+     This function does not return a value.
+
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
+
+       MSS_UART_set_loopback(&g_mss_uart0_lo, MSS_UART_LOCAL_LOOPBACK_OFF);
+   @endcode
+  */
+void
+MSS_UART_set_loopback(
+    mss_uart_instance_t* this_uart, mss_uart_loopback_t loopback);
+
+/***************************************************************************/ /**
+   The MSS_UART_fill_tx_fifo() function fills the UART's hardware transmitter
+   FIFO with the data found in the transmitter buffer that is passed via the
+   tx_buffer function parameter. If the transmitter FIFO is not empty when
+   the function is called, the function returns immediately without transferring
+   any data to the FIFO; otherwise, the function transfers data from the
+   transmitter buffer to the FIFO until it is full or until the complete
+   contents of the transmitter buffer have been copied into the FIFO. The
+   function returns the number of bytes copied into the UART's transmitter FIFO.
+
+   Note:     This function reads the UART's line status register (LSR) to check
+   for the active state of the transmitter holding register empty (THRE) bit
+   before transferring data from the data buffer to the transmitter FIFO. If
+   THRE is 0, the function returns immediately, without transferring any data
+   to the FIFO. If THRE is 1, the function transfers up to 16 bytes of data
+   to the FIFO and then returns.
+
+   Note:     The actual transmission over the serial connection will still be
+   in progress when this function returns. Use the MSS_UART_get_tx_status()
+   function if you need to know when the transmitter is empty.
+
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
+
+   @param tx_buffer
+     The tx_buffer parameter is a pointer to a buffer containing the data
+     to be transmitted.
+
+   @param tx_size
+     The tx_size parameter is the size in bytes, of the data to be transmitted.
+
+   @return
+     This function returns the number of bytes copied into the UART's
+     transmitter FIFO.
+
+   Example:
+   @code
+      void send_using_interrupt(uint8_t * pbuff, size_t tx_size)
       {
-          task_a();
-          task_b();
+         size_t size_in_fifo;
+         size_in_fifo = MSS_UART_fill_tx_fifo(&g_mss_uart0_lo, pbuff, tx_size);
       }
-      return 0;
-   }
-
-   void uart1_rx_handler(mss_uart_instance_t * this_uart)
-   {
-      uint8_t rx_buff[RX_BUFF_SIZE];
-      uint32_t rx_idx  = 0;
-      rx_size = MSS_UART_get_rx(this_uart, rx_buff, sizeof(rx_buff));
-      process_rx_data(rx_buff, rx_size);
-   }
-  @endcode
- */
+   @endcode
+  */
 size_t
-MSS_UART_get_rx
-(
-   mss_uart_instance_t * this_uart,
-   uint8_t * rx_buff,
-   size_t buff_size
-);
+MSS_UART_fill_tx_fifo(
+    mss_uart_instance_t* this_uart, const uint8_t* tx_buffer, size_t tx_size);
 
+/***************************************************************************/ /**
+   The MSS_UART_get_rx_status() function returns the receiver error status of
+   the MSS UART instance. It reads both the current error status of the receiver
+   from the UART's line status register (LSR) and the accumulated error status
+   from preceding calls to the MSS_UART_get_rx() function, and it combines them
+   using a bitwise OR. It returns the cumulative overrun, parity, framing, break
+   and FIFO error status of the receiver, since the previous call to
+   MSS_UART_get_rx_status(), as an 8-bit encoded value.
 
-/***************************************************************************//**
-  The MSS_UART_set_loopback() function is used to locally loop-back the Tx and
-  Rx lines of a UART. This is not to be confused with the loop-back of UART0
-  to UART1, which can be achieved through the microprocessor subsystem's
-  system registers.
+   Note:     The MSS_UART_get_rx() function reads and accumulates the receiver
+   status of the MSS UART instance before reading each byte from the receiver's
+   data register/FIFO. The driver maintains a sticky record of the cumulative
+   receiver error status, which persists after the MSS_UART_get_rx() function
+   returns. The MSS_UART_get_rx_status() function clears the driver's sticky
+   receiver error record before returning.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   Note:     The driver's transmit functions also read the line status
+   register (LSR) as part of their implementation. When the driver reads the
+   LSR, the UART clears any active receiver error bits in the LSR. This could
+   result in the driver losing receiver errors. To avoid any loss of receiver
+   errors, the transmit functions also update the driver's sticky record of the
+   cumulative receiver error status whenever they read the LSR.
 
-  @param loopback
-    The loopback parameter indicates whether or not the UART's transmit and
-    receive lines should be looped back. Allowed values are as follows:
-      - MSS_UART_LOCAL_LOOPBACK_ON
-      - MSS_UART_LOCAL_LOOPBACK_OFF
-      - MSS_UART_REMOTE_LOOPBACK_ON
-      - MSS_UART_REMOTE_LOOPBACK_OFF
-      - MSS_UART_AUTO_ECHO_ON
-      - MSS_UART_AUTO_ECHO_OFF
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function does not return a value.
+   @return
+     This function returns the UART's receiver error status as an 8-bit unsigned
+     integer. The returned value is 0 if no receiver errors occurred. The driver
+     provides a set of bit mask constants that should be compared with and/or
+     used to mask the returned value to determine the receiver error status.
+     When the return value is compared to the following bit masks, a non-zero
+     result indicates that the corresponding error occurred:
+         - MSS_UART_OVERRUN_ERROR      (bit mask = 0x02)
+         - MSS_UART_PARITY_ERROR       (bit mask = 0x04)
+         - MSS_UART_FRAMING_ERROR      (bit mask = 0x08)
+         - MSS_UART_BREAK_ERROR        (bit mask = 0x10)
+         - MSS_UART_FIFO_ERROR         (bit mask = 0x80)
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+     When the return value is compared to the following bit mask, a non-zero
+     result indicates that no error occurred:
+         - MSS_UART_NO_ERROR       (bit mask = 0x00)
 
-      MSS_UART_set_loopback(&g_mss_uart0_lo, MSS_UART_LOCAL_LOOPBACK_OFF);
-  @endcode
- */
-void
-MSS_UART_set_loopback
-(
-    mss_uart_instance_t *   this_uart,
-    mss_uart_loopback_t     loopback
-);
+     Upon unsuccessful execution, this function returns:
+         - MSS_UART_INVALID_PARAM      (bit mask = 0xFF)
 
-/***************************************************************************//**
-  The MSS_UART_fill_tx_fifo() function fills the UART's hardware transmitter
-  FIFO with the data found in the transmitter buffer that is passed via the
-  tx_buffer function parameter. If the transmitter FIFO is not empty when
-  the function is called, the function returns immediately without transferring
-  any data to the FIFO; otherwise, the function transfers data from the
-  transmitter buffer to the FIFO until it is full or until the complete
-  contents of the transmitter buffer have been copied into the FIFO. The
-  function returns the number of bytes copied into the UART's transmitter FIFO.
+   Example:
+   @code
+     uint8_t rx_data[MAX_RX_DATA_SIZE];
+     uint8_t err_status;
+     err_status = MSS_UART_get_rx_status(&g_mss_uart0);
 
-  Note:     This function reads the UART's line status register (LSR) to check
-  for the active state of the transmitter holding register empty (THRE) bit
-  before transferring data from the data buffer to the transmitter FIFO. If
-  THRE is 0, the function returns immediately, without transferring any data
-  to the FIFO. If THRE is 1, the function transfers up to 16 bytes of data
-  to the FIFO and then returns.
-
-  Note:     The actual transmission over the serial connection will still be
-  in progress when this function returns. Use the MSS_UART_get_tx_status()
-  function if you need to know when the transmitter is empty.
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-  @param tx_buffer
-    The tx_buffer parameter is a pointer to a buffer containing the data
-    to be transmitted.
-
-  @param tx_size
-    The tx_size parameter is the size in bytes, of the data to be transmitted.
-
-  @return
-    This function returns the number of bytes copied into the UART's
-    transmitter FIFO.
-
-  Example:
-  @code
-     void send_using_interrupt(uint8_t * pbuff, size_t tx_size)
+     if(MSS_UART_NO_ERROR == err_status)
      {
-        size_t size_in_fifo;
-        size_in_fifo = MSS_UART_fill_tx_fifo(&g_mss_uart0_lo, pbuff, tx_size);
+        rx_size = MSS_UART_get_rx(&g_mss_uart0_lo, rx_data, MAX_RX_DATA_SIZE);
      }
-  @endcode
- */
-size_t
-MSS_UART_fill_tx_fifo
-(
-    mss_uart_instance_t * this_uart,
-    const uint8_t * tx_buffer,
-    size_t tx_size
-);
-
-/***************************************************************************//**
-  The MSS_UART_get_rx_status() function returns the receiver error status of the
-  MSS UART instance. It reads both the current error status of the receiver from
-  the UART's line status register (LSR) and the accumulated error status from
-  preceding calls to the MSS_UART_get_rx() function, and it combines them using
-  a bitwise OR. It returns the cumulative overrun, parity, framing, break and
-  FIFO error status of the receiver, since the previous call to
-  MSS_UART_get_rx_status(), as an 8-bit encoded value.
-
-  Note:     The MSS_UART_get_rx() function reads and accumulates the receiver
-  status of the MSS UART instance before reading each byte from the receiver's
-  data register/FIFO. The driver maintains a sticky record of the cumulative
-  receiver error status, which persists after the MSS_UART_get_rx() function
-  returns. The MSS_UART_get_rx_status() function clears the driver's sticky
-  receiver error record before returning.
-
-  Note:     The driver's transmit functions also read the line status
-  register (LSR) as part of their implementation. When the driver reads the
-  LSR, the UART clears any active receiver error bits in the LSR. This could
-  result in the driver losing receiver errors. To avoid any loss of receiver
-  errors, the transmit functions also update the driver's sticky record of the
-  cumulative receiver error status whenever they read the LSR.
-
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
-
-  @return
-    This function returns the UART's receiver error status as an 8-bit unsigned
-    integer. The returned value is 0 if no receiver errors occurred. The driver
-    provides a set of bit mask constants that should be compared with and/or
-    used to mask the returned value to determine the receiver error status.
-    When the return value is compared to the following bit masks, a non-zero
-    result indicates that the corresponding error occurred:
-        - MSS_UART_OVERRUN_ERROR      (bit mask = 0x02)
-        - MSS_UART_PARITY_ERROR       (bit mask = 0x04)
-        - MSS_UART_FRAMING_ERROR      (bit mask = 0x08)
-        - MSS_UART_BREAK_ERROR        (bit mask = 0x10)
-        - MSS_UART_FIFO_ERROR         (bit mask = 0x80)
-
-    When the return value is compared to the following bit mask, a non-zero
-    result indicates that no error occurred:
-        - MSS_UART_NO_ERROR       (bit mask = 0x00)
-
-    Upon unsuccessful execution, this function returns:
-        - MSS_UART_INVALID_PARAM      (bit mask = 0xFF)
-
-  Example:
-  @code
-    uint8_t rx_data[MAX_RX_DATA_SIZE];
-    uint8_t err_status;
-    err_status = MSS_UART_get_rx_status(&g_mss_uart0);
-
-    if(MSS_UART_NO_ERROR == err_status)
-    {
-       rx_size = MSS_UART_get_rx(&g_mss_uart0_lo, rx_data, MAX_RX_DATA_SIZE);
-    }
-  @endcode
- */
+   @endcode
+  */
 uint8_t
-MSS_UART_get_rx_status
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_get_rx_status(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_get_modem_status() function returns the modem status of the
-  MSS UART instance. It reads the modem status register (MSR) and returns
-  the 8 bit value. The bit encoding of the returned value is exactly the
-  same as the definition of the bits in the MSR.
+/***************************************************************************/ /**
+   The MSS_UART_get_modem_status() function returns the modem status of the
+   MSS UART instance. It reads the modem status register (MSR) and returns
+   the 8 bit value. The bit encoding of the returned value is exactly the
+   same as the definition of the bits in the MSR.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function returns current state of the UART's MSR as an 8 bit
-    unsigned integer. The driver provides the following set of bit mask
-    constants that should be compared with and/or used to mask the
-    returned value to determine the modem status:
-        - MSS_UART_DCTS   (bit mask = 0x01)
-        - MSS_UART_DDSR   (bit mask = 0x02)
-        - MSS_UART_TERI   (bit mask = 0x04)
-        - MSS_UART_DDCD   (bit mask = 0x08)
-        - MSS_UART_CTS    (bit mask = 0x10)
-        - MSS_UART_DSR    (bit mask = 0x20)
-        - MSS_UART_RI     (bit mask = 0x40)
-        - MSS_UART_DCD    (bit mask = 0x80)
+   @return
+     This function returns current state of the UART's MSR as an 8 bit
+     unsigned integer. The driver provides the following set of bit mask
+     constants that should be compared with and/or used to mask the
+     returned value to determine the modem status:
+         - MSS_UART_DCTS   (bit mask = 0x01)
+         - MSS_UART_DDSR   (bit mask = 0x02)
+         - MSS_UART_TERI   (bit mask = 0x04)
+         - MSS_UART_DDCD   (bit mask = 0x08)
+         - MSS_UART_CTS    (bit mask = 0x10)
+         - MSS_UART_DSR    (bit mask = 0x20)
+         - MSS_UART_RI     (bit mask = 0x40)
+         - MSS_UART_DCD    (bit mask = 0x80)
 
-  Example:
-  @code
-    void uart_modem_status_isr(mss_uart_instance_t * this_uart)
-    {
-        uint8_t status;
-        status = MSS_UART_get_modem_status(this_uart);
-        if( status & MSS_UART_DCTS )
-        {
-            uart_dcts_handler();
-        }
-        if( status & MSS_UART_CTS )
-        {
-            uart_cts_handler();
-        }
-    }
-  @endcode
- */
+   Example:
+   @code
+     void uart_modem_status_isr(mss_uart_instance_t * this_uart)
+     {
+         uint8_t status;
+         status = MSS_UART_get_modem_status(this_uart);
+         if( status & MSS_UART_DCTS )
+         {
+             uart_dcts_handler();
+         }
+         if( status & MSS_UART_CTS )
+         {
+             uart_cts_handler();
+         }
+     }
+   @endcode
+  */
 uint8_t
-MSS_UART_get_modem_status
-(
-    const mss_uart_instance_t * this_uart
-);
+MSS_UART_get_modem_status(const mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_get_tx_status() function returns the transmitter status of the
-  MSS UART instance. It reads both the UART's line status register (LSR) and
-  returns the status of the transmit holding register empty (THRE) and
-  transmitter empty (TEMT) bits.
+/***************************************************************************/ /**
+   The MSS_UART_get_tx_status() function returns the transmitter status of the
+   MSS UART instance. It reads both the UART's line status register (LSR) and
+   returns the status of the transmit holding register empty (THRE) and
+   transmitter empty (TEMT) bits.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function returns the UART's transmitter status as an 8-bit unsigned
-    integer. The returned value is 0 if the transmitter status bits are not
-    set or the function execution failed. The driver provides a set of bit
-    mask constants that should be compared with and/or used to mask the
-    returned value to determine the transmitter status.
-    When the return value is compared to the following bit mask, a non-zero
-    result indicates that the corresponding transmitter status bit is set:
-      - MSS_UART_THRE       (bit mask = 0x20)
-      - MSS_UART_TEMT       (bit mask = 0x40)
+   @return
+     This function returns the UART's transmitter status as an 8-bit unsigned
+     integer. The returned value is 0 if the transmitter status bits are not
+     set or the function execution failed. The driver provides a set of bit
+     mask constants that should be compared with and/or used to mask the
+     returned value to determine the transmitter status.
+     When the return value is compared to the following bit mask, a non-zero
+     result indicates that the corresponding transmitter status bit is set:
+       - MSS_UART_THRE       (bit mask = 0x20)
+       - MSS_UART_TEMT       (bit mask = 0x40)
 
-    When the return value is compared to the following bit mask, a non-zero
-    result indicates that the transmitter is busy or the function execution
-    failed.
-      - MSS_UART_TX_BUSY        (bit mask = 0x00)
+     When the return value is compared to the following bit mask, a non-zero
+     result indicates that the transmitter is busy or the function execution
+     failed.
+       - MSS_UART_TX_BUSY        (bit mask = 0x00)
 
-  Example:
-  @code
-    uint8_t tx_buff[10] = "abcdefghi";
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     uint8_t tx_buff[10] = "abcdefghi";
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_polled_tx(&g_mss_uart0_lo, tx_buff, sizeof(tx_buff));
+     MSS_UART_polled_tx(&g_mss_uart0_lo, tx_buff, sizeof(tx_buff));
 
-    while(!(MSS_UART_TEMT & MSS_UART_get_tx_status(&g_mss_uart0)))
-    {
-        ;
-    }
-  @endcode
- */
+     while(!(MSS_UART_TEMT & MSS_UART_get_tx_status(&g_mss_uart0)))
+     {
+         ;
+     }
+   @endcode
+  */
 uint8_t
-MSS_UART_get_tx_status
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_get_tx_status(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_set_break() function is used to send the break
-  (9 zeros after stop bit) signal on the TX line. This function can be used
-  only when the MSS UART is initialized in LIN mode by using MSS_UART_lin_init().
+/***************************************************************************/ /**
+   The MSS_UART_set_break() function is used to send the break
+   (9 zeros after stop bit) signal on the TX line. This function can be used
+   only when the MSS UART is initialized in LIN mode by using
+   MSS_UART_lin_init().
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_lin_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_lin_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_set_break(&g_mss_uart0);
-  @endcode
- */
+     MSS_UART_set_break(&g_mss_uart0);
+   @endcode
+  */
 void
-MSS_UART_set_break
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_set_break(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_clear_break() function is used to remove the break signal on the
-  TX line. This function can be used only when the MSS UART is initialized in
-  LIN mode by using MSS_UART_lin_init().
+/***************************************************************************/ /**
+   The MSS_UART_clear_break() function is used to remove the break signal on the
+   TX line. This function can be used only when the MSS UART is initialized in
+   LIN mode by using MSS_UART_lin_init().
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_lin_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_lin_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_clear_break(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_clear_break(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_clear_break
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_clear_break(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_enable_half_duplex() function is used to enable the half-duplex
-  (single wire) mode for the MSS UART. Though it finds application in Smartcard
-  mode, half-duplex mode can be used in other modes as well.
+/***************************************************************************/ /**
+   The MSS_UART_enable_half_duplex() function is used to enable the half-duplex
+   (single wire) mode for the MSS UART. Though it finds application in Smartcard
+   mode, half-duplex mode can be used in other modes as well.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_enable_half_duplex(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_enable_half_duplex(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_enable_half_duplex
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_enable_half_duplex(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_disable_half_duplex() function is used to disable the half-duplex
-  (single wire) mode for the MSS UART. Though it finds application in Smartcard
-  mode, half-duplex mode can be used in other modes as well.
+/***************************************************************************/ /**
+   The MSS_UART_disable_half_duplex() function is used to disable the
+   half-duplex (single wire) mode for the MSS UART. Though it finds application
+   in Smartcard mode, half-duplex mode can be used in other modes as well.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_disable_half_duplex(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_disable_half_duplex(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_disable_half_duplex
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_disable_half_duplex(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_set_rx_endian() function is used to configure the LSB first or
-  MSB first setting for MSS UART receiver
+/***************************************************************************/ /**
+   The MSS_UART_set_rx_endian() function is used to configure the LSB first or
+   MSB first setting for MSS UART receiver
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @param endian
-    The endian parameter tells the LSB first or MSB first configuration.
-    This parameter is of type mss_uart_endian_t.
+   @param endian
+     The endian parameter tells the LSB first or MSB first configuration.
+     This parameter is of type mss_uart_endian_t.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_set_rx_endian(&g_mss_uart0_lo, MSS_UART_LITTLEEND);
-  @endcode
- */
+     MSS_UART_set_rx_endian(&g_mss_uart0_lo, MSS_UART_LITTLEEND);
+   @endcode
+  */
 void
-MSS_UART_set_rx_endian
-(
-    mss_uart_instance_t * this_uart,
-    mss_uart_endian_t endian
-);
+MSS_UART_set_rx_endian(
+    mss_uart_instance_t* this_uart, mss_uart_endian_t endian);
 
-/***************************************************************************//**
-  The MSS_UART_set_tx_endian() function is used to configure the LSB first or
-  MSB first setting for MSS UART transmitter.
+/***************************************************************************/ /**
+   The MSS_UART_set_tx_endian() function is used to configure the LSB first or
+   MSB first setting for MSS UART transmitter.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @param endian
-    The endian parameter tells the LSB first or MSB first configuration.
-    This parameter is of type mss_uart_endian_t.
+   @param endian
+     The endian parameter tells the LSB first or MSB first configuration.
+     This parameter is of type mss_uart_endian_t.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_set_tx_endian(&g_mss_uart0_lo, MSS_UART_LITTLEEND);
-  @endcode
- */
+     MSS_UART_set_tx_endian(&g_mss_uart0_lo, MSS_UART_LITTLEEND);
+   @endcode
+  */
 void
-MSS_UART_set_tx_endian
-(
-    mss_uart_instance_t * this_uart,
-    mss_uart_endian_t endian
-);
+MSS_UART_set_tx_endian(
+    mss_uart_instance_t* this_uart, mss_uart_endian_t endian);
 
-/***************************************************************************//**
-  The MSS_UART_set_filter_length () function is used to configure the glitch
-  filter length of the MSS UART. This should be configured in accordance with
-  the chosen baud rate.
+/***************************************************************************/ /**
+   The MSS_UART_set_filter_length () function is used to configure the glitch
+   filter length of the MSS UART. This should be configured in accordance with
+   the chosen baud rate.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @param length
-    The length parameter is of mss_uart_filter_length_t type that determines
-    the length of the glitch filter.
+   @param length
+     The length parameter is of mss_uart_filter_length_t type that determines
+     the length of the glitch filter.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_set_filter_length(&g_mss_uart0_lo, MSS_UART_LEN2);
-  @endcode
- */
+     MSS_UART_set_filter_length(&g_mss_uart0_lo, MSS_UART_LEN2);
+   @endcode
+  */
 void
-MSS_UART_set_filter_length
-(
-    mss_uart_instance_t * this_uart,
-    mss_uart_filter_length_t length
-);
+MSS_UART_set_filter_length(
+    mss_uart_instance_t* this_uart, mss_uart_filter_length_t length);
 
-/***************************************************************************//**
-  The MSS_UART_enable_afm() function is used to enable address flag detection
-  mode of the MSS UART
+/***************************************************************************/ /**
+   The MSS_UART_enable_afm() function is used to enable address flag detection
+   mode of the MSS UART
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_enable_afm(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_enable_afm(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_enable_afm
-(
-     mss_uart_instance_t * this_uart
-);
+MSS_UART_enable_afm(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_disable_afm() function is used to disable address flag detection
-  mode of the MSS UART.
+/***************************************************************************/ /**
+   The MSS_UART_disable_afm() function is used to disable address flag detection
+   mode of the MSS UART.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_disable_afm(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_disable_afm(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_disable_afm
-(
-     mss_uart_instance_t * this_uart
-);
+MSS_UART_disable_afm(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_enable_afclear () function is used to enable address flag clear
-  of the MSS UART. This should be used in conjunction with address flag
-  detection mode (AFM).
+/***************************************************************************/ /**
+   The MSS_UART_enable_afclear () function is used to enable address flag clear
+   of the MSS UART. This should be used in conjunction with address flag
+   detection mode (AFM).
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_enable_afclear(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_enable_afclear(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_enable_afclear
-(
-     mss_uart_instance_t * this_uart
-);
+MSS_UART_enable_afclear(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_disable_afclear () function is used to disable address flag
-  clear of the MSS UART. This should be used in conjunction with address flag
-  detection mode (AFM).
+/***************************************************************************/ /**
+   The MSS_UART_disable_afclear () function is used to disable address flag
+   clear of the MSS UART. This should be used in conjunction with address flag
+   detection mode (AFM).
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_disable_afclear(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_disable_afclear(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_disable_afclear
-(
-     mss_uart_instance_t * this_uart
-);
+MSS_UART_disable_afclear(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_enable_rx_timeout() function is used to enable and configure
-  the receiver timeout functionality of MSS UART. This function accepts the
-  timeout parameter and applies the timeout based up on the baud rate as per
-  the formula 4 x timeout x bit time.
+/***************************************************************************/ /**
+   The MSS_UART_enable_rx_timeout() function is used to enable and configure
+   the receiver timeout functionality of MSS UART. This function accepts the
+   timeout parameter and applies the timeout based up on the baud rate as per
+   the formula 4 x timeout x bit time.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @param timeout
-    The timeout parameter specifies the receiver timeout multiple.
-    It should be configured according to the baud rate in use.
+   @param timeout
+     The timeout parameter specifies the receiver timeout multiple.
+     It should be configured according to the baud rate in use.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_enable_rx_timeout(&g_mss_uart0_lo, 24);
-  @endcode
- */
+     MSS_UART_enable_rx_timeout(&g_mss_uart0_lo, 24);
+   @endcode
+  */
 void
-MSS_UART_enable_rx_timeout
-(
-    mss_uart_instance_t * this_uart,
-    uint8_t timeout
-);
+MSS_UART_enable_rx_timeout(mss_uart_instance_t* this_uart, uint8_t timeout);
 
-/***************************************************************************//**
-  The MSS_UART_disable_rx_timeout() function is used to disable the receiver
-  timeout functionality of MSS UART.
+/***************************************************************************/ /**
+   The MSS_UART_disable_rx_timeout() function is used to disable the receiver
+   timeout functionality of MSS UART.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_disable_rx_timeout(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_disable_rx_timeout(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_disable_rx_timeout
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_disable_rx_timeout(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_enable_tx_time_guard() function is used to enable and configure
-  the transmitter time guard functionality of MSS UART. This function accepts
-  the timeguard parameter and applies the timeguard based up on the baud rate
-  as per the formula timeguard x bit time.
+/***************************************************************************/ /**
+   The MSS_UART_enable_tx_time_guard() function is used to enable and configure
+   the transmitter time guard functionality of MSS UART. This function accepts
+   the timeguard parameter and applies the timeguard based up on the baud rate
+   as per the formula timeguard x bit time.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
 
-  @param timeguard
-    The timeguard parameter specifies the transmitter time guard multiple.
-    It should be configured according to the baud rate in use.
+   @param timeguard
+     The timeguard parameter specifies the transmitter time guard multiple.
+     It should be configured according to the baud rate in use.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_enable_tx_time_guard(&g_mss_uart0_lo, 24);
-  @endcode
- */
+     MSS_UART_enable_tx_time_guard(&g_mss_uart0_lo, 24);
+   @endcode
+  */
 void
-MSS_UART_enable_tx_time_guard
-(
-    mss_uart_instance_t * this_uart,
-    uint8_t timeguard
-);
+MSS_UART_enable_tx_time_guard(
+    mss_uart_instance_t* this_uart, uint8_t timeguard);
 
-/***************************************************************************//**
-  The MSS_UART_disable_tx_time_guard() function is used to disable the
-  transmitter time guard functionality of MSS UART.
+/***************************************************************************/ /**
+   The MSS_UART_disable_tx_time_guard() function is used to disable the
+   transmitter time guard functionality of MSS UART.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-    Note that if you are using the UART on the AMP APB bus, the hardware
-    configuration to connect UART on AMP APB bus must already be done by the
-    application using SYSREG registers before initializing the UART instance
-    structure.
+     Note that if you are using the UART on the AMP APB bus, the hardware
+     configuration to connect UART on AMP APB bus must already be done by the
+     application using SYSREG registers before initializing the UART instance
+     structure.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_disable_tx_time_guard(&g_mss_uart0_lo);
-  @endcode
- */
+     MSS_UART_disable_tx_time_guard(&g_mss_uart0_lo);
+   @endcode
+  */
 void
-MSS_UART_disable_tx_time_guard
-(
-    mss_uart_instance_t * this_uart
-);
+MSS_UART_disable_tx_time_guard(mss_uart_instance_t* this_uart);
 
-/***************************************************************************//**
-  The MSS_UART_set_address() function is used to set the 8-bit address for
-  the MSS UART referenced by this_uart parameter.
+/***************************************************************************/ /**
+   The MSS_UART_set_address() function is used to set the 8-bit address for
+   the MSS UART referenced by this_uart parameter.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @param address
-    The address parameter is the 8-bit address which is to be configured
-    to the MSS UART referenced by this_uart parameter.
+   @param address
+     The address parameter is the 8-bit address which is to be configured
+     to the MSS UART referenced by this_uart parameter.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_set_address(&g_mss_uart0_lo, 0xAA);
-  @endcode
- */
+     MSS_UART_set_address(&g_mss_uart0_lo, 0xAA);
+   @endcode
+  */
 void
-MSS_UART_set_address
-(
-    mss_uart_instance_t * this_uart,
-    uint8_t address
-);
+MSS_UART_set_address(mss_uart_instance_t* this_uart, uint8_t address);
 
-/***************************************************************************//**
-  The MSS_UART_set_ready_mode() function is used to configure the MODE0 or MODE1
-  to the TXRDY and RXRDY signals of the MSS UART referenced by this_uart
-  parameter. The mode parameter is used to provide the mode to be configured.
+/***************************************************************************/ /**
+   The MSS_UART_set_ready_mode() function is used to configure the MODE0 or
+   MODE1 to the TXRDY and RXRDY signals of the MSS UART referenced by this_uart
+   parameter. The mode parameter is used to provide the mode to be configured.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @param mode
-    The mode parameter is the mss_uart_ready_mode_t type which is used to
-    configure the TXRDY and RXRDY signal modes.
+   @param mode
+     The mode parameter is the mss_uart_ready_mode_t type which is used to
+     configure the TXRDY and RXRDY signal modes.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_set_ready_mode(&g_mss_uart0_lo, MSS_UART_READY_MODE0);
-  @endcode
- */
+     MSS_UART_set_ready_mode(&g_mss_uart0_lo, MSS_UART_READY_MODE0);
+   @endcode
+  */
 void
-MSS_UART_set_ready_mode
-(
-    mss_uart_instance_t * this_uart,
-    mss_uart_ready_mode_t mode
-);
+MSS_UART_set_ready_mode(
+    mss_uart_instance_t* this_uart, mss_uart_ready_mode_t mode);
 
-/***************************************************************************//**
-  The MSS_UART_set_usart_mode() function is used to configure the MSS UART
-  referenced by the parameter this_uart in USART mode. Various USART modes
-  are supported which can be configured by the parameter mode of type
-  mss_uart_usart_mode_t.
+/***************************************************************************/ /**
+   The MSS_UART_set_usart_mode() function is used to configure the MSS UART
+   referenced by the parameter this_uart in USART mode. Various USART modes
+   are supported which can be configured by the parameter mode of type
+   mss_uart_usart_mode_t.
 
-  @param this_uart
-    The this_uart parameter is a pointer to an mss_uart_instance_t
-    structure identifying the MSS UART hardware block that will perform
-    the requested function. There are ten such data structures,
-    g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 5 (main APB bus) and
-    g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
-    when they are connected on the AXI switch slave 6 (AMP APB bus).
-    This parameter must point to one of these ten global data structure defined
-    within the UART driver.
+   @param this_uart
+     The this_uart parameter is a pointer to an mss_uart_instance_t
+     structure identifying the MSS UART hardware block that will perform
+     the requested function. There are ten such data structures,
+     g_mss_uart0_lo to g_mss_uart4_lo, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 5 (main APB bus) and
+     g_mss_uart0_hi to g_mss_uart4_hi, associated with MSS UART0 to MSS UART4
+     when they are connected on the AXI switch slave 6 (AMP APB bus).
+     This parameter must point to one of these ten global data structure defined
+     within the UART driver.
 
-  @param mode
-    The mode parameter is the USART mode to be configured.
-    This parameter is of type mss_uart_usart_mode_t.
+   @param mode
+     The mode parameter is the USART mode to be configured.
+     This parameter is of type mss_uart_usart_mode_t.
 
-  @return
-    This function does not return a value.
+   @return
+     This function does not return a value.
 
-  Example:
-  @code
-    MSS_UART_init(&g_mss_uart0_lo,
-             MSS_UART_57600_BAUD,
-             MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+   Example:
+   @code
+     MSS_UART_init(&g_mss_uart0_lo,
+              MSS_UART_57600_BAUD,
+              MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY |
+   MSS_UART_ONE_STOP_BIT);
 
-    MSS_UART_set_usart_mode(&g_mss_uart0_lo, MSS_UART_SYNC_MASTER_POS_EDGE_CLK);
-  @endcode
- */
+     MSS_UART_set_usart_mode(&g_mss_uart0_lo,
+   MSS_UART_SYNC_MASTER_POS_EDGE_CLK);
+   @endcode
+  */
 void
-MSS_UART_set_usart_mode
-(
-    mss_uart_instance_t * this_uart,
-    mss_uart_usart_mode_t mode
-);
-
+MSS_UART_set_usart_mode(
+    mss_uart_instance_t* this_uart, mss_uart_usart_mode_t mode);
 
 #ifdef __cplusplus
 }

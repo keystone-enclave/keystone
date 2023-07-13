@@ -26,7 +26,7 @@ elf_isElf32(elf_t* elf) {
 
 static inline Elf32_Ehdr
 elf32_getHeader(elf_t* elf) {
-  return *(Elf32_Ehdr*)elf->elfFile;
+  return *static_cast<Elf32_Ehdr*>(elf->elfFile);
 }
 
 static inline uintptr_t

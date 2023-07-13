@@ -3,6 +3,7 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "Enclave.hpp"
+
 #include <math.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -47,8 +48,8 @@ calculate_required_pages(uint64_t eapp_sz, uint64_t rt_sz) {
 
 Error
 Enclave::loadUntrusted() {
-  uintptr_t va_start = ROUND_DOWN(params.getUntrustedMem(), PAGE_BITS);
-  uintptr_t va_end   = ROUND_UP(params.getUntrustedEnd(), PAGE_BITS);
+  std::uintptr_t va_start = ROUND_DOWN(params.getUntrustedMem(), PAGE_BITS);
+  std::uintptr_t va_end   = ROUND_UP(params.getUntrustedEnd(), PAGE_BITS);
 
   while (va_start < va_end) {
     if (!pMemory->allocPage(va_start, 0, UTM_FULL)) {
@@ -61,19 +62,20 @@ Enclave::loadUntrusted() {
 
 /* This function will be deprecated when we implement freemem */
 bool
-Enclave::initStack(uintptr_t start, size_t size, bool is_rt) {
+Enclave::initStack(std::uintptr_t start, std::size_t size, bool is_rt) {
   static char nullpage[PAGE_SIZE] = {
       0,
   };
-  uintptr_t high_addr    = ROUND_UP(start, PAGE_BITS);
-  uintptr_t va_start_stk = ROUND_DOWN((high_addr - size), PAGE_BITS);
-  int stk_pages          = (high_addr - va_start_stk) / PAGE_SIZE;
+  std::uintptr_t high_addr    = ROUND_UP(start, PAGE_BITS);
+  std::uintptr_t va_start_stk = ROUND_DOWN((high_addr - size), PAGE_BITS);
+  int stk_pages               = (high_addr - va_start_stk) / PAGE_SIZE;
 
   for (int i = 0; i < stk_pages; i++) {
     if (!pMemory->allocPage(
-            va_start_stk, (uintptr_t)nullpage,
-            (is_rt ? RT_NOEXEC : USER_NOEXEC)))
+            va_start_stk, (std::uintptr_t)nullpage,
+            (is_rt ? RT_NOEXEC : USER_NOEXEC))) {
       return false;
+}
 
     va_start_stk += PAGE_SIZE;
   }
@@ -83,11 +85,11 @@ Enclave::initStack(uintptr_t start, size_t size, bool is_rt) {
 
 bool
 Enclave::mapElf(ElfFile* elf) {
-  uintptr_t va;
+  std::uintptr_t va;
 
   assert(elf);
 
-  size_t num_pages =
+  std::size_t num_pages =
       ROUND_DOWN(elf->getTotalMemorySize(), PAGE_BITS) / PAGE_SIZE;
   va = elf->getMinVaddr();
 
@@ -111,30 +113,32 @@ Enclave::loadElf(ElfFile* elf) {
       continue;
     }
 
-    uintptr_t start      = elf->getProgramHeaderVaddr(i);
-    uintptr_t file_end   = start + elf->getProgramHeaderFileSize(i);
-    uintptr_t memory_end = start + elf->getProgramHeaderMemorySize(i);
-    char* src            = reinterpret_cast<char*>(elf->getProgramSegment(i));
-    uintptr_t va         = start;
+    std::uintptr_t start      = elf->getProgramHeaderVaddr(i);
+    std::uintptr_t file_end   = start + elf->getProgramHeaderFileSize(i);
+    std::uintptr_t memory_end = start + elf->getProgramHeaderMemorySize(i);
+    char* src         = reinterpret_cast<char*>(elf->getProgramSegment(i));
+    std::uintptr_t va = start;
 
     /* FIXME: This is a temporary fix for loading iozone binary
      * which has a page-misaligned program header. */
     if (!IS_ALIGNED(va, PAGE_SIZE)) {
-      size_t offset = va - PAGE_DOWN(va);
-      size_t length = PAGE_UP(va) - va;
+      std::size_t offset = va - PAGE_DOWN(va);
+      std::size_t length = PAGE_UP(va) - va;
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
       memcpy(page + offset, (const void*)src, length);
-      if (!pMemory->allocPage(PAGE_DOWN(va), (uintptr_t)page, mode))
+      if (!pMemory->allocPage(PAGE_DOWN(va), (std::uintptr_t)page, mode)) {
         return Error::PageAllocationFailure;
+}
       va += length;
       src += length;
     }
 
     /* first load all pages that do not include .bss segment */
     while (va + PAGE_SIZE <= file_end) {
-      if (!pMemory->allocPage(va, (uintptr_t)src, mode))
+      if (!pMemory->allocPage(va, (std::uintptr_t)src, mode)) {
         return Error::PageAllocationFailure;
+}
 
       src += PAGE_SIZE;
       va += PAGE_SIZE;
@@ -145,16 +149,18 @@ Enclave::loadElf(ElfFile* elf) {
     if (va < file_end) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
-      memcpy(page, (const void*)src, static_cast<size_t>(file_end - va));
-      if (!pMemory->allocPage(va, (uintptr_t)page, mode))
+      memcpy(page, (const void*)src, static_cast<std::size_t>(file_end - va));
+      if (!pMemory->allocPage(va, (std::uintptr_t)page, mode)) {
         return Error::PageAllocationFailure;
+}
       va += PAGE_SIZE;
     }
 
     /* finally, load the remaining .bss segments */
     while (va < memory_end) {
-      if (!pMemory->allocPage(va, (uintptr_t)nullpage, mode))
+      if (!pMemory->allocPage(va, (std::uintptr_t)nullpage, mode)) {
         return Error::PageAllocationFailure;
+}
       va += PAGE_SIZE;
     }
   }
@@ -172,8 +178,8 @@ Enclave::validate_and_hash_enclave(struct runtime_params_t args) {
   // hash the runtime parameters
   hash_extend(&hash_ctx, &args, sizeof(struct runtime_params_t));
 
-  uintptr_t runtime_max_seen = 0;
-  uintptr_t user_max_seen    = 0;
+  std::uintptr_t runtime_max_seen = 0;
+  std::uintptr_t user_max_seen    = 0;
 
   // hash the epm contents including the virtual addresses
   int valid = pMemory->validateAndHashEpm(
@@ -226,7 +232,7 @@ Enclave::initFiles(const char* eapppath, const char* runtimepath) {
 }
 
 bool
-Enclave::prepareEnclave(uintptr_t alternatePhysAddr) {
+Enclave::prepareEnclave(std::uintptr_t alternatePhysAddr) {
   // FIXME: this will be deprecated with complete freemem support.
   // We just add freemem size for now.
   uint64_t minPages;
@@ -245,7 +251,7 @@ Enclave::prepareEnclave(uintptr_t alternatePhysAddr) {
   }
 
   /* We switch out the phys addr as needed */
-  uintptr_t physAddr;
+  std::uintptr_t physAddr;
   if (alternatePhysAddr) {
     physAddr = alternatePhysAddr;
   } else {
@@ -258,18 +264,18 @@ Enclave::prepareEnclave(uintptr_t alternatePhysAddr) {
 
 Error
 Enclave::init(const char* eapppath, const char* runtimepath, Params _params) {
-  return this->init(eapppath, runtimepath, _params, (uintptr_t)0);
+  return this->init(eapppath, runtimepath, _params, static_cast<std::uintptr_t>(0));
 }
 
 const char*
-Enclave::getHash() {
+Enclave::getHash() const noexcept {
   return this->hash;
 }
 
 Error
 Enclave::init(
     const char* eapppath, const char* runtimepath, Params _params,
-    uintptr_t alternatePhysAddr) {
+    std::uintptr_t alternatePhysAddr) {
   params = _params;
 
   if (params.isSimulated()) {
@@ -329,7 +335,7 @@ Enclave::init(
   }
 #endif /* USE_FREEMEM */
 
-  uintptr_t utm_free;
+  std::uintptr_t utm_free;
   utm_free = pMemory->allocUtm(params.getUntrustedSize());
 
   if (!utm_free) {
@@ -344,13 +350,13 @@ Enclave::init(
 
   struct runtime_params_t runtimeParams;
   runtimeParams.runtime_entry =
-      reinterpret_cast<uintptr_t>(runtimeFile->getEntryPoint());
+      reinterpret_cast<std::uintptr_t>(runtimeFile->getEntryPoint());
   runtimeParams.user_entry =
-      reinterpret_cast<uintptr_t>(enclaveFile->getEntryPoint());
+      reinterpret_cast<std::uintptr_t>(enclaveFile->getEntryPoint());
   runtimeParams.untrusted_ptr =
-      reinterpret_cast<uintptr_t>(params.getUntrustedMem());
+      reinterpret_cast<std::uintptr_t>(params.getUntrustedMem());
   runtimeParams.untrusted_size =
-      reinterpret_cast<uintptr_t>(params.getUntrustedSize());
+      reinterpret_cast<std::uintptr_t>(params.getUntrustedSize());
 
   pMemory->startFreeMem();
 
@@ -383,7 +389,7 @@ Enclave::init(
 }
 
 bool
-Enclave::mapUntrusted(size_t size) {
+Enclave::mapUntrusted(std::size_t size) {
   if (size == 0) {
     return true;
   }
@@ -415,7 +421,7 @@ Enclave::destroy() {
 }
 
 Error
-Enclave::run(uintptr_t* retval) {
+Enclave::run(std::uintptr_t* retval) {
   if (params.isSimulated()) {
     return Error::Success;
   }
@@ -439,12 +445,12 @@ Enclave::run(uintptr_t* retval) {
 }
 
 void*
-Enclave::getSharedBuffer() {
+Enclave::getSharedBuffer() noexcept {
   return shared_buffer;
 }
 
-size_t
-Enclave::getSharedBufferSize() {
+std::size_t
+Enclave::getSharedBufferSize() const noexcept {
   return shared_buffer_size;
 }
 

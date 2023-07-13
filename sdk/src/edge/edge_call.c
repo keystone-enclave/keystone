@@ -3,9 +3,10 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include <edge_call.h>
-#include "string.h"
 #include <sys/epoll.h>
 #include <sys/socket.h>
+
+#include "string.h"
 
 uintptr_t _shared_start;
 size_t _shared_len;

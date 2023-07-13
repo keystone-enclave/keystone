@@ -18,7 +18,7 @@ class SharedBuffer {
   SharedBuffer(void* buffer, size_t buffer_len)
       /* For now we assume the call struct is at the front of the shared
        * buffer. This will have to change to allow nested calls. */
-      : edge_call_((struct edge_call*)buffer),
+      : edge_call_(static_cast<struct edge_call*>(buffer)),
         buffer_((uintptr_t)buffer),
         buffer_len_(buffer_len) {}
 
@@ -55,30 +55,30 @@ class SharedBuffer {
 // The Host class mimicks a host interacting with the local enclave
 // and the remote verifier.
 class Host {
-public:
-Host(
-    const Keystone::Params& params, const std::string& eapp_file,
-    const std::string& rt_file)
-    : params_(params), eapp_file_(eapp_file), rt_file_(rt_file) {}
-    // Given a random nonce from the remote verifier, this method leaves
-    // it for the enclave to fetch, and returns the attestation report
-    // from the enclave to the verifier.
-    Report run(const std::string& nonce);
+ public:
+  Host(
+      const Keystone::Params& params, const std::string& eapp_file,
+      const std::string& rt_file)
+      : params_(params), eapp_file_(eapp_file), rt_file_(rt_file) {}
+  // Given a random nonce from the remote verifier, this method leaves
+  // it for the enclave to fetch, and returns the attestation report
+  // from the enclave to the verifier.
+  Report run(const std::string& nonce);
 
-private:
- struct RunData {
-   SharedBuffer shared_buffer;
-   const std::string& nonce;
-   std::unique_ptr<Report> report;
- };
- static void dispatch_ocall(RunData& run_data);
- static void print_buffer_wrapper(RunData& run_data);
- static void print_value_wrapper(RunData& run_data);
- static void copy_report_wrapper(RunData& run_data);
- static void get_host_string_wrapper(RunData& run_data);
- const Keystone::Params params_;
- const std::string eapp_file_;
- const std::string rt_file_;
+ private:
+  struct RunData {
+    SharedBuffer shared_buffer;
+    const std::string& nonce;
+    std::unique_ptr<Report> report;
+  };
+  static void dispatch_ocall(RunData& run_data);
+  static void print_buffer_wrapper(RunData& run_data);
+  static void print_value_wrapper(RunData& run_data);
+  static void copy_report_wrapper(RunData& run_data);
+  static void get_host_string_wrapper(RunData& run_data);
+  const Keystone::Params params_;
+  const std::string eapp_file_;
+  const std::string rt_file_;
 };
 
 #endif /* _ATTESTATION_HOST_H_ */

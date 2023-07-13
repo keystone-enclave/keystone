@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
 #include "ed25519/ed25519.h"
 
 using json11::Json;
@@ -17,7 +18,7 @@ Report::BytesToHex(byte* bytes, size_t len) {
   std::string str;
   for (i = 0; i < len; i += 1) {
     std::stringstream ss;
-    ss << std::setfill('0') << std::setw(2) << std::hex << (uintptr_t)bytes[i];
+    ss << std::setfill('0') << std::setw(2) << std::hex << static_cast<uintptr_t>(bytes[i]);
 
     str += ss.str();
   }
@@ -32,7 +33,7 @@ Report::HexToBytes(byte* bytes, size_t len, std::string hexstr) {
     std::stringstream ss;
     ss << hexstr.substr(i * 2, 2);
     ss >> std::hex >> data;
-    bytes[i] = (byte)data;
+    bytes[i] = static_cast<byte>(data);
   }
 }
 
@@ -123,12 +124,12 @@ Report::printPretty() {
 
 byte*
 Report::getEnclaveHash() {
-    return report.enclave.hash;
+  return report.enclave.hash;
 }
 
 byte*
 Report::getSmHash() {
-    return report.sm.hash;
+  return report.sm.hash;
 }
 
 int

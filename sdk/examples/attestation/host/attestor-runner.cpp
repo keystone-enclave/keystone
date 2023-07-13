@@ -13,9 +13,8 @@
 #include <string>
 
 #include "host/keystone.h"
-#include "verifier/report.h"
-
 #include "verifier.h"
+#include "verifier/report.h"
 
 int
 main(int argc, char** argv) {
@@ -32,7 +31,7 @@ main(int argc, char** argv) {
 
   size_t untrusted_size = 2 * 1024 * 1024;
   size_t freemem_size   = 48 * 1024 * 1024;
-  uintptr_t utm_ptr     = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
+  uintptr_t utm_ptr     = static_cast<uintptr_t>(DEFAULT_UNTRUSTED_PTR);
   bool retval_exist     = false;
   unsigned long retval  = 0;
 
