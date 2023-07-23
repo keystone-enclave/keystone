@@ -336,6 +336,9 @@ void handle_syscall(struct encl_ctx* ctx)
   case(SYS_setsockopt):
     ret = io_syscall_setsockopt((int) arg0, (int) arg1, (int) arg2, (int *) arg3, (int) arg4); 
     break; 
+  case(SYS_connect):
+    ret = io_syscall_connect((int) arg0, (uintptr_t) arg1, (int) arg2);
+    break;
   case (SYS_bind):
     ret = io_syscall_bind((int) arg0, (uintptr_t) arg1, (int) arg2);
     break;

@@ -57,6 +57,29 @@ uintptr_t io_syscall_setsockopt(int socket, int level, int option_name, const vo
 
 }
 
+uintptr_t io_syscall_connect(int sockfd, uintptr_t addr, socklen_t addrlen){
+  uintptr_t ret = -1;
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  edge_syscall->syscall_num = SYS_connect;
+
+  sargs_SYS_connect *args = (sargs_SYS_connect *) edge_syscall->data;
+
+  args->sockfd = sockfd;
+  args->addrlen = addrlen;
+
+  if(addrlen > sizeof(struct sockaddr_storage)) {
+    return -1;
+  }
+
+  copy_from_user(&args->addr, (void *) addr, addrlen);
+  
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_connect);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  print_strace("[runtime] proxied connect: %d \r\n", ret);
+  return ret;
+}
+
 uintptr_t io_syscall_bind (int sockfd, uintptr_t addr, socklen_t addrlen){
 
   uintptr_t ret = -1;
