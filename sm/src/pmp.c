@@ -253,7 +253,7 @@ int pmp_set_keystone(int region_idx, uint8_t perm)
   LIST_OF_PMP_REGS
 #undef X
     default:
-      sm_assert(FALSE);
+      sm_assert(false);
   }
 
   /* TOR decoding with 2 registers */
@@ -267,7 +267,7 @@ int pmp_set_keystone(int region_idx, uint8_t perm)
   LIST_OF_PMP_REGS
 #undef X
     default:
-      sm_assert(FALSE);
+      sm_assert(false);
     }
   }
   return SBI_ERR_SM_PMP_SUCCESS;
@@ -285,7 +285,7 @@ int pmp_unset(int region_idx)
   LIST_OF_PMP_REGS
 #undef X
     default:
-      sm_assert(FALSE);
+      sm_assert(false);
   }
 
   if(region_needs_two_entries(region_idx))
@@ -296,7 +296,7 @@ int pmp_unset(int region_idx)
   LIST_OF_PMP_REGS
 #undef X
     default:
-      sm_assert(FALSE);
+      sm_assert(false);
     }
   }
 
