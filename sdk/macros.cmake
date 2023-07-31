@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 include(ExternalProject)
 
+# find program "makeself"
+find_program(MAKESELF makeself)
+
 macro(global_set Name Value)
     #  message("set ${Name} to " ${ARGN})
     set(${Name} "${Value}" CACHE STRING "NoDesc" FORCE)
@@ -105,12 +108,14 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   list(APPEND PLUGIN_FLAGS "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
   list(APPEND PLUGIN_FLAGS "-DCMAKE_OBJCOPY=${CMAKE_OBJCOPY}")
 
-  get_runtime_dir(EYRIE_SRCDIR)
+  if(NOT DEFINED KEYSTONE_EYRIE_RUNTIME)
+    get_runtime_dir(KEYSTONE_EYRIE_RUNTIME)
+  endif()
 
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
-    DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${EYRIE_SRCDIR} ${eyrie_src}
-    CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${EYRIE_SRCDIR}
+    DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${KEYSTONE_EYRIE_RUNTIME} ${eyrie_src}
+    CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${KEYSTONE_EYRIE_RUNTIME}
     BUILD_IN_SOURCE TRUE
     BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
     INSTALL_COMMAND "")

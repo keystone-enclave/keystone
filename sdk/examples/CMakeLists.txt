@@ -30,9 +30,6 @@ set(KEYSTONE_LIB_EDGE ${KEYSTONE_SDK_DIR}/lib/libkeystone-edge.a)
 set(KEYSTONE_LIB_VERIFIER ${KEYSTONE_SDK_DIR}/lib/libkeystone-verifier.a)
 set(KEYSTONE_LIB_EAPP ${KEYSTONE_SDK_DIR}/lib/libkeystone-eapp.a)
 
-# find program "makeself"
-find_program(MAKESELF makeself)
-
 # create a phony target "examples"
 add_custom_target("examples")
 
