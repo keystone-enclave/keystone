@@ -73,6 +73,12 @@ typedef struct sargs_SYS_setsockopt{
   socklen_t option_len;
 } sargs_SYS_setsockopt;
 
+typedef struct sargs_SYS_connect{
+  int sockfd;
+  struct sockaddr_storage addr;
+  socklen_t addrlen;
+} sargs_SYS_connect;
+
 typedef struct sargs_SYS_bind{
   int sockfd;
   struct sockaddr_storage addr;
