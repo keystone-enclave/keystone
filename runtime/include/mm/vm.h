@@ -12,6 +12,7 @@ extern void* rt_base;
 extern uintptr_t runtime_va_start;
 extern uintptr_t kernel_offset;
 extern uintptr_t load_pa_start;
+extern pte* root_page_table;
 
 /* Eyrie is for Sv39 */
 static inline uintptr_t satp_new(uintptr_t pa)
@@ -64,15 +65,6 @@ static inline uintptr_t pte_ppn(pte pte)
 {
   return pte >> PTE_PPN_SHIFT;
 }
-
-/* root page table */
-extern pte root_page_table[];
-/* page tables for kernel remap */
-extern pte kernel_l2_page_table[];
-extern pte kernel_l3_page_table[];
-/* page tables for loading physical memory */
-extern pte load_l2_page_table[];
-extern pte load_l3_page_table[];
 
 /* Program break */
 extern uintptr_t program_break;
