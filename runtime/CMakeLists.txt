@@ -55,6 +55,7 @@ add_compile_options(-Wall -Werror -fPIC -fno-builtin -std=c11 -g)
 # Generate all the library targets
 add_subdirectory(call)
 add_subdirectory(crypto)
+add_subdirectory(loader)
 add_subdirectory(mm)
 add_subdirectory(tmplib)
 add_subdirectory(util)

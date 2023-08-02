@@ -1,4 +1,5 @@
 #include "sys/env.h"
+#include "sys/auxvec.h"
 #include "uaccess.h"
 #include "util/rt_util.h"
 #include "util/string.h"

@@ -108,13 +108,20 @@
 .endm
 
 _start:
+  /* Set up runtime stack */ 
   la sp, kernel_stack_end
 
   /* set sscratch zero so that the trap handler can
    * notice that the trap is from S-mode */
   csrw sscratch, x0
 
+  sfence.vma
   jal eyrie_boot
+  sfence.vma
+
+  /* set spp to user; hello-native needs this but hello-dynamic doesn't? */
+  addi t0, x0, 0x100
+  csrrc x0, sstatus, t0
 
   /* start running enclave */
   csrrw sp, sscratch, sp

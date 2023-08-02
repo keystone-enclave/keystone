@@ -67,6 +67,19 @@ __walk_create(pte* root, uintptr_t addr)
   return __walk_internal(root, addr, 1);
 }
 
+/* Create a virtual memory mapping between a physical and virtual page */
+uintptr_t 
+map_page(uintptr_t vpn, uintptr_t ppn) {
+  pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
+
+  // TODO: what is supposed to happen if page is already allocated?
+  if (*pte & PTE_V) {
+    return -1;
+  }
+
+  *pte = pte_create(ppn, PTE_U | PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
+  return 1;
+}
 
 /* allocate a new page to a given vpn
  * returns VA of the page, (returns 0 if fails) */
