@@ -31,6 +31,7 @@ struct platform_enclave_data{
 
 // Search for FPGA devices
 #define DEV_SEARCH_BASE         "fabric-bus@40000000"
+#define DEV_IGNORED             { "microchip,mpfs-ccc", "microchip,mpfs-qspi" }
 
 // Initialization functions
 void sm_copy_key(void);

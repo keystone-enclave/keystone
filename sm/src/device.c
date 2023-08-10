@@ -26,6 +26,12 @@
 #define DEV_SEARCH_BASE "/soc"
 #endif
 
+// Ignore some compatibles if requested by the platform
+#ifdef DEV_IGNORED
+#include <sbi/sbi_types.h>
+static const char *ignored_compatibles[] = DEV_IGNORED;
+#endif
+
 struct keystone_device
 {
     char devname[DEV_NAMELEN];
@@ -55,6 +61,11 @@ int fdt_init_pmp_devices(void *fdt) {
     const char *status, *secure_status, *name;
     const uint32_t *reg;
 
+#ifdef DEV_IGNORED
+    int compatible_len;
+    const char *compatible;
+#endif
+
     // Device tree variables
     int bus_offset, dev_offset, addr_cells, size_cells;
 
@@ -83,6 +94,26 @@ int fdt_init_pmp_devices(void *fdt) {
     size_cells = fdt_size_cells(fdt, bus_offset);
 
     fdt_for_each_subnode(dev_offset, fdt, bus_offset) {
+#ifdef DEV_IGNORED
+        // Check if we should ignore this device
+        compatible = fdt_getprop(fdt, dev_offset, "compatible", &compatible_len);
+        if(compatible) {
+            // A device without a compatible string would not be accesible by Linux, since these strings
+            // determine what driver to load. To that extent, it seems likely that such devices would
+            // potentially be mapped by an enclave. Therefore, if there is no compatible string, we
+            // choose to continue parsing in case it is a device we need to handle
+
+            for(i = 0; i < array_size(ignored_compatibles); i++) {
+                if(!strcmp(compatible, ignored_compatibles[i])) {
+                        break;
+                }
+            }
+
+            if(i != array_size(ignored_compatibles))
+                continue;
+        }
+#endif
+
         // We follow the spec for secure nodes defined in the Linux kernel,
         // under Documentation/devicetree/bindings/arm/secure.txt.
         status = fdt_getprop(fdt, dev_offset, "status", &status_len);
