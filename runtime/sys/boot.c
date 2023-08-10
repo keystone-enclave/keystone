@@ -11,6 +11,10 @@
 #include "sys/env.h"
 #include "mm/paging.h"
 
+#ifdef USE_DRIVERS
+#include "drivers/drivers.h"
+#endif
+
 /* defined in vm.h */
 extern uintptr_t shared_buffer;
 extern uintptr_t shared_buffer_size;
@@ -165,6 +169,11 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* set timer */
   init_timer();
+
+#ifdef USE_DRIVERS
+  /* initialize any drivers included in the .drivers section */
+  init_driver_subsystem();
+#endif
 
   /* Enable the FPU */
   csr_write(sstatus, csr_read(sstatus) | 0x6000);
