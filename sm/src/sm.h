@@ -10,9 +10,6 @@
 #include "sm-sbi.h"
 #include <sbi/riscv_encoding.h>
 
-#define SMM_BASE  0x80000000
-#define SMM_SIZE  0x200000
-
 #include "sm_call.h"
 #include "sm_err.h"
 

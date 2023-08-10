@@ -18,7 +18,6 @@
 #include TARGET_PLATFORM_HEADER
 
 #define ATTEST_DATA_MAXLEN  1024
-#define ENCLAVE_REGIONS_MAX 8
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 

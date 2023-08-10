@@ -13,8 +13,6 @@
 #include <sbi/riscv_locks.h>
 #include <sbi/sbi_console.h>
 
-#define ENCL_MAX  16
-
 struct enclave enclaves[ENCL_MAX];
 #define ENCLAVE_EXISTS(eid) (eid >= 0 && eid < ENCL_MAX && enclaves[eid].state >= 0)
 

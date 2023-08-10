@@ -14,6 +14,13 @@
 #include <sbi/riscv_locks.h>
 #include <sbi/riscv_atomic.h>
 
+#ifndef TARGET_PLATFORM_HEADER
+#error "SM requires a defined platform to build"
+#endif
+
+// Special target platform header, set by configure script
+#include TARGET_PLATFORM_HEADER
+
 /* PMP global spin locks */
 static spinlock_t pmp_lock = SPIN_LOCK_INITIALIZER;
 

@@ -5,6 +5,13 @@
 #include "cpu.h"
 #include <sbi/riscv_asm.h>
 
+#ifndef TARGET_PLATFORM_HEADER
+#error "SM requires a defined platform to build"
+#endif
+
+// Special target platform header, set by configure script
+#include TARGET_PLATFORM_HEADER
+
 static struct cpu_state cpus[MAX_HARTS] = {0,};
 
 int cpu_is_enclave_context()
