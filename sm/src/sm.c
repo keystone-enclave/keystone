@@ -18,6 +18,13 @@
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
 
+#ifndef TARGET_PLATFORM_HEADER
+#error "SM requires a defined platform to build"
+#endif
+
+// Special target platform header, set by configure script
+#include TARGET_PLATFORM_HEADER
+
 /* from Sanctum BootROM */
 extern byte sanctum_sm_hash[MDSIZE];
 extern byte sanctum_sm_signature[SIGNATURE_SIZE];
