@@ -8,9 +8,6 @@
 #include "sm.h"
 #include <sbi/riscv_atomic.h>
 
-#define PMP_N_REG         8 //number of PMP registers
-#define PMP_MAX_N_REGION  16 //maximum number of PMP regions
-
 #define SET_BIT(bitmap, n) (bitmap |= (0x1 << (n)))
 #define UNSET_BIT(bitmap, n) (bitmap &= ~(0x1 << (n)))
 #define TEST_BIT(bitmap, n) (bitmap & (0x1 << (n)))
