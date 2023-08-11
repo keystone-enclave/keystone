@@ -14,4 +14,4 @@ set-name: 'PolarFire-SoC-HSS::U-Boot'
 hart-entry-points: {u54_1: '0x90200000', u54_2: '0x90200000', u54_3: '0x90200000', u54_4: '0x90200000'}
 
 payloads:
-  src.bin: {exec-addr: '0x90200000', owner-hart: u54_1, secondary-hart: u54_2, secondary-hart: u54_3, secondary-hart: u54_4, priv-mode: prv_s}
+  src.bin: {exec-addr: '0x90200000', owner-hart: u54_1, secondary-hart: u54_2, secondary-hart: u54_3, secondary-hart: u54_4, priv-mode: prv_s, ancilliary-data: mpfs-icicle-kit.dtb}

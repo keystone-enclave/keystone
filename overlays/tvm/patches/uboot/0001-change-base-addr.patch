@@ -1,5 +1,5 @@
 diff --git a/configs/microchip_mpfs_icicle_defconfig b/configs/microchip_mpfs_icicle_defconfig
-index 13725c584e..353ef1a1b6 100644
+index 13725c584e..d72e44e2fc 100644
 --- a/configs/microchip_mpfs_icicle_defconfig
 +++ b/configs/microchip_mpfs_icicle_defconfig
 @@ -1,4 +1,5 @@
@@ -8,33 +8,17 @@ index 13725c584e..353ef1a1b6 100644
  CONFIG_SYS_MALLOC_LEN=0x800000
  CONFIG_SYS_MALLOC_F_LEN=0x2000
  CONFIG_ENV_SIZE=0x2000
-@@ -7,19 +8,16 @@ CONFIG_TARGET_MICROCHIP_ICICLE=y
+@@ -7,7 +8,7 @@ CONFIG_TARGET_MICROCHIP_ICICLE=y
  CONFIG_ARCH_RV64I=y
  CONFIG_RISCV_SMODE=y
  CONFIG_DISTRO_DEFAULTS=y
 -CONFIG_SYS_LOAD_ADDR=0x80200000
 +CONFIG_SYS_LOAD_ADDR=0x90200000
  CONFIG_FIT=y
-+CONFIG_USE_BOOTARGS=y
-+CONFIG_BOOTARGS="earlycon root=/dev/mmcblk0p3 rootwait uio_pdrv_genirq.of_id=generic-uio"
  CONFIG_DISPLAY_CPUINFO=y
  CONFIG_DISPLAY_BOARDINFO=y
- CONFIG_SYS_PROMPT="RISC-V # "
-+CONFIG_MTDPARTS_DEFAULT="mtdparts=spi-nand0:2m(payload),128k(env),119m(rootfs)"
-+CONFIG_CMD_UBI=y
- CONFIG_SYS_RELOC_GD_ENV_ADDR=y
- CONFIG_BOOTP_SEND_HOSTNAME=y
- CONFIG_DM_MTD=y
--CONFIG_CMD_MTDPARTS=y
--CONFIG_MTDPARTS_DEFAULT="mtdparts=spi-nand0:2m(payload),128k(env),119m(rootfs)"
--CONFIG_CMD_UBI=y
--CONFIG_CMD_UBIFS=y
--CONFIG_MTD_UBI=y
--CONFIG_MTD_UBI_WL_THRESHOLD=4096
--CONFIG_MTD_UBI_BEB_LIMIT=20
- CONFIG_OF_LIBFDT_OVERLAY=y
 diff --git a/include/configs/microchip_mpfs_icicle.h b/include/configs/microchip_mpfs_icicle.h
-index 9ef5425c9f..b795985a1d 100644
+index 9ef5425c9f..7efed8376c 100644
 --- a/include/configs/microchip_mpfs_icicle.h
 +++ b/include/configs/microchip_mpfs_icicle.h
 @@ -9,12 +9,12 @@
@@ -51,4 +35,13 @@ index 9ef5425c9f..b795985a1d 100644
 +#define CONFIG_STANDALONE_LOAD_ADDR 0x90200000
  
  /* Environment options */
+ 
+@@ -70,7 +70,7 @@
+ 
+ #define CONFIG_EXTRA_ENV_SETTINGS \
+ 	"bootm_size=0x10000000\0" \
+-	"scriptaddr=0x8e000000\0" \
++	"scriptaddr=0x9e000000\0" \
+ 	BOOTENV_DESIGN_OVERLAYS \
+ 	BOOTENV \
  
