@@ -37,7 +37,7 @@ target_link_libraries(test-loop ${KEYSTONE_LIB_EAPP})
 
 # malloc
 add_executable(test-malloc malloc/malloc.c)
-target_link_libraries(test-malloc ${KEYSTONE_LIB_EAPP})
+target_link_libraries(test-malloc ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_UTIL})
 
 # long-nop
 add_executable(test-long-nop long-nop/long-nop.S ${CMAKE_CURRENT_BINARY_DIR}/add_long.S)
@@ -64,11 +64,11 @@ target_link_libraries(test-attestation ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE}
 
 # untrusted
 add_executable(test-untrusted untrusted/untrusted.c untrusted/edge_wrapper.c)
-target_link_libraries(test-untrusted ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
+target_link_libraries(test-untrusted ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE} ${KEYSTONE_LIB_UTIL})
 
 # data-sealing
 add_executable(test-data-sealing data-sealing/data-sealing.c)
-target_link_libraries(test-data-sealing ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
+target_link_libraries(test-data-sealing ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE} ${KEYSTONE_LIB_UTIL})
 
 ###############################################
 # a script for running all test enclaves
