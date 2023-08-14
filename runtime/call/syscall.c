@@ -324,6 +324,11 @@ void handle_syscall(struct encl_ctx* ctx)
     ret = linux_set_tid_address(stack, ctx->regs.tp, (int*) arg0);
     break;
 
+  case(SYS_futex):
+    // lie?
+    ret = 0;
+    break;
+
   case(SYS_brk):
     ret = syscall_brk((void*) arg0);
     break;
