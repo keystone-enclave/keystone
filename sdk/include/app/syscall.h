@@ -5,6 +5,10 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include "sealing.h"
@@ -67,5 +71,9 @@ int yield_thread();
 uintptr_t translate(uintptr_t va);
 uintptr_t map(uintptr_t pa, size_t size, uintptr_t va);
 int unmap(uintptr_t va, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* syscall.h */
