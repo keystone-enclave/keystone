@@ -29,7 +29,7 @@ include mkutils/log.mk
 
 BUILDROOT_CONFIGFILE    ?= qemu_riscv$(KEYSTONE_BITS)_virt_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
-        EXTERNALS += microchip tvm
+        EXTERNALS += tvm microchip
         BUILDROOT_CONFIGFILE := riscv64_mpfs_defconfig
 endif
 

@@ -3,8 +3,15 @@
 ## Packages ##
 ##############
 
-# Packages
-include $(sort $(wildcard $(BR2_EXTERNAL_TVM_PATH)/package/*/*.mk))
+# Packages. Ordering here does slightly matter, since some of the TVM-related
+# python packages depend on TVM variables being defined.
+
+include $(BR2_EXTERNAL_TVM_PATH)/package/gcc-target/gcc-target.mk
+include $(BR2_EXTERNAL_TVM_PATH)/package/vta-driver/vta-driver.mk
+include $(BR2_EXTERNAL_TVM_PATH)/package/python-cloudpickle/python-cloudpickle.mk
+include $(BR2_EXTERNAL_TVM_PATH)/package/tvm/tvm.mk
+include $(BR2_EXTERNAL_TVM_PATH)/package/python-tvm/python-tvm.mk
+include $(BR2_EXTERNAL_TVM_PATH)/package/python-vta/python-vta.mk
 
 ###############
 ## Overrides ##
