@@ -15,8 +15,14 @@ TVM_GIT_SUBMODULES = YES
 TVM_INSTALL_TARGET = NO
 #HOST_TVM_DEPENDENCIES += host-llvm
 
-TVM_CONF_OPTS = -DUSE_LIBBACKTRACE=off
+ifeq ($(BR2_PACKAGE_TVM_VTA),y)
+ifeq ($(BR2_PACKAGE_TVM_VTA_FAMILY),"keystone")
 
+TVM_DEPENDENCIES += host-keystone-sdk
+HOST_TVM_DEPENDENCIES += host-keystone-sdk
+
+endif
+endif
 
 TVM_MAKE_OPTS = tvm_runtime
 HOST_TVM_MAKE_OPTS = tvm
@@ -39,11 +45,11 @@ endef
 
 define TVM_CONFIGURE_FOR_VTA
 	sed -i 's/USE_VTA_FPGA OFF/USE_VTA_FPGA ON/g' $(@D)/config.cmake
-	mkdir -p $(@D)/3rdparty/vta-hw/src/polarfire
-	cp -ar $(KEYSTONE_TVM)/tvm_device/polarfire* \
-            $(@D)/3rdparty/vta-hw/src/polarfire/
+	mkdir -p $(@D)/3rdparty/vta-hw/src/$(BR2_PACKAGE_TVM_VTA_FAMILY)
+	cp -ar $(KEYSTONE_TVM)/tvm_device/$(BR2_PACKAGE_TVM_VTA_FAMILY)* \
+            $(@D)/3rdparty/vta-hw/src/$(BR2_PACKAGE_TVM_VTA_FAMILY)/
         ( cd $(@D)/3rdparty/vta-hw/config/ ; \
-                cat vta_config.json | jq '.TARGET = "polarfire"' > vta_config.json.new ; \
+                cat vta_config.json | jq '.TARGET = $(BR2_PACKAGE_TVM_VTA_FAMILY)' > vta_config.json.new ; \
                 mv vta_config.json.new vta_config.json )
 endef
 

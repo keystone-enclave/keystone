@@ -35,3 +35,17 @@ gcc-target-post-finalize: target-finalize
                 do rename .bak '' $$f ; done
 
 $(TARGETS_ROOTFS): gcc-target-post-finalize
+
+# We want to conditionally patch Linux depending on whether VTA is enabled,
+# and also which specific VTA family we are building for. These have minor
+# differences in the device tree as well as the CMA allocator
+
+ifeq ($(BR2_PACKAGE_TVM_VTA),y)
+
+define LINUX_PATCH_FOR_VTA
+	$(APPLY_PATCHES) $(LINUX_BUILDDIR) $(BR2_EXTERNAL_TVM_PATH)/patches/linux \
+             0001-add-vta-$(BR2_PACKAGE_TVM_VTA_FAMILY).patch.conditional
+endef
+
+LINUX_POST_PATCH_HOOKS += LINUX_PATCH_FOR_VTA
+endif

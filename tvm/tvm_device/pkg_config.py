@@ -179,7 +179,7 @@ class PkgConfig(object):
             self.load_base_addr = "0xA0001000"
             self.compute_base_addr = "0xA0002000"
             self.store_base_addr = "0xA0003000"
-        elif self.TARGET == "polarfire":
+        elif self.TARGET == "polarfire" or self.TARGET == "keystone":
                 self.fpga_device = "MPFS250T_ES"
                 self.fpga_family = "polarfire"
                 self.fpga_board = None

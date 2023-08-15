@@ -5,3 +5,6 @@ config BR2_PACKAGE_TVM_VTA
 	bool "Build support for the VTA hardware accelerator
 	depends on BR2_PACKAGE_TVM
 
+config BR2_PACKAGE_TVM_VTA_FAMILY
+	string "VTA driver to bundle"
+	depends on BR2_PACKAGE_TVM_VTA
