@@ -1,0 +1,89 @@
+diff --git a/hw/riscv/virt.c b/hw/riscv/virt.c
+index a5bc7353b4..9cfb1cd1b3 100644
+--- a/hw/riscv/virt.c
++++ b/hw/riscv/virt.c
+@@ -49,6 +49,7 @@
+ #include "hw/pci/pci.h"
+ #include "hw/pci-host/gpex.h"
+ #include "hw/display/ramfb.h"
++#include "hw/misc/unimp.h"
+ 
+ /*
+  * The virt machine physical address space used by some of the devices
+@@ -91,7 +92,8 @@ static const MemMapEntry virt_memmap[] = {
+     [VIRT_IMSIC_M] =      { 0x24000000, VIRT_IMSIC_MAX_SIZE },
+     [VIRT_IMSIC_S] =      { 0x28000000, VIRT_IMSIC_MAX_SIZE },
+     [VIRT_PCIE_ECAM] =    { 0x30000000,    0x10000000 },
+-    [VIRT_PCIE_MMIO] =    { 0x40000000,    0x40000000 },
++    [VIRT_PCIE_MMIO] =    { 0x40000000,    0x20000000 },
++    [VIRT_VTA] =          { 0x60000000,        0x1000 },
+     [VIRT_DRAM] =         { 0x80000000,           0x0 },
+ };
+ 
+@@ -104,6 +106,35 @@ static const MemMapEntry virt_memmap[] = {
+ 
+ static MemMapEntry virt_high_pcie_memmap;
+ 
++
++static void virt_vta_create(RISCVVirtState *s, const MemMapEntry *memmap)
++{
++    // No functionality for now
++    create_unimplemented_device("vta", memmap[VIRT_VTA].base, memmap[VIRT_VTA].size);
++}
++
++static void create_fdt_vta(RISCVVirtState *s, const MemMapEntry *memmap)
++{
++    char *name;
++    MachineState *mc = MACHINE(s);
++
++    name = g_strdup_printf("/soc/vta@%lx", (long) memmap[VIRT_VTA].base);
++    qemu_fdt_add_subnode(mc->fdt, name);
++    qemu_fdt_setprop_string(mc->fdt, name, "compatible", "vta-fpga");
++
++    // Secure mode device
++    qemu_fdt_setprop_string(mc->fdt, name, "status", "disabled");
++    qemu_fdt_setprop_string(mc->fdt, name, "secure-status", "okay");
++
++//    qemu_fdt_setprop_string(mc->fdt, name, "status", "okay");
++
++    qemu_fdt_setprop_cells(mc->fdt, name, "reg",
++                           0x0, memmap[VIRT_VTA].base,
++                           0x0, memmap[VIRT_VTA].size);
++
++    g_free(name);
++}
++
+ #define VIRT_FLASH_SECTOR_SIZE (256 * KiB)
+ 
+ static PFlashCFI01 *virt_flash_create1(RISCVVirtState *s,
+@@ -1051,6 +1082,7 @@ static void create_fdt(RISCVVirtState *s, const MemMapEntry *memmap,
+ 
+     create_fdt_flash(s, memmap);
+     create_fdt_fw_cfg(s, memmap);
++    create_fdt_vta(s, memmap);
+     create_fdt_pmu(s);
+ 
+ update_bootargs:
+@@ -1522,6 +1554,8 @@ static void virt_machine_init(MachineState *machine)
+     }
+     virt_flash_map(s, system_memory);
+ 
++    virt_vta_create(s, memmap);
++
+     /* create device tree */
+     create_fdt(s, memmap, machine->ram_size, machine->kernel_cmdline,
+                riscv_is_32bit(&s->soc[0]));
+diff --git a/include/hw/riscv/virt.h b/include/hw/riscv/virt.h
+index be4ab8fe7f..3d8d43617f 100644
+--- a/include/hw/riscv/virt.h
++++ b/include/hw/riscv/virt.h
+@@ -78,7 +78,8 @@ enum {
+     VIRT_PCIE_MMIO,
+     VIRT_PCIE_PIO,
+     VIRT_PLATFORM_BUS,
+-    VIRT_PCIE_ECAM
++    VIRT_PCIE_ECAM,
++    VIRT_VTA
+ };
+ 
+ enum {

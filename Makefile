@@ -33,6 +33,10 @@ ifeq ($(KEYSTONE_PLATFORM),mpfs)
         BUILDROOT_CONFIGFILE := riscv64_mpfs_defconfig
 endif
 
+ifeq ($(KEYSTONE_PLATFORM),generic)
+        EXTERNALS += tvm
+endif
+
 # Highest priority external
 EXTERNALS += keystone
 
