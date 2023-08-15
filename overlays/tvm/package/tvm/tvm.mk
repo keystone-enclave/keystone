@@ -18,7 +18,7 @@ TVM_INSTALL_TARGET = NO
 TVM_CONF_OPTS = -DUSE_LIBBACKTRACE=off
 
 
-TVM_MAKE_OPTS = tvm_runtime vta
+TVM_MAKE_OPTS = tvm_runtime
 HOST_TVM_MAKE_OPTS = tvm
 
 HOST_TVM_CONF_OPTS = $(TVM_CONF_OPTS) \
@@ -52,7 +52,13 @@ define TVM_CONFIGURE_FOR_HOST
 	sed -i 's/USE_LLVM OFF/USE_LLVM ON/g' $(@D)/config.cmake
 endef
 
-TVM_PRE_CONFIGURE_HOOKS += TVM_CONFIGURE TVM_CONFIGURE_FOR_VTA
+TVM_PRE_CONFIGURE_HOOKS += TVM_CONFIGURE
+
+ifeq ($(BR2_PACKAGE_TVM_VTA),y)
+TVM_PRE_CONFIGURE_HOOKS += TVM_CONFIGURE_FOR_VTA
+TVM_MAKE_OPTS += vta
+endif
+
 HOST_TVM_PRE_CONFIGURE_HOOKS += $(TVM_PRE_CONFIGURE_HOOKS) #TVM_CONFIGURE_FOR_HOST
 
 ###################
@@ -72,7 +78,9 @@ define TVM_COPY_LIBVTA
 	$(INSTALL) -D -m 0755 $(@D)/libtvm_runtime.so $(TARGET_DIR)/usr/lib/libtvm_runtime.so
 endef
 
+ifeq ($(BR2_PACKAGE_TVM_VTA),y)
 TVM_POST_BUILD_HOOKS += TVM_COPY_VTA_CONFIG TVM_COPY_LIBVTA
+endif
 
 $(eval $(cmake-package))
 $(eval $(host-cmake-package))
