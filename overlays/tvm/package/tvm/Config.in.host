@@ -1,0 +1,3 @@
+config BR2_PACKAGE_HOST_TVM
+        bool "Host-side Apache TVM"
+#	depends on BR2_PACKAGE_LLVM
