@@ -27,7 +27,7 @@ endif
 TVM_MAKE_OPTS = tvm_runtime standalone_crt
 HOST_TVM_MAKE_OPTS = tvm
 
-HOST_TVM_CONF_OPTS = $(TVM_CONF_OPTS) \
+HOST_TVM_CONF_OPTS = $(TVM_CONF_OPTS) -DINSTALL_DEV=on \
 			-DCMAKE_CXX_FLAGS="-I$(HOST_DIR)/usr/include"
 
 
@@ -63,7 +63,7 @@ TVM_PRE_CONFIGURE_HOOKS += TVM_CONFIGURE
 
 ifeq ($(BR2_PACKAGE_TVM_VTA),y)
 TVM_PRE_CONFIGURE_HOOKS += TVM_CONFIGURE_FOR_VTA
-TVM_MAKE_OPTS += vta
+TVM_MAKE_OPTS += vta_static vta_shared
 endif
 
 HOST_TVM_PRE_CONFIGURE_HOOKS += $(TVM_PRE_CONFIGURE_HOOKS) #TVM_CONFIGURE_FOR_HOST
@@ -85,6 +85,7 @@ endef
 define TVM_COPY_LIBVTA
 	$(INSTALL) -D -m 0755 $(@D)/libvta.so $(TARGET_DIR)/usr/lib/libvta.so
 	$(INSTALL) -D -m 0755 $(@D)/libtvm_runtime.so $(TARGET_DIR)/usr/lib/libtvm_runtime.so
+	$(INSTALL) -D -m 0755 $(@D)/libvta.a $(HOST_DIR)/usr/lib/tvm/libvta.a
 endef
 
 define TVM_INSTALL_CRT_LIBS
@@ -92,10 +93,17 @@ define TVM_INSTALL_CRT_LIBS
             $(INSTALL) -D -m 0644 $$f $(HOST_DIR)/usr/lib/tvm/lib$${f##libhost_standalone_crt_} ; done )
 endef
 
+define TVM_INSTALL_VTA_HEADERS
+	mkdir -p $(HOST_DIR)/usr/include
+	chmod 755 $(HOST_DIR)/usr/include
+	cp -ar $(HOST_TVM_BUILDDIR)/3rdparty/vta-hw/include/vta $(HOST_DIR)/usr/include/vta
+endef
+
 TVM_POST_BUILD_HOOKS += TVM_INSTALL_CRT_LIBS
 
 ifeq ($(BR2_PACKAGE_TVM_VTA),y)
 TVM_POST_BUILD_HOOKS += TVM_COPY_VTA_CONFIG TVM_COPY_LIBVTA
+HOST_TVM_POST_INSTALL_HOOKS += TVM_INSTALL_VTA_HEADERS
 endif
 
 $(eval $(cmake-package))

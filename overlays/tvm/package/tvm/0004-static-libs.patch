@@ -1,0 +1,38 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7ba94064e..138acff9b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -544,6 +544,8 @@ target_link_libraries(tvm_runtime_objs PUBLIC atomic)
+ add_library(tvm_libinfo_objs OBJECT ${LIBINFO_FILE})
+ 
+ add_library(tvm SHARED $<TARGET_OBJECTS:tvm_objs> $<TARGET_OBJECTS:tvm_runtime_objs> $<TARGET_OBJECTS:tvm_libinfo_objs>)
++add_library(tvm_static STATIC $<TARGET_OBJECTS:tvm_objs> $<TARGET_OBJECTS:tvm_runtime_objs> $<TARGET_OBJECTS:tvm_libinfo_objs>)
++set_target_properties(tvm_static PROPERTIES OUTPUT_NAME tvm)
+ target_link_libraries(tvm PUBLIC atomic)
+ target_include_directories(tvm PUBLIC "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+ set_property(TARGET tvm APPEND PROPERTY LINK_OPTIONS "${TVM_NO_UNDEFINED_SYMBOLS}")
+diff --git a/cmake/modules/VTA.cmake b/cmake/modules/VTA.cmake
+index 729de68d4..b68ea15a3 100644
+--- a/cmake/modules/VTA.cmake
++++ b/cmake/modules/VTA.cmake
+@@ -126,7 +126,7 @@ elseif(PYTHON)
+       list(APPEND FPGA_RUNTIME_SRCS ${POLARFIRE_SRC})
+     endif()
+     # Target lib: vta
+-    add_library(vta SHARED ${FPGA_RUNTIME_SRCS})
++    add_library(vta OBJECT ${FPGA_RUNTIME_SRCS})
+     target_include_directories(vta PUBLIC vta/runtime)
+     target_include_directories(vta PUBLIC ${VTA_HW_PATH}/include)
+     target_compile_definitions(vta PUBLIC DMLC_USE_LOGGING_LIBRARY=<tvm/runtime/logging.h>)
+@@ -151,6 +151,11 @@ elseif(PYTHON)
+       target_include_directories(vta SYSTEM PUBLIC ${VTA_HW_PATH}/src/polarfire)
+       target_include_directories(vta SYSTEM PUBLIC 3rdparty)
+     endif()
++
++    add_library(vta_shared SHARED $<TARGET_OBJECTS:vta>)
++    set_target_properties(vta_shared PROPERTIES OUTPUT_NAME vta)
++    add_library(vta_static STATIC $<TARGET_OBJECTS:vta>)
++    set_target_properties(vta_static PROPERTIES OUTPUT_NAME vta)
+   endif()
+ 
+ 
