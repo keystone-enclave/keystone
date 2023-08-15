@@ -13,7 +13,7 @@ ifeq ($(KEYSTONE_SDK_DIR),)
     $(error KEYSTONE_SDK_DIR not defined)
 endif
 
-	ccflags-y := -I$(KEYSTONE_SDK_DIR)/include/shared
+	ccflags-y := -I$(KEYSTONE_SDK_DIR)/include/shared -DKEYSTONE_PLAT_$(KEYSTONE_PLATFORM)
 else
 
 PWD := $(shell pwd)
