@@ -1,0 +1,271 @@
+diff --git a/include/tvm/runtime/crt/platform.h b/include/tvm/runtime/crt/platform.h
+index 85121fd0f..ca4d3b42d 100644
+--- a/include/tvm/runtime/crt/platform.h
++++ b/include/tvm/runtime/crt/platform.h
+@@ -83,6 +83,19 @@ tvm_crt_error_t TVMPlatformMemoryAllocate(size_t num_bytes, DLDevice dev, void**
+  */
+ tvm_crt_error_t TVMPlatformMemoryFree(void* ptr, DLDevice dev);
+ 
++/*!
++ * \brief Copy memory used by TVM.
++ *
++ * \param from Source array to copy from
++ * \param to Destination array to copy to
++ * \param size Number of bytes to copy
++ * \param dev_from Device of source buffer
++ * \param dev_to Device of destination buffer
++ * \return kTvmErrorNoError if successful; a descriptive error code otherwise.
++ */
++tvm_crt_error_t TVMPlatformMemoryCopy(const void* from, void *to, size_t size,
++                                     DLDevice dev_from, DLDevice dev_to);
++
+ /*! \brief Start a device timer.
+  *
+  * The device timer used must not be running.
+diff --git a/src/runtime/crt/aot_executor/aot_executor.c b/src/runtime/crt/aot_executor/aot_executor.c
+index 8a47bb008..2c8a94728 100644
+--- a/src/runtime/crt/aot_executor/aot_executor.c
++++ b/src/runtime/crt/aot_executor/aot_executor.c
+@@ -89,13 +89,13 @@ int TVMAotExecutor_GetInputName(TVMAotExecutor* executor, int index, char** name
+ }
+ 
+ int TVMAotExecutor_Run(TVMAotExecutor* executor) {
+-  const char* tvm_main_suffix = "_run";
++  const char tvm_main_suffix[] = "_run";
+   char tvm_main_name[TVM_CRT_MAX_STRLEN_FUNCTION_NAME];
+ 
+   {
+     const size_t max_strlen = TVM_CRT_MAX_STRLEN_FUNCTION_NAME;
+     size_t len = strnlen(executor->metadata->mod_name, max_strlen);
+-    len += strnlen(tvm_main_suffix, max_strlen);
++    len += sizeof(tvm_main_suffix);
+ 
+     CHECK_LT(len, max_strlen, "tvm_main name too long %zu\n", len);
+   }
+@@ -139,15 +139,15 @@ int TVMAotExecutor_Init(TVMAotExecutor* executor, TVMModuleHandle module_handle,
+   TVMArgs temp_args;
+   temp_args.values_count = 0;
+ 
+-  const char* tvmgen_prefix = "tvmgen_";
+-  const char* get_c_metdata_suffix = "_get_c_metadata";
++  const char tvmgen_prefix[] = "tvmgen_";
++  const char get_c_metdata_suffix[] = "_get_c_metadata";
+   char get_c_metdata_name[TVM_CRT_MAX_STRLEN_FUNCTION_NAME];
+ 
+   {
+     size_t max_strlen = TVM_CRT_MAX_STRLEN_FUNCTION_NAME;
+-    size_t len = strnlen(tvmgen_prefix, max_strlen);
++    size_t len = sizeof(tvmgen_prefix);
+     len += strnlen(module_name, max_strlen);
+-    len += strnlen(get_c_metdata_suffix, max_strlen);
++    len += sizeof(get_c_metdata_suffix);
+ 
+     CHECK_LT(len, max_strlen, "get_c_metadata name too long %zu\n", len);
+   }
+diff --git a/src/runtime/crt/common/ndarray.c b/src/runtime/crt/common/ndarray.c
+index b0e869766..e729fcc57 100644
+--- a/src/runtime/crt/common/ndarray.c
++++ b/src/runtime/crt/common/ndarray.c
+@@ -64,12 +64,13 @@ int TVMNDArray_Empty(int32_t ndim, const tvm_index_t* shape, DLDataType dtype, D
+   }
+   int total_elem_bytes = TVMNDArray_DataSizeBytes(array);
+   array->dl_tensor.data =
+-      TVMBackendAllocWorkspace(kDLCPU, 0, total_elem_bytes, dtype.code, dtype.bits);
+-  memset(array->dl_tensor.data, 0, total_elem_bytes);
++      TVMBackendAllocWorkspace(dev.device_type, 0, total_elem_bytes, dtype.code, dtype.bits);
++//  memset(array->dl_tensor.data, 0, total_elem_bytes);
+   return 0;
+ }
+ 
+-int TVMNDArray_Load(TVMNDArray* ret, const char** strm) {
++int TVMNDArray_ParseStrm(const char **strm, DLDevice *dev, int *ndim, DLDataType *dtype,
++                        int64_t *shape, int64_t *data_byte_size) {
+   int32_t status = 0;
+   uint64_t header, reserved;
+   memcpy(&header, *strm, sizeof(header));
+@@ -80,15 +81,43 @@ int TVMNDArray_Load(TVMNDArray* ret, const char** strm) {
+   }
+   memcpy(&reserved, *strm, sizeof(reserved));
+   *strm += sizeof(reserved);
++  memcpy(dev, *strm, sizeof(DLDevice));
++  *strm += sizeof(DLDevice);
++  memcpy(ndim, *strm, sizeof(int));
++  *strm += sizeof(int);
++  memcpy(dtype, *strm, sizeof(DLDataType));
++  *strm += sizeof(DLDataType);
++
++  int32_t idx;
++  if (*ndim != 0) {
++    for (idx = 0; idx < *ndim; idx++) {
++      memcpy(&shape[idx], *strm, sizeof(int64_t));
++      *strm += sizeof(int64_t);
++    }
++  }
++
++  memcpy(data_byte_size, *strm, sizeof(int64_t));
++  *strm += sizeof(int64_t);
++
++  return status;
++}
++
++int TVMNDArray_Load(TVMNDArray* ret, const char** strm) {
++  int status;
++  int32_t idx;
+   DLDevice dev;
+-  int ndim;  // sizeof ndim should match dlpack
++  int ndim;
+   DLDataType dtype;
+-  memcpy(&dev, *strm, sizeof(dev));
+-  *strm += sizeof(dev);
+-  memcpy(&ndim, *strm, sizeof(ndim));
+-  *strm += sizeof(ndim);
+-  memcpy(&dtype, *strm, sizeof(dtype));
+-  *strm += sizeof(dtype);
++  int64_t shape[TVM_CRT_MAX_NDIM] = {0};
++  int64_t data_byte_size;
++  tvm_crt_error_t err;
++
++  status = TVMNDArray_ParseStrm(strm, &dev, &ndim, &dtype, shape, &data_byte_size);
++  if(status < 0) {
++    fprintf(stderr, "Failed to parse NDArray bytes\n");
++    status = -1;
++  }
++
+   if ((ndim < 0) || (ndim > TVM_CRT_MAX_NDIM)) {
+     fprintf(stderr, "Invalid ndim=%d: expected to be 0 ~ %d.\n", ndim, TVM_CRT_MAX_NDIM);
+     status = -1;
+@@ -97,14 +126,6 @@ int TVMNDArray_Load(TVMNDArray* ret, const char** strm) {
+     fprintf(stderr, "Invalid DLTensor device: can only save as CPU tensor\n");
+     status = -1;
+   }
+-  int64_t shape[TVM_CRT_MAX_NDIM] = {0};
+-  int32_t idx;
+-  if (ndim != 0) {
+-    for (idx = 0; idx < ndim; idx++) {
+-      memcpy(&shape[idx], *strm, sizeof(int64_t));
+-      *strm += sizeof(shape[idx]);
+-    }
+-  }
+   status = TVMNDArray_Empty(ndim, shape, dtype, dev, ret);
+   if (status != 0) {
+     return status;
+@@ -114,9 +135,6 @@ int TVMNDArray_Load(TVMNDArray* ret, const char** strm) {
+   for (idx = 0; idx < ret->dl_tensor.ndim; ++idx) {
+     num_elems *= ret->dl_tensor.shape[idx];
+   }
+-  int64_t data_byte_size;
+-  memcpy(&data_byte_size, *strm, sizeof(data_byte_size));
+-  *strm += sizeof(data_byte_size);
+   if (!(data_byte_size == num_elems * elem_bytes)) {
+     fprintf(stderr,
+             "invalid DLTensor file format: data_byte_size=%d, "
+@@ -124,12 +142,55 @@ int TVMNDArray_Load(TVMNDArray* ret, const char** strm) {
+             (int)data_byte_size, (int)(num_elems * elem_bytes));  // NOLINT(*)
+     status = -1;
+   }
+-  memcpy(ret->dl_tensor.data, *strm, data_byte_size);
++
++  err = TVMPlatformMemoryCopy(*strm, ret->dl_tensor.data, data_byte_size,
++                                dev, ret->dl_tensor.device);
+   *strm += data_byte_size;
++  if(err != kTvmErrorNoError) {
++    status = -1;
++  }
+ 
+   return status;
+ }
+ 
++int TVMNDArray_CopyFromBytes(TVMNDArray* ret, const char **strm) {
++  int status;
++  int32_t idx;
++  DLDevice dev;
++  int ndim;
++  DLDataType dtype;
++  int64_t shape[TVM_CRT_MAX_NDIM];
++  int64_t data_byte_size;
++  tvm_crt_error_t err;
++
++  status = TVMNDArray_ParseStrm(strm, &dev, &ndim, &dtype, shape, &data_byte_size);
++  if(status < 0) {
++    fprintf(stderr, "Failed to parse NDArray bytes\n");
++    status = -1;
++  }
++
++  // Check whether the target and this tensor are suitably equal to copy
++  // todo also check datatype etc
++  if(ret->dl_tensor.ndim == ndim) {
++    for(idx = 0; idx < ndim; idx++) {
++      if(ret->dl_tensor.shape[idx] != shape[idx]) {
++        break;
++      }
++    }
++
++    if(idx == ndim) {
++      err = TVMPlatformMemoryCopy(*strm, ret->dl_tensor.data, data_byte_size,
++                                 dev, ret->dl_tensor.device);
++      *strm += data_byte_size;
++      if(err == kTvmErrorNoError) {
++        return 0;
++      }
++    }
++ }
++
++ return -1;
++}
++
+ int TVMNDArray_CreateView(TVMNDArray* arr, const tvm_index_t* shape, int32_t ndim, DLDataType dtype,
+                           TVMNDArray* array_view) {
+   int status = Create(ndim, shape, dtype, arr->dl_tensor.device, array_view);
+diff --git a/src/runtime/crt/graph_executor/graph_executor.c b/src/runtime/crt/graph_executor/graph_executor.c
+index 395a343cc..ef3bb814f 100644
+--- a/src/runtime/crt/graph_executor/graph_executor.c
++++ b/src/runtime/crt/graph_executor/graph_executor.c
+@@ -841,21 +841,27 @@ int TVMGraphExecutor_LoadParams(TVMGraphExecutor* executor, const char* param_bl
+       status = -1;
+     }
+ 
+-    if (executor->data_entry[eid].dl_tensor.shape) {
+-      err = TVMPlatformMemoryFree(executor->data_entry[eid].dl_tensor.shape, dev);
+-      if (err != kTvmErrorNoError) {
+-        status = -1;
++    if (executor->data_entry[eid].dl_tensor.device.device_type == kDLCPU) {
++      if (executor->data_entry[eid].dl_tensor.shape) {
++        err = TVMPlatformMemoryFree(executor->data_entry[eid].dl_tensor.shape, dev);
++        if (err != kTvmErrorNoError) {
++          status = -1;
++        }
++        executor->data_entry[eid].dl_tensor.shape = 0;
+       }
+-      executor->data_entry[eid].dl_tensor.shape = 0;
+-    }
+-    if (executor->data_entry[eid].dl_tensor.data) {
+-      err = TVMPlatformMemoryFree(executor->data_entry[eid].dl_tensor.data, dev);
+-      if (err != kTvmErrorNoError) {
+-        status = -1;
++      if (executor->data_entry[eid].dl_tensor.data) {
++        err = TVMPlatformMemoryFree(executor->data_entry[eid].dl_tensor.data, dev);
++        if (err != kTvmErrorNoError) {
++          status = -1;
++        }
++        executor->data_entry[eid].dl_tensor.data = 0;
+       }
+-      executor->data_entry[eid].dl_tensor.data = 0;
++
++      status |= TVMNDArray_Load(&(executor->data_entry[eid]), &bptr);
++    } else {
++      status |= TVMNDArray_CopyFromBytes(&(executor->data_entry[eid]), &bptr);
+     }
+-    status |= TVMNDArray_Load(&(executor->data_entry[eid]), &bptr);
++
+ #if TVM_CRT_DEBUG
+     TVMNDArray* entry = &(executor->data_entry[eid]);
+     printf("loading: param %s loaded, in_idx=%d, eid=%d, ndim=%d, data[0]=%f\n",
+@@ -911,7 +917,7 @@ int TVMGraphExecutor_GetOutput(TVMGraphExecutor* executor, const int32_t idx, DL
+   CHECK(out->ndim == tensor->ndim);
+   CHECK(out->dtype.bits == tensor->dtype.bits);
+   CHECK(Shape_Accumulate(out->shape, out->ndim) == Shape_Accumulate(tensor->shape, tensor->ndim));
+-  memcpy(out->data, tensor->data, size * elem_bytes);
++  TVMPlatformMemoryCopy(tensor->data, out->data, size * elem_bytes, tensor->device, out->device);
+   return status;
+ }
+ 

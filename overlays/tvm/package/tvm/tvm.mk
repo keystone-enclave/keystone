@@ -24,7 +24,7 @@ HOST_TVM_DEPENDENCIES += host-keystone-sdk
 endif
 endif
 
-TVM_MAKE_OPTS = tvm_runtime
+TVM_MAKE_OPTS = tvm_runtime standalone_crt
 HOST_TVM_MAKE_OPTS = tvm
 
 HOST_TVM_CONF_OPTS = $(TVM_CONF_OPTS) \
@@ -41,6 +41,7 @@ HOST_TVM_CONF_OPTS = $(TVM_CONF_OPTS) \
 define TVM_CONFIGURE
 	cp $(@D)/cmake/config.cmake $(@D)/config.cmake
 	sed -i 's/USE_LIBBACKTRACE AUTO/USE_LIBBACKTRACE OFF/g' $(@D)/config.cmake
+	sed -i 's/USE_MICRO OFF/USE_MICRO ON/g' $(@D)/config.cmake
 endef
 
 define TVM_CONFIGURE_FOR_VTA
@@ -72,6 +73,8 @@ HOST_TVM_PRE_CONFIGURE_HOOKS += $(TVM_PRE_CONFIGURE_HOOKS) #TVM_CONFIGURE_FOR_HO
 ###################
 
 # We want these only for the target build, which needs miscellaneous VTA configuration files.
+# We also place the prebuilt "host" (actually crosscompiled) crt static libs into the host
+# directory, so that these can be used by later consumers (such as in keystone-examples)
 
 define TVM_COPY_VTA_CONFIG
 	mkdir -p $(TARGET_DIR)/usr/share/vta/config/
@@ -83,6 +86,13 @@ define TVM_COPY_LIBVTA
 	$(INSTALL) -D -m 0755 $(@D)/libvta.so $(TARGET_DIR)/usr/lib/libvta.so
 	$(INSTALL) -D -m 0755 $(@D)/libtvm_runtime.so $(TARGET_DIR)/usr/lib/libtvm_runtime.so
 endef
+
+define TVM_INSTALL_CRT_LIBS
+	( cd $(TVM_BUILDDIR)/host_standalone_crt ; for f in libhost_standalone_crt_* ; do \
+            $(INSTALL) -D -m 0644 $$f $(HOST_DIR)/usr/lib/tvm/lib$${f##libhost_standalone_crt_} ; done )
+endef
+
+TVM_POST_BUILD_HOOKS += TVM_INSTALL_CRT_LIBS
 
 ifeq ($(BR2_PACKAGE_TVM_VTA),y)
 TVM_POST_BUILD_HOOKS += TVM_COPY_VTA_CONFIG TVM_COPY_LIBVTA
