@@ -8,7 +8,7 @@ ifeq ($(KEYSTONE_TVM),)
 	$(error KEYSTONE_TVM directory not defined)
 endif
 
-TVM_VERSION = v0.11.1
+TVM_VERSION = v0.12.0
 TVM_SITE = https://github.com/apache/tvm
 TVM_SITE_METHOD = git
 TVM_GIT_SUBMODULES = YES
