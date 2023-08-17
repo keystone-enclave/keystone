@@ -147,7 +147,7 @@ Enclave::init(
     return Error::DeviceError;
   }
 
- 	uintptr_t utm_free;
+  uintptr_t utm_free;
   utm_free = pMemory->allocUtm(params.getUntrustedSize());
 
   if (!utm_free) {
@@ -156,24 +156,24 @@ Enclave::init(
     return Error::DeviceError;
   }
 	
-	/* Copy loader into beginning of enclave memory */
-	copyFile((uintptr_t) loaderFile->getPtr(), loaderFile->getFileSize());
+  /* Copy loader into beginning of enclave memory */
+  copyFile((uintptr_t) loaderFile->getPtr(), loaderFile->getFileSize());
 
-	pMemory->startRuntimeMem();
+  pMemory->startRuntimeMem();
   runtimeElfAddr = copyFile((uintptr_t) runtimeFile->getPtr(), runtimeFile->getFileSize()); // TODO: figure out if we need runtimeELFAddr
-  
-	pMemory->startEappMem();
-	enclaveElfAddr = copyFile((uintptr_t) enclaveFile->getPtr(), enclaveFile->getFileSize());  // TODO: figure out if we need enclaveElfAddr
 
-	pMemory->startFreeMem();	
+  pMemory->startEappMem();
+  enclaveElfAddr = copyFile((uintptr_t) enclaveFile->getPtr(), enclaveFile->getFileSize());  // TODO: figure out if we need enclaveElfAddr
 
-/* This should be replaced with functions that perform the same function 
- * but with new implementation of memory */
-//  /* TODO: This should be invoked with some other function e.g., measure() */
-//  if (params.isSimulated()) {
-//    validate_and_hash_enclave(runtimeParams);
-//  }
-//
+  pMemory->startFreeMem();	
+
+  /* This should be replaced with functions that perform the same function 
+  * but with new implementation of memory */
+  //  /* TODO: This should be invoked with some other function e.g., measure() */
+  //  if (params.isSimulated()) {
+  //    validate_and_hash_enclave(runtimeParams);
+  //  }
+
   struct runtime_params_t runtimeParams;
   runtimeParams.untrusted_ptr =
       reinterpret_cast<uintptr_t>(utm_free);
@@ -235,7 +235,6 @@ Enclave::run(uintptr_t* retval) {
     if (ret == Error::EdgeCallHost && oFuncDispatch != NULL) {
       oFuncDispatch(getSharedBuffer());
     }
-    printf("Resuming enclave from sdk\n");
     ret = pDevice->resume(retval);
   }
 

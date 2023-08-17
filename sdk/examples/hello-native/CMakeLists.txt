@@ -6,9 +6,9 @@ set(package_name "hello-native.ke")
 set(package_script "./hello-native-runner hello-native eyrie-rt loader.bin")
 
 if(RISCV32)
-  set(eyrie_plugins "rv32 freemem debug")
+  set(eyrie_plugins "rv32 freemem")
 else()
-  set(eyrie_plugins "freemem debug")
+  set(eyrie_plugins "freemem")
 endif()
 
 # eapp

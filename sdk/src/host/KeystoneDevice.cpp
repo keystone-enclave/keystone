@@ -57,20 +57,6 @@ KeystoneDevice::finalize(
 }
 
 Error
-KeystoneDevice::finalizeLibraryEnclave(const char* library_name) {
-  struct keystone_ioctl_create_enclave encl;
-  encl.eid           = eid;
-  memset(encl.library_name, 0, 256);
-  strncpy(encl.library_name, library_name, 256);
-
-  if (ioctl(fd, KEYSTONE_IOC_FINALIZE_LIBRARY_ENCLAVE, &encl)) {
-    perror("ioctl error");
-    return Error::IoctlErrorFinalize;
-  }
-  return Error::Success;
-}
-
-Error
 KeystoneDevice::destroy() {
   struct keystone_ioctl_create_enclave encl;
   encl.eid = eid;
@@ -81,24 +67,6 @@ KeystoneDevice::destroy() {
   }
 
   if (ioctl(fd, KEYSTONE_IOC_DESTROY_ENCLAVE, &encl)) {
-    perror("ioctl error");
-    return Error::IoctlErrorDestroy;
-  }
-
-  return Error::Success;
-}
-
-Error
-KeystoneDevice::destroyLibraryEnclave() {
-  struct keystone_ioctl_create_enclave encl;
-  encl.eid = eid;
-
-  /* if the enclave has never created */
-  if (eid < 0) {
-    return Error::Success;
-  }
-
-  if (ioctl(fd, KEYSTONE_IOC_DESTROY_LIBRARY_ENCLAVE, &encl)) {
     perror("ioctl error");
     return Error::IoctlErrorDestroy;
   }

@@ -20,8 +20,6 @@
 #define SBI_SM_DESTROY_ENCLAVE    2002
 #define SBI_SM_RUN_ENCLAVE        2003
 #define SBI_SM_RESUME_ENCLAVE     2005
-#define SBI_SM_CREATE_LIBRARY_ENCLAVE     2006
-#define SBI_SM_DESTROY_LIBRARY_ENCLAVE     2007
 #define FID_RANGE_HOST            2999
 /* 3000-3999 are called by enclave */
 #define SBI_SM_RANDOM             3001
@@ -109,9 +107,7 @@ struct keystone_sbi_create
   uintptr_t free_paddr;
 
   struct runtime_va_params_t params;
-  unsigned int* eid_pptr; // TODO: remove? 
-
-  char library_name[256]; // TODO: define somewhere
+  unsigned int* eid_pptr; // TODO: remove?
 };
 
 int osm_pmp_set(uint8_t perm);

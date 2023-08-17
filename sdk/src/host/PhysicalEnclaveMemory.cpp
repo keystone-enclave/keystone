@@ -13,7 +13,7 @@ PhysicalEnclaveMemory::init(
   // TODO(dayeol): need to set actual EPM size
   epmSize       = PAGE_SIZE * min_pages;
   epmFreeList   = 0; 
-	startAddr 		= phys_addr;
+  startAddr 		= phys_addr;
 }
 
 uintptr_t

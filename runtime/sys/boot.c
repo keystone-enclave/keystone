@@ -26,39 +26,6 @@ extern void* encl_trap_handler;
 
 #ifdef USE_FREEMEM
 
-static int print_pgtable(int level, pte* tb, uintptr_t vaddr)
-{
-  pte* walk;
-  int ret = 0;
-  int i=0;
-
-   for (walk=tb, i=0; walk < tb + ((1<<12)/sizeof(pte)) ; walk += 1, i++)
-  {
-    if(*walk == 0)
-      continue;
-
-     pte e = *walk;
-    uintptr_t phys_addr = (e >> 10) << 12;
-
-    if(level == 1 || (e & PTE_R) || (e & PTE_W) || (e & PTE_X))
-    {
-      printf("[pgtable] level:%d, base: 0x%lx, i:%d (0x%lx -> 0x%lx), flags: 0x%lx\r\n", level, tb, i, ((vaddr << 9) | (i&0x1ff))<<12, phys_addr, e & PTE_FLAG_MASK);
-    }
-    else
-    {
-      printf("[pgtable] level:%d, base: 0x%lx, i:%d, pte: 0x%lx, flags: 0x%lx\r\n", level, tb, i, e, e & PTE_FLAG_MASK);
-    }
-
-    if(level > 1 && !(e & PTE_R) && !(e & PTE_W) && !(e & PTE_X))
-    {
-      if(level == 3 && (i&0x100))
-        vaddr = 0xffffffffffffffffUL;
-      ret |= print_pgtable(level - 1, (pte*) __va(phys_addr), (vaddr << 9) | (i&0x1ff));
-    }
-  }
-  return ret;
-}
-
 int verify_and_load_elf_file(uintptr_t ptr, size_t file_size, bool is_eapp) {
   int ret = 0;
   // validate elf 
@@ -82,7 +49,6 @@ int verify_and_load_elf_file(uintptr_t ptr, size_t file_size, bool is_eapp) {
   }
   return ret;
 }
-
 
 /* initialize free memory with a simple page allocator*/
 void
@@ -128,7 +94,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
            uintptr_t user_paddr,
            uintptr_t free_paddr,
            uintptr_t utm_vaddr,
-           uintptr_t utm_size) 
+           uintptr_t utm_size)
 {
   /* set initial values */
   load_pa_start = dram_base;
@@ -154,8 +120,6 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   /* initialize free memory */
   init_freemem();
 
-  print_pgtable(3, root_page_table, 0);
-
   /* load eapp elf */
   verify_and_load_elf_file(__va(user_paddr), free_paddr-user_paddr, true);
 
@@ -173,10 +137,6 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* prepare edge & system calls */
   init_edge_internals();
-
-#ifdef USE_FREEMEM
-  print_pgtable(3, root_page_table, 0);
-#endif
 
   /* set timer */
   init_timer();

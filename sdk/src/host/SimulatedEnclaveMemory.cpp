@@ -12,7 +12,7 @@ SimulatedEnclaveMemory::init(
   pDevice       = dev;
   epmSize       = PAGE_SIZE * min_pages;
   epmFreeList   = 0; // offset
-	startAddr 		= 0;
+  startAddr 		= 0;
 }
 
 void*

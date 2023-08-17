@@ -42,7 +42,7 @@ Memory::allocPages(size_t size) {
   } else {
     epmFreeList += (size / PAGE_SIZE) * PAGE_SIZE;
   }
-	return addr; 
+  return addr;
 }
 
 
@@ -52,7 +52,7 @@ int
 Memory::validateAndHashEpm(
     hash_ctx_t* hash_ctx, int level, pte* tb, uintptr_t vaddr, int contiguous,
     uintptr_t* runtime_max_seen, uintptr_t* user_max_seen) {
-	return 0;
+  return 0;
 }
 
 }  // namespace Keystone

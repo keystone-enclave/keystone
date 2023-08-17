@@ -7,7 +7,6 @@ pte* root_page_table;
 
 #ifdef USE_FREEMEM
 
-
 /* Program break */
 uintptr_t program_break;
 
