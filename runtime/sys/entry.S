@@ -120,7 +120,6 @@ _start:
   sfence.vma
 
   /* set spp to user */
-  /* todo: hello-native needs this but hello already is user? */
   addi t0, x0, 0x100
   csrrc x0, sstatus, t0
 
