@@ -8,13 +8,17 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 ###############################################################################
 
 # add patch macro
-macro(add_patch submodule patch working_directory patch_list)
+macro(add_patch_n level submodule patch working_directory patch_list)
   add_custom_command(OUTPUT ${patch}.applied
     WORKING_DIRECTORY ${working_directory}
-    COMMAND patch --forward -p0 < ${patchdir}/${submodule}/${patch} || true
+    COMMAND patch --forward -p${level} < ${patchdir}/${submodule}/${patch}
     COMMAND touch ${CMAKE_BINARY_DIR}/${patch}.applied
     COMMENT "Applying ${patch}")
   list(APPEND ${patch_list} ${patch}.applied)
+endmacro()
+
+macro(add_patch submodule patch working_directory patch_list)
+  add_patch_n(0 submodule patch working_directory patch_list)
 endmacro()
 
 macro(mkdir name dir)
