@@ -47,13 +47,18 @@ uintptr_t io_syscall_setsockopt(int socket, int level, int option_name, const vo
     return ret; 
   }
 
+	if(edge_call_check_ptr_valid((uintptr_t)&args->option_value, option_len) != 0){
+		goto done;
+	}
+
   copy_from_user(&args->option_value, option_value, option_len);
 
-  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_setsockopt);
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_setsockopt) + option_len;
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
-  print_strace("[runtime] proxied setsockopt: %d \r\n", ret);
-  return ret; 
+  done:
+    print_strace("[runtime] proxied setsockopt: %d \r\n", ret);
+    return ret; 
 
 }
 
