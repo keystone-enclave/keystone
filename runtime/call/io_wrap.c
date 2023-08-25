@@ -400,6 +400,8 @@ uintptr_t io_syscall_getcwd(char* buf, size_t size){
 
   edge_syscall->syscall_num = SYS_getcwd;
 
+  args->size = size;
+
   size_t totalsize = (sizeof(struct edge_syscall) +
                       sizeof(sargs_SYS_getcwd));
 
