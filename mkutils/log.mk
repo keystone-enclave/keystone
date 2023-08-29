@@ -47,9 +47,24 @@ define __log_generic
 @- if [[ $$KEYSTONE_LOG_LEVEL -le $(2) ]]; then echo "$(log_bold)$(3)>>> $(4) $(1)$(log_sgr0)"; fi
 endef
 
+define __mlog_generic
+ifeq ($$(shell [[ $$$$KEYSTONE_LOG_LEVEL -le $(2) ]] && echo y),y)
+$$(info $$(log_bold)$(3)>>> $(4) $(1) $$(log_sgr0))
+endif
+endef
+
+# This one can be used within recipes, and is used like $(call log,level,message)
 define log
 $(call __log_generic,$(2),              \
         $(LOG_$(call to_upper,$(1))),   \
         $(col_$(call to_lower,$(1))),   \
+        $(str_$(call to_lower,$(1))))
+endef
+
+# This one can be used outside of recipes, and is used like $(eval $(call mlog,level,message))
+define mlog
+$(call __mlog_generic,$(2),             \
+        $(LOG_$(call to_upper,$(1))),   \
+        $$(col_$(call to_lower,$(1))),   \
         $(str_$(call to_lower,$(1))))
 endef
