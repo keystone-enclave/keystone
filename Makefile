@@ -55,11 +55,24 @@ $(BUILDDIR):
 $(BUILDROOT_BUILDDIR): $(BUILDDIR)
 	mkdir -p $@
 
+$(BUILDROOT_OVERLAYDIR): $(BUILDDIR)
+	mkdir -p $@
+
 # Configuration
 
 $(BUILDROOT_BUILDDIR)/.config: $(BUILDROOT_BUILDDIR)
 	$(call log,info,Configuring Buildroot with $(BUILDROOT_CONFIGFILE))
 	$(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_CONFIGFILE)
+	echo "BR2_ROOTFS_OVERLAY=\"$(BUILDROOT_OVERLAYDIR)\"" >> $(BUILDROOT_BUILDDIR)/.config
+
+# Overlay
+
+$(BUILDROOT_OVERLAYDIR)/.done: $(BUILDROOT_OVERLAYDIR)
+	$(call log,info,Setting up overlay)
+	mkdir -p $(BUILDROOT_OVERLAYDIR)/root/.ssh
+	ssh-keygen -C 'root@keystone' -t rsa -f $(BUILDROOT_OVERLAYDIR)/root/.ssh/id-rsa -N ''
+	cp $(BUILDROOT_OVERLAYDIR)/root/.ssh/{id-rsa.pub,authorized_keys}
+	touch $@
 
 # Main build target for buildroot. The specific subtarget to build can be overriden
 # by setting the BUILDROOT_TARGET environment variable.
@@ -67,7 +80,7 @@ $(BUILDROOT_BUILDDIR)/.config: $(BUILDROOT_BUILDDIR)
 BUILDROOT_TARGET        ?= all
 
 .PHONY: buildroot
-buildroot: $(BUILDROOT_BUILDDIR)/.config
+buildroot: $(BUILDROOT_BUILDDIR)/.config $(BUILDROOT_OVERLAYDIR)/.done
 	$(call log,info,Building Buildroot)
 	$(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_TARGET)
 
