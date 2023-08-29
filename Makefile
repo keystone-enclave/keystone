@@ -82,7 +82,8 @@ BUILDROOT_TARGET        ?= all
 .PHONY: buildroot
 buildroot: $(BUILDROOT_BUILDDIR)/.config $(BUILDROOT_OVERLAYDIR)/.done
 	$(call log,info,Building Buildroot)
-	$(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_TARGET)
+	$(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_TARGET) 2>&1 | \
+            tee $(BUILDDIR)/build.log | LC_ALL=C grep -of scripts/grep.patterns
 
 # Useful configuration target. This is meant as a development helper to keep
 # the repository configuration in sync with what the user is doing. It
