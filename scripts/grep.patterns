@@ -1,0 +1,11 @@
+# Detect bolded buildroot output lines
+\[7m>>>.*\[27m
+
+# Detect our own log output
+\[1m.*\[m
+
+# Detect make error messages
+make\(\[[0-9]*\]\)\?: \*\*\* \[.*\] Error [0-9]*
+
+# Detect dirclean lines
+rm -Rf .*
