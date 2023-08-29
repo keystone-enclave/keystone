@@ -1,0 +1,4 @@
+config BR2_PACKAGE_KEYSTONE_RUNTIME
+        bool "Keystone Eyrie runtime"
+        help
+          Eyrie runtime
