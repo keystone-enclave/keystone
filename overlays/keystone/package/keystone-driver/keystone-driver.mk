@@ -6,11 +6,10 @@
 
 ifeq ($(KEYSTONE_DRIVER),)
 $(error KEYSTONE_DRIVER directory not defined)
+else
+include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 
-define KEYSTONE_DRIVER_EXTRACT_CMDS
-	cp -ar $(KEYSTONE_DRIVER)/* $(@D)
-endef
-
+$(eval $(keystone-package))
 $(eval $(kernel-module))
 $(eval $(generic-package))

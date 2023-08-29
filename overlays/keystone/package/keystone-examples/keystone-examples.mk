@@ -6,11 +6,9 @@
 
 ifeq ($(KEYSTONE_EXAMPLES),)
 $(error KEYSTONE_EXAMPLES directory not defined)
+else
+include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
-
-define KEYSTONE_EXAMPLES_EXTRACT_CMDS
-	cp -ar $(KEYSTONE_EXAMPLES)/* $(@D)
-endef
 
 KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk
 KEYSTONE_EXAMPLES_CONF_OPTS += -DKEYSTONE_SDK_DIR=$(HOST_DIR)/usr/share/keystone/sdk
@@ -23,4 +21,6 @@ define KEYSTONE_EXAMPLES_INSTALL_TARGET_CMDS
                 xargs -i{} $(INSTALL) -D -m 755 -t $(TARGET_DIR)/usr/share/keystone/examples/ {}
 endef
 
+$(eval $(keystone-package))
 $(eval $(cmake-package))
+
