@@ -121,7 +121,7 @@ Enclave::loadElf(ElfFile* elf) {
      * which has a page-misaligned program header. */
     if (!IS_ALIGNED(va, PAGE_SIZE)) {
       size_t offset = va - PAGE_DOWN(va);
-      size_t length = PAGE_UP(va) - va;
+      size_t length = std::min(file_end, PAGE_UP(va)) - va;
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
       memcpy(page + offset, (const void*)src, length);
