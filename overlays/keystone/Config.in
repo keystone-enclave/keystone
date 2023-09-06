@@ -2,9 +2,11 @@
 # Bootloaders
 source "$BR2_EXTERNAL_KEYSTONE_PATH/boot/keystone-bootrom/Config.in"
 source "$BR2_EXTERNAL_KEYSTONE_PATH/boot/keystone-sm/Config.in"
+source "$BR2_EXTERNAL_KEYSTONE_PATH/boot/hss/Config.in"
 
 # Packages
 source "$BR2_EXTERNAL_KEYSTONE_PATH/package/keystone-driver/Config.in"
 source "$BR2_EXTERNAL_KEYSTONE_PATH/package/keystone-sdk/Config.in.host"
 source "$BR2_EXTERNAL_KEYSTONE_PATH/package/keystone-runtime/Config.in"
 source "$BR2_EXTERNAL_KEYSTONE_PATH/package/keystone-examples/Config.in"
+source "$BR2_EXTERNAL_KEYSTONE_PATH/package/u-dma-buf/Config.in"
