@@ -1,0 +1,4 @@
+
+# Bootloaders
+source "$BR2_EXTERNAL_KEYSTONE_PATH/boot/keystone-bootrom/Config.in"
+

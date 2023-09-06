@@ -1,0 +1,5 @@
+config BR2_TARGET_KEYSTONE_BOOTROM
+        bool "Keystone bootrom"
+        help
+          Minimal bootrom for keystone to test secure boot
+          functionality. Based on Sanctum.

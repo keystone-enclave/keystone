@@ -1,10 +1,11 @@
-march ?= rv64imafdc
-mabi ?= lp64
-CC ?= riscv64-unknown-elf-gcc
-OBJCOPY ?= riscv64-unknown-elf-objcopy
 
-CFLAGS = \
-	-march=$(march) -mcmodel=medany -mabi=$(mabi) \
+# We override some of the variables that we get from the Buildroot
+# infrastructure here. Specifically, we don't want to use the provided
+# CFLAGS since these assume that the build target isn't firmware-like
+# (i.e. we want nostdlib, nostartfiles, etc).
+
+override CFLAGS := \
+	-mcmodel=medany \
 	-nostdlib -nostartfiles -fno-common -std=gnu11 \
 	-static \
 	-fPIC \

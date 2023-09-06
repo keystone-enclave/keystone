@@ -65,8 +65,6 @@ set(confdir ${CMAKE_SOURCE_DIR}/overlays/keystone/configs)
 set(patchdir ${CMAKE_SOURCE_DIR}/overlays/keystone/patches)
 set(cross_compile riscv${BITS}-buildroot-linux-gnu-)
 
-set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
-set(bootrom_wrkdir ${CMAKE_BINARY_DIR}/bootrom.build)
 set(sm_srcdir ${CMAKE_SOURCE_DIR}/sm)
 mkdir(sm_wrkdir ${CMAKE_BINARY_DIR}/sm.build)
 set(buildroot_srcdir ${CMAKE_SOURCE_DIR}/buildroot)
@@ -76,6 +74,8 @@ set(overlay_dir ${CMAKE_BINARY_DIR}/overlay)
 set(overlay_root ${overlay_dir}/root)
 set(external_dir ${CMAKE_SOURCE_DIR}/overlays)
 set(toolchain_dir ${buildroot_wrkdir}/per-package/host-gcc-final/host/bin)
+set(bootrom_srcdir ${CMAKE_SOURCE_DIR}/bootrom)
+set(bootrom_wrkdir ${buildroot_wrkdir}/images/)
 
 if(firesim)
   message(STATUS "Using Linux defconfig: ${linux_defconfig}")
@@ -125,11 +125,13 @@ add_custom_command(DEPENDS ${overlay_dir}
 add_custom_command(OUTPUT ${buildroot_wrkdir} COMMAND mkdir -p ${buildroot_wrkdir})
 add_custom_target("buildroot" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config ${overlay_root} ${buildroot_wrkdir} "buildroot_toolchain"
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
+            KEYSTONE_BOOTROM=${bootrom_srcdir}
   COMMENT "Building buildroot"
 )
 
 add_custom_target("buildroot_toolchain" ALL DEPENDS ${buildroot_srcdir} ${buildroot_wrkdir}/.config
-  COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone toolchain
+  COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone
+            KEYSTONE_BOOTROM=${bootrom_srcdir} toolchain
   COMMENT "Building buildroot toolchain"
 )
 
@@ -141,21 +143,6 @@ add_custom_command(DEPENDS ${buildroot_config} OUTPUT ${buildroot_wrkdir}/.confi
   COMMAND $(MAKE) -s -C ${buildroot_srcdir} O=${buildroot_wrkdir} BR2_EXTERNAL=${external_dir}/keystone olddefconfig
   COMMENT "Configuring buildroot (overlay = ${overlay_dir})"
 )
-
-
-###############################################################################
-## component: bootrom
-###############################################################################
-
-add_custom_command(OUTPUT ${bootrom_wrkdir} COMMAND mkdir -p ${bootrom_wrkdir})
-add_custom_target("bootrom-sync" DEPENDS ${bootrom_srcdir} ${bootrom_wrkdir}
-  COMMAND rsync -r ${bootrom_srcdir}/ ${bootrom_wrkdir})
-add_custom_target("bootrom" ALL DEPENDS ${bootrom_wrkdir} ${bootrom_srcdir} "bootrom-sync" "buildroot_toolchain"
-  COMMAND $(MAKE) -C ${bootrom_wrkdir} O=${bootrom_wrkdir} march=${ISA} mabi=${ABI} PATH=${toolchain_dir}:$ENV{PATH}
-    CC=riscv${BITS}-buildroot-linux-gnu-gcc OBJCOPY=riscv${BITS}-buildroot-linux-gnu-objcopy
-  COMMENT "Building bootrom"
-)
-
 
 ###############################################################################
 ## COMPONENT: linux kernel
