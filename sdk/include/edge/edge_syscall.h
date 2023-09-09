@@ -69,8 +69,8 @@ typedef struct sargs_SYS_setsockopt{
   int socket;
   int level;
   int option_name;
-  int option_value;
   socklen_t option_len;
+  unsigned char option_value[];
 } sargs_SYS_setsockopt;
 
 typedef struct sargs_SYS_connect{
