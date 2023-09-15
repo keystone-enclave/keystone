@@ -125,6 +125,7 @@ _start:
 
   /* start running enclave */
   csrrw sp, sscratch, sp
+  li a0, 0 // passed as rtld_fini to entry point/ __libc_start_main. TODO: Why is this not 0 in the first place??
   sret
 
 .align 6

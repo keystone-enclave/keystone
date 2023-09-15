@@ -107,7 +107,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   debug("ROOT PAGE TABLE: 0x%lx", root_page_table);
   debug("UTM : 0x%lx-0x%lx (%u KB)", utm_vaddr, utm_vaddr+utm_size, utm_size/1024);
   debug("DRAM: 0x%lx-0x%lx (%u KB)", dram_base, dram_base + dram_size, dram_size/1024);
-  debug("USER: 0x%lx-0x%lx (%u KB)", user_paddr, free_paddr, (user_paddr-free_paddr)/1024);
+  debug("USER: 0x%lx-0x%lx (%u KB)", user_paddr, free_paddr, (free_paddr-user_paddr)/1024);
 
   /* set trap vector */
   csr_write(stvec, &encl_trap_handler);
