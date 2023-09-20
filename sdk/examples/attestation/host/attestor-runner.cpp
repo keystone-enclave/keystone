@@ -19,7 +19,7 @@
 
 int
 main(int argc, char** argv) {
-  if (argc < 3 || argc > 8) {
+  if (argc < 4 || argc > 9) {
     printf(
         "Usage: %s <eapp> <runtime> [--utm-size SIZE(K)] [--freemem-size "
         "SIZE(K)] [--utm-ptr 0xPTR] [--sm-bin SM_BIN_PATH]\n",
@@ -45,6 +45,7 @@ main(int argc, char** argv) {
 
   char* eapp_file   = argv[1];
   char* rt_file     = argv[2];
+  char* ld_file     = argv[3];
   char* sm_bin_file = NULL;
 
   int c;
@@ -77,7 +78,7 @@ main(int argc, char** argv) {
   params.setFreeMemSize(freemem_size);
   params.setUntrustedMem(utm_ptr, untrusted_size);
 
-  Verifier verifier{params, eapp_file, rt_file, sm_bin_file};
+  Verifier verifier{params, eapp_file, rt_file, ld_file, sm_bin_file};
   verifier.run();
 
   return 0;

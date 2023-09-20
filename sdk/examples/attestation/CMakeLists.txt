@@ -3,7 +3,7 @@ set(eapp_src eapp/attestor.c)
 set(host_bin attestor-runner)
 set(host_src host/attestor-runner.cpp host/host.cpp host/verifier.cpp)
 set(package_name "attestor.ke")
-set(package_script "./attestor-runner attestor eyrie-rt --sm-bin fw_jump.bin")
+set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin fw_jump.bin")
 
 if(RISCV32)
   set(eyrie_plugins "freemem rv32")
@@ -40,14 +40,21 @@ add_eyrie_runtime(${eapp_bin}-eyrie
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 
+# add target for loader
+
+set(loader_files_to_copy loader.bin)
+add_loader(${eapp_bin}-loader
+  "dev-page-tables"
+  ${loader_files_to_copy})
+
 # add target for packaging (see keystone.cmake)
 
 add_keystone_package(${eapp_bin}-package
   ${package_name}
   ${package_script}
-  ${eyrie_files_to_copy} ${eapp_bin} ${host_bin} ${fw_bin})
+  ${eyrie_files_to_copy} ${eapp_bin} ${host_bin} ${loader_files_to_copy} ${fw_bin})
 
-add_dependencies(${eapp_bin}-package ${eapp_bin}-eyrie)
+add_dependencies(${eapp_bin}-package ${eapp_bin}-eyrie ${eapp_bin}-loader)
 
 # add package to the top-level target
 add_dependencies(examples ${eapp_bin}-package)

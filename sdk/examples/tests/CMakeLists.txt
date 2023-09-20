@@ -80,9 +80,9 @@ foreach (test IN ITEMS ${all_test_bins})
   file(APPEND ${test_script_tmp} "echo 'testing ${test}'\n")
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${test}/retval)
     execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/${test}/retval OUTPUT_VARIABLE retval)
-    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt --retval ${retval}")
+    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt loader.bin --retval ${retval}")
   else()
-    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt\n")
+    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt loader.bin\n")
   endif()
 endforeach(test)
 
@@ -107,15 +107,22 @@ add_eyrie_runtime(test-eyrie
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
 
+# add target for loader
+
+set(loader_files_to_copy loader.bin)
+add_loader(test-loader
+  "dev-page-tables"
+  ${loader_files_to_copy})
+
 # add target for packaging (see keystone.cmake)
 
 add_keystone_package(test-package
   ${package_name}
   ${package_script}
-  ${test_script} ${eyrie_files_to_copy} ${all_test_bins} ${host_bin}
+  ${test_script} ${eyrie_files_to_copy} ${all_test_bins} ${host_bin} ${loader_files_to_copy}
   )
 
-add_dependencies(test-package test-eyrie)
+add_dependencies(test-package test-eyrie test-loader)
 
 # add package to the top-level target
 add_dependencies(examples test-package)

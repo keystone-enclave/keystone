@@ -22,10 +22,11 @@ class Verifier {
  public:
   Verifier(
       const Keystone::Params& params, const std::string& eapp_file,
-      const std::string& rt_file, const std::string& sm_bin_file)
+      const std::string& rt_file, const std::string& ld_file, const std::string& sm_bin_file)
       : params_(params),
         eapp_file_(eapp_file),
         rt_file_(rt_file),
+        ld_file_(ld_file),
         sm_bin_file_(sm_bin_file) {}
   // This method generates a random nonce, invokes the run() method
   // of the Host, and verifies that the returned attestation report
@@ -59,5 +60,6 @@ class Verifier {
   const Keystone::Params params_;
   const std::string eapp_file_;
   const std::string rt_file_;
+  const std::string ld_file_;
   const std::string sm_bin_file_;
 };
