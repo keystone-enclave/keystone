@@ -185,10 +185,10 @@ void handle_syscall(struct encl_ctx* ctx)
     break;
   case(RUNTIME_SYSCALL_GET_SEALING_KEY):;
     /* Stores the key receive structure */
-    uintptr_t buffer_1_pa = kernel_va_to_pa(rt_copy_buffer_1);
+    uintptr_t buffer_1_pa = translate((uintptr_t) rt_copy_buffer_1);
 
     /* Stores the key identifier */
-    uintptr_t buffer_2_pa = kernel_va_to_pa(rt_copy_buffer_2);
+    uintptr_t buffer_2_pa = translate((uintptr_t) rt_copy_buffer_2);
 
     if (arg1 > sizeof(rt_copy_buffer_1) ||
         arg3 > sizeof(rt_copy_buffer_2)) {
