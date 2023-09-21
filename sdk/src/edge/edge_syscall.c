@@ -136,6 +136,10 @@ incoming_syscall(struct edge_call* edge_call) {
       sargs_SYS_setsockopt *setsockopt_args = (sargs_SYS_setsockopt *) syscall_info->data; 
       ret = setsockopt(setsockopt_args->socket, setsockopt_args->level, setsockopt_args->option_name, &setsockopt_args->option_value, setsockopt_args->option_len);
       break;
+    case (SYS_connect):;
+      sargs_SYS_connect *connect_args = (sargs_SYS_connect *) syscall_info->data; 
+      ret = connect(connect_args->sockfd, (struct sockaddr *) &connect_args->addr, connect_args->addrlen);
+      break;
     case (SYS_bind):;
       sargs_SYS_bind *bind_args = (sargs_SYS_bind *) syscall_info->data; 
       ret = bind(bind_args->sockfd, (struct sockaddr *) &bind_args->addr, bind_args->addrlen);

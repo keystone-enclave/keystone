@@ -47,14 +47,42 @@ uintptr_t io_syscall_setsockopt(int socket, int level, int option_name, const vo
     return ret; 
   }
 
+	if(edge_call_check_ptr_valid((uintptr_t)&args->option_value, option_len) != 0){
+		goto done;
+	}
+
   copy_from_user(&args->option_value, option_value, option_len);
 
-  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_setsockopt);
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_setsockopt) + option_len;
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
-  print_strace("[runtime] proxied setsockopt: %d \r\n", ret);
-  return ret; 
+  done:
+    print_strace("[runtime] proxied setsockopt: %d \r\n", ret);
+    return ret; 
 
+}
+
+uintptr_t io_syscall_connect(int sockfd, uintptr_t addr, socklen_t addrlen){
+  uintptr_t ret = -1;
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  edge_syscall->syscall_num = SYS_connect;
+
+  sargs_SYS_connect *args = (sargs_SYS_connect *) edge_syscall->data;
+
+  args->sockfd = sockfd;
+  args->addrlen = addrlen;
+
+  if(addrlen > sizeof(struct sockaddr_storage)) {
+    return -1;
+  }
+
+  copy_from_user(&args->addr, (void *) addr, addrlen);
+  
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_connect);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  print_strace("[runtime] proxied connect: %d \r\n", ret);
+  return ret;
 }
 
 uintptr_t io_syscall_bind (int sockfd, uintptr_t addr, socklen_t addrlen){
@@ -161,7 +189,7 @@ uintptr_t io_syscall_recvfrom(int sockfd, uintptr_t buf, size_t len, int flags,
 	ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
 	if (ret > 0) {
-		copy_to_user((void *) buf, &args->buf, ret);
+		copy_to_user((void *) buf, &args->buf, ret > len ? len : ret);
 	}
 
 	done: 
@@ -204,7 +232,7 @@ uintptr_t io_syscall_sendto(int sockfd, uintptr_t buf, size_t len, int flags,
 	copy_from_user(&args->buf, (void *) buf, len);
 	print_strace("[runtime] sendto buf: %s \r\n", &args->buf);
 
-	size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_sendto);
+	size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_sendto) + len;
 	ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
 	done: 
@@ -261,6 +289,9 @@ uintptr_t io_syscall_getpeername(int sockfd, uintptr_t addr,
   size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_getpeername);
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
+	copy_to_user((void *) addr, &args->addr, args->addrlen > *(socklen_t*)addrlen ? *(socklen_t*)addrlen : args->addrlen); 
+	copy_to_user((void *) addrlen, &args->addrlen, sizeof(socklen_t)); 
+
   print_strace("[runtime] proxied getpeername: fd: %d, ret: %d\r\n", args->sockfd, ret);
   return ret;
 }
@@ -280,7 +311,7 @@ uintptr_t io_syscall_getsockname(int sockfd, uintptr_t addr,
   size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_getsockname);
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
-  copy_to_user((void *) addr, &args->addr, args->addrlen);
+  copy_to_user((void *) addr, &args->addr, args->addrlen > *(socklen_t*)addrlen ? *(socklen_t*)addrlen : args->addrlen);
   copy_to_user((void *) addrlen, &args->addrlen, sizeof(socklen_t));
 
   print_strace("[runtime] proxied getsockname: fd: %d, ret: %d\r\n", args->sockfd, ret);

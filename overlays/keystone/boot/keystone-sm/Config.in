@@ -1,0 +1,6 @@
+config BR2_TARGET_KEYSTONE_SM
+        bool "Keystone security monitor"
+	select BR2_TARGET_OPENSBI
+        help
+          Keystone security monitor augmentations
+          to OpenSBI

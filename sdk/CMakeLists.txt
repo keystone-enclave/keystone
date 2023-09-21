@@ -18,8 +18,7 @@ set(prog_name    keystone-sdk)
 set(src_dir      ${CMAKE_CURRENT_LIST_DIR})
 set(scripts_dir  ${src_dir}/scripts)
 
-if (DEFINED ENV{KEYSTONE_SDK_DIR})
-  set(KEYSTONE_SDK_DIR $ENV{KEYSTONE_SDK_DIR})
+if (DEFINED KEYSTONE_SDK_DIR)
   if (NOT IS_ABSOLUTE ${KEYSTONE_SDK_DIR})
     message(FATAL_ERROR "KEYSTONE_SDK_DIR needs to be absolute path")
   endif()
@@ -51,7 +50,6 @@ else()
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DDEBUG=1)
     set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -g)
 endif()
 
@@ -111,7 +109,5 @@ add_custom_target("uninstall"
   rm -rf ${out_dir}/include
   rm -rf ${out_dir}/cmake)
 
-add_subdirectory(examples EXCLUDE_FROM_ALL)
 add_subdirectory(tests EXCLUDE_FROM_ALL)
-
 add_subdirectory(.post-install)

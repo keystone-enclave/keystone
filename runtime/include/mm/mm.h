@@ -10,6 +10,7 @@ pte* pte_of_va(uintptr_t va);
 #ifdef USE_FREEMEM
 uintptr_t map_page(uintptr_t vpn, uintptr_t ppn);
 uintptr_t alloc_page(uintptr_t vpn, int flags);
+uintptr_t realloc_page(uintptr_t vpn, int flags);
 void free_page(uintptr_t vpn);
 size_t alloc_pages(uintptr_t vpn, size_t count, int flags);
 void free_pages(uintptr_t vpn, size_t count);

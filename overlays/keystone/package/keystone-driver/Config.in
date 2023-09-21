@@ -1,0 +1,4 @@
+config BR2_PACKAGE_KEYSTONE_DRIVER
+        bool "Keystone driver"
+        help
+          Linux driver for the Keystone TEE system
