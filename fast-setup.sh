@@ -9,3 +9,13 @@ echo "export RISCV=$RISCV_DIR" > ./source.sh
 echo "export PATH=\$RISCV/bin:\$PATH" >> ./source.sh
 
 echo "Remember to source ./source.sh !!!"
+
+# INSTRUCTIONS for running
+# ./fast-setup.sh
+# source ./source.sh
+# git submodule update --init --recursive --depth 1
+# make -j 12 # more if available
+# make run
+# # find port in command from make # 9821
+# scp -i build-generic64/overlay/root/.ssh/id-rsa -P 9821 build-generic64/buildroot.build/build/keystone-*/*.ko root@localhost:.
+# scp -i build-generic64/overlay/root/.ssh/id-rsa -P 9821 build-generic64/buildroot.build/build/keystone-examples-*/*/*.ke root@localhost:.
