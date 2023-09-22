@@ -49,7 +49,7 @@ main(int argc, char** argv) {
   char* sm_bin_file = NULL;
 
   int c;
-  int opt_index = 3;
+  int opt_index = 4;
   while (1) {
     c = getopt_long(argc, argv, "u:p:f:s:", long_options, &opt_index);
 
