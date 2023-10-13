@@ -37,16 +37,13 @@ class Enclave {
   uintptr_t enclaveElfAddr;
   Memory* pMemory;
   KeystoneDevice* pDevice;
-  char hash[MDSIZE];
-  hash_ctx_t hash_ctx;
   void* shared_buffer;
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   bool mapUntrusted(size_t size);
   uintptr_t copyFile(uintptr_t filePtr, size_t fileSize);
-  void allocUninitialized(ElfFile* elfFile);\
+  void allocUninitialized(ElfFile* elfFile);
   void loadElf(ElfFile* elfFile);
-  Error validate_and_hash_enclave(struct runtime_params_t args);
 
   bool initFiles(const char*, const char*);
   bool initDevice();
@@ -56,6 +53,7 @@ class Enclave {
  public:
   Enclave();
   ~Enclave();
+  static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath);
   const char* getHash();
   void* getSharedBuffer();
   size_t getSharedBufferSize();

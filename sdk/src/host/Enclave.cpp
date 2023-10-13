@@ -92,7 +92,7 @@ Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
       memcpy(page, (const void*) (filePtr + bytesWritten), (size_t)(bytesToWrite));
-      pMemory->writeMem((uintptr_t) page, currOffset, bytesToWrite);
+      pMemory->writeMem((uintptr_t) page, currOffset, PAGE_SIZE);
     } else {
 		  pMemory->writeMem(filePtr + bytesWritten, currOffset, bytesToWrite);
     }
@@ -101,8 +101,33 @@ Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
 	return startOffset;
 }
 
+static void measureElfFile(hash_ctx_t* hash_ctx, const char* path) {
+  ElfFile* file = new ElfFile(path);
+
+  for (uintptr_t offset = 0; offset < file->getFileSize(); offset += PAGE_SIZE) {
+    if (file->getFileSize() - offset < PAGE_SIZE) {
+      char page[PAGE_SIZE];
+      memset(page, 0, PAGE_SIZE);
+      memcpy(page, (const void*) (file->getPtr() + offset), (size_t)(file->getFileSize()-offset));
+      hash_extend_page(hash_ctx, (void*) page);
+    } else {
+      hash_extend_page(hash_ctx, (void*) (file->getPtr() + offset));
+    }
+  }
+  delete file;
+}
+
 Error
-Enclave::validate_and_hash_enclave(struct runtime_params_t args) {
+Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath) {
+  hash_ctx_t hash_ctx;
+  hash_init(&hash_ctx);
+
+  measureElfFile(&hash_ctx, loaderpath);
+  measureElfFile(&hash_ctx, runtimepath);
+  measureElfFile(&hash_ctx, eapppath);
+
+  hash_finalize(hash, &hash_ctx);
+
   return Error::Success;
 }
 
@@ -125,6 +150,7 @@ Enclave::init(
   if (params.isSimulated()) {
     pMemory = new SimulatedEnclaveMemory();
     pDevice = new MockKeystoneDevice();
+    return Error::DeviceInitFailure;
   } else {
     pMemory = new PhysicalEnclaveMemory();
     pDevice = new KeystoneDevice();
@@ -165,14 +191,7 @@ Enclave::init(
   pMemory->startEappMem();
   enclaveElfAddr = copyFile((uintptr_t) enclaveFile->getPtr(), enclaveFile->getFileSize());  // TODO: figure out if we need enclaveElfAddr
 
-  pMemory->startFreeMem();	
-
-  /* This should be replaced with functions that perform the same function 
-  * but with new implementation of memory */
-  //  /* TODO: This should be invoked with some other function e.g., measure() */
-  //  if (params.isSimulated()) {
-  //    validate_and_hash_enclave(runtimeParams);
-  //  }
+  pMemory->startFreeMem();
 
   struct runtime_params_t runtimeParams;
   runtimeParams.untrusted_ptr =
