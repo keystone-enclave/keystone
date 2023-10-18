@@ -10,7 +10,7 @@ else
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 
-KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk
+KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk keystone-runtime
 
 # Required to build enclaved ML accelerators
 ifneq ($(BR2_EXTERNAL_TVM_PATH),)
