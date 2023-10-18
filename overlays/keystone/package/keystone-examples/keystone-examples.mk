@@ -10,7 +10,7 @@ else
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 
-KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk
+KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk keystone-runtime
 KEYSTONE_EXAMPLES_CONF_OPTS += -DKEYSTONE_SDK_DIR=$(HOST_DIR)/usr/share/keystone/sdk \
                                 -DKEYSTONE_EYRIE_RUNTIME=$(KEYSTONE_RUNTIME_BUILDDIR)
 KEYSTONE_EXAMPLES_MAKE_ENV += KEYSTONE_SDK_DIR=$(HOST_DIR)/usr/share/keystone/sdk
