@@ -20,53 +20,6 @@
 
 namespace Keystone {
 
-/*
- * These are used to make use of C type-checking..
- */
-typedef struct {
-  uintptr_t pte;
-} pte;
-
-#define pte_val(x) ((x).pte)
-
-#define __pa(x) ((uintptr_t)(x))
-
-#define __pte(x) ((pte){(x)})
-
-// page table entry (PTE) fields
-#define PTE_V 0x001     // Valid
-#define PTE_R 0x002     // Read
-#define PTE_W 0x004     // Write
-#define PTE_X 0x008     // Execute
-#define PTE_U 0x010     // User
-#define PTE_G 0x020     // Global
-#define PTE_A 0x040     // Accessed
-#define PTE_D 0x080     // Dirty
-#define PTE_SOFT 0x300  // Reserved for Software
-
-#define PTE_PPN_SHIFT 10
-
-#if __riscv_xlen == 32
-#define VA_BITS 32
-#define RISCV_PGLEVEL_BITS 10
-#else  // __riscv_xlen == 64 or x86 test
-#define VA_BITS 39
-#define RISCV_PGLEVEL_BITS 9
-#endif
-
-#define RISCV_PGSHIFT 12
-#define RISCV_PGSIZE (1 << RISCV_PGSHIFT)
-
-#if __riscv_xlen == 64
-#define RISCV_PGLEVEL_MASK 0x1ff
-#define RISCV_PGTABLE_HIGHEST_BIT 0x100
-#else
-#define RISCV_PGLEVEL_MASK 0x3ff
-#define RISCV_PGTABLE_HIGHEST_BIT 0x300
-#endif
-
-#define RISCV_PGLEVEL_TOP ((VA_BITS - RISCV_PGSHIFT) / RISCV_PGLEVEL_BITS)
-
 class Memory {
  public:
   Memory();
@@ -86,10 +39,6 @@ class Memory {
   uintptr_t getCurrentOffset() { return epmFreeList; }
   uintptr_t getCurrentEPMAddress() { return epmFreeList + startAddr; }
 
-  int validateAndHashEpm(
-      hash_ctx_t* hash_ctx, int level, pte* tb, uintptr_t vaddr, int contiguous,
-      uintptr_t* runtime_max_seen, uintptr_t* user_max_seen);
-
   void startRuntimeMem();
   void startEappMem();
   void startFreeMem();
@@ -99,14 +48,14 @@ class Memory {
   uintptr_t getRuntimePhysAddr() { return runtimePhysAddr; }
   uintptr_t getEappPhysAddr() { return eappPhysAddr; }
   uintptr_t getFreePhysAddr() { return freePhysAddr; }
+  uintptr_t getUTMPhysAddr() { return utmPhysAddr; }
 
   KeystoneDevice* pDevice;
   size_t epmSize;
   uintptr_t epmFreeList;
-  uintptr_t utmFreeList;
   uintptr_t startAddr;
 
-  // for hash calculation
+  // Keystone Device runtime params
   uintptr_t runtimePhysAddr;
   uintptr_t eappPhysAddr;
   uintptr_t freePhysAddr;

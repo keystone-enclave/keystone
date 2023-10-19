@@ -21,7 +21,7 @@ KeystoneDevice::create(uint64_t minPages) {
   }
 
   eid      = encl.eid;
-  physAddr = encl.pt_ptr;
+  physAddr = encl.epm_paddr;
 
   return Error::Success;
 }
@@ -29,25 +29,25 @@ KeystoneDevice::create(uint64_t minPages) {
 uintptr_t
 KeystoneDevice::initUTM(size_t size) {
   struct keystone_ioctl_create_enclave encl;
-  encl.eid                   = eid;
-  encl.params.untrusted_size = size;
+  encl.eid      = eid;
+  encl.utm_size = size;
   if (ioctl(fd, KEYSTONE_IOC_UTM_INIT, &encl)) {
     return 0;
   }
 
-  return encl.utm_free_ptr;
+  return encl.utm_paddr;
 }
 
 Error
 KeystoneDevice::finalize(
     uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    struct runtime_params_t params) {
+    uintptr_t freeRequested) {
   struct keystone_ioctl_create_enclave encl;
-  encl.eid           = eid;
-  encl.runtime_paddr = runtimePhysAddr;
-  encl.user_paddr    = eappPhysAddr;
-  encl.free_paddr    = freePhysAddr;
-  encl.params        = params;
+  encl.eid            = eid;
+  encl.runtime_paddr  = runtimePhysAddr;
+  encl.user_paddr     = eappPhysAddr;
+  encl.free_paddr     = freePhysAddr;
+  encl.free_requested = freeRequested;
 
   if (ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl)) {
     perror("ioctl error");
@@ -156,7 +156,7 @@ MockKeystoneDevice::initUTM(size_t size) {
 Error
 MockKeystoneDevice::finalize(
     uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    struct runtime_params_t params) {
+    uintptr_t freeRequested) {
   return Error::Success;
 }
 

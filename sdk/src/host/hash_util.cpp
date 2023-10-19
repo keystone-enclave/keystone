@@ -8,6 +8,8 @@ extern "C" {
 #include "Memory.hpp"
 #include "hash_util.hpp"
 
+#define RISCV_PGSIZE (1 << 12)
+
 void
 hash_init(hash_ctx_t* hash_ctx) {
   sha3_init(hash_ctx, MDSIZE);

@@ -38,6 +38,10 @@ calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
    * away from this problem.
    * 15 pages will be more than sufficient to cover several hundreds of
    * megabytes of enclave/runtime. */
+  /* FIXME Part 2: now that loader does loading, .bss sections also eat up
+   * space. Eapp dev must make FREEMEM big enough to fit this!!
+   * Possible fix -- re-add exact .bss calculations?
+   */
 
   /* Add one page each for bss segments of runtime and eapp */ 
   // TODO: add space for stack?
@@ -52,11 +56,6 @@ Enclave::prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr)
   uint64_t minPages;
   minPages = ROUND_UP(params.getFreeMemSize(), PAGE_BITS) / PAGE_SIZE; 
   minPages += requiredPages;
-
-  if (params.isSimulated()) {
-    pMemory->init(0, 0, minPages);
-    return true;
-  }
 
   /* Call Enclave Driver */
   if (pDevice->create(minPages) != Error::Success) {
@@ -75,7 +74,7 @@ Enclave::prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr)
   return true;
 }
 
-uintptr_t
+void
 Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
 	uintptr_t startOffset = pMemory->getCurrentOffset(); 
   size_t bytesRemaining = fileSize; 
@@ -88,6 +87,8 @@ Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
 		size_t bytesToWrite = (bytesRemaining > PAGE_SIZE) ? PAGE_SIZE : bytesRemaining;
 		size_t bytesWritten = fileSize - bytesRemaining;
 
+    // need 0 padding for hashes to be consistent,
+    // and to keep code aligned to be able to map page-wise without copying.
     if (bytesToWrite < PAGE_SIZE) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
@@ -98,10 +99,10 @@ Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
     }
 		bytesRemaining -= bytesToWrite;
 	}
-	return startOffset;
 }
 
-static void measureElfFile(hash_ctx_t* hash_ctx, const char* path) {
+void
+measureElfFile(hash_ctx_t* hash_ctx, const char* path) {
   ElfFile* file = new ElfFile(path);
   uintptr_t fptr = (uintptr_t) file->getPtr();
   uintptr_t fend = fptr + (uintptr_t) file->getFileSize();
@@ -121,9 +122,13 @@ static void measureElfFile(hash_ctx_t* hash_ctx, const char* path) {
 }
 
 Error
-Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath) {
+Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params) {
   hash_ctx_t hash_ctx;
   hash_init(&hash_ctx);
+
+  // sm will check that actual >= requested and attest to requested, pre-bss and page table eating up space
+  uintptr_t sizes[2] = {_params.getUntrustedSize(), _params.getFreeMemSize()};
+  hash_extend(&hash_ctx, sizes, sizeof(sizes));
 
   measureElfFile(&hash_ctx, loaderpath);
   measureElfFile(&hash_ctx, runtimepath);
@@ -145,14 +150,8 @@ Enclave::init(
     uintptr_t alternatePhysAddr) {
   params = _params;
 
-  if (params.isSimulated()) {
-    pMemory = new SimulatedEnclaveMemory();
-    pDevice = new MockKeystoneDevice();
-    return Error::DeviceInitFailure;
-  } else {
-    pMemory = new PhysicalEnclaveMemory();
-    pDevice = new KeystoneDevice();
-  }
+  pMemory = new PhysicalEnclaveMemory();
+  pDevice = new KeystoneDevice();
 
   ElfFile* enclaveFile = new ElfFile(eapppath);
   ElfFile* runtimeFile = new ElfFile(runtimepath);
@@ -170,11 +169,7 @@ Enclave::init(
     destroy();
     return Error::DeviceError;
   }
-
-  uintptr_t utm_free;
-  utm_free = pMemory->allocUtm(params.getUntrustedSize());
-
-  if (!utm_free) {
+  if (!pMemory->allocUtm(params.getUntrustedSize())) {
     ERROR("failed to init untrusted memory - ioctl() failed");
     destroy();
     return Error::DeviceError;
@@ -184,22 +179,16 @@ Enclave::init(
   copyFile((uintptr_t) loaderFile->getPtr(), loaderFile->getFileSize());
 
   pMemory->startRuntimeMem();
-  runtimeElfAddr = copyFile((uintptr_t) runtimeFile->getPtr(), runtimeFile->getFileSize()); // TODO: figure out if we need runtimeELFAddr
+  copyFile((uintptr_t) runtimeFile->getPtr(), runtimeFile->getFileSize());
 
   pMemory->startEappMem();
-  enclaveElfAddr = copyFile((uintptr_t) enclaveFile->getPtr(), enclaveFile->getFileSize());  // TODO: figure out if we need enclaveElfAddr
+  copyFile((uintptr_t) enclaveFile->getPtr(), enclaveFile->getFileSize());
 
   pMemory->startFreeMem();
 
-  struct runtime_params_t runtimeParams;
-  runtimeParams.untrusted_ptr =
-      reinterpret_cast<uintptr_t>(utm_free);
-  runtimeParams.untrusted_size =
-      reinterpret_cast<uintptr_t>(params.getUntrustedSize());
-
   if (pDevice->finalize(
           pMemory->getRuntimePhysAddr(), pMemory->getEappPhysAddr(),
-          pMemory->getFreePhysAddr(), runtimeParams) != Error::Success) {
+          pMemory->getFreePhysAddr(), params.getFreeMemSize()) != Error::Success) {
     destroy();
     return Error::DeviceError;
   }
@@ -242,10 +231,6 @@ Enclave::destroy() {
 
 Error
 Enclave::run(uintptr_t* retval) {
-  if (params.isSimulated()) {
-    return Error::Success;
-  }
-
   Error ret = pDevice->run(retval);
   while (ret == Error::EdgeCallHost || ret == Error::EnclaveInterrupted) {
     /* enclave is stopped in the middle. */
