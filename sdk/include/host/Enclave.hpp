@@ -41,7 +41,7 @@ class Enclave {
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   bool mapUntrusted(size_t size);
-  uintptr_t copyFile(uintptr_t filePtr, size_t fileSize);
+  void copyFile(uintptr_t filePtr, size_t fileSize);
   void allocUninitialized(ElfFile* elfFile);
   void loadElf(ElfFile* elfFile);
 

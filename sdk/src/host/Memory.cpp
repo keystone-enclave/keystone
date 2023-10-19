@@ -10,7 +10,6 @@ namespace Keystone {
 
 Memory::Memory() {
   epmFreeList   = 0;
-  utmFreeList   = 0;
   startAddr     = 0;
 }
 
@@ -43,16 +42,6 @@ Memory::allocPages(size_t size) {
     epmFreeList += (size / PAGE_SIZE) * PAGE_SIZE;
   }
   return addr;
-}
-
-
-/* This will walk the entire vaddr space in the enclave, validating
-   linear at-most-once paddr mappings, and then hashing valid pages */
-int
-Memory::validateAndHashEpm(
-    hash_ctx_t* hash_ctx, int level, pte* tb, uintptr_t vaddr, int contiguous,
-    uintptr_t* runtime_max_seen, uintptr_t* user_max_seen) {
-  return 0;
 }
 
 }  // namespace Keystone

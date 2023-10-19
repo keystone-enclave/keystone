@@ -40,7 +40,7 @@ class KeystoneDevice {
   virtual uintptr_t initUTM(size_t size);
   virtual Error finalize(
       uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-      struct runtime_params_t params);
+      uintptr_t freeRequested);
   virtual Error destroy();
   virtual Error run(uintptr_t* ret);
   virtual Error resume(uintptr_t* ret);
@@ -60,7 +60,7 @@ class MockKeystoneDevice : public KeystoneDevice {
   uintptr_t initUTM(size_t size);
   Error finalize(
       uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-      struct runtime_params_t params);
+      uintptr_t freeRequested);
   Error destroy();
   Error run(uintptr_t* ret);
   Error resume(uintptr_t* ret);

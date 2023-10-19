@@ -10,10 +10,10 @@
 /* This will hash the loader and the runtime + eapp elf files. */
 int validate_and_hash_epm(hash_ctx* hash_ctx, struct enclave* encl)
 {
-  uintptr_t loader = encl->pa_params.dram_base; // also base
-  uintptr_t runtime = encl->pa_params.runtime_base;
-  uintptr_t eapp = encl->pa_params.user_base;
-  uintptr_t free = encl->pa_params.free_base;
+  uintptr_t loader = encl->params.dram_base; // also base
+  uintptr_t runtime = encl->params.runtime_base;
+  uintptr_t eapp = encl->params.user_base;
+  uintptr_t free = encl->params.free_base;
 
   // ensure pointers don't point to middle of correct files
   uintptr_t sizes[3] = {runtime - loader, eapp - runtime, free - eapp};

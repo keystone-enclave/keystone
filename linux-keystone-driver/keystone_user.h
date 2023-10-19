@@ -30,38 +30,23 @@
 #define USER_FULL 3
 #define UTM_FULL 4
 
-struct runtime_params_t {
-  uintptr_t runtime_entry;
-  uintptr_t user_entry;
-  uintptr_t untrusted_ptr;
-  uintptr_t  untrusted_size;
-};
-
 struct keystone_ioctl_create_enclave {
   uintptr_t eid;
 
-  //Min pages required
-  uintptr_t min_pages;
+  // host -> driver
+  uintptr_t min_pages; // create
+  uintptr_t utm_size; // utm_init
 
-  // virtual addresses
-  uintptr_t runtime_vaddr;
-  uintptr_t user_vaddr;
-
-  uintptr_t pt_ptr;
-  uintptr_t utm_free_ptr;
-
-  //Used for hash
-  uintptr_t epm_paddr;
-  uintptr_t utm_paddr;
+  // host -> driver // finalize
   uintptr_t runtime_paddr;
   uintptr_t user_paddr;
   uintptr_t free_paddr;
+  uintptr_t free_requested;
 
+  // driver -> host
+  uintptr_t epm_paddr;
   uintptr_t epm_size;
-  uintptr_t utm_size;
-
-  // Runtime Parameters
-  struct runtime_params_t params;
+  uintptr_t utm_paddr;
 };
 
 struct keystone_ioctl_run_enclave {

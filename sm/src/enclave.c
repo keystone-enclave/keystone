@@ -51,21 +51,21 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 
   if(load_parameters) {
     // passing parameters for a first run
-    regs->mepc = (uintptr_t) enclaves[eid].pa_params.dram_base - 4; // regs->mepc will be +4 before sbi_ecall_handler return
+    regs->mepc = (uintptr_t) enclaves[eid].params.dram_base - 4; // regs->mepc will be +4 before sbi_ecall_handler return
     regs->mstatus = (1 << MSTATUS_MPP_SHIFT);
     // $a1: (PA) DRAM base,
-    regs->a1 = (uintptr_t) enclaves[eid].pa_params.dram_base;
-    // $a2: (PA) DRAM size,
-    regs->a2 = (uintptr_t) enclaves[eid].pa_params.dram_size;
+    regs->a1 = (uintptr_t) enclaves[eid].params.dram_base;
+    // $a2: DRAM size,
+    regs->a2 = (uintptr_t) enclaves[eid].params.dram_size;
     // $a3: (PA) kernel location,
-    regs->a3 = (uintptr_t) enclaves[eid].pa_params.runtime_base;
+    regs->a3 = (uintptr_t) enclaves[eid].params.runtime_base;
     // $a4: (PA) user location,
-    regs->a4 = (uintptr_t) enclaves[eid].pa_params.user_base;
+    regs->a4 = (uintptr_t) enclaves[eid].params.user_base;
     // $a5: (PA) freemem location,
-    regs->a5 = (uintptr_t) enclaves[eid].pa_params.free_base;
+    regs->a5 = (uintptr_t) enclaves[eid].params.free_base;
     // $a6: (PA) utm base,
-    regs->a6 = (uintptr_t) enclaves[eid].params.untrusted_ptr;
-    // $a7: (size_t) utm size
+    regs->a6 = (uintptr_t) enclaves[eid].params.untrusted_base;
+    // $a7: utm size
     regs->a7 = (uintptr_t) enclaves[eid].params.untrusted_size;
 
     // enclave will only have physical addresses in the first run
@@ -317,7 +317,7 @@ static int is_create_args_valid(struct keystone_sbi_create* args)
     return 0;
   if (args->user_paddr > args->free_paddr)
     return 0;
-
+  
   return 1;
 }
 
@@ -350,14 +350,16 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   if(!is_create_args_valid(&create_args))
     return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
 
-  /* set va params */
-  struct runtime_va_params_t params = create_args.params;
-  struct runtime_pa_params pa_params;
-  pa_params.dram_base = base;
-  pa_params.dram_size = size;
-  pa_params.runtime_base = create_args.runtime_paddr;
-  pa_params.user_base = create_args.user_paddr;
-  pa_params.free_base = create_args.free_paddr;
+  /* set params */
+  struct runtime_params params;
+  params.dram_base = base;
+  params.dram_size = size;
+  params.runtime_base = create_args.runtime_paddr;
+  params.user_base = create_args.user_paddr;
+  params.free_base = create_args.free_paddr;
+  params.untrusted_base = utbase;
+  params.untrusted_size = utsize;
+  params.free_requested = create_args.free_requested;
 
 
   // allocate eid
@@ -396,7 +398,6 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
 #endif
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = params;
-  enclaves[eid].pa_params = pa_params;
 
   /* Init enclave state (regs etc) */
   clean_state(&enclaves[eid].threads[0]);
@@ -492,8 +493,7 @@ unsigned long destroy_enclave(enclave_id eid)
 
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
-  enclaves[eid].params = (struct runtime_va_params_t) {0};
-  enclaves[eid].pa_params = (struct runtime_pa_params) {0};
+  enclaves[eid].params = (struct runtime_params) {0};
   for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
     enclaves[eid].regions[i].type = REGION_INVALID;
   }
