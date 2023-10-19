@@ -11,9 +11,6 @@ typedef uintptr_t pte_t;
 /* This will hash the loader and the runtime + eapp elf files. */
 int validate_and_hash_epm(hash_ctx* hash_ctx, struct enclave* encl)
 {
-  pte_t* walk;
-  int i;
-
   #ifdef this_is_not_defined
   // $a1: (PA) DRAM base,
   regs->a1 = (uintptr_t) enclaves[eid].pa_params.dram_base;
@@ -35,7 +32,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, struct enclave* encl)
   uintptr_t runtime = encl->pa_params.runtime_base;
   uintptr_t eapp = encl->pa_params.user_base;
   uintptr_t free = encl->pa_params.free_base;
-  uintptr_t untrusted = encl->params.untrusted_ptr;
+  // uintptr_t untrusted = encl->params.untrusted_ptr;
   uintptr_t end = loader + encl->pa_params.dram_size;
 
   // using pointers to ensure that they themselves are correct
@@ -57,6 +54,7 @@ int validate_and_hash_epm(hash_ctx* hash_ctx, struct enclave* encl)
   for (uintptr_t page = eapp; page < free; page += RISCV_PGSIZE) {
     hash_extend_page(hash_ctx, (void*) page);
   }
+  return 0;
 }
 
 unsigned long validate_and_hash_enclave(struct enclave* enclave){

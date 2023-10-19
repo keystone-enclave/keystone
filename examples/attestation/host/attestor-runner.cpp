@@ -21,8 +21,8 @@ int
 main(int argc, char** argv) {
   if (argc < 4 || argc > 9) {
     printf(
-        "Usage: %s <eapp> <runtime> [--utm-size SIZE(K)] [--freemem-size "
-        "SIZE(K)] [--utm-ptr 0xPTR] [--sm-bin SM_BIN_PATH]\n",
+        "Usage: %s <eapp> <runtime> <loader> [--utm-size SIZE(K)] "
+        "[--freemem-size SIZE(K)] [--utm-ptr 0xPTR] [--sm-bin SM_BIN_PATH]\n",
         argv[0]);
     return 0;
   }
@@ -71,6 +71,11 @@ main(int argc, char** argv) {
         sm_bin_file = optarg;
         break;
     }
+  }
+
+  if (sm_bin_file == NULL) {
+    printf("--sm-bin is missing.\n");
+    return 0;
   }
 
   Keystone::Params params;

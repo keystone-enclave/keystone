@@ -410,8 +410,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
   /* Validate memory, prepare hash and signature for attestation */
   spin_lock(&encl_lock); // FIXME This should error for second enter.
  
-  // TODO: (Cathy) validation for new loader scheme
-  // ret = validate_and_hash_enclave(&enclaves[eid]);
+  ret = validate_and_hash_enclave(&enclaves[eid]);
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
   if (ret)
     goto unlock;

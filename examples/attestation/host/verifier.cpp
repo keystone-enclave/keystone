@@ -23,7 +23,7 @@
 void
 Verifier::run() {
   const std::string nonce = std::to_string(random() % 0x100000000);
-  Host host(params_, eapp_file_, ld_file_, rt_file_);
+  Host host(params_, eapp_file_, rt_file_, ld_file_);
   Report report = host.run(nonce);
   verify_report(report, nonce);
 }
@@ -78,13 +78,9 @@ Verifier::verify_data(Report& report, const std::string& nonce) {
 
 void
 Verifier::compute_expected_enclave_hash(byte* expected_enclave_hash) {
-  Keystone::Enclave enclave;
-  Keystone::Params simulated_params = params_;
-  simulated_params.setSimulated(true);
-  // This will cause validate_and_hash_enclave to be called when
-  // isSimulated() == true.
-  enclave.init(eapp_file_.c_str(), rt_file_.c_str(), ld_file_.c_str(), simulated_params);
-  memcpy(expected_enclave_hash, enclave.getHash(), MDSIZE);
+  // Keystone::Params simulated_params = params_;
+  // simulated_params.setSimulated(true);
+  Keystone::Enclave::measure((char*) expected_enclave_hash, eapp_file_.c_str(), rt_file_.c_str(), ld_file_.c_str());
 }
 
 void

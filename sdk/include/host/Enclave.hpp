@@ -54,7 +54,6 @@ class Enclave {
   Enclave();
   ~Enclave();
   static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath);
-  const char* getHash();
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   Memory* getMemory();

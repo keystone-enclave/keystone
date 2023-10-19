@@ -103,17 +103,20 @@ Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
 
 static void measureElfFile(hash_ctx_t* hash_ctx, const char* path) {
   ElfFile* file = new ElfFile(path);
+  uintptr_t fptr = (uintptr_t) file->getPtr();
+  uintptr_t fend = fptr + (uintptr_t) file->getFileSize();
 
-  for (uintptr_t offset = 0; offset < file->getFileSize(); offset += PAGE_SIZE) {
-    if (file->getFileSize() - offset < PAGE_SIZE) {
+  for (; fptr < fend; fptr += PAGE_SIZE) {
+    if (fend - fptr < PAGE_SIZE) {
       char page[PAGE_SIZE];
       memset(page, 0, PAGE_SIZE);
-      memcpy(page, (const void*) (file->getPtr() + offset), (size_t)(file->getFileSize()-offset));
+      memcpy(page, (const void*) fptr, (size_t)(fend-fptr));
       hash_extend_page(hash_ctx, (void*) page);
     } else {
-      hash_extend_page(hash_ctx, (void*) (file->getPtr() + offset));
+      hash_extend_page(hash_ctx, (void*) fptr);
     }
   }
+
   delete file;
 }
 
@@ -134,11 +137,6 @@ Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, cons
 Error
 Enclave::init(const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params) {
   return this->init(eapppath, runtimepath, loaderpath, _params, (uintptr_t)0);
-}
-
-const char*
-Enclave::getHash() {
-  return this->hash;
 }
 
 Error
