@@ -341,6 +341,10 @@ void handle_syscall(struct encl_ctx* ctx)
   case(SYS_munmap):
     ret = syscall_munmap((void*) arg0, (size_t)arg1);
     break;
+  
+  case(SYS_ioctl):
+    ret = syscall_ioctl((int) arg0, (unsigned long) arg1, (uintptr_t) arg2);
+    break;
 
   case(SYS_mprotect):
     ret = syscall_mprotect((void *) arg0, (size_t) arg1, (int) arg2);

@@ -13,6 +13,7 @@
 #include "util/rt_util.h"
 #include "call/syscall.h"
 #include "uaccess.h"
+#include <asm/ioctl.h>
 
 #ifdef USE_CALLEE
 #include "call/callee.h"
@@ -235,4 +236,36 @@ uintptr_t syscall_brk(void* addr){
   return ret;
 
 }
+
+uintptr_t syscall_ioctl(int fd, unsigned long req, uintptr_t ptr) {
+  uintptr_t ret = -1;
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  sargs_SYS_ioctl* args = (sargs_SYS_ioctl*) edge_syscall->data;
+
+  edge_syscall->syscall_num = SYS_ioctl;
+  args->fd = fd;
+  args->request = req;
+
+  // If this is an output call, copy data into the buffer
+  if(_IOC_DIR(req) & IOC_OUT) {
+    if(edge_call_check_ptr_valid((uintptr_t) (args + 1), _IOC_SIZE(req)) != 0) {
+      goto done;
+    }
+
+    copy_from_user(args + 1, (void *) ptr, _IOC_SIZE(req));
+  }
+
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_ioctl) + _IOC_SIZE(req);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  // If this is an input call, copy data out of the buffer
+  if(_IOC_DIR(req) & IOC_IN) {
+    copy_to_user((void *) ptr, args + 1, _IOC_SIZE(req));
+  }
+
+done:
+  print_strace("[runtime] ioctl on %i with %x = %i\r\n", fd, req, ret);
+  return ret;
+}
+
 #endif /* USE_LINUX_SYSCALL */

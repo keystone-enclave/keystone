@@ -6,6 +6,10 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/sendfile.h>
+
+#define __USE_GNU
+#include <sys/ioctl.h>
+
 // Special edge-call handler for syscall proxying
 void
 incoming_syscall(struct edge_call* edge_call) {
@@ -98,6 +102,10 @@ incoming_syscall(struct edge_call* edge_call) {
       sargs_SYS_chdir* chdir_args = (sargs_SYS_chdir*) syscall_info->data;
 			ret = chdir(chdir_args->path);
 			break;
+    case(SYS_ioctl):;
+      sargs_SYS_ioctl* ioctl_args = (sargs_SYS_ioctl*) syscall_info->data;
+      ret = ioctl(ioctl_args->fd, ioctl_args->request, ioctl_args + 1);
+      break;
     case (SYS_epoll_ctl):;
       sargs_SYS_epoll_ctl *epoll_ctl_args = (sargs_SYS_epoll_ctl *) syscall_info->data;
       ret = epoll_ctl(epoll_ctl_args->epfd, epoll_ctl_args->op, epoll_ctl_args->fd, (struct epoll_event * ) &epoll_ctl_args->event);

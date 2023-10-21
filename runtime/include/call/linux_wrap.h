@@ -21,5 +21,6 @@ uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
                   int fd, __off_t offset);
 uintptr_t syscall_mprotect(void *addr, size_t len, int prot);
 uintptr_t syscall_brk(void* addr);
+uintptr_t syscall_ioctl(int fd, unsigned long req, uintptr_t ptr);
 #endif /* _LINUX_WRAP_H_ */
 #endif /* USE_LINUX_SYSCALL */

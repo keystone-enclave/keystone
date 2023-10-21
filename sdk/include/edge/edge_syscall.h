@@ -119,6 +119,10 @@ typedef struct sargs_SYS_chdir{
   char path[0];
 } sargs_SYS_chdir;
 
+typedef struct sargs_SYS_ioctl {
+  int fd;
+  unsigned long request;
+} sargs_SYS_ioctl;
 
 typedef struct sargs_SYS_epoll_pwait{
   int epfd;
