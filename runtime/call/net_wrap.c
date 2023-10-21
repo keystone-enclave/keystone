@@ -9,6 +9,7 @@
 #include <sys/epoll.h>
 #include <sys/time.h>
 #include <sys/select.h>
+#include <poll.h>
 
 //Length of optional value for setsockopt 
 #define MAX_OPTION_LEN 256

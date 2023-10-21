@@ -10,6 +10,9 @@
 
 #define __USE_GNU
 #include <sys/ioctl.h>
+#define _GNU_SOURCE
+#include <poll.h>
+
 
 // Special edge-call handler for syscall proxying
 void
