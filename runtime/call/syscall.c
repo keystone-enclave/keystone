@@ -505,6 +505,18 @@ void handle_syscall(struct encl_ctx* ctx)
   case(SYS_pselect6): 
     ret = io_syscall_pselect((int) arg0, (uintptr_t) arg1, (uintptr_t) arg2, (uintptr_t) arg3, (uintptr_t) arg4, (uintptr_t) arg5);
     break;
+  case(SYS_ppoll):
+    ret = io_syscall_ppoll((uintptr_t) arg0, (int) arg1, (uintptr_t) arg2, (uintptr_t) arg3);
+    break;
+  case(SYS_sendmsg):
+    ret = io_syscall_sendmsg((int) arg0, (uintptr_t) arg1, (int) arg2);
+    break;
+  case(SYS_recvmsg):
+    ret = io_syscall_recvmsg((int) arg0, (uintptr_t) arg1, (int) arg2);
+    break;
+  case(SYS_connect):
+    ret = io_syscall_connect((int) arg0, (uintptr_t) arg1, (int) arg2);
+    break;
 #endif /* USE_NET_SYSCALL */
 
 

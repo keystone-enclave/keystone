@@ -217,6 +217,32 @@ typedef struct sargs_SYS_sendfile {
   size_t count;
 } sargs_SYS_sendfile;
 
+typedef struct sargs_SYS_ppoll {
+  int nfds;
+  int timeout_is_null;
+  int sigmask_is_null;
+
+  struct timespec timeout_ts;
+  sigset_t sigmask;
+} sargs_SYS_ppoll;
+
+typedef struct sargs_SYS_sendrecvmsg {
+  int sockfd;
+  int flags;
+
+  // msghdr below
+  int msg_flags;
+
+  size_t msg_name_offs;
+  socklen_t msg_namelen;
+
+  size_t msg_iov_offs;
+  size_t msg_iovlen;
+
+  size_t msg_control_offs;
+  size_t msg_controllen;
+} sargs_SYS_sendrecvmsg;
+
 void
 incoming_syscall(struct edge_call* buffer);
 

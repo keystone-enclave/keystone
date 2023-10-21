@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/select.h>
@@ -148,10 +149,11 @@ incoming_syscall(struct edge_call* edge_call) {
       sargs_SYS_getsetsockopt  *getsockopt_args = (sargs_SYS_getsetsockopt *) syscall_info->data;
       ret = getsockopt(getsockopt_args->socket, getsockopt_args->level, getsockopt_args->option_name, &getsockopt_args->option_value, &getsockopt_args->option_len);
       break;
-    case (SYS_connect):;
-      sargs_SYS_connect *connect_args = (sargs_SYS_connect *) syscall_info->data; 
-      ret = connect(connect_args->sockfd, (struct sockaddr *) &connect_args->addr, connect_args->addrlen);
-      break;
+    // TODO(chungmcl): get rid of this? 
+    // case (SYS_connect):;
+    //   sargs_SYS_connect *connect_args = (sargs_SYS_connect *) syscall_info->data; 
+    //   ret = connect(connect_args->sockfd, (struct sockaddr *) &connect_args->addr, connect_args->addrlen);
+    //   break;
     case (SYS_bind):;
       sargs_SYS_bind *bind_args = (sargs_SYS_bind *) syscall_info->data; 
       ret = bind(bind_args->sockfd, (struct sockaddr *) &bind_args->addr, bind_args->addrlen);
@@ -200,6 +202,58 @@ incoming_syscall(struct edge_call* edge_call) {
       struct timespec *timeout = pselect_args->timeout_is_null ? NULL : &pselect_args->timeout; 
       sigset_t *sigmask = pselect_args->sigmask_is_null ? NULL : &pselect_args->sigmask; 
       ret = pselect(pselect_args->nfds, readfds, writefds, exceptfds, timeout, sigmask);
+      break;
+    case (SYS_ppoll):;
+      sargs_SYS_ppoll* ppoll_args = (sargs_SYS_ppoll*)syscall_info->data;
+      struct pollfd *ppoll_fds = (void *) ppoll_args + sizeof(sargs_SYS_ppoll);
+      struct timespec *ppoll_timeout = ppoll_args->timeout_is_null ? NULL : &ppoll_args->timeout_ts;
+      sigset_t *ppoll_sigset = ppoll_args->sigmask_is_null ? NULL : &ppoll_args->sigmask;
+      ret = ppoll(ppoll_fds, ppoll_args->nfds, ppoll_timeout, ppoll_sigset);
+      break;
+    case (SYS_sendmsg):;
+      sargs_SYS_sendrecvmsg* sendmsg_args = (sargs_SYS_sendrecvmsg*)syscall_info->data;
+      struct msghdr sendmsghdr = {
+        .msg_name = ((void *) sendmsg_args) + sendmsg_args->msg_name_offs,
+        .msg_namelen = sendmsg_args->msg_namelen,
+        .msg_iov = ((void *) sendmsg_args) + sendmsg_args->msg_iov_offs,
+        .msg_iovlen = sendmsg_args->msg_iovlen,
+        .msg_control = ((void *) sendmsg_args) + sendmsg_args->msg_control_offs,
+        .msg_controllen = sendmsg_args->msg_controllen,
+      };
+
+      // todo unmarshal iovs?
+
+      ret = sendmsg(sendmsg_args->sockfd, &sendmsghdr, sendmsg_args->flags);
+      break;
+    case (SYS_recvmsg):;
+      sargs_SYS_sendrecvmsg* recvmsg_args = (sargs_SYS_sendrecvmsg*)syscall_info->data;
+      struct msghdr recvmsghdr = {
+         .msg_name = ((void *) recvmsg_args) + recvmsg_args->msg_name_offs,
+         .msg_namelen = recvmsg_args->msg_namelen,
+         .msg_iov = ((void *) recvmsg_args) + recvmsg_args->msg_iov_offs,
+         .msg_iovlen = recvmsg_args->msg_iovlen,
+         .msg_control = ((void *) recvmsg_args) + recvmsg_args->msg_control_offs,
+         .msg_controllen = recvmsg_args->msg_controllen,
+      };
+
+      if(recvmsghdr.msg_iovlen != 0) {
+        recvmsghdr.msg_iov[0].iov_base = recvmsghdr.msg_iov + recvmsghdr.msg_iovlen;
+
+        for(int i = 1; i < recvmsghdr.msg_iovlen; i++) {
+          recvmsghdr.msg_iov[i].iov_base =
+            recvmsghdr.msg_iov[i - 1].iov_base + recvmsghdr.msg_iov[i - 1].iov_len;
+        }
+      }
+
+      ret = recvmsg(recvmsg_args->sockfd, &recvmsghdr, recvmsg_args->flags);
+      recvmsg_args->msg_flags = recvmsghdr.msg_flags;
+      break;
+    case(SYS_connect):;
+      sargs_SYS_connect* connect_args = (sargs_SYS_connect*)syscall_info->data;
+      ret = connect(connect_args->sockfd, &connect_args->addr, connect_args->addrlen);
+      if(ret < 0) {
+        fprintf(stderr, "connect failed with %i (%s)\n", errno, strerror(errno));
+      }
       break;
     default:
       goto syscall_error;

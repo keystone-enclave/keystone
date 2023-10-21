@@ -212,6 +212,10 @@ uintptr_t io_syscall_recvfrom(int sockfd, uintptr_t buf, size_t len, int flags,
 
 	if (ret > 0) {
 		copy_to_user((void *) buf, &args->buf, ret);
+    if (src_addr != 0) {
+      copy_to_user((void*)src_addr, &args->src_addr, args->addrlen);
+      copy_to_user((void*)addrlen, &args->addrlen, sizeof(socklen_t));
+    }
 	}
 
 	done: 
@@ -406,5 +410,193 @@ uintptr_t io_syscall_pselect(int nfds, uintptr_t readfds, uintptr_t writefds,
   print_strace("[runtime] proxied pselect: nfds: %d, ret: %d\r\n", args->nfds, ret);
   return ret;
 }
+
+uintptr_t io_syscall_ppoll(uintptr_t fds, int nfds, uintptr_t timeout, uintptr_t sigmask) {
+  uintptr_t ret = -1;
+
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  sargs_SYS_ppoll* args = (sargs_SYS_ppoll*) edge_syscall->data;
+  struct pollfd *args_pollfds = (void *) args + sizeof(sargs_SYS_ppoll);
+
+  edge_syscall->syscall_num = SYS_ppoll;
+  args->nfds = nfds;
+
+  if(timeout != 0) {
+      args->timeout_is_null = 0;
+      copy_from_user(&args->timeout_ts, (void *) timeout, sizeof(struct timespec));
+  } else {
+      args->timeout_is_null = 1;
+  }
+
+  if(sigmask != 0) {
+      args->sigmask_is_null = 0;
+      copy_from_user(&args->sigmask, (void *) sigmask, sizeof(sigset_t));
+  } else {
+      args->sigmask_is_null = 1;
+  }
+
+  if(nfds != 0) {
+      if(edge_call_check_ptr_valid((uintptr_t) args_pollfds,
+                                    nfds * sizeof(struct pollfd)) != 0) {
+          goto done;
+      }
+      copy_from_user(args_pollfds, (void *) fds,nfds * sizeof(struct pollfd));
+  }
+
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_ppoll) +
+                        nfds * sizeof(struct pollfd);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  // Copy pollfds back to the eapp
+  if(nfds != 0) {
+      copy_to_user((void *) fds, args_pollfds, nfds * sizeof(struct pollfd));
+  }
+
+done:
+  print_strace("[runtime] proxied ppoll: %d\r\n", ret);
+  return ret;
+}
+
+uintptr_t io_syscall_sendmsg(int sockfd, uintptr_t msg, int flags) {
+  uintptr_t ret = -1;
+
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  edge_syscall->syscall_num = SYS_sendmsg;
+
+  sargs_SYS_sendrecvmsg *args = (sargs_SYS_sendrecvmsg *) edge_syscall->data;
+
+  args->sockfd = sockfd;
+  args->flags = flags;
+
+  // todo not done
+
+//
+//  if(edge_call_check_ptr_valid((uintptr_t)&args->msghdr, sizeof(struct msghdr)) != 0){
+//      goto done;
+//  }
+//
+//  copy_from_user(&args->msghdr, (void *) msg, sizeof(struct msghdr));
+
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_sendrecvmsg);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+//done:
+  print_strace("[runtime] proxied sendmsg\n: %d", ret);
+  return ret;
+}
+
+uintptr_t io_syscall_recvmsg(int sockfd, uintptr_t msg, int flags) {
+  int i;
+  struct msghdr msghdr;
+  struct iovec *iovec;
+  void *curr, *iovec_data;
+  uintptr_t ret = -1;
+
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  edge_syscall->syscall_num = SYS_recvmsg;
+
+  sargs_SYS_sendrecvmsg *args = (sargs_SYS_sendrecvmsg *) edge_syscall->data;
+
+  args->sockfd = sockfd;
+  args->flags = flags;
+  args->msg_namelen = args->msg_name_offs =
+      args->msg_iovlen = args->msg_iov_offs =
+          args->msg_controllen = args->msg_control_offs = 0;
+
+  copy_from_user(&msghdr, (void *) msg, sizeof(struct msghdr));
+  curr = (void *) args + sizeof(struct sargs_SYS_sendrecvmsg);
+
+  if(msghdr.msg_namelen != 0) {
+      if(edge_call_check_ptr_valid((uintptr_t) curr, msghdr.msg_namelen) != 0){
+          goto done;
+      }
+
+      copy_from_user(curr, msghdr.msg_name, msghdr.msg_namelen);
+      args->msg_namelen = msghdr.msg_namelen;
+      args->msg_name_offs = (curr - (void *) args);
+      curr += args->msg_namelen;
+  }
+
+  if(msghdr.msg_iovlen != 0) {
+      // First, copy the iovec vector directly
+      if(edge_call_check_ptr_valid((uintptr_t) curr, msghdr.msg_iovlen * sizeof(struct iovec)) != 0){
+          goto done;
+      }
+
+      copy_from_user(curr, msghdr.msg_iov, msghdr.msg_iovlen * sizeof(struct iovec));
+      args->msg_iovlen = msghdr.msg_iovlen;
+      args->msg_iov_offs = (curr - (void *) args);
+
+      // Save iovec info for later
+      iovec = curr;
+      curr += msghdr.msg_iovlen * sizeof(struct iovec);
+      iovec_data = curr;
+
+      // We don't need to copy each vector for a receive operation, but we do
+      // need to reserve buffer space for every entry
+      for(i = 0; i < msghdr.msg_iovlen; i++) {
+          if(edge_call_check_ptr_valid((uintptr_t) curr, iovec[i].iov_len) != 0){
+            goto done;
+          }
+
+//          copy_from_user(curr, iovec[i].iov_base, iovec[i].iov_len);
+          curr += iovec[i].iov_len;
+      }
+  }
+
+  if(msghdr.msg_controllen != 0) {
+      if(edge_call_check_ptr_valid((uintptr_t) curr, msghdr.msg_controllen) != 0){
+          goto done;
+      }
+
+      copy_from_user(curr, msghdr.msg_control, msghdr.msg_controllen);
+      args->msg_controllen = msghdr.msg_controllen;
+      args->msg_control_offs = (curr - (void *) args);
+      curr += args->msg_namelen;
+  }
+
+  size_t totalsize = sizeof(struct edge_syscall) + (curr - (void *) args);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  // Copy flags back
+  msghdr.msg_flags = args->msg_flags;
+  copy_to_user((void *) msg, &msghdr, sizeof(struct msghdr));
+
+  // Copy back the iovec array, since the host may have trashed this
+  copy_from_user(iovec, msghdr.msg_iov, msghdr.msg_iovlen * sizeof(struct iovec));
+  if(msghdr.msg_iovlen != 0) {
+      for(i = 0; i < msghdr.msg_iovlen; i++) {
+          copy_to_user(iovec[i].iov_base, iovec_data, iovec[i].iov_len);
+          iovec_data += iovec[i].iov_len;
+      }
+  }
+
+done:
+  print_strace("[runtime] proxied recvmsg: %d\n", ret);
+  return ret;
+}
+
+uintptr_t io_syscall_connect(int sockfd, uintptr_t addr, socklen_t addrlen) {
+  uintptr_t ret = -1;
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  sargs_SYS_connect* args = (sargs_SYS_connect*) edge_syscall->data;
+
+  edge_syscall->syscall_num = SYS_connect;
+  args->sockfd = sockfd;
+  args->addrlen = addrlen;
+
+  if(edge_call_check_ptr_valid((uintptr_t) &args->addr, args->addrlen) != 0) {
+    goto done;
+  }
+
+  copy_from_user(&args->addr, (void *) addr, args->addrlen);
+  size_t totalsize = (sizeof(struct edge_syscall)) + sizeof(sargs_SYS_connect);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+done:
+  print_strace("[runtime] proxied connect: fd: %d, ret: %d\r\n", args->sockfd, ret);
+  return ret;
+}
+
 
 #endif /* USE_NET_SYSCALL */

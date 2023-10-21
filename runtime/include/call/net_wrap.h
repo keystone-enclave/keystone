@@ -23,5 +23,9 @@ uintptr_t io_syscall_sendto(int sockfd, uintptr_t buf, size_t len, int flags,
 uintptr_t io_syscall_sendfile(int out_fd, int in_fd, uintptr_t offset, int count);
 uintptr_t io_syscall_getuid();
 uintptr_t io_syscall_pselect(int nfds, uintptr_t readfds, uintptr_t writefds, uintptr_t exceptfds, uintptr_t timeout, uintptr_t sigmask);
+uintptr_t io_syscall_ppoll(uintptr_t fds, int nfds, uintptr_t timeout, uintptr_t sigmask);
+uintptr_t io_syscall_sendmsg(int sockfd, uintptr_t msg, int flags);
+uintptr_t io_syscall_recvmsg(int sockfd, uintptr_t msg, int flags);
+uintptr_t io_syscall_connect(int sockfd, uintptr_t addr, socklen_t addrlen);
 #endif /* _NET_WRAP_H_ */
 #endif /* USE_NET_SYSCALL */
