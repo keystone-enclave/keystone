@@ -65,13 +65,13 @@ typedef struct sargs_SYS_socket{
   int protocol;
 } sargs_SYS_socket;
 
-typedef struct sargs_SYS_setsockopt{
+typedef struct sargs_SYS_getsetsockopt{
   int socket;
   int level;
   int option_name;
   int option_value;
   socklen_t option_len;
-} sargs_SYS_setsockopt;
+} sargs_SYS_getsetsockopt;
 
 typedef struct sargs_SYS_connect{
   int sockfd;

@@ -36,7 +36,7 @@ uintptr_t io_syscall_setsockopt(int socket, int level, int option_name, const vo
   struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
   edge_syscall->syscall_num = SYS_setsockopt;
 
-  sargs_SYS_setsockopt *args = (sargs_SYS_setsockopt *) edge_syscall->data;
+  sargs_SYS_getsetsockopt *args = (sargs_SYS_getsetsockopt *) edge_syscall->data;
 
   args->socket = socket; 
   args->level = level; 
@@ -49,12 +49,39 @@ uintptr_t io_syscall_setsockopt(int socket, int level, int option_name, const vo
 
   copy_from_user(&args->option_value, option_value, option_len);
 
-  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_setsockopt);
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_getsetsockopt);
   ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
 
   print_strace("[runtime] proxied setsockopt: %d \r\n", ret);
   return ret; 
 
+}
+
+uintptr_t io_syscall_getsockopt(int socket, int level, int optname, uintptr_t optval, uintptr_t optlen){
+  uintptr_t ret = -1;
+  struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  edge_syscall->syscall_num = SYS_getsockopt;
+
+  sargs_SYS_getsetsockopt *args = (sargs_SYS_getsetsockopt *) edge_syscall->data;
+
+  args->socket = socket;
+  args->level = level;
+  args->option_name = optname;
+
+  // First, copy the available length
+  copy_from_user(&args->option_len, (void *) optlen, sizeof(socklen_t));
+
+  size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_getsetsockopt);
+  ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+
+  // Copy back the actual length and the data
+  // todo assert that size back is actually valid
+
+  copy_to_user((void *) optlen, &args->option_len, sizeof(socklen_t));
+  copy_to_user((void *) optval, &args->option_value, args->option_len);
+
+  print_strace("[runtime] proxied getsockopt: %d \r\n", ret);
+  return ret;
 }
 
 uintptr_t io_syscall_connect(int sockfd, uintptr_t addr, socklen_t addrlen){

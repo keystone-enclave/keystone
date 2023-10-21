@@ -133,8 +133,12 @@ incoming_syscall(struct edge_call* edge_call) {
       ret = socket(socket_args->domain, socket_args->type, socket_args->protocol); 
       break; 
     case (SYS_setsockopt):;
-      sargs_SYS_setsockopt *setsockopt_args = (sargs_SYS_setsockopt *) syscall_info->data; 
+      sargs_SYS_getsetsockopt *setsockopt_args = (sargs_SYS_getsetsockopt *) syscall_info->data; 
       ret = setsockopt(setsockopt_args->socket, setsockopt_args->level, setsockopt_args->option_name, &setsockopt_args->option_value, setsockopt_args->option_len);
+      break;
+    case (SYS_getsockopt):;
+      sargs_SYS_getsetsockopt  *getsockopt_args = (sargs_SYS_getsetsockopt *) syscall_info->data;
+      ret = getsockopt(getsockopt_args->socket, getsockopt_args->level, getsockopt_args->option_name, &getsockopt_args->option_value, &getsockopt_args->option_len);
       break;
     case (SYS_connect):;
       sargs_SYS_connect *connect_args = (sargs_SYS_connect *) syscall_info->data; 

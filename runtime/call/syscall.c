@@ -464,7 +464,10 @@ void handle_syscall(struct encl_ctx* ctx)
     break; 
   case(SYS_setsockopt):
     ret = io_syscall_setsockopt((int) arg0, (int) arg1, (int) arg2, (int *) arg3, (int) arg4); 
-    break; 
+    break;
+  case(SYS_getsockopt):
+    ret = io_syscall_getsockopt((int) arg0, (int) arg1, (int) arg2, (uintptr_t) arg3, (uintptr_t) arg4);
+    break;
   case(SYS_connect):
     ret = io_syscall_connect((int) arg0, (uintptr_t) arg1, (int) arg2);
     break;
