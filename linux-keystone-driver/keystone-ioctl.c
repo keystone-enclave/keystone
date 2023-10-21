@@ -72,6 +72,7 @@ int keystone_finalize_enclave(unsigned long arg)
   create_args.free_paddr = enclp->free_paddr;
 
   create_args.params = enclp->params;
+  create_args.misc_params = enclp->miscParams;
 
   ret = sbi_sm_create_enclave(&create_args);
 

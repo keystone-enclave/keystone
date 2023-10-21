@@ -79,6 +79,11 @@ typedef struct sargs_SYS_connect{
   socklen_t addrlen;
 } sargs_SYS_connect;
 
+typedef struct sargs_SYS_clock_gettime {
+  clockid_t clock;
+  struct timespec tp;
+} sargs_SYS_clock_gettime;
+
 typedef struct sargs_SYS_bind{
   int sockfd;
   struct sockaddr_storage addr;

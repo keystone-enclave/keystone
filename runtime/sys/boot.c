@@ -10,6 +10,7 @@
 #include "mm/mm.h"
 #include "sys/env.h"
 #include "mm/paging.h"
+#include "call/linux_wrap.h"
 
 #ifdef USE_DRIVERS
 #include "drivers/drivers.h"
@@ -169,6 +170,12 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* set timer */
   init_timer();
+  // get misc_params
+  struct runtime_misc_params_t misc_params;
+  struct runtime_misc_params_t* misc_params_phys_addr = (struct runtime_misc_params_t*)translate((uintptr_t)&misc_params);
+  sbi_get_misc_params(misc_params_phys_addr);
+  initial_time_since_unix_epoch_s = misc_params.time_since_unix_epoch_s;
+  // print_strace("!!! Value of passed Unix Time is: %ld\n", misc_params.time_since_unix_epoch_s);
 
 #ifdef USE_DRIVERS
   /* initialize any drivers included in the .drivers section */

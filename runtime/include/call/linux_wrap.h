@@ -8,6 +8,8 @@
 
 struct timespec;
 
+extern uint64_t initial_time_since_unix_epoch_s;
+
 uintptr_t linux_uname(void* buf);
 uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp);
 uintptr_t linux_rt_sigprocmask(int how, const sigset_t *set, sigset_t *oldset);

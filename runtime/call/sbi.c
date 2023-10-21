@@ -126,3 +126,8 @@ uintptr_t
 sbi_unshare_region(uintptr_t addr, int with) {
   return SBI_CALL_2(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_UNSHARE_REGION, addr, with);
 }
+
+uintptr_t
+sbi_get_misc_params(struct runtime_misc_params_t* out_phys_adr) {
+  return SBI_CALL_1(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE, SBI_SM_GET_MISC_PARAMS, out_phys_adr);
+}

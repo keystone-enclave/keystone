@@ -21,9 +21,37 @@
 
 #define CLOCK_FREQ 1000000000
 
+uint64_t initial_time_since_unix_epoch_s;
+
 //TODO we should check which clock this is
 uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp){
   print_strace("[runtime] clock_gettime not fully supported (clock %x, assuming)\r\n", clock);
+  // // original
+  // print_strace("[runtime] clock_gettime not fully supported (clock %x, assuming)\r\n", clock);
+  // unsigned long cycles;
+  // __asm__ __volatile__("rdcycle %0" : "=r"(cycles));
+  // 
+  // unsigned long sec = cycles / CLOCK_FREQ;
+  // unsigned long nsec = (cycles % CLOCK_FREQ);
+  // copy_to_user(&(tp->tv_sec), &sec, sizeof(unsigned long));
+  // copy_to_user(&(tp->tv_nsec), &nsec, sizeof(unsigned long));
+  // return 0;
+
+  // // time from linux
+  // // TODO(chungmcl): If you grab time from Linux, ensure NTP is enabled
+  // in conf/qemu_riscv64_virt_defconfig
+  // uintptr_t ret = -1;
+  // struct edge_syscall* edge_syscall = (struct edge_syscall*)edge_call_data_ptr();
+  // edge_syscall->syscall_num = SYS_clock_gettime;
+  // struct sargs_SYS_clock_gettime* params = (struct sargs_SYS_clock_gettime*)edge_syscall->data;
+  // params->clock = clock;
+  // size_t totalsize = sizeof(struct edge_syscall) + sizeof(sargs_SYS_clock_gettime);
+  // ret = dispatch_edgecall_syscall(edge_syscall, totalsize);
+  // copy_to_user(tp, &params->tp, sizeof(struct timespec));
+  // print_strace("!!! clock_gettime on clock %i sec: %ld\n", (int)clock, params->tp.tv_sec);
+  // return ret;
+
+  // time from initial_time_since_unix_epoch_s + hardware clock since boot
   unsigned long cycles;
   __asm__ __volatile__("rdcycle %0" : "=r"(cycles));
 
@@ -33,6 +61,11 @@ uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp){
   copy_to_user(&(tp->tv_sec), &sec, sizeof(unsigned long));
   copy_to_user(&(tp->tv_nsec), &nsec, sizeof(unsigned long));
 
+  struct timespec timespec;
+  timespec.tv_sec = initial_time_since_unix_epoch_s + sec;
+  timespec.tv_nsec = (initial_time_since_unix_epoch_s * 1000) + nsec;
+  copy_to_user(tp, &timespec, sizeof(struct timespec));
+  print_strace("!!! clock_gettime on clock %i sec: %ld\n", (int)clock, timespec.tv_sec);
   return 0;
 }
 

@@ -48,4 +48,7 @@ sbi_share_region(uintptr_t addr, size_t size, int with);
 uintptr_t
 sbi_unshare_region(uintptr_t addr, int with);
 
+uintptr_t
+sbi_get_misc_params(struct runtime_misc_params_t* out_phys_adr);
+
 #endif

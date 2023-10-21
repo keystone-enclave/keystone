@@ -46,11 +46,13 @@ class Params {
     untrusted_size = size;
   }
   void setFreeMemSize(uint64_t size) { freemem_size = size; }
+  void setTimeSinceUnixEpoch(uint64_t seconds) { time_since_unix_epoch_s = seconds; }
   bool isSimulated() { return simulated; }
   uintptr_t getUntrustedMem() { return untrusted; }
   uintptr_t getUntrustedSize() { return untrusted_size; }
   uintptr_t getUntrustedEnd() { return untrusted + untrusted_size; }
   uintptr_t getFreeMemSize() { return freemem_size; }
+  uintptr_t getTimeSinceUnixEpoch() { return time_since_unix_epoch_s; };
 
  private:
   bool simulated;
@@ -59,6 +61,7 @@ class Params {
   uint64_t untrusted;
   uint64_t untrusted_size;
   uint64_t freemem_size;
+  uint64_t time_since_unix_epoch_s;
 };
 
 }  // namespace Keystone

@@ -30,6 +30,7 @@
 #define SBI_SM_REGISTER_HANDLER  3011
 #define SBI_SM_SHARE_REGION      3012
 #define SBI_SM_UNSHARE_REGION    3013
+#define SBI_SM_GET_MISC_PARAMS   3014
 #define FID_RANGE_ENCLAVE        3999
 
 /* 4000-4999 are experimental */
@@ -63,6 +64,11 @@ struct runtime_pa_params_t {
   uintptr_t free_base;
 };
 
+struct runtime_misc_params_t {
+  uint64_t time_since_unix_epoch_s;
+};
+
+
 struct keystone_sbi_pregion_t {
   uintptr_t paddr;
   size_t size;
@@ -77,6 +83,7 @@ struct keystone_sbi_create_t {
   uintptr_t free_paddr;
 
   struct runtime_va_params_t params;
+  struct runtime_misc_params_t misc_params;
 };
 
 #endif  // __SM_CALL_H__
