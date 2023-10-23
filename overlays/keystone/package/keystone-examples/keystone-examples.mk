@@ -16,8 +16,7 @@ KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk keystone-runtime
 # Required to build enclaved ML accelerators
 ifneq ($(BR2_EXTERNAL_TVM_PATH),)
 KEYSTONE_EXAMPLES_DEPENDENCIES += tvm host-tvm #host-python-tvm host-python-vta
-KEYSTONE_EXAMPLES_CONF_OPTS += -DCMAKE_C_FLAGS="-I$(HOST_DIR)/usr/include -L$(HOST_DIR)/usr/lib/tvm" \
-                                -DCMAKE_CXX_FLAGS="-I$(HOST_DIR)/usr/include"
+KEYSTONE_EXAMPLES_CONF_OPTS += -DBUILDROOT_HOST_DIR=$(HOST_DIR) -DBUILDROOT_TARGET_DIR=$(TARGET_DIR)
 
 # We take a bit of a non-buildroot approach here. We need several python packages in order to
 # retrieve pretrained machine learning models. The primary package used here (in conjunction with
