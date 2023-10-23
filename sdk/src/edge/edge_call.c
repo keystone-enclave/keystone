@@ -22,7 +22,7 @@ edge_call_get_ptr_from_offset(
   // TODO double check these checks
 
   /* Validate that _shared_start+offset is sane */
-  if (offset > UINTPTR_MAX - _shared_start || offset > _shared_len) {
+  if (offset > UINTPTR_MAX - _shared_start || offset >= _shared_len) {
     return -1;
   }
 
