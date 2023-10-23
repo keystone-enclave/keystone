@@ -1,6 +1,8 @@
 /* Default platform does nothing special here */
 #include "../../enclave.h"
 
+#include <sbi/sbi_string.h>
+
 unsigned long platform_init_global_once(){
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
@@ -50,7 +52,7 @@ extern byte sanctum_sm_hash[MDSIZE];
 extern byte sanctum_sm_signature[SIGNATURE_SIZE];
 extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
 extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
-extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE]
+extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
 
 extern byte sm_hash[MDSIZE];
 extern byte sm_signature[SIGNATURE_SIZE];

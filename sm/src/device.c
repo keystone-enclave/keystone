@@ -161,7 +161,7 @@ int fdt_init_pmp_devices(void *fdt) {
             }
 
             ret = pmp_region_init_atomic(mmio_addr, ROUNDUP(mmio_size, PAGE_SIZE),
-                                         PMP_PRI_ANY, &region, 0);
+                                         PMP_PRI_ANY, &region, 0, false);
             if(ret) {
                 goto _fail;
             }
@@ -351,4 +351,21 @@ region_id region_from_device_name(const char *devname) {
 #endif // NUM_SECURE_DEVS
 
     return -1;
+}
+
+bool device_is_claimed(const char *devname) {
+    __attribute__((unused)) int i;
+    if(!devname) {
+        return false;
+    }
+
+#if NUM_SECURE_DEVS
+    for(i = 0; i < MIN(num_secure_devs, NUM_SECURE_DEVS); i++) {
+        if(strcmp(secure_devs[i].devname, devname) == 0) {
+            return secure_devs[i].claimed;
+        }
+    }
+#endif
+
+    return false;
 }

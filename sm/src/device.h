@@ -18,5 +18,6 @@ int device_switch_to_host(void);
 // internal utility. these are only implemented for secure devices
 const char *device_name_from_region(region_id rid);
 region_id region_from_device_name(const char *devname);
+bool device_is_claimed(const char *devname);
 
 #endif //_DEVICE_H_
