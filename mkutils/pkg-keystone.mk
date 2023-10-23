@@ -38,8 +38,8 @@ include $(KEYSTONE)/mkutils/args.mk
 
 # This macro hashes the contents of a specific directory (truncated to 16 chars)
 define keystone_hash_contents
-$(shell (find $(1) -type f -print0 | sort -z | xargs -0 sha256sum ; \
-            find $(1) \( -type f -o -type d \) -print0 | sort -z | \
+$(shell (find $(1) -type f $(foreach d,$(2),-not -path "$(d)") -print0 | sort -z | xargs -0 sha256sum ; \
+            find $(1) $(foreach d,$(2),-not -path "$(d)") \( -type f -o -type d \) -print0 | sort -z | \
                 xargs -0 stat -c '%n %a') | sha256sum | awk -F' ' '{ print $$1 }' | head -c16)
 endef
 
@@ -75,11 +75,19 @@ endef
 
 define inner-keystone-package
 
-$(2)_VERSION := $$(call keystone_hash_contents,$($(3)))
+$(2)_VERSION := $$(call keystone_hash_contents,$($(3)),$$($(3)_IGNORE_DIRS))
 $(2)_SITE = $($(3))
 $(2)_SITE_METHOD = local
 
 $(call keystone_dirclean,$(1),$$($(2)_VERSION))
+
+# Delete files which are specified as ignored by the package
+ifdef $(3)_IGNORE_DIRS
+define $(2)_CLEANUP_RSYNCED_FILES
+	find $$(@D) \( $$(foreach d,$$($(3)_IGNORE_DIRS),-path "$$(d)" -o) -false \) -delete
+endef
+$(2)_POST_RSYNC_HOOKS += $(2)_CLEANUP_RSYNCED_FILES
+endif
 
 endef
 

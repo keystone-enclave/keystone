@@ -7,6 +7,7 @@
 ifeq ($(KEYSTONE_SDK),)
 $(error KEYSTONE_SDK directory not defined)
 else
+KEYSTONE_SDK_IGNORE_DIRS = */cmake-build-debug* */.idea*
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 

@@ -7,6 +7,7 @@
 ifeq ($(KEYSTONE_RUNTIME),)
 $(error KEYSTONE_RUNTIME directory not defined)
 else
+KEYSTONE_RUNTIME_IGNORE_DIRS = */cmake-build-debug* */.idea*
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 

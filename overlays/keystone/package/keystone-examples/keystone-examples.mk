@@ -7,6 +7,7 @@
 ifeq ($(KEYSTONE_EXAMPLES),)
 $(error KEYSTONE_EXAMPLES directory not defined)
 else
+KEYSTONE_EXAMPLES_IGNORE_DIRS = */cmake-build-debug* */.idea*
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 

@@ -7,6 +7,7 @@
 ifeq ($(KEYSTONE_SM),)
 $(error KEYSTONE_SM directory not defined)
 else
+KEYSTONE_SM_IGNORE_DIRS = */*.o */*.d
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 
