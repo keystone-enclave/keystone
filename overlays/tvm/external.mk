@@ -33,6 +33,7 @@ include $(BR2_EXTERNAL_TVM_PATH)/package/python-vta/python-vta.mk
 #
 # https://luplab.cs.ucdavis.edu/2022/01/06/buildroot-and-compiler-on-target.html
 
+ifeq ($(BR2_PACKAGE_GCC_TARGET),y)
 .PHONY: gcc-target-post-finalize
 gcc-target-post-finalize: target-finalize
 	$(warning gcc-target-post-finalize)
@@ -42,12 +43,14 @@ gcc-target-post-finalize: target-finalize
                 do rename .bak '' $$f ; done
 
 $(TARGETS_ROOTFS): gcc-target-post-finalize
+endif
 
 # We want to conditionally patch Linux depending on whether VTA is enabled,
 # and also which specific VTA family we are building for. These have minor
 # differences in the device tree as well as the CMA allocator
 
 ifeq ($(BR2_PACKAGE_TVM_VTA),y)
+ifeq ($(KEYSTONE_PLATFORM),mpfs)
 
 define LINUX_PATCH_FOR_VTA
 	$(APPLY_PATCHES) $(LINUX_BUILDDIR) $(BR2_EXTERNAL_TVM_PATH)/patches/linux \
@@ -55,4 +58,5 @@ define LINUX_PATCH_FOR_VTA
 endef
 
 LINUX_POST_PATCH_HOOKS += LINUX_PATCH_FOR_VTA
+endif
 endif
