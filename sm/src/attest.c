@@ -37,9 +37,7 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
   hash_ctx hash_ctx;
   hash_init(&hash_ctx);
 
-  // TODO: move untrusted_ptr to pa_params and remove below !!!!!! also what to do w/ this?
-  // hash the runtime parameters
-  // hash_extend(&hash_ctx, &enclave->params, sizeof(struct runtime_va_params_t));
+  // TODO: ensure untrusted and free sizes
 
   // hash the epm contents
   int valid = validate_and_hash_epm(&hash_ctx, enclave);
