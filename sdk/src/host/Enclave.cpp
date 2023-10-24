@@ -38,6 +38,10 @@ calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
    * away from this problem.
    * 15 pages will be more than sufficient to cover several hundreds of
    * megabytes of enclave/runtime. */
+  /* FIXME Part 2: now that loader does loading, .bss sections also eat up
+   * space. Eapp dev must make FREEMEM big enough to fit this!!
+   * Possible fix -- re-add exact .bss calculations?
+   */
 
   /* Add one page each for bss segments of runtime and eapp */ 
   // TODO: add space for stack?
@@ -101,8 +105,7 @@ Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
 	return startOffset;
 }
 
-static void measureElfFile(hash_ctx_t* hash_ctx, const char* path) {
-  ElfFile* file = new ElfFile(path);
+static void measureElfFile(hash_ctx_t* hash_ctx, ElfFile* file) {
   uintptr_t fptr = (uintptr_t) file->getPtr();
   uintptr_t fend = fptr + (uintptr_t) file->getFileSize();
 
@@ -116,8 +119,6 @@ static void measureElfFile(hash_ctx_t* hash_ctx, const char* path) {
       hash_extend_page(hash_ctx, (void*) fptr);
     }
   }
-
-  delete file;
 }
 
 Error
@@ -125,9 +126,20 @@ Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, cons
   hash_ctx_t hash_ctx;
   hash_init(&hash_ctx);
 
-  measureElfFile(&hash_ctx, loaderpath);
-  measureElfFile(&hash_ctx, runtimepath);
-  measureElfFile(&hash_ctx, eapppath);
+  ElfFile* loader = new ElfFile(loaderpath);
+  ElfFile* runtime = new ElfFile(runtimepath);
+  ElfFile* eapp = new ElfFile(eapppath);
+
+  uintptr_t sizes[3] = { PAGE_UP(loader->getFileSize()), PAGE_UP(runtime->getFileSize()),
+                          PAGE_UP(eapp->getFileSize()) };
+  hash_extend(&hash_ctx, (void*) sizes, sizeof(sizes));
+
+  measureElfFile(&hash_ctx, loader);
+  delete loader;
+  measureElfFile(&hash_ctx, runtime);
+  delete runtime;
+  measureElfFile(&hash_ctx, eapp);
+  delete eapp;
 
   hash_finalize(hash, &hash_ctx);
 
