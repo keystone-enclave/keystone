@@ -21,6 +21,7 @@
 
 size_t untrusted_size = 2 * 1024 * 1024;
 size_t freemem_size   = 48 * 1024 * 1024;
+uintptr_t utm_ptr     = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
 
 using Keystone::Enclave;
 using Keystone::Error;
@@ -34,11 +35,11 @@ TEST(Enclave_Init, DeterministicMeasurement) {
   Params params1, params2;
 
   params1.setFreeMemSize(untrusted_size);
-  params1.setUntrustedSize(untrusted_size);
+  params1.setUntrustedMem(utm_ptr, untrusted_size);
   params1.setSimulated(true);
 
   params2.setFreeMemSize(untrusted_size);
-  params2.setUntrustedSize(untrusted_size);
+  params2.setUntrustedMem(utm_ptr, untrusted_size);
   params2.setSimulated(true);
 
   EXPECT_EQ(Error::Success, enclave1.init(TEST_EAPP, EYRIE_RT, params1));
@@ -56,7 +57,7 @@ TEST(Enclave_Init, InvalidRT) {
   Params params;
 
   params.setFreeMemSize(untrusted_size);
-  params.setUntrustedSize(untrusted_size);
+  params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
 
   EXPECT_EQ(enclave.init(TEST_EAPP, FAKE_RT, params), Error::FileInitFailure);
@@ -70,7 +71,7 @@ TEST(Enclave_Init, InvalidEAPP) {
   Params params;
 
   params.setFreeMemSize(untrusted_size);
-  params.setUntrustedSize(untrusted_size);
+  params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
 
   EXPECT_EQ(enclave.init(FAKE_EAPP, EYRIE_RT, params), Error::FileInitFailure);
@@ -84,7 +85,7 @@ TEST(Enclave_Run, RunTest) {
   Params params;
 
   params.setFreeMemSize(untrusted_size);
-  params.setUntrustedSize(untrusted_size);
+  params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
 
   EXPECT_EQ(enclave.init(TEST_EAPP, EYRIE_RT, params), Error::Success);

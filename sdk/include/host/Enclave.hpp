@@ -41,7 +41,7 @@ class Enclave {
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   bool mapUntrusted(size_t size);
-  void copyFile(uintptr_t filePtr, size_t fileSize);
+  uintptr_t copyFile(uintptr_t filePtr, size_t fileSize);
   void allocUninitialized(ElfFile* elfFile);
   void loadElf(ElfFile* elfFile);
 
@@ -50,12 +50,10 @@ class Enclave {
   bool prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr);
   bool initMemory();
 
-  // static void measureElfFile(hash_ctx_t* hash_ctx, const char* path);
-
  public:
   Enclave();
   ~Enclave();
-  static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params);
+  static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath);
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   Memory* getMemory();
@@ -72,8 +70,5 @@ class Enclave {
 
 uint64_t
 calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles);
-
-void
-measureElfFile(hash_ctx_t* hash_ctx, const char* path); // TODO: Make class member
 
 }  // namespace Keystone

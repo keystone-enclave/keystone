@@ -80,18 +80,21 @@ struct keystone_sbi_pregion
   uintptr_t paddr;
   size_t size;
 };
+struct runtime_va_params_t
+{
+  uintptr_t runtime_entry;
+  uintptr_t user_entry;
+  uintptr_t untrusted_ptr;
+  uintptr_t untrusted_size;
+};
 
-// same as keystone_user.h
-struct runtime_params
+struct runtime_pa_params
 {
   uintptr_t dram_base;
   uintptr_t dram_size;
   uintptr_t runtime_base;
   uintptr_t user_base;
   uintptr_t free_base;
-  uintptr_t untrusted_base;
-  uintptr_t untrusted_size;
-  uintptr_t free_requested; // for attestation
 };
 
 struct keystone_sbi_create
@@ -102,8 +105,8 @@ struct keystone_sbi_create
   uintptr_t runtime_paddr;
   uintptr_t user_paddr;
   uintptr_t free_paddr;
-  uintptr_t free_requested; // for attestation
 
+  struct runtime_va_params_t params;
   unsigned int* eid_pptr; // TODO: remove?
 };
 

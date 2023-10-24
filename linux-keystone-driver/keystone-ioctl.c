@@ -24,7 +24,7 @@ int keystone_create_enclave(struct file *filep, unsigned long arg)
   }
 
   /* Pass base page table */
-  enclp->epm_paddr = __pa(enclave->epm->root_page_table);
+  enclp->pt_ptr = __pa(enclave->epm->root_page_table);
   enclp->epm_size = enclave->epm->size;
 
   /* allocate UID */
@@ -71,7 +71,8 @@ int keystone_finalize_enclave(unsigned long arg)
   create_args.runtime_paddr = enclp->runtime_paddr;
   create_args.user_paddr = enclp->user_paddr;
   create_args.free_paddr = enclp->free_paddr;
-  create_args.free_requested = enclp->free_requested;
+
+  create_args.params = enclp->params;
 
   ret = sbi_sm_create_enclave(&create_args);
 
@@ -126,7 +127,7 @@ int utm_init_ioctl(struct file *filp, unsigned long arg)
   struct utm *utm;
   struct enclave *enclave;
   struct keystone_ioctl_create_enclave *enclp = (struct keystone_ioctl_create_enclave *) arg;
-  long long unsigned untrusted_size = enclp->utm_size;
+  long long unsigned untrusted_size = enclp->params.untrusted_size;
 
   enclave = get_enclave_by_id(enclp->eid);
 
@@ -146,7 +147,7 @@ int utm_init_ioctl(struct file *filp, unsigned long arg)
   /* prepare for mmap */
   enclave->utm = utm;
 
-  enclp->utm_paddr = __pa(utm->ptr);
+  enclp->utm_free_ptr = __pa(utm->ptr);
 
   return ret;
 }

@@ -32,9 +32,10 @@ SimulatedEnclaveMemory::allocMem(size_t size) {
 
 uintptr_t
 SimulatedEnclaveMemory::allocUtm(size_t size) {
-  utmPhysAddr   = allocMem(size);
+  utmFreeList   = allocMem(size);
   untrustedSize = size;
-  return utmPhysAddr;
+  utmPhysAddr   = utmFreeList;
+  return utmFreeList;
 }
 
 uintptr_t

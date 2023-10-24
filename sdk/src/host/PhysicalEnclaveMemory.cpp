@@ -19,6 +19,7 @@ PhysicalEnclaveMemory::init(
 uintptr_t
 PhysicalEnclaveMemory::allocUtm(size_t size) {
   uintptr_t ret = pDevice->initUTM(size);
+  utmFreeList   = ret;
   untrustedSize = size;
   utmPhysAddr   = ret;
   return ret;

@@ -24,6 +24,7 @@ const uint8_t ref_hash[MD_SIZE] = {
 
 size_t untrusted_size = 2 * 1024 * 1024;
 size_t freemem_size   = 48 * 1024 * 1024;
+uintptr_t utm_ptr     = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
 
 using Keystone::Enclave;
 using Keystone::Params;
@@ -36,7 +37,7 @@ TEST(Copy_Elf, Valid) {
   Params params; 
 	
   params.setFreeMemSize(untrusted_size);
-  params.setUntrustedSize(untrusted_size);
+  params.setUntrustedMem(utm_ptr, untrusted_size);
   params.setSimulated(true);
   
   enclave.init(TEST_EAPP, EYRIE_RT, params);

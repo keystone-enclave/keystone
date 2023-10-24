@@ -31,7 +31,9 @@ struct keystone_sbi_create_t
   uintptr_t runtime_paddr;
   uintptr_t user_paddr;
   uintptr_t free_paddr;
-  uintptr_t free_requested;
+
+  // Parameters
+  struct runtime_params_t params;
 };
 
 struct sbiret sbi_sm_create_enclave(struct keystone_sbi_create_t* args);

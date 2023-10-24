@@ -74,7 +74,8 @@ struct enclave
   byte sign[SIGNATURE_SIZE];
 
   /* parameters */
-  struct runtime_params params;
+  struct runtime_va_params_t params;
+  struct runtime_pa_params pa_params;
 
   /* enclave execution context */
   unsigned int n_thread;
@@ -122,8 +123,8 @@ unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 unsigned long exit_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid);
 unsigned long attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, enclave_id eid);
-// attestation
-unsigned long hash_enclave(struct enclave* enclave);
+/* attestation and virtual mapping validation */
+unsigned long validate_and_hash_enclave(struct enclave* enclave);
 // TODO: These functions are supposed to be internal functions.
 void enclave_init_metadata();
 unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create* dest);

@@ -22,7 +22,7 @@ main(int argc, char** argv) {
   if (argc < 4 || argc > 9) {
     printf(
         "Usage: %s <eapp> <runtime> <loader> [--utm-size SIZE(K)] "
-        "[--freemem-size SIZE(K)] [--sm-bin SM_BIN_PATH]\n",
+        "[--freemem-size SIZE(K)] [--utm-ptr 0xPTR] [--sm-bin SM_BIN_PATH]\n",
         argv[0]);
     return 0;
   }
@@ -32,11 +32,13 @@ main(int argc, char** argv) {
 
   size_t untrusted_size = 2 * 1024 * 1024;
   size_t freemem_size   = 48 * 1024 * 1024;
+  uintptr_t utm_ptr     = (uintptr_t)DEFAULT_UNTRUSTED_PTR;
   bool retval_exist     = false;
   unsigned long retval  = 0;
 
   static struct option long_options[] = {
       {"utm-size", required_argument, 0, 'u'},
+      {"utm-ptr", required_argument, 0, 'p'},
       {"freemem-size", required_argument, 0, 'f'},
       {"sm-bin", required_argument, 0, 's'},
       {0, 0, 0, 0}};
@@ -49,7 +51,7 @@ main(int argc, char** argv) {
   int c;
   int opt_index = 4;
   while (1) {
-    c = getopt_long(argc, argv, "u:f:s:", long_options, &opt_index);
+    c = getopt_long(argc, argv, "u:p:f:s:", long_options, &opt_index);
 
     if (c == -1) break;
 
@@ -58,6 +60,9 @@ main(int argc, char** argv) {
         break;
       case 'u':
         untrusted_size = atoi(optarg) * 1024;
+        break;
+      case 'p':
+        utm_ptr = strtoll(optarg, NULL, 16);
         break;
       case 'f':
         freemem_size = atoi(optarg) * 1024;
@@ -76,7 +81,7 @@ main(int argc, char** argv) {
   Keystone::Params params;
 
   params.setFreeMemSize(freemem_size);
-  params.setUntrustedSize(untrusted_size);
+  params.setUntrustedMem(utm_ptr, untrusted_size);
 
   Verifier verifier{params, eapp_file, rt_file, ld_file, sm_bin_file};
   verifier.run();
