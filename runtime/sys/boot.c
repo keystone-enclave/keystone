@@ -121,7 +121,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   init_freemem();
 
   /* load eapp elf */
-  verify_and_load_elf_file(__va(user_paddr), free_paddr-user_paddr, true);
+  assert(!verify_and_load_elf_file(__va(user_paddr), free_paddr-user_paddr, true));
 
   /* free leaking memory */
   // TODO: clean up after loader -- entire file no longer needed
