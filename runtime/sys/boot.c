@@ -123,6 +123,10 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   /* load eapp elf */
   verify_and_load_elf_file(__va(user_paddr), free_paddr-user_paddr, true);
 
+  /* free leaking memory */
+  // TODO: clean up after loader -- entire file no longer needed
+  // TODO: load elf file doesn't map some pages; those can be re-used. runtime and eapp.
+
   //TODO: This should be set by walking the userspace vm and finding
   //highest used addr. Instead we start partway through the anon space
   set_program_break(EYRIE_ANON_REGION_START + (1024 * 1024 * 1024));
