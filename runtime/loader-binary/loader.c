@@ -229,6 +229,7 @@ int load_runtime(uintptr_t dummy,
   return ret;
 }
 
+// TODO: exit instead, may need to set up some memory stuff first
 void error_and_loop() {
   printf("[loader] ran into error. looping infinitely...\n");
   while(true) {
