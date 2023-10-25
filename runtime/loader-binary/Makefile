@@ -9,7 +9,7 @@ endif
 CFLAGS = -Wall -Werror -fno-builtin -nostdlib -g -mcmodel=medany -static $(OPTIONS_FLAGS)
 LDFLAGS = -fPIC -nostdlib -g -static $(shell $(CC) --print-file-name=libgcc.a)
 
-SRCS = mem.c string.c printf.c elf.c elf32.c elf64.c loader.c mm.c sbi.c sbi.c vm.c
+SRCS = mem.c string.c printf.c elf.c elf32.c elf64.c loader.c mm.c sbi.c vm.c
 ASM_SRCS = loader.S
 LOADER = loader
 LOADER_BIN = loader.bin
