@@ -73,5 +73,15 @@ set_target_properties(rt_linkscript PROPERTIES PREFIX "")
 set_target_properties(rt_linkscript PROPERTIES OUTPUT_NAME runtime.ld)
 set_target_properties(rt_linkscript PROPERTIES SUFFIX "")
 
-# Generate final executable
+# Generate final executables
 add_subdirectory(sys)
+
+## Loader
+add_custom_target(loader.bin ALL
+        COMMAND ./build.sh
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/loader-binary
+)
+
+add_custom_command(TARGET loader.bin POST_BUILD
+    COMMAND cp ${CMAKE_SOURCE_DIR}/loader-binary/loader.bin ${CMAKE_SOURCE_DIR}/loader.bin || true
+)

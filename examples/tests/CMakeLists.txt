@@ -102,27 +102,20 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE} ${KE
 
 # add target for Eyrie runtime (see keystone.cmake)
 
-set(eyrie_files_to_copy .options_log eyrie-rt)
+set(eyrie_files_to_copy .options_log eyrie-rt loader.bin)
 add_eyrie_runtime(test-eyrie
   ${eyrie_plugins}
   ${eyrie_files_to_copy})
-
-# add target for loader
-
-set(loader_files_to_copy loader.bin)
-add_loader(test-loader
-  "dev-page-tables"
-  ${loader_files_to_copy})
 
 # add target for packaging (see keystone.cmake)
 
 add_keystone_package(test-package
   ${package_name}
   ${package_script}
-  ${test_script} ${eyrie_files_to_copy} ${all_test_bins} ${host_bin} ${loader_files_to_copy}
+  ${test_script} ${eyrie_files_to_copy} ${all_test_bins} ${host_bin}
   )
 
-add_dependencies(test-package test-eyrie test-loader)
+add_dependencies(test-package test-eyrie)
 
 # add package to the top-level target
 add_dependencies(examples test-package)

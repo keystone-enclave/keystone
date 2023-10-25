@@ -120,7 +120,7 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
     DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${KEYSTONE_EYRIE_RUNTIME} ${eyrie_src}
     CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${KEYSTONE_EYRIE_RUNTIME} -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR}
     BUILD_IN_SOURCE TRUE
-    BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
+    BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log ${eyrie_src}/loader.bin
     INSTALL_COMMAND "")
 
   add_custom_target(${target_name} DEPENDS ${ARGN})
@@ -131,30 +131,6 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   endforeach(item)
 
 endmacro(add_eyrie_runtime)
-
-# CMake macro for loader
-macro(add_loader target_name tag) # the files are passed via ${ARGN}
-  set(loader_prefix loader)
-  set (loader_src ${CMAKE_CURRENT_BINARY_DIR}/${loader_prefix}/src/loader-${target_name})
-
-  ExternalProject_Add(loader-${target_name}
-    PREFIX ${loader_prefix}
-    GIT_REPOSITORY https://github.com/keystone-enclave/elfloader 
-    GIT_TAG ${tag}
-    CONFIGURE_COMMAND ""
-    UPDATE_COMMAND git fetch
-    BUILD_COMMAND ./build.sh
-    BUILD_IN_SOURCE TRUE
-    INSTALL_COMMAND "")
-
-  add_custom_target(${target_name} DEPENDS ${ARGN})
-
-  foreach(item IN ITEMS ${ARGN})
-    add_custom_command(OUTPUT ${item} DEPENDS loader-${target_name} ${loader_src}/${item}
-      COMMAND cp ${loader_src}/${item} ${item})
-  endforeach(item)
-
-endmacro(add_loader)
 
 # CMake macro for Keystone Package
 macro(add_keystone_package target_name package_name package_script) # files are passed via ${ARGN}
