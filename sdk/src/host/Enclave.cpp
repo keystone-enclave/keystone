@@ -28,7 +28,8 @@ calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
 
   for (int i = 0; i < numElfFiles; i++) {
     ElfFile* elfFile = elfFiles[i];
-    req_pages += ceil(elfFile->getFileSize() / PAGE_SIZE);
+    // include pages for both file and .bss sections
+    req_pages += ceil(elfFile->getTotalMemorySize() / PAGE_SIZE);
   }
   /* FIXME: calculate the required number of pages for the page table.
    * We actually don't know how many page tables the enclave might need,
@@ -38,10 +39,6 @@ calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
    * away from this problem.
    * 15 pages will be more than sufficient to cover several hundreds of
    * megabytes of enclave/runtime. */
-  /* FIXME Part 2: now that loader does loading, .bss sections also eat up
-   * space. Eapp dev must make FREEMEM big enough to fit this!!
-   * Possible fix -- re-add exact .bss calculations?
-   */
 
   /* Add one page each for bss segments of runtime and eapp */ 
   // TODO: add space for stack?
