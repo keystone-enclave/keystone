@@ -14,8 +14,6 @@
 /* ELF header functions */
 int
 elf_newFile(void* file, size_t size, elf_t* res) {
-  printf("Creating new elf file struct\n");
-
   return elf_newFile_maybe_unsafe(file, size, true, true, res);
 }
 
@@ -24,13 +22,11 @@ elf_newFile_maybe_unsafe(
     void* file, size_t size, bool check_pht, bool check_st, elf_t* res) {
   elf_t new_file = {.elfFile = file, .elfSize = size};
 
-  printf("Check elf file\n");
   int status = elf_checkFile(&new_file);
   if (status < 0) {
     return status;
   }
 
-  printf("Check program header\n");
   if (check_pht) {
     status = elf_checkProgramHeaderTable(&new_file);
     if (status < 0) {
@@ -38,7 +34,6 @@ elf_newFile_maybe_unsafe(
     }
   }
 
-  printf("Check section table\n");
   if (check_st) {
     status = elf_checkSectionTable(&new_file);
     if (status < 0) {
@@ -46,7 +41,6 @@ elf_newFile_maybe_unsafe(
     }
   }
 
-  printf("Finished validating elf\n");
   if (res) {
     *res = new_file;
   }
@@ -73,13 +67,11 @@ elf_checkFile(elf_t* elfFile) {
   if (res == 0) {
     return 0;
   }
-  printf("Check elf file 32\n");
 
   res = elf64_checkFile(elfFile);
   if (res == 0) {
     return 0;
   }
-  printf("Check elf file 64\n");
 
   return -1;
 }
