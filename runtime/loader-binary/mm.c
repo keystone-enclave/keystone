@@ -67,7 +67,7 @@ __walk_create(pte* root, uintptr_t addr)
 
 
 uint32_t 
-mapPage(uintptr_t va, uintptr_t pa) {
+mapPage(uintptr_t va, uintptr_t pa, int flags) {
   pte* pte = __walk_create(root_page_table, va);
 
   // TODO: what is supposed to happen if page is already allocated?
@@ -77,12 +77,12 @@ mapPage(uintptr_t va, uintptr_t pa) {
 
   uintptr_t phys_page_num = ppn(pa);
 
-  *pte = pte_create(phys_page_num, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
+  *pte = pte_create(phys_page_num, PTE_D | PTE_A | PTE_V | flags);
   return 1;
 }
 
 uint32_t
-allocPage(uintptr_t va, uintptr_t src) {
+allocPage(uintptr_t va, uintptr_t src, int flags) {
   uintptr_t page_addr;
   // uintptr_t* pFreeList = (uintptr_t*)freeList; 
 
@@ -97,7 +97,7 @@ allocPage(uintptr_t va, uintptr_t src) {
   page_addr = get_new_page();
   uintptr_t phys_page_num = ppn(page_addr);
 
-  *pte = pte_create(phys_page_num, PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
+  *pte = pte_create(phys_page_num, PTE_D | PTE_A | PTE_V | flags);
   if (src != (uintptr_t) NULL) {
     memcpy((void*) page_addr, (void*) src, RISCV_PAGE_SIZE);
   } else {

@@ -8,6 +8,14 @@
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
+int pt_mode_from_elf(int elf_pt_mode) {
+  return 
+    (((elf_pt_mode & PF_X) > 0) * PTE_X) |
+    (((elf_pt_mode & PF_W) > 0) * (PTE_W | PTE_R)) |
+    (((elf_pt_mode & PF_R) > 0) * PTE_R)
+  ;
+}
+
 int loadElf(elf_t* elf) {
   for (unsigned int i = 0; i < elf_getNumProgramHeaders(elf); i++) {
     if (elf_getProgramHeaderType(elf, i) != PT_LOAD) {
@@ -19,6 +27,7 @@ int loadElf(elf_t* elf) {
     uintptr_t memory_end = start + elf_getProgramHeaderMemorySize(elf, i);
     char* src            = (char*)(elf_getProgramSegment(elf, i));
     uintptr_t va         = start;
+    int pt_mode          = pt_mode_from_elf(elf_getProgramHeaderFlags(elf, i));
 
     /* va is not page-aligned, so it doesn't own some of the page. Page may already be mapped. */
     if (RISCV_PAGE_OFFSET(va)) {
@@ -26,7 +35,7 @@ int loadElf(elf_t* elf) {
         printf("[runtime] loadElf: va and src are misaligned");
         return -1;
       }
-      uintptr_t new_page = alloc_page(vpn(va), PTE_U | PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
+      uintptr_t new_page = alloc_page(vpn(va), pt_mode);
       if (!new_page)
         //return Error::PageAllocationFailure;asdf
         return -1; //TODO: error class laterasdf
@@ -39,7 +48,7 @@ int loadElf(elf_t* elf) {
     /* first load all pages that do not include .bss segment */
     while (va + RISCV_PAGE_SIZE <= file_end) {
       uintptr_t src_pa = __pa((uintptr_t) src);
-      if (!map_page(vpn(va), ppn(src_pa)))
+      if (!map_page(vpn(va), ppn(src_pa), pt_mode))
         //return Error::PageAllocationFailure;
         return -1; //TODO: error class later
       src += RISCV_PAGE_SIZE;
@@ -48,7 +57,7 @@ int loadElf(elf_t* elf) {
 
     /* load the .bss segments */
     while (va < memory_end) {
-      uintptr_t new_page = alloc_page(vpn(va), PTE_U | PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
+      uintptr_t new_page = alloc_page(vpn(va), pt_mode);
       if (!new_page)
         //return Error::PageAllocationFailure;
         return -1; //TODO: error class later

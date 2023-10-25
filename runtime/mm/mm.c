@@ -69,7 +69,7 @@ __walk_create(pte* root, uintptr_t addr)
 
 /* Create a virtual memory mapping between a physical and virtual page */
 uintptr_t 
-map_page(uintptr_t vpn, uintptr_t ppn) {
+map_page(uintptr_t vpn, uintptr_t ppn, int flags) {
   pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
 
   // TODO: what is supposed to happen if page is already allocated?
@@ -77,7 +77,7 @@ map_page(uintptr_t vpn, uintptr_t ppn) {
     return -1;
   }
 
-  *pte = pte_create(ppn, PTE_U | PTE_D | PTE_A | PTE_R | PTE_W | PTE_X | PTE_V);
+  *pte = pte_create(ppn, PTE_U | PTE_D | PTE_A | PTE_V | flags);
   return 1;
 }
 
@@ -88,8 +88,6 @@ alloc_page(uintptr_t vpn, int flags)
 {
   uintptr_t page;
   pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
-
-  assert(flags & PTE_U);
 
   if (!pte)
     return 0;
@@ -103,7 +101,7 @@ alloc_page(uintptr_t vpn, int flags)
   page = spa_get_zero();
   assert(page);
 
-  *pte = pte_create(ppn(__pa(page)), flags | PTE_V);
+  *pte = pte_create(ppn(__pa(page)), PTE_U | PTE_D | PTE_A | PTE_V | flags);
 #ifdef USE_PAGING
   paging_inc_user_page();
 #endif
