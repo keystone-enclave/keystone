@@ -23,8 +23,13 @@ export BUILDDIR                 ?= $(KEYSTONE)/build-$(KEYSTONE_PLATFORM)$(KEYST
 export BUILDROOT_OVERLAYDIR     ?= $(BUILDDIR)/overlay
 export BUILDROOT_BUILDDIR       ?= $(BUILDDIR)/buildroot.build
 
+
+# options: generic, cva6
 export KEYSTONE_PLATFORM        ?= generic
 export KEYSTONE_BITS            ?= 64
+
+# additional linux FS overlay
+export FS_OVERLAY_DIR			?= $(KEYSTONE)/overlays/fs/$(KEYSTONE_PLATFORM)
 
 include mkutils/args.mk
 include mkutils/log.mk
@@ -76,7 +81,8 @@ $(BUILDROOT_OVERLAYDIR)/.done: $(BUILDROOT_OVERLAYDIR)
 	$(call log,info,Setting up overlay)
 	mkdir -p $(BUILDROOT_OVERLAYDIR)/root/.ssh
 	ssh-keygen -C 'root@keystone' -t rsa -f $(BUILDROOT_OVERLAYDIR)/root/.ssh/id-rsa -N ''
-	cp $(BUILDROOT_OVERLAYDIR)/root/.ssh/{id-rsa.pub,authorized_keys}
+	cp -f $(BUILDROOT_OVERLAYDIR)/root/.ssh/{id-rsa.pub,authorized_keys} 
+	cp -rf $(FS_OVERLAY_DIR)/* $(BUILDROOT_OVERLAYDIR)/ | true
 	touch $@
 
 # Main build target for buildroot. The specific subtarget to build can be overriden
