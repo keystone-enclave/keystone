@@ -1,0 +1,25 @@
+From 1e01634ef8a426f1c58cb1c6455a4a92516f24c0 Mon Sep 17 00:00:00 2001
+From: sahmad <syarif.ahmad@thalesgroup.com>
+Date: Thu, 26 Oct 2023 18:33:21 +0800
+Subject: [PATCH 6/6] fix netif_napi_add to many argument
+
+---
+ drivers/net/ethernet/lowrisc/lowrisc_100MHz.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
+index a047e5ec460a..4c0b82ff36be 100644
+--- a/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
++++ b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
+@@ -760,7 +760,7 @@ static int lowrisc_100MHz_probe(struct platform_device *ofdev)
+ 	ndev->netdev_ops = &lowrisc_netdev_ops;
+ 	ndev->flags &= ~IFF_MULTICAST;
+ 	ndev->watchdog_timeo = TX_TIMEOUT;
+-        netif_napi_add(ndev, &priv->napi, lowrisc_ether_poll, 64);
++        netif_napi_add(ndev, &priv->napi, lowrisc_ether_poll);
+ 
+ 	printk("lowrisc-digilent-ethernet: Lowrisc ethernet platform (%llX-%llX) mapped to %lx\n",
+                lowrisc_ethernet[0].start,
+-- 
+2.34.1
+

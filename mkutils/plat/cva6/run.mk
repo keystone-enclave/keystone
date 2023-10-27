@@ -11,9 +11,6 @@ SDDEVICE_PART2          = $(SD_DEVICE)2
 
 
 flash: $(SD_DEVICE)
-	ifndef SD_DEVICE
-		$(error SD_DEVICE is not set)
-	endif
 	$(info PAYLOAD INFORMATION)
 	$(info $(PAYLOAD))
 	$(info $(SD_DEVICE))

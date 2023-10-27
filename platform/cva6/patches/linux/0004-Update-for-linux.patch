@@ -1,0 +1,49 @@
+From d7a17f4c3faacb42d6289dfabef5ef6fb000e182 Mon Sep 17 00:00:00 2001
+From: sahmad <syarif.ahmad@thalesgroup.com>
+Date: Thu, 26 Oct 2023 18:11:03 +0800
+Subject: [PATCH 4/5] Update-for-linux
+
+---
+ drivers/net/ethernet/lowrisc/Kconfig          | 4 ++--
+ drivers/net/ethernet/lowrisc/lowrisc_100MHz.c | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/ethernet/lowrisc/Kconfig b/drivers/net/ethernet/lowrisc/Kconfig
+index 247a6fbc3029..8a6c3e186f43 100644
+--- a/drivers/net/ethernet/lowrisc/Kconfig
++++ b/drivers/net/ethernet/lowrisc/Kconfig
+@@ -6,7 +6,7 @@ config NET_VENDOR_LOWRISC
+ 	bool "Lowrisc devices"
+ 	default y
+ 	depends on RISCV
+-	---help---
++	help
+ 	  If you have a network (Ethernet) card belonging to this class, say Y.
+ 
+ 	  Note that the answer to this question doesn't directly affect the
+@@ -20,7 +20,7 @@ config LOWRISC_DIGILENT_100MHZ
+ 	tristate "Lowrisc 100MHz Ethernet Nexys4_DDR support"
+ 	depends on RISCV
+ 	select PHYLIB
+-	---help---
++	help
+ 	  This driver supports the 100MHz Ethernet for Nexys4_DDR Digilent boards from Lowrisc.
+ 
+ endif # NET_VENDOR_LOWRISC
+\ No newline at end of file
+diff --git a/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
+index 1ce6778ae59f..a047e5ec460a 100644
+--- a/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
++++ b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
+@@ -224,7 +224,7 @@ static int lowrisc_set_mac_address(struct net_device *ndev, void *address)
+  *
+  * This function is called when Tx time out occurs for Ether100MHz device.
+  */
+-static void lowrisc_tx_timeout(struct net_device *ndev)
++static void lowrisc_tx_timeout(struct net_device *ndev, unsigned int txqueue)
+ {
+ 	struct net_local *priv = netdev_priv(ndev);
+ 
+-- 
+2.34.1
+

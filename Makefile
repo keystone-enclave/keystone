@@ -29,7 +29,7 @@ export KEYSTONE_PLATFORM        ?= generic
 export KEYSTONE_BITS            ?= 64
 
 # additional linux FS overlay
-export FS_OVERLAY_DIR			?= $(KEYSTONE)/overlays/fs/$(KEYSTONE_PLATFORM)
+export FS_OVERLAY_DIR			?= $(KEYSTONE)/platform/$(KEYSTONE_PLATFORM)/overlay
 
 include mkutils/args.mk
 include mkutils/log.mk
