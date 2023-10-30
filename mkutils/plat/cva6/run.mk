@@ -16,5 +16,5 @@ flash: $(SD_DEVICE)
 	$(info $(SD_DEVICE))
 	$(info $(SDDEVICE_PART1))
 	$(info $(SDDEVICE_PART2))
-	sgdisk --clear -g --new=1:2048:30M --new=2:512M:0 --typecode=1:3000 --typecode=2:8300 $(SD_DEVICE)
+	sgdisk --clear -g --new=1:2048:40M --new=2:512M:0 --typecode=1:3000 --typecode=2:8300 $(SD_DEVICE)
 	dd if=$(PAYLOAD) of=$(SDDEVICE_PART1) status=progress oflag=sync bs=1M
