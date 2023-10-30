@@ -1,0 +1,31 @@
+From e2d72c215bbd0fe5970ece55fbd52d33c35d5b7e Mon Sep 17 00:00:00 2001
+From: sahmad <syarif.ahmad@thalesgroup.com>
+Date: Mon, 30 Oct 2023 20:50:21 +0800
+Subject: [PATCH 2/2] workaround to fix CVA6 32 bit "ABi is incompatible" issue
+
+---
+ firmware/payloads/objects.mk | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/firmware/payloads/objects.mk b/firmware/payloads/objects.mk
+index 21e0185..1223cce 100644
+--- a/firmware/payloads/objects.mk
++++ b/firmware/payloads/objects.mk
+@@ -6,14 +6,3 @@
+ # Authors:
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+-
+-firmware-bins-$(FW_PAYLOAD) += payloads/test.bin
+-
+-test-y += test_head.o
+-test-y += test_main.o
+-
+-%/test.o: $(foreach obj,$(test-y),%/$(obj))
+-	$(call merge_objs,$@,$^)
+-
+-%/test.dep: $(foreach dep,$(test-y:.o=.dep),%/$(dep))
+-	$(call merge_deps,$@,$^)
+-- 
+2.34.1
+
