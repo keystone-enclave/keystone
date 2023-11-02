@@ -2,7 +2,6 @@
 #include "csr.h"
 #include "vm.h"
 #include "mm.h"
-#include "mem.h"
 #include "printf.h"
 #include "common.h"
 
