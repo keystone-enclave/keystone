@@ -11,11 +11,13 @@ duplicated_files=(
     "../include/loader/elf64.h"
     "../include/call/sbi.h"
     "../include/util/string.h"
+    "../include/util/printf.h"
     "../loader/elf.c"
     "../loader/elf32.c"
     "../loader/elf64.c"
     "../call/sbi.c"
     "../util/string.c"
+    "../util/printf.c"
 )
 
 # for robustness
@@ -30,7 +32,6 @@ done
 # TODOs:
 # loader: need to combine functionality
 # mm: same
-# printf: replace seems unsafe??
 # vm_defs: recombine? why was stuff removed?
 # vm: also questionable
 

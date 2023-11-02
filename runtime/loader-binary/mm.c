@@ -1,6 +1,7 @@
 #include "mm.h"
 #include "vm.h"
 #include "common.h"
+#include "string.h"
 
 uintptr_t freeList; 
 uintptr_t epmBase; 
