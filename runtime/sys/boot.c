@@ -41,7 +41,7 @@ int verify_and_load_elf_file(uintptr_t ptr, size_t file_size, bool is_eapp) {
   }
 
   // parse and load elf file
-  ret = loadElf(&elf_file);
+  ret = loadElf(&elf_file, 1);
 
   if (is_eapp) { // setup entry point
     uintptr_t entry = elf_getEntryPoint(&elf_file);

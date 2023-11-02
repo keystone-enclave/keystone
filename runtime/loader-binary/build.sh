@@ -15,6 +15,7 @@ duplicated_files=(
     "../include/mm/vm_defs.h"
     "../include/mm/vm.h"
     "../include/mm/mm.h"
+    "../include/loader/loader.h"
     "../loader/elf.c"
     "../loader/elf32.c"
     "../loader/elf64.c"
@@ -23,19 +24,12 @@ duplicated_files=(
     "../util/printf.c"
     "../mm/vm.c"
     "../mm/mm.c"
+    "../loader/loader.c"
 )
-
-# for robustness
-for file in "${duplicated_files[@]}"; do
-    rm "$(basename "$file")" || true
-done
 
 for file in "${duplicated_files[@]}"; do
     cp "$file" .
 done
-
-# TODOs:
-# loader: need to combine functionality
 
 python3 flatten_includes.py
 

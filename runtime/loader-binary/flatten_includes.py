@@ -32,6 +32,5 @@ for root, dirs, files in os.walk(directory):
         if file.endswith(('.c', '.h')):
             file_path = os.path.join(root, file)
             process_file(file_path)
-            print(f"Processed: {file_path}")
 
-print("Replacement complete.")
+print("#include in src's replacement complete.")
