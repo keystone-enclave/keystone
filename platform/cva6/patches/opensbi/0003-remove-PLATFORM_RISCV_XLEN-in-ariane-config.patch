@@ -1,0 +1,24 @@
+From 59ed69975a392eb232be6091da247a94fc5d2767 Mon Sep 17 00:00:00 2001
+From: sahmad <syarif.ahmad@thalesgroup.com>
+Date: Thu, 2 Nov 2023 16:25:17 +0800
+Subject: [PATCH 3/3] remove PLATFORM_RISCV_XLEN in ariane config
+
+---
+ platform/fpga/ariane/config.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/platform/fpga/ariane/config.mk b/platform/fpga/ariane/config.mk
+index 3556461..5716c13 100644
+--- a/platform/fpga/ariane/config.mk
++++ b/platform/fpga/ariane/config.mk
+@@ -7,7 +7,6 @@
+ 
+ #for more infos, check out /platform/template/config.mk
+ 
+-PLATFORM_RISCV_XLEN = 64
+ 
+ # Blobs to build
+ FW_TEXT_START=0x80000000
+-- 
+2.34.1
+
