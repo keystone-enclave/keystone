@@ -1,24 +1,50 @@
 #ifndef __VM_H__
 #define __VM_H__
 
-#include <asm/csr.h>
-
 #include "mm/common.h"
 #include "util/printf.h"
 #include "mm/vm_defs.h"
 
-extern void* rt_base;
-
 extern uintptr_t runtime_va_start;
-extern uintptr_t kernel_offset;
-extern uintptr_t load_pa_start;
-extern pte* root_page_table;
+
+#ifdef LOADER_BIN
+
+#include "csr.h"
+
+/* root page table */
+extern pte root_page_table[];
+/* page tables for loading physical memory */
+extern pte load_l2_page_table[];
+extern pte load_l3_page_table[];
 
 /* Eyrie is for Sv39 */
-static inline uintptr_t satp_new(uintptr_t pa)
+uintptr_t satp_new(uintptr_t pa);
+
+/* no-ops */
+
+static inline uintptr_t kernel_va_to_pa(void* ptr)
 {
-  return (SATP_MODE | (pa >> RISCV_PAGE_BITS));
+  return (uintptr_t) ptr;
 }
+
+static inline uintptr_t __va(uintptr_t pa)
+{
+  return pa;
+}
+
+static inline uintptr_t __pa(uintptr_t va)
+{
+  return va;
+}
+
+#else
+
+/* root page table */
+extern pte* root_page_table;
+
+extern void* rt_base;
+extern uintptr_t kernel_offset; // TODO: is this needed?
+extern uintptr_t load_pa_start;
 
 static inline uintptr_t kernel_va_to_pa(void* ptr)
 {
@@ -34,6 +60,19 @@ static inline uintptr_t __pa(uintptr_t va)
 {
   return (va - EYRIE_LOAD_START) + load_pa_start;
 }
+
+/* Program break */
+extern uintptr_t program_break;
+
+/* freemem */
+extern uintptr_t freemem_va_start;
+extern size_t freemem_size;
+
+/* shared buffer */
+extern uintptr_t shared_buffer;
+extern uintptr_t shared_buffer_size;
+
+#endif
 
 static inline pte pte_create(uintptr_t ppn, int type)
 {
@@ -65,17 +104,5 @@ static inline uintptr_t pte_ppn(pte pte)
 {
   return pte >> PTE_PPN_SHIFT;
 }
-
-/* Program break */
-extern uintptr_t program_break;
-
-/* freemem */
-extern uintptr_t freemem_va_start;
-extern size_t freemem_size;
-
-/* shared buffer */
-extern uintptr_t shared_buffer;
-extern uintptr_t shared_buffer_size;
-
 
 #endif

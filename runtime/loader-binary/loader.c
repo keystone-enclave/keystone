@@ -76,12 +76,6 @@ int loadElf(elf_t* elf) {
    return 0; //TODO: error class later
 }
 
-/* Loader is for Sv39 */
-uintptr_t satp_new(uintptr_t pa)
-{
-  return (SATP_MODE | (pa >> RISCV_PAGE_BITS));
-}
-
 void
 map_physical_memory(uintptr_t dram_base,
                     uintptr_t dram_size)

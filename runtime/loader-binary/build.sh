@@ -13,12 +13,14 @@ duplicated_files=(
     "../include/util/string.h"
     "../include/util/printf.h"
     "../include/mm/vm_defs.h"
+    "../include/mm/vm.h"
     "../loader/elf.c"
     "../loader/elf32.c"
     "../loader/elf64.c"
     "../call/sbi.c"
     "../util/string.c"
     "../util/printf.c"
+    "../mm/vm.c"
 )
 
 # for robustness

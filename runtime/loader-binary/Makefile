@@ -6,7 +6,7 @@ ifeq ($(CROSSCOMPILE),)
 $(error RISCV Toochain is not found: riscv${KEYSTONE_BITS}-buildroot-linux-gnu-gcc)
 endif
 
-CFLAGS = -Wall -Werror -fno-builtin -nostdlib -g -mcmodel=medany -static $(OPTIONS_FLAGS)
+CFLAGS = -Wall -Werror -fno-builtin -nostdlib -g -mcmodel=medany -static -DLOADER_BIN $(OPTIONS_FLAGS)
 LDFLAGS = -fPIC -nostdlib -g -static $(shell $(CC) --print-file-name=libgcc.a)
 
 SRCS = string.c printf.c elf.c elf32.c elf64.c loader.c mm.c sbi.c vm.c
