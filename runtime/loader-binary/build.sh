@@ -14,6 +14,7 @@ duplicated_files=(
     "../include/util/printf.h"
     "../include/mm/vm_defs.h"
     "../include/mm/vm.h"
+    "../include/mm/mm.h"
     "../loader/elf.c"
     "../loader/elf32.c"
     "../loader/elf64.c"
@@ -21,6 +22,7 @@ duplicated_files=(
     "../util/string.c"
     "../util/printf.c"
     "../mm/vm.c"
+    "../mm/mm.c"
 )
 
 # for robustness
@@ -34,8 +36,6 @@ done
 
 # TODOs:
 # loader: need to combine functionality
-# mm: same
-# vm: also questionable
 
 python3 flatten_includes.py
 

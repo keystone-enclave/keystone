@@ -1,11 +1,42 @@
-#include "util/rt_util.h"
 #include "mm/common.h"
 #include "call/syscall.h"
 #include "mm/mm.h"
+#include "mm/vm.h"
+
+#ifdef USE_FREEMEM
+
+#ifdef LOADER_BIN
+
+#include "string.h"
+
+uintptr_t freeList;
+uintptr_t epmBase;
+size_t epmSize;
+
+static uintptr_t spa_get_zero()
+{
+  uintptr_t new_page = freeList;
+  assert(new_page < epmBase + epmSize);
+  if (new_page > epmBase + epmSize) { // TODO: fix assert and remove
+    return 0; // loader is at beginning of linear allocation, 0 is never free
+  }
+  memset((void *) new_page, 0, RISCV_PAGE_SIZE);
+
+  freeList += RISCV_PAGE_SIZE;
+  return new_page;
+}
+
+static void spa_put(uintptr_t page)
+{
+  assert(false); // not implemented
+}
+
+#else
+
 #include "mm/freemem.h"
 #include "mm/paging.h"
 
-#ifdef USE_FREEMEM
+#endif
 
 /* Page table utilities */
 static pte*
@@ -14,11 +45,13 @@ __walk_create(pte* root, uintptr_t addr);
 /* Hacky storage of current u-mode break */
 static uintptr_t current_program_break;
 
-uintptr_t get_program_break(){
+uintptr_t get_program_break()
+{
   return current_program_break;
 }
 
-void set_program_break(uintptr_t new_break){
+void set_program_break(uintptr_t new_break)
+{
   current_program_break = new_break;
 }
 
@@ -69,7 +102,8 @@ __walk_create(pte* root, uintptr_t addr)
 
 /* Create a virtual memory mapping between a physical and virtual page */
 uintptr_t 
-map_page(uintptr_t vpn, uintptr_t ppn, int flags) {
+map_page(uintptr_t vpn, uintptr_t ppn, int flags)
+{
   pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
 
   // TODO: what is supposed to happen if page is already allocated?
@@ -77,7 +111,7 @@ map_page(uintptr_t vpn, uintptr_t ppn, int flags) {
     return -1;
   }
 
-  *pte = pte_create(ppn, PTE_U | PTE_D | PTE_A | PTE_V | flags);
+  *pte = pte_create(ppn, PTE_D | PTE_A | PTE_V | flags);
   return 1;
 }
 
@@ -101,7 +135,7 @@ alloc_page(uintptr_t vpn, int flags)
   page = spa_get_zero();
   assert(page);
 
-  *pte = pte_create(ppn(__pa(page)), PTE_U | PTE_D | PTE_A | PTE_V | flags);
+  *pte = pte_create(ppn(__pa(page)), PTE_D | PTE_A | PTE_V | flags);
 #ifdef USE_PAGING
   paging_inc_user_page();
 #endif
@@ -127,7 +161,8 @@ realloc_page(uintptr_t vpn, int flags)
 }
 
 void
-free_page(uintptr_t vpn){
+free_page(uintptr_t vpn)
+{
 
   pte* pte = __walk(root_page_table, vpn << RISCV_PAGE_BITS);
 

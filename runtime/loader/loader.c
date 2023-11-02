@@ -6,13 +6,11 @@
 #include "mm/vm_defs.h"
 #include "mm/vm.h"
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
-
 int pt_mode_from_elf(int elf_pt_mode) {
   return 
     (((elf_pt_mode & PF_X) > 0) * PTE_X) |
     (((elf_pt_mode & PF_W) > 0) * (PTE_W | PTE_R)) |
-    (((elf_pt_mode & PF_R) > 0) * PTE_R)
+    (((elf_pt_mode & PF_R) > 0) * PTE_R) | PTE_U
   ;
 }
 
@@ -61,7 +59,6 @@ int loadElf(elf_t* elf) {
       if (!new_page)
         //return Error::PageAllocationFailure;
         return -1; //TODO: error class later
-      memset((void*) new_page, 0, MIN(RISCV_PAGE_SIZE, memory_end - va));
       /* copy over non .bss part of the page if it's a part of the page */
       if (va < file_end) {
         memcpy((void*) new_page, src, file_end - va);

@@ -20,7 +20,6 @@ int pt_mode_from_elf(int elf_pt_mode) {
 }
 
 int loadElf(elf_t* elf) {
-
   for (unsigned int i = 0; i < elf_getNumProgramHeaders(elf); i++) {
     if (elf_getProgramHeaderType(elf, i) != PT_LOAD) {
       continue;
@@ -39,7 +38,7 @@ int loadElf(elf_t* elf) {
         printf("[loader] loadElf: va and src are misaligned");
         return -1;
       }
-      uintptr_t new_page = allocPage(va, 0, pt_mode);
+      uintptr_t new_page = alloc_page(vpn(va), pt_mode);
       if (!new_page)
         //return Error::PageAllocationFailure;asdf
         return -1; //TODO: error class laterasdf
@@ -51,7 +50,8 @@ int loadElf(elf_t* elf) {
 
     /* first load all pages that do not include .bss segment */
     while (va + RISCV_PAGE_SIZE <= file_end) {
-      if (!mapPage(va, (uintptr_t)src, pt_mode))
+      uintptr_t src_pa = __pa((uintptr_t) src);
+      if (!map_page(vpn(va), ppn(src_pa), pt_mode))
         //return Error::PageAllocationFailure;
         return -1; //TODO: error class later
       src += RISCV_PAGE_SIZE;
@@ -60,7 +60,7 @@ int loadElf(elf_t* elf) {
 
     /* load the .bss segments */
     while (va < memory_end) {
-      uintptr_t new_page = allocPage(va, 0, pt_mode);
+      uintptr_t new_page = alloc_page(vpn(va), pt_mode);
       if (!new_page)
         //return Error::PageAllocationFailure;
         return -1; //TODO: error class later
@@ -125,7 +125,7 @@ int load_runtime(uintptr_t dummy,
   uintptr_t va        = EYRIE_UNTRUSTED_START;
   uintptr_t untr_iter = untrusted_ptr;
   while (va < EYRIE_UNTRUSTED_START + untrusted_size) {
-    if (!mapPage(va, untr_iter, PTE_W | PTE_R)) {
+    if (!map_page(vpn(va), ppn(untr_iter), PTE_W | PTE_R)) {
       //return Error::PageAllocationFailure;
       return -1; //TODO: error class later
     }
