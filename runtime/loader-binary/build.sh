@@ -12,6 +12,7 @@ duplicated_files=(
     "../include/call/sbi.h"
     "../include/util/string.h"
     "../include/util/printf.h"
+    "../include/mm/vm_defs.h"
     "../loader/elf.c"
     "../loader/elf32.c"
     "../loader/elf64.c"
@@ -32,7 +33,6 @@ done
 # TODOs:
 # loader: need to combine functionality
 # mm: same
-# vm_defs: recombine? why was stuff removed?
 # vm: also questionable
 
 python3 flatten_includes.py
