@@ -54,7 +54,7 @@ Then, in another terminal, run the following command to connect to the GDB serve
 
 This will connect to the GDB server running in QEMU. You can then use GDB as normal to debug the
 Keystone build. In addition to the normal GDB commands, the following Keystone-specific commands
-are available:
+are available after running ``source scripts/gdb/pmp.py`` (in GDB):
 
 * ``pmp-clear``: Clear the PMP CSRs
 * ``pmp-dump``: Show the current state of the PMP CSRs
