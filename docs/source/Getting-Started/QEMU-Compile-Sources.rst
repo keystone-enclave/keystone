@@ -4,6 +4,11 @@ Compile Sources
 Build All Components
 ##############################################################
 
+.. note::
+
+  Keystone recently transitioned from a CMake build system to what you will find here.
+  To view a previous version of the documentation, please see the `GitHub repository <https://github.com/keystone-enclave/keystone/commit/3d0d7a621813b74d0b3da37ce6fc92b08bc04f5e>`_.
+
 We use `Make <https://www.gnu.org/software/make/manual/make.html/>`_ and `Buildroot <https://buildroot.org/>`_ as a build system.
 The top-level Makefile is located in the root directory of the repository and is the main frontend to the build system.
 It collects configuration options and initiates the build process, which itself takes place in Buildroot.
