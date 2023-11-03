@@ -8,12 +8,13 @@ We use `Make <https://www.gnu.org/software/make/manual/make.html/>`_ and `Buildr
 The top-level Makefile is located in the root directory of the repository and is the main frontend to the build system.
 It collects configuration options and initiates the build process, which itself takes place in Buildroot.
 
-A build can be configured with the following options (along with their default values):
+A build can be configured with the following options (along with their default values). The values must be passed to the build as environment variables, either through an ``export`` in the shell, or by passing them
+directly to ``make`` by prepending them to the command (e.g. ``OPTION1=VALUE1 OPTION2=VALUE2 (...) make``):
 
-* ``-KEYSTONE_PLATFORM=generic``: Configures the platform to build for. Currently, only the ``generic`` `QEMU virtual platform <https://www.qemu.org/docs/master/system/openrisc/virt.html/>`_ is supported.
-* ``-KEYSTONE_BITS=64``: Configures if the build is for RV64 or RV32.
-* ``-BUILDROOT_CONFIGFILE=qemu_riscv$(KEYSTONE_BITS)_virt_defconfig``: Configures the buildroot config file to use.
-* ``-BUILDROOT_TARGET=all``: Configures the target to be built. (e.g. ``keystone-sm``, for the security monitor)
+* ``KEYSTONE_PLATFORM=generic``: Configures the platform to build for. Currently, only the ``generic`` `QEMU virtual platform <https://www.qemu.org/docs/master/system/openrisc/virt.html/>`_ is supported.
+* ``KEYSTONE_BITS=64``: Configures if the build is for RV64 or RV32.
+* ``BUILDROOT_CONFIGFILE=qemu_riscv$(KEYSTONE_BITS)_virt_defconfig``: Configures the buildroot config file to use.
+* ``BUILDROOT_TARGET=all``: Configures the target to be built. (e.g. ``keystone-sm``, for the security monitor)
 
 Use the following command to initiate a build of all components:
 
