@@ -18,9 +18,8 @@ Login as ``root`` with the password ``sifive``.
 You can exit QEMU by ``ctrl-a``+``x`` or using ``poweroff`` command
 
 .. note::
-  Note that the launch scripts for QEMU will start ssh on a random
-  forwarded localhost port (this is to allow multiple qemu test runs on
-  the same development machine). The script will print what port it has
+  Note that the launch scripts for QEMU will start ssh on a
+  forwarded localhost port. The script will print what port it has
   forwarded ssh to on start.
 
 Start the Keystone driver by running the following command in the QEMU guest:
