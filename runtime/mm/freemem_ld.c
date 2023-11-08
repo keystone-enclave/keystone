@@ -4,8 +4,8 @@
 #include "mm/vm_defs.h"
 #include "util/string.h"
 
-uintptr_t freeBase;
-uintptr_t freeEnd;
+static uintptr_t freeBase;
+static uintptr_t freeEnd;
 
 void spa_init(uintptr_t base, size_t size)
 {
