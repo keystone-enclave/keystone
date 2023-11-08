@@ -1,5 +1,4 @@
 #include "mm/common.h"
-#include "call/syscall.h"
 #include "mm/mm.h"
 #include "mm/vm.h"
 #include "mm/freemem.h"

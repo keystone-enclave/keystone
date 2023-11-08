@@ -1,10 +1,10 @@
-#include "loader.h"
-#include "vm.h"
-#include "mm.h"
-#include "printf.h"
-#include "common.h"
-#include "freemem.h"
-#include "csr.h"
+#include "loader/loader.h"
+#include "mm/vm.h"
+#include "mm/mm.h"
+#include "mm/common.h"
+#include "mm/freemem.h"
+#include "util/printf.h"
+#include "../tmplib/asm/csr.h"
 
 /* root page table */
 pte root_page_table_storage[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));

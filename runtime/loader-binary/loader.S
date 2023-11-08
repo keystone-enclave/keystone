@@ -1,8 +1,6 @@
-#include "csr.h"
-
 #define SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE 0x08424b45
 #define SBI_SM_EXIT_ENCLAVE      3006
-# define RUNTIME_VA_START 0xffffffffc0000000 
+#define RUNTIME_VA_START 0xffffffffc0000000 
 
 #if __riscv_xlen == 64
 #define STORE sd
