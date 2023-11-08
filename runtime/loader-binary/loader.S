@@ -49,7 +49,7 @@ _start:
   call load_runtime 
 
   // exit if errors
-  blt a0, x0, exit
+  bne a0, zero, exit
 
   // switch to va and jump to runtime code 
   li t0, RUNTIME_VA_START
