@@ -4,15 +4,27 @@
 #include "printf.h"
 #include "common.h"
 #include "freemem.h"
+#include "csr.h"
+
+/* root page table */
+pte root_page_table_storage[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+/* page tables for loading physical memory */
+pte load_l2_page_table_storage[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
+pte load_l3_page_table_storage[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 
 uintptr_t free_base_final = 0;
+
+uintptr_t satp_new(uintptr_t pa)
+{
+  return (SATP_MODE | (pa >> RISCV_PAGE_BITS));
+}
 
 void map_physical_memory(uintptr_t dram_base, uintptr_t dram_size) {
   uintptr_t ptr = EYRIE_LOAD_START;
   /* load address should not override kernel address */
   assert(RISCV_GET_PT_INDEX(ptr, 1) != RISCV_GET_PT_INDEX(RUNTIME_VA_START, 1));
   map_with_reserved_page_table(dram_base, dram_size,
-      ptr, load_l2_page_table, load_l3_page_table);
+      ptr, load_l2_page_table_storage, load_l3_page_table_storage);
 }
 
 int load_runtime(uintptr_t dummy,
@@ -21,6 +33,8 @@ int load_runtime(uintptr_t dummy,
                 uintptr_t free_base, uintptr_t untrusted_ptr, 
                 uintptr_t untrusted_size) {
   int ret = 0;
+
+  root_page_table = root_page_table_storage;
 
   // initialize freemem
   spa_init(free_base, dram_base + dram_size - free_base);

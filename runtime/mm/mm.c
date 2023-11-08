@@ -3,12 +3,9 @@
 #include "mm/mm.h"
 #include "mm/vm.h"
 #include "mm/freemem.h"
+#include "mm/paging.h"
 
 #ifdef USE_FREEMEM
-
-#ifndef LOADER_BIN
-#include "mm/paging.h"
-#endif
 
 /* Page table utilities */
 static pte*

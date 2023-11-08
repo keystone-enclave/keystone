@@ -4,28 +4,44 @@
 
 uintptr_t runtime_va_start;
 
-#ifdef LOADER_BIN
-
-/* root page table */
-pte root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-/* page tables for loading physical memory */
-pte load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-
-uintptr_t satp_new(uintptr_t pa)
-{
-  return (SATP_MODE | (pa >> RISCV_PAGE_BITS));
-}
-
-#else
-
 /* root page table */
 pte* root_page_table;
 
-uintptr_t kernel_offset;
-uintptr_t load_pa_start;
+#ifdef LOADER_BIN
 
-#endif
+/* no-ops */
+
+uintptr_t kernel_va_to_pa(void* ptr)
+{
+  return (uintptr_t) ptr;
+}
+
+uintptr_t __va(uintptr_t pa)
+{
+  return pa;
+}
+
+uintptr_t __pa(uintptr_t va)
+{
+  return va;
+}
+
+#else // !LOADER_BIN
+
+uintptr_t kernel_va_to_pa(void* ptr)
+{
+  return (uintptr_t) ptr - kernel_offset;
+}
+
+uintptr_t __va(uintptr_t pa)
+{
+  return (pa - load_pa_start) + EYRIE_LOAD_START;
+}
+
+uintptr_t __pa(uintptr_t va)
+{
+  return (va - EYRIE_LOAD_START) + load_pa_start;
+}
 
 #ifdef USE_FREEMEM
 
@@ -40,5 +56,10 @@ size_t freemem_size;
 /* shared buffer */
 uintptr_t shared_buffer;
 uintptr_t shared_buffer_size;
+
+uintptr_t kernel_offset;
+uintptr_t load_pa_start;
+
+#endif // LOADER_BIN
 
 

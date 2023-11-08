@@ -17,6 +17,7 @@ duplicated_files=(
     "../include/mm/mm.h"
     "../include/loader/loader.h"
     "../include/mm/freemem.h"
+    "../include/mm/paging.h" # unused
     "../loader/elf.c"
     "../loader/elf32.c"
     "../loader/elf64.c"

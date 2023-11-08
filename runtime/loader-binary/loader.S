@@ -57,7 +57,7 @@ _start:
   li t0, RUNTIME_VA_START
   csrw stvec, t0  // store runtime start addresss in stvec 
 
-  la a0, root_page_table  
+  la a0, root_page_table_storage  
   call satp_new // construct new satp
 
   // set arguments for eyrie_boot
