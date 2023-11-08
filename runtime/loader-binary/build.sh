@@ -16,6 +16,7 @@ duplicated_files=(
     "../include/mm/vm.h"
     "../include/mm/mm.h"
     "../include/loader/loader.h"
+    "../include/mm/freemem.h"
     "../loader/elf.c"
     "../loader/elf32.c"
     "../loader/elf64.c"
@@ -25,6 +26,7 @@ duplicated_files=(
     "../mm/vm.c"
     "../mm/mm.c"
     "../loader/loader.c"
+    "../mm/freemem_ld.c"
 )
 
 for file in "${duplicated_files[@]}"; do

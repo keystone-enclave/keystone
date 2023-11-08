@@ -2,40 +2,12 @@
 #include "call/syscall.h"
 #include "mm/mm.h"
 #include "mm/vm.h"
+#include "mm/freemem.h"
 
 #ifdef USE_FREEMEM
 
-#ifdef LOADER_BIN
-
-#include "string.h"
-
-uintptr_t freeList;
-uintptr_t epmBase;
-size_t epmSize;
-
-static uintptr_t spa_get_zero()
-{
-  uintptr_t new_page = freeList;
-  assert(new_page < epmBase + epmSize);
-  if (new_page > epmBase + epmSize) { // TODO: fix assert and remove
-    return 0; // loader is at beginning of linear allocation, 0 is never free
-  }
-  memset((void *) new_page, 0, RISCV_PAGE_SIZE);
-
-  freeList += RISCV_PAGE_SIZE;
-  return new_page;
-}
-
-static void spa_put(uintptr_t page)
-{
-  assert(false); // not implemented
-}
-
-#else
-
-#include "mm/freemem.h"
+#ifndef LOADER_BIN
 #include "mm/paging.h"
-
 #endif
 
 /* Page table utilities */

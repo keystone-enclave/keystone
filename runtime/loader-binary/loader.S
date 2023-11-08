@@ -65,7 +65,7 @@ _start:
   LOAD a2, 1*REGBYTES(sp)
   LOAD a3, 2*REGBYTES(sp)
   LOAD a4, 3*REGBYTES(sp)
-  LOAD a5, freeList
+  LOAD a5, free_base_final
   LOAD a6, 5*REGBYTES(sp)
   LOAD a7, 6*REGBYTES(sp)
 

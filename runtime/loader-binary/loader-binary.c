@@ -3,12 +3,9 @@
 #include "mm.h"
 #include "printf.h"
 #include "common.h"
+#include "freemem.h"
 
-void initializeFreeList(uintptr_t freeMemBase, uintptr_t dramBase, size_t dramSize) {
-  freeList = freeMemBase;
-  epmBase = dramBase; 
-  epmSize = dramSize;
-}
+uintptr_t free_base_final = 0;
 
 void map_physical_memory(uintptr_t dram_base, uintptr_t dram_size) {
   uintptr_t ptr = EYRIE_LOAD_START;
@@ -25,8 +22,8 @@ int load_runtime(uintptr_t dummy,
                 uintptr_t untrusted_size) {
   int ret = 0;
 
-  // initialize free list
-  initializeFreeList(free_base, dram_base, dram_size);
+  // initialize freemem
+  spa_init(free_base, dram_base + dram_size - free_base);
 
   // validate runtime elf 
   size_t runtime_size = user_base - runtime_base;
@@ -61,6 +58,8 @@ int load_runtime(uintptr_t dummy,
     va += RISCV_PAGE_SIZE;
     untr_iter += RISCV_PAGE_SIZE;
   }
+
+  free_base_final = dram_base + dram_size - spa_available() * RISCV_PAGE_SIZE;
 
   return ret;
 }
