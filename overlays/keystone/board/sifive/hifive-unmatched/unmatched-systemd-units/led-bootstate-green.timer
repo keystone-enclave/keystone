@@ -1,0 +1,10 @@
+[Unit]
+Description=timer to trun-on green LED
+After=getty.target
+
+[Timer]
+OnActiveSec=3min
+Unit=led-bootstate-green.service
+
+[Install]
+WantedBy=timers.target

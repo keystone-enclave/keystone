@@ -1,0 +1,16 @@
+diff --git a/include/configs/sifive-unmatched.h b/include/configs/sifive-unmatched.h
+index 74150b7d4b..8066c8fd38 100644
+--- a/include/configs/sifive-unmatched.h
++++ b/include/configs/sifive-unmatched.h
+@@ -16,10 +16,10 @@
+ /* Environment options */
+ 
+ #define BOOT_TARGET_DEVICES(func) \
++	func(MMC, mmc, 0) \
+ 	func(NVME, nvme, 0) \
+ 	func(NVME, nvme, 1) \
+ 	func(USB, usb, 0) \
+-	func(MMC, mmc, 0) \
+ 	func(SCSI, scsi, 0) \
+ 	func(PXE, pxe, na) \
+ 	func(DHCP, dhcp, na)

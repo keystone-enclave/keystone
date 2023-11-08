@@ -1,0 +1,67 @@
+From 4b38d485f38e51106f8f16a10dd5d84d221ef276 Mon Sep 17 00:00:00 2001
+From: Ruinland Tsai <ruinland.tsai@sifive.com>
+Date: Mon, 11 Apr 2022 16:16:10 +0800
+Subject: [PATCH 2/3] riscv: sifive: unmatched: define PWM LEDs
+
+Add D2 (RGB) and D12 (green) LEDs for SiFive Unmatched board.
+
+Upstream-Status: Pending
+Signed-off-by: Ruinland Tsai <ruinland.tsai@sifive.com>
+Signed-off-by: Thomas Perrot <thomas.perrot@bootlin.com>
+---
+ .../boot/dts/sifive/hifive-unmatched-a00.dts  | 39 +++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+
+diff --git a/arch/riscv/boot/dts/sifive/hifive-unmatched-a00.dts b/arch/riscv/boot/dts/sifive/hifive-unmatched-a00.dts
+index 07387f9c135c..e4ad9c40abd3 100644
+--- a/arch/riscv/boot/dts/sifive/hifive-unmatched-a00.dts
++++ b/arch/riscv/boot/dts/sifive/hifive-unmatched-a00.dts
+@@ -28,6 +28,45 @@ memory@80000000 {
+ 		reg = <0x0 0x80000000 0x4 0x00000000>;
+ 	};
+ 
++	pwmleds {
++		compatible = "pwm-leds";
++		green-d12 {
++			label = "green:d12";
++			color = <LED_COLOR_ID_GREEN>;
++			pwms = <&pwm0 0 7812500 PWM_POLARITY_INVERTED>;
++			active-low = <1>;
++			max-brightness = <255>;
++			linux,default-trigger = "none";
++		};
++
++		green-d2 {
++			label = "green:d2";
++			color = <LED_COLOR_ID_GREEN>;
++			pwms = <&pwm0 1 7812500 PWM_POLARITY_INVERTED>;
++			active-low = <1>;
++			max-brightness = <255>;
++			linux,default-trigger = "none";
++		};
++
++		red-d2 {
++			label = "red:d2";
++			color = <LED_COLOR_ID_RED>;
++			pwms = <&pwm0 2 7812500 PWM_POLARITY_INVERTED>;
++			active-low = <1>;
++			max-brightness = <255>;
++			linux,default-trigger = "none";
++		};
++
++		blue-d2 {
++			label = "blue:d2";
++			color = <LED_COLOR_ID_BLUE>;
++			pwms = <&pwm0 3 7812500 PWM_POLARITY_INVERTED>;
++			active-low = <1>;
++			max-brightness = <255>;
++			linux,default-trigger = "none";
++		};
++	};
++
+ 	hfclk: hfclk {
+ 		#clock-cells = <0>;
+ 		compatible = "fixed-clock";
+-- 
+2.39.1
+

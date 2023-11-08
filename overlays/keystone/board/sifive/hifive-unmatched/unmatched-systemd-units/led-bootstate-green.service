@@ -1,0 +1,12 @@
+[Unit]
+Description="Change the color of D2 LED to green"
+ConditionPathIsReadWrite=/sys/class/leds/green:d2/trigger
+ConditionPathIsReadWrite=/sys/class/leds/red:d2/trigger
+ConditionPathIsReadWrite=/sys/class/leds/blue:d2/trigger
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c '/bin/echo "default-on" > /sys/class/leds/green:d2/trigger'
+ExecStart=/bin/bash -c '/bin/echo "25" > /sys/class/leds/green:d2/brightness'
+ExecStart=/bin/bash -c '/bin/echo "none" > /sys/class/leds/red:d2/trigger'
+ExecStart=/bin/bash -c '/bin/echo "none" > /sys/class/leds/blue:d2/trigger'
