@@ -12,11 +12,6 @@ pte root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_
 pte load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 pte load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 
-uintptr_t satp_new(uintptr_t pa)
-{
-  return (SATP_MODE | (pa >> RISCV_PAGE_BITS));
-}
-
 #else
 
 /* root page table */

@@ -17,9 +17,6 @@ extern pte root_page_table[];
 extern pte load_l2_page_table[];
 extern pte load_l3_page_table[];
 
-/* Eyrie is for Sv39 */
-uintptr_t satp_new(uintptr_t pa);
-
 /* no-ops */
 
 static inline uintptr_t kernel_va_to_pa(void* ptr)
