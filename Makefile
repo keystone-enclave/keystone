@@ -29,6 +29,8 @@ include mkutils/log.mk
 BUILDROOT_CONFIGFILE    ?= qemu_riscv$(KEYSTONE_BITS)_virt_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
 	EXTERNALS += microchip
+else ifeq($(KEYSTONE_PLATFORM),unmatched)
+    BUILDROOT_CONFIGFILE = riscv64_hifive_unmatched_defconfig
 endif
 
 # Highest priority external
