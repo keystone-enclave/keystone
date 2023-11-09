@@ -24,11 +24,9 @@ _start:
   // a5: free_base
   // a6: untrusted_ptr
   // a7: untrusted_size
-  // ...
 
-  // sp <- stack_addr + dram_base (a1)
+  // use designated stack
   la sp, _estack
-  # add sp, sp, a1
 
   // save all args to stack 
   addi sp, sp, -(REGBYTES*7)
@@ -39,10 +37,6 @@ _start:
   STORE a5, 4*REGBYTES(sp)
   STORE a6, 5*REGBYTES(sp)
   STORE a7, 6*REGBYTES(sp)
-
-  // csrr t0, sepc // user_entry previously written to sepc
-  // addi sp, sp, -(REGBYTES) 
-  // STORE t0, (sp)
 
   // call load_runtime
   call load_runtime 
