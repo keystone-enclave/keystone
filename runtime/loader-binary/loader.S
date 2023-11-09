@@ -1,5 +1,6 @@
 #define __PREPROCESSING__
 #include "mm/vm_defs.h"
+#include "../tmplib/asm/csr.h"
 
 #if __riscv_xlen == 64
 #define STORE sd
@@ -48,8 +49,16 @@ _start:
   li t0, RUNTIME_VA_START
   csrw stvec, t0  // store runtime start addresss in stvec 
 
+  // construct new satp
   la a0, root_page_table_storage  
-  call satp_new // construct new satp
+  li a1, RISCV_PAGE_BITS
+  li a2, SATP_MODE
+  srl a0, a0, a1
+  or a0, a0, a2
+
+  // Flush TLB's just in case:
+  fence.i
+  sfence.vma
 
   // set arguments for eyrie_boot
   LOAD a1, 0(sp)
@@ -60,7 +69,10 @@ _start:
   LOAD a6, 5*REGBYTES(sp)
   LOAD a7, 6*REGBYTES(sp)
 
+  // Flush TLB's just in case:
+  fence.i
   sfence.vma
+
   csrw satp, a0 // switch to virtual addresssing 
   sfence.vma
 
