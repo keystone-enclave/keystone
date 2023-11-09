@@ -4,122 +4,71 @@ Compile Sources
 Build All Components
 ##############################################################
 
-We use `CMake <https://cmake.org/>`_ as a build system. It lets you generate the Makefile for a
-given configuration.
+.. note::
 
-``PATH`` must include the RISC-V toolchain.
+  Keystone recently transitioned from a CMake build system to what you will find here.
+  To view a previous version of the documentation, please see the `GitHub repository <https://github.com/keystone-enclave/keystone/commit/3d0d7a621813b74d0b3da37ce6fc92b08bc04f5e>`_.
 
-::
+We use `Make <https://www.gnu.org/software/make/manual/make.html/>`_ and `Buildroot <https://buildroot.org/>`_ as a build system.
+The top-level Makefile is located in the root directory of the repository and is the main frontend to the build system.
+It collects configuration options and initiates the build process, which itself takes place in Buildroot.
 
-  mkdir <build directory>
-  cd <build directory>
-  cmake ..
-  make
+A build can be configured with the following options (along with their default values). The values must be passed to the build as environment variables, either through an ``export`` in the shell, or by passing them
+directly to ``make`` by prepending them to the command (e.g. ``OPTION1=VALUE1 OPTION2=VALUE2 (...) make``):
 
-Here are some useful CMake flags you can add:
+* ``KEYSTONE_PLATFORM=generic``: Configures the platform to build for. Currently, only the ``generic`` `QEMU virtual platform <https://www.qemu.org/docs/master/system/openrisc/virt.html/>`_ is supported.
+* ``KEYSTONE_BITS=64``: Configures if the build is for RV64 or RV32.
+* ``BUILDROOT_CONFIGFILE=qemu_riscv$(KEYSTONE_BITS)_virt_defconfig``: Configures the buildroot config file to use.
+* ``BUILDROOT_TARGET=all``: Configures the target to be built. (e.g. ``keystone-sm``, for the security monitor)
 
-* ``-Dinitramfs=y``: This will compile the Linux kernel with buildroot image as the initramfs.
-* ``-DRISCV32=y``: This will conrigure the build with RV32. You should have ran ``BITS=32 ./fast-setup.sh``.
-* ``-DLINUX_SIFIVE=y``: This is a temporary flag for HiFive Unleashed board.
-* ``-DSM_PLATFORM=<platform>``: The security monitor will be compiled with platform sources in ``sm/plat/<platform>``. The default value is "generic".
-* ``-DUSE_RUST_SM=y``: Use the Rust port of the security monitor. Curently not supported in v1.0.
-
-In order to build the driver and have the final images for QEMU, you need to run
+Use the following command to initiate a build of all components:
 
 ::
 
-  # in your <build directory>
-  make image
+  make -j$(nproc)
 
-If you run into any issues, check our
-``CMakeLists.txt`` and as it will always have the up-to-date build recipes.
+This will build all Keystone components and generate a bootable image for QEMU, placing the
+build output in ``build-$PLATFORM$BITS``.
 
-Please refer to the following sections if you want to learn how to build each individual component.
-Otherwise, skip to :ref:`LaunchQEMU`.
-
-Build Buildroot
+Rebuilding Changed Components
 ##############################################################
 
-Buildroot config files are located at ``conf/``. RV64 buildroot will use ``conf/qemu_riscv64_virt_defconfig``.
-The following command will build buildroot with the config:
+In a very common workflow, a developer would make changes to a component and then rebuild the component.
+As built packages are synced to various other places by Buildroot, this can be prone to stale and thus incorrect builds.
+
+To avoid this, changes to components are detected by using content-adressed versioning of the component sources, allowing
+Buildroot to detect builds that include stale sources. In such cases, a warning is printed when executing the build.
+
+A stale source is then removed by using the following command:
 
 ::
 
-  # in your <build directory>
-  make buildroot
+  BUILDROOT_TARGET=<target>-dirclean make -j$(nproc)
 
-Build QEMU (in-tree)
+This will remove the stale source directory. Afterwards, a new build can be initiated as usual.
+
+Appendix A: Configuring Buildroot and the Linux Kernel
 ##############################################################
 
-We do not try to build QEMU out-of-tree as it will unlikely to be rebuilt once it's compiled.
-The in-tree compilation will take place in ``qemu``.
-Thus, rebuilding QEMU may require ``make clean`` in ``qemu``.
+There are convenience targets in the top-level Makefile to configure both Buildroot and the Linux kernel.
 
-Keystone requires patches for QEMU (1) to emulate the secure boot via on-chip bootrom and (2) to
-apply not-yet-upstreamed bug fixes. All patches are located at ``patches/qemu/``
-
-The following command will configure and build QEMU after applying the patches:
+To configure Buildroot, use the following command:
 
 ::
 
-  # in your <build directory>
-  make qemu
+  make buildroot-configure
 
-Build Linux Kernel
+To configure the Linux kernel, use the following command:
+
+::
+
+  make linux-configure
+
+These commands open a menu-based configuration interface. After making changes, save the configuration and exit the interface.
+The Makefile takes care of placing the configuration files in the correct locations.
+
+Appendix B: Debugging Failed Builds
 ##############################################################
 
-Kernel config files are located at ``conf/``. RV64 linux will use ``conf/linux-v5.0-defconfig-rv64``.
-The following command will build the linux.
-Note that you need at least 2GB of memory in order to successfully build the kernel.
-
-Keystone requires patches for the Linux kernel to reserve CMA region at boot.
-The patch is located at ``patches/linux/``.
-
-::
-
-  # in your <build directory>
-  make linux
-
-Build OpenSBI Firmware with Keystone Security Monitor
-##############################################################
-
-The following command will build the M-mode security monitor.
-
-::
-
-  # in your <build directory>
-  make sm
-
-Build Root-of-Trust Boot ROM
-##############################################################
-
-This is used for secure boot. With our patch for QEMU, compiled boot code will be copied to the boot
-ROM in QEMU.
-
-::
-
-  # in your <build directory>
-  make bootrom
-
-Build Keystone Driver
-##############################################################
-
-Linux module does not support in-tree build.
-Thus, we ``rsync`` the entire source code directory with a build directory and build the driver there.
-
-The following command will build the linux driver for Keystone.
-
-::
-
-  # in your <build directory>
-  make driver
-
-Updating Images
-##############################################################
-
-Once you have built every component, you may need to update the final buildroot image by running
-
-::
-
-  # in your <build directory>
-  make image
+As the Buildroot output is very verbose, only certain parts of it are printed to ``stdout`` by default.
+The full output of a build is written to ``build-$PLATFORM$BITS/build.log``, which can be used to debug failed builds.
