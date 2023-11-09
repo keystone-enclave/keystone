@@ -50,13 +50,15 @@ _start:
   csrw stvec, t0  // store runtime start addresss in stvec 
 
   // construct new satp
+  // below assembly and fences work on CVA6, for satp specifically.
+  // FIXME: declutter if possible according to more testing
   la a0, root_page_table_storage  
   li a1, RISCV_PAGE_BITS
   li a2, SATP_MODE
   srl a0, a0, a1
   or a0, a0, a2
 
-  // Flush TLB's just in case:
+  // flush TLB's just in case
   fence.i
   sfence.vma
 
@@ -69,7 +71,7 @@ _start:
   LOAD a6, 5*REGBYTES(sp)
   LOAD a7, 6*REGBYTES(sp)
 
-  // Flush TLB's just in case:
+  // flush TLB's just in case
   fence.i
   sfence.vma
 
