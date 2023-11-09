@@ -9,7 +9,7 @@
 static inline int pt_mode_from_elf(int elf_pt_mode) {
   return 
     (((elf_pt_mode & PF_X) > 0) * PTE_X) |
-    (((elf_pt_mode & PF_W) > 0) * (PTE_W | PTE_R)) |
+    (((elf_pt_mode & PF_W) > 0) * (PTE_W | PTE_R | PTE_D)) |
     (((elf_pt_mode & PF_R) > 0) * PTE_R)
   ;
 }

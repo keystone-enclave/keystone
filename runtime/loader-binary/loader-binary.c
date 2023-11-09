@@ -65,7 +65,7 @@ int load_runtime(uintptr_t dummy,
   uintptr_t va        = EYRIE_UNTRUSTED_START;
   uintptr_t untr_iter = untrusted_ptr;
   while (va < EYRIE_UNTRUSTED_START + untrusted_size) {
-    if (!map_page(vpn(va), ppn(untr_iter), PTE_W | PTE_R)) {
+    if (!map_page(vpn(va), ppn(untr_iter), PTE_W | PTE_R | PTE_D)) {
       //return Error::PageAllocationFailure;
       return -1; //TODO: error class later
     }
