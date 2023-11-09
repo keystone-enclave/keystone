@@ -84,11 +84,8 @@ int load_runtime(uintptr_t dummy,
   return ret;
 }
 
-// TODO: exit instead, may need to set up some memory stuff first
-void error_and_loop() {
-  printf("[loader] ran into error. looping infinitely...\n");
-  while(true) {
-    printf(".");
-  }
+void error_and_exit() {
+  printf("[loader] FATAL: failed to load.\n");
+  sbi_exit_enclave(-1);
 }
 

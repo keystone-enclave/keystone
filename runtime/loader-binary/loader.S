@@ -1,6 +1,5 @@
-#define SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE 0x08424b45
-#define SBI_SM_EXIT_ENCLAVE      3006
-#define RUNTIME_VA_START 0xffffffffc0000000 
+#define __PREPROCESSING__
+#include "mm/vm_defs.h"
 
 #if __riscv_xlen == 64
 #define STORE sd
@@ -72,4 +71,4 @@ _start:
   sfence.vma
 
 exit:
-  call error_and_loop
+  call error_and_exit
