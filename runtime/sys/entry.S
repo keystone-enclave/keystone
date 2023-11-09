@@ -120,12 +120,12 @@ _start:
   sfence.vma
 
   /* set spp to user */
-  addi t0, x0, 0x100
+  li t0, 0x100
   csrrc x0, sstatus, t0
 
   /* start running enclave */
   csrrw sp, sscratch, sp
-  li a0, 0 // passed as rtld_fini to entry point/ __libc_start_main. TODO: Why is this not 0 in the first place??
+  li a0, 0 // passed as rtld_fini to entry point/ __libc_start_main
   sret
 
 .align 6

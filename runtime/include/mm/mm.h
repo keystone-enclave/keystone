@@ -5,12 +5,6 @@
 
 #include "mm/vm_defs.h"
 
-#ifdef LOADER_BIN
-extern uintptr_t freeList; 
-extern uintptr_t epmBase; 
-extern size_t epmSize;
-#endif
-
 uintptr_t translate(uintptr_t va);
 pte* pte_of_va(uintptr_t va);
 #ifdef USE_FREEMEM

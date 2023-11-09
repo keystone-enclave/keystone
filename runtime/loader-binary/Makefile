@@ -6,10 +6,11 @@ ifeq ($(CROSSCOMPILE),)
 $(error RISCV Toochain is not found: riscv${KEYSTONE_BITS}-buildroot-linux-gnu-gcc)
 endif
 
-CFLAGS = -Wall -Werror -fno-builtin -nostdlib -g -mcmodel=medany -static -DLOADER_BIN -DUSE_FREEMEM $(OPTIONS_FLAGS)
-LDFLAGS = -fPIC -nostdlib -g -static $(shell $(CC) --print-file-name=libgcc.a)
+CFLAGS = -Wall -Werror -fno-builtin -nostdlib -g -mcmodel=medany -static -DLOADER_BIN -DUSE_FREEMEM $(OPTIONS_FLAGS) -I../include
+LDFLAGS = -fPIC -nostdlib -g -static
 
-SRCS = string.c printf.c elf.c elf32.c elf64.c loader.c mm.c sbi.c vm.c loader-binary.c
+SRCS = loader-binary.c mm.c
+LIBS = ../loader/librt_loader.a ../util/librt_util.a ../mm/libld_mm.a ../call/librt_call.a
 ASM_SRCS = loader.S
 LOADER = loader
 LOADER_BIN = loader.bin
@@ -17,13 +18,13 @@ LOADER_BIN = loader.bin
 OBJS = $(patsubst %.c,obj/%.o,$(SRCS))
 ASM_OBJS = $(patsubst %.S,obj/%.S.o,$(ASM_SRCS))
 OBJ_DIR_EXISTS = obj/.exists
- 
+
 .PHONY: all clean
 
 all: $(LOADER_BIN)
 
 $(LOADER): $(ASM_OBJS) $(OBJS) 
-	$(CC) $(LDFLAGS) -T loader.lds $^ -o $@
+	$(CC) $(LDFLAGS) -T loader.lds $^ -o $@ $(LIBS)
 
 $(LOADER_BIN): $(LOADER) 
 	$(OBJCOPY) -O binary --only-section .text $< loader.bin
@@ -37,6 +38,9 @@ obj/%.S.o: %.S $(OBJ_DIR_EXISTS)
 
 obj/%.o: %.c $(OBJ_DIR_EXISTS)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+mm.c:
+	cp ../mm/mm.c .
 
 clean:
 	rm -rf obj 

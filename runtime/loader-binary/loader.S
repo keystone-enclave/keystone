@@ -1,8 +1,6 @@
-#include "csr.h"
-
-#define SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE 0x08424b45
-#define SBI_SM_EXIT_ENCLAVE      3006
-# define RUNTIME_VA_START 0xffffffffc0000000 
+#define __PREPROCESSING__
+#include "mm/vm_defs.h"
+#include "../tmplib/asm/csr.h"
 
 #if __riscv_xlen == 64
 #define STORE sd
@@ -27,11 +25,9 @@ _start:
   // a5: free_base
   // a6: untrusted_ptr
   // a7: untrusted_size
-  // ...
 
-  // sp <- stack_addr + dram_base (a1)
+  // use designated stack
   la sp, _estack
-  # add sp, sp, a1
 
   // save all args to stack 
   addi sp, sp, -(REGBYTES*7)
@@ -43,22 +39,19 @@ _start:
   STORE a6, 5*REGBYTES(sp)
   STORE a7, 6*REGBYTES(sp)
 
-  // csrr t0, sepc // user_entry previously written to sepc
-  // addi sp, sp, -(REGBYTES) 
-  // STORE t0, (sp)
-
   // call load_runtime
   call load_runtime 
 
   // exit if errors
-  blt a0, x0, exit
+  bne a0, zero, exit
 
   // switch to va and jump to runtime code 
   li t0, RUNTIME_VA_START
   csrw stvec, t0  // store runtime start addresss in stvec 
 
-  la a0, root_page_table  
-  li a1, 12
+  // construct new satp
+  la a0, root_page_table_storage  
+  li a1, RISCV_PAGE_BITS
   li a2, SATP_MODE
   srl a0, a0, a1
   or a0, a0, a2
@@ -72,7 +65,7 @@ _start:
   LOAD a2, 1*REGBYTES(sp)
   LOAD a3, 2*REGBYTES(sp)
   LOAD a4, 3*REGBYTES(sp)
-  LOAD a5, freeList
+  LOAD a5, free_base_final
   LOAD a6, 5*REGBYTES(sp)
   LOAD a7, 6*REGBYTES(sp)
 
@@ -84,263 +77,4 @@ _start:
   sfence.vma
 
 exit:
-  call error_and_loop
-  
-_sstack:
-  .dword 1
-  .dword 2
-  .dword 3
-  .dword 4
-  .dword 5
-  .dword 6
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-  .dword 0
-_estack:
+  call error_and_exit

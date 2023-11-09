@@ -6,10 +6,10 @@
 #include "mm/vm_defs.h"
 #include "mm/vm.h"
 
-static int pt_mode_from_elf(int elf_pt_mode) {
+static inline int pt_mode_from_elf(int elf_pt_mode) {
   return 
     (((elf_pt_mode & PF_X) > 0) * PTE_X) |
-    (((elf_pt_mode & PF_W) > 0) * (PTE_W | PTE_R)) |
+    (((elf_pt_mode & PF_W) > 0) * (PTE_W | PTE_R | PTE_D)) |
     (((elf_pt_mode & PF_R) > 0) * PTE_R)
   ;
 }
@@ -36,10 +36,8 @@ int loadElf(elf_t* elf, bool user) {
       }
       uintptr_t new_page = alloc_page(vpn(va), pt_mode);
       if (!new_page)
-        //return Error::PageAllocationFailure;asdf
-        return -1; //TODO: error class laterasdf
+        return -1;
       memcpy((void *) (new_page + RISCV_PAGE_OFFSET(va)), src, RISCV_PAGE_SIZE - RISCV_PAGE_OFFSET(va));
-      // TODO: is it safe to free the page?
       va = PAGE_DOWN(va) + RISCV_PAGE_SIZE;
       src = (char *) (PAGE_DOWN((uintptr_t) src) + RISCV_PAGE_SIZE);
     }
@@ -48,8 +46,7 @@ int loadElf(elf_t* elf, bool user) {
     while (va + RISCV_PAGE_SIZE <= file_end) {
       uintptr_t src_pa = __pa((uintptr_t) src);
       if (!map_page(vpn(va), ppn(src_pa), pt_mode))
-        //return Error::PageAllocationFailure;
-        return -1; //TODO: error class later
+        return -1;
       src += RISCV_PAGE_SIZE;
       va += RISCV_PAGE_SIZE;
     }
@@ -58,8 +55,7 @@ int loadElf(elf_t* elf, bool user) {
     while (va < memory_end) {
       uintptr_t new_page = alloc_page(vpn(va), pt_mode);
       if (!new_page)
-        //return Error::PageAllocationFailure;
-        return -1; //TODO: error class later
+        return -1;
       /* copy over non .bss part of the page if it's a part of the page */
       if (va < file_end) {
         memcpy((void*) new_page, src, file_end - va);
@@ -68,8 +64,7 @@ int loadElf(elf_t* elf, bool user) {
     }
   }
 
-   //return Error::Success;
-   return 0; //TODO: error class later
+   return 0;
 }
 
 // assumes beginning and next file are page-aligned

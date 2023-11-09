@@ -78,8 +78,6 @@ Verifier::verify_data(Report& report, const std::string& nonce) {
 
 void
 Verifier::compute_expected_enclave_hash(byte* expected_enclave_hash) {
-  // Keystone::Params simulated_params = params_;
-  // simulated_params.setSimulated(true);
   Keystone::Enclave::measure((char*) expected_enclave_hash, eapp_file_.c_str(), rt_file_.c_str(), ld_file_.c_str());
 }
 

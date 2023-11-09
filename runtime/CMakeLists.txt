@@ -75,13 +75,12 @@ set_target_properties(rt_linkscript PROPERTIES SUFFIX "")
 
 # Generate final executables
 add_subdirectory(sys)
-
-## Loader
+# add_subdirectory(loader-binary)
 add_custom_target(loader.bin ALL
-        COMMAND ./build.sh
+        DEPENDS rt_call ld_mm rt_util rt_loader
+        COMMAND make
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/loader-binary
 )
-
 add_custom_command(TARGET loader.bin POST_BUILD
     COMMAND cp ${CMAKE_SOURCE_DIR}/loader-binary/loader.bin ${CMAKE_SOURCE_DIR}/loader.bin || true
 )
