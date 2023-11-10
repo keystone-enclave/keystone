@@ -2,7 +2,7 @@
 set(LOADER_SOURCES loader.S loader-binary.c)
 set(LOADER_LINK_SCRIPT loader.lds)
 
-# TODO: fix. Both files must be compiled manually, otherwise loader seemingly doesn't execute any instructions.
+# TODO: fix. Both files must be compiled without -fPIC, otherwise loader seemingly doesn't execute any instructions.
 set(MANUAL_COMPILE_CFLAGS -Wall -Werror -fno-builtin -nostdlib -g -mcmodel=medany -static -DLOADER_BIN -DUSE_FREEMEM -I../include)
 set(MANUAL_COMPILED ${CMAKE_CURRENT_BINARY_DIR}/loader.S.o ${CMAKE_CURRENT_BINARY_DIR}/loader-binary.o)
 add_custom_target(loader-manual-compile
