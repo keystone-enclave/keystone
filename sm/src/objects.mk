@@ -36,7 +36,7 @@ keystone-sm-sources += crypto.c sha3/sha3.c ed25519/fe.c ed25519/ge.c ed25519/ke
                         hmac_sha3/hmac_sha3.c
 
 # Platform
-keystone-sm-sources += platform/$(PLATFORM)/platform.c
+keystone-sm-sources += platform/$(KEYSTONE_PLATFORM)/platform.c
 
 # Plugin files
 keystone-sm-sources += plugins/multimem.c plugins/plugins.c
