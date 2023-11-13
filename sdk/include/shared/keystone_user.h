@@ -58,6 +58,7 @@ struct keystone_ioctl_create_enclave {
 
   // Runtime Parameters
   struct runtime_va_params_t params;
+  struct runtime_misc_params_t miscParams;
 };
 
 struct keystone_ioctl_run_enclave {

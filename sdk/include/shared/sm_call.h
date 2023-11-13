@@ -68,7 +68,6 @@ struct runtime_misc_params_t {
   uint64_t time_since_unix_epoch_s;
 };
 
-
 struct keystone_sbi_pregion_t {
   uintptr_t paddr;
   size_t size;

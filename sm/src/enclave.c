@@ -396,6 +396,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
   pa_params.user_base = create_args.user_paddr;
   pa_params.free_base = create_args.free_paddr;
 
+  struct runtime_misc_params_t misc_params = create_args.misc_params;
 
   // allocate eid
   ret = SBI_ERR_SM_ENCLAVE_NO_FREE_RESOURCE;
@@ -434,6 +435,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
   enclaves[eid].n_thread = 0;
   enclaves[eid].params = params;
   enclaves[eid].pa_params = pa_params;
+  enclaves[eid].misc_params = misc_params;
 
   /* Init callable state */
   enclaves[eid].handler = 0;
@@ -1007,4 +1009,8 @@ unsigned long unshare_region(uintptr_t addr, enclave_id with, enclave_id eid) {
     }
 
     return ret;
+}
+
+struct runtime_misc_params_t* get_enclave_misc_params(enclave_id eid) {
+  return &enclaves[eid].misc_params;
 }

@@ -143,3 +143,9 @@ unsigned long sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr
   ret = call_plugin(cpu_get_enclave_id(), plugin_id, call_id, arg0, arg1);
   return ret;
 }
+
+unsigned long sbi_sm_get_misc_params(uintptr_t out)
+{
+  *((struct runtime_misc_params_t*)out) = *get_enclave_misc_params(cpu_get_enclave_id());
+  return 0;
+}

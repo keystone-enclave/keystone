@@ -11,12 +11,23 @@ KEYSTONE_EXAMPLES_IGNORE_DIRS = */cmake-build-debug* */.idea*
 include $(KEYSTONE)/mkutils/pkg-keystone.mk
 endif
 
-KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk keystone-runtime
+define MUSL_HOST_PATCH
+find ${HOST_DIR} -type f \( -name "*.a" -o -name "*.so" \) -exec bash -c 'dir=$$(dirname "{}"); filename=$$(basename "{}"); filename_without_extension="$${filename%.*}"; extension="$${filename##*.}"; new_name="$$dir/$${filename_without_extension}_musl.$$extension"; mv "{}" "$$new_name"' \;
+endef
+
+define MUSL_TARGET_PATCH
+find ${TARGET_DIR} -type f \( -name "*.a" -o -name "*.so" \) -exec bash -c 'dir=$$(dirname "{}"); filename=$$(basename "{}"); filename_without_extension="$${filename%.*}"; extension="$${filename##*.}"; new_name="$$dir/$${filename_without_extension}_musl.$$extension"; mv "{}" "$$new_name"' \;
+endef
+
+MUSL_POST_INSTALL_TARGET_HOOKS += MUSL_HOST_PATCH
+MUSL_POST_INSTALL_TARGET_HOOKS += MUSL_TARGET_PATCH
+
+KEYSTONE_EXAMPLES_DEPENDENCIES += host-keystone-sdk keystone-runtime musl xz
 
 # Required to build enclaved ML accelerators
 ifneq ($(BR2_EXTERNAL_TVM_PATH),)
-KEYSTONE_EXAMPLES_DEPENDENCIES += tvm host-tvm #host-python-tvm host-python-vta
-KEYSTONE_EXAMPLES_CONF_OPTS += -DBUILDROOT_HOST_DIR=$(HOST_DIR) -DBUILDROOT_TARGET_DIR=$(TARGET_DIR)
+KEYSTONE_EXAMPLES_DEPENDENCIES += tvm host-tvm openssl musl #host-python-tvm host-python-vta
+KEYSTONE_EXAMPLES_CONF_OPTS += -DBUILDROOT_HOST_DIR=$(HOST_DIR) -DBUILDROOT_TARGET_DIR=$(TARGET_DIR) -DCMAKE_BUILD_TYPE=Debug
 
 # We take a bit of a non-buildroot approach here. We need several python packages in order to
 # retrieve pretrained machine learning models. The primary package used here (in conjunction with
@@ -46,7 +57,7 @@ KEYSTONE_EXAMPLES_MAKE_ENV += SSL_CERT_DIR=/etc/ssl/certs/
 endif
 
 KEYSTONE_EXAMPLES_CONF_OPTS += -DKEYSTONE_SDK_DIR=$(HOST_DIR)/usr/share/keystone/sdk \
-                                -DKEYSTONE_EYRIE_RUNTIME=$(KEYSTONE_RUNTIME_BUILDDIR)
+                                -DKEYSTONE_EYRIE_RUNTIME=$(KEYSTONE_RUNTIME_BUILDDIR) -DCMAKE_BUILD_TYPE=Debug
 
 KEYSTONE_EXAMPLES_MAKE_ENV += KEYSTONE_SDK_DIR=$(HOST_DIR)/usr/share/keystone/sdk
 KEYSTONE_EXAMPLES_MAKE_OPTS += examples
@@ -59,4 +70,3 @@ endef
 
 $(eval $(keystone-package))
 $(eval $(cmake-package))
-

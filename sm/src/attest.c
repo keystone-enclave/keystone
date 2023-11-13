@@ -178,6 +178,8 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
   // hash the runtime parameters
   hash_extend(&ctx, &enclave->params, sizeof(struct runtime_va_params_t));
 
+  // hash the runtime misc parameters
+  hash_extend(&ctx, &enclave->misc_params, sizeof(struct runtime_misc_params_t));
 
   uintptr_t runtime_max_seen=0;
   uintptr_t user_max_seen=0;;

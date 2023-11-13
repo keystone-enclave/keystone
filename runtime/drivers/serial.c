@@ -218,7 +218,7 @@ size_t uart8250_write(void* buf, size_t len);
 size_t uart8250_read(void* buf, size_t len);
 
 driver_instance uart8250_driver = {
-  .name = "uart8250",
+  .name = "serial",
   .init = uart8250_init,
   .fini = NULL,
   .read = uart8250_read,

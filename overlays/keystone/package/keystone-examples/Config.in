@@ -2,6 +2,7 @@ config BR2_PACKAGE_KEYSTONE_EXAMPLES
         bool "Keystone examples"
         depends on BR2_PACKAGE_HOST_KEYSTONE_SDK
         depends on BR2_PACKAGE_KEYSTONE_RUNTIME
+        select BR2_PACKAGE_MUSL
         help
           Example applications for Keystone, showing a variety
           of functionalities and features

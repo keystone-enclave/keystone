@@ -27,6 +27,11 @@ size_t utm_size;
 /* defined in entry.S */
 extern void* encl_trap_handler;
 
+struct runtime_misc_params_t misc_params;
+#ifdef USE_LINUX_SYSCALL
+extern uint64_t initial_time_since_unix_epoch_s;
+#endif
+
 #ifdef USE_FREEMEM
 
 
@@ -171,11 +176,12 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   /* set timer */
   init_timer();
   // get misc_params
-  struct runtime_misc_params_t misc_params;
   struct runtime_misc_params_t* misc_params_phys_addr = (struct runtime_misc_params_t*)translate((uintptr_t)&misc_params);
   sbi_get_misc_params(misc_params_phys_addr);
+#ifdef USE_LINUX_SYSCALL
   initial_time_since_unix_epoch_s = misc_params.time_since_unix_epoch_s;
   // print_strace("!!! Value of passed Unix Time is: %ld\n", misc_params.time_since_unix_epoch_s);
+#endif
 
 #ifdef USE_DRIVERS
   /* initialize any drivers included in the .drivers section */

@@ -73,17 +73,6 @@ typedef struct sargs_SYS_getsetsockopt{
   socklen_t option_len;
 } sargs_SYS_getsetsockopt;
 
-typedef struct sargs_SYS_connect{
-  int sockfd;
-  struct sockaddr_storage addr;
-  socklen_t addrlen;
-} sargs_SYS_connect;
-
-typedef struct sargs_SYS_clock_gettime {
-  clockid_t clock;
-  struct timespec tp;
-} sargs_SYS_clock_gettime;
-
 typedef struct sargs_SYS_bind{
   int sockfd;
   struct sockaddr_storage addr;
@@ -136,7 +125,6 @@ typedef struct sargs_SYS_epoll_pwait{
   int timeout;
 } sargs_SYS_epoll_pwait;
 
-
 typedef struct sargs_SYS_getpeername{
   int sockfd;
   struct sockaddr_storage addr;
@@ -156,8 +144,6 @@ typedef struct sargs_SYS_renameat2{
   char newpath[128];
   unsigned int flags;
 } sargs_SYS_renameat2;
-
-
 
 typedef struct sargs_SYS_umask{
   mode_t mask;
@@ -247,6 +233,19 @@ typedef struct sargs_SYS_sendrecvmsg {
   size_t msg_control_offs;
   size_t msg_controllen;
 } sargs_SYS_sendrecvmsg;
+
+typedef struct sargs_SYS_connect {
+  int sockfd;
+  socklen_t addrlen;
+  struct sockaddr addr;
+} sargs_SYS_connect;
+
+typedef struct sargs_SYS_clock_gettime {
+  // time_t  tv_sec;       /* seconds */
+  // long tv_nsec;         /* nanoseconds */
+  clockid_t clock;
+  struct timespec tp;
+} sargs_SYS_clock_gettime;
 
 void
 incoming_syscall(struct edge_call* buffer);

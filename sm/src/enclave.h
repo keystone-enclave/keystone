@@ -97,6 +97,7 @@ struct enclave
   /* parameters */
   struct runtime_va_params_t params;
   struct runtime_pa_params_t pa_params;
+  struct runtime_misc_params_t misc_params;
 
   /* enclave execution context */
   unsigned int n_thread;
@@ -160,6 +161,7 @@ unsigned long ret_enclave(struct sbi_trap_regs *regs);
 unsigned long register_handler(uintptr_t handler, enclave_id eid);
 unsigned long share_region(uintptr_t addr, size_t size, enclave_id with, enclave_id eid);
 unsigned long unshare_region(uintptr_t addr, enclave_id with, enclave_id eid);
+struct runtime_misc_params_t* get_enclave_misc_params(enclave_id eid);
 
 // interrupt handlers
 void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs);

@@ -152,11 +152,6 @@ incoming_syscall(struct edge_call* edge_call) {
       sargs_SYS_getsetsockopt  *getsockopt_args = (sargs_SYS_getsetsockopt *) syscall_info->data;
       ret = getsockopt(getsockopt_args->socket, getsockopt_args->level, getsockopt_args->option_name, &getsockopt_args->option_value, &getsockopt_args->option_len);
       break;
-    // TODO(chungmcl): get rid of this? 
-    // case (SYS_connect):;
-    //   sargs_SYS_connect *connect_args = (sargs_SYS_connect *) syscall_info->data; 
-    //   ret = connect(connect_args->sockfd, (struct sockaddr *) &connect_args->addr, connect_args->addrlen);
-    //   break;
     case (SYS_bind):;
       sargs_SYS_bind *bind_args = (sargs_SYS_bind *) syscall_info->data; 
       ret = bind(bind_args->sockfd, (struct sockaddr *) &bind_args->addr, bind_args->addrlen);
@@ -255,7 +250,7 @@ incoming_syscall(struct edge_call* edge_call) {
       sargs_SYS_connect* connect_args = (sargs_SYS_connect*)syscall_info->data;
       ret = connect(connect_args->sockfd, &connect_args->addr, connect_args->addrlen);
       if(ret < 0) {
-        fprintf(stderr, "connect failed with %i (%s)\n", errno, strerror(errno));
+        printf("### connect failed! sdk/src/edge/edge_syscall.c:%d with error %d\n", __LINE__, errno);
       }
       break;
     default:

@@ -77,7 +77,7 @@ int keystone_finalize_enclave(unsigned long arg)
   ret = sbi_sm_create_enclave(&create_args);
 
   if (ret.error) {
-    keystone_err("keystone_create_enclave: SBI call failed with error codd %ld\n", ret.error);
+    keystone_err("keystone_create_enclave: SBI call failed with error code %ld\n", ret.error);
     goto error_destroy_enclave;
   }
 

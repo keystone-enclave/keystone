@@ -161,7 +161,7 @@ int fdt_init_pmp_devices(void *fdt) {
             }
 
             ret = pmp_region_init_atomic(mmio_addr, ROUNDUP(mmio_size, PAGE_SIZE),
-                                         PMP_PRI_ANY, &region, 0, false);
+                                         PMP_PRI_ANY, &region, 0);
             if(ret) {
                 goto _fail;
             }

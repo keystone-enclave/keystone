@@ -24,7 +24,7 @@
 uint64_t initial_time_since_unix_epoch_s;
 
 //TODO we should check which clock this is
-uintptr_t linux_clock_gettime(__clockid_t clock, struct timespec *tp){
+uintptr_t linux_clock_gettime(clockid_t clock, struct timespec *tp){
   print_strace("[runtime] clock_gettime not fully supported (clock %x, assuming)\r\n", clock);
   // // original
   // print_strace("[runtime] clock_gettime not fully supported (clock %x, assuming)\r\n", clock);
@@ -155,7 +155,7 @@ uintptr_t syscall_munmap(void *addr, size_t length){
 }
 
 uintptr_t syscall_mmap(void *addr, size_t length, int prot, int flags,
-                 int fd, __off_t offset){
+                 int fd, off_t offset){
   uintptr_t ret = (uintptr_t)((void*)-1);
 
   int pte_flags = PTE_U | PTE_A;

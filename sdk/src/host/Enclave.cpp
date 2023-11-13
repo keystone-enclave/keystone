@@ -354,6 +354,9 @@ Enclave::init(
 
   pMemory->startFreeMem();
 
+  struct runtime_misc_params_t miscParams;
+  miscParams.time_since_unix_epoch_s = params.getTimeSinceUnixEpoch();
+
   /* TODO: This should be invoked with some other function e.g., measure() */
   if (params.isSimulated()) {
     validate_and_hash_enclave(runtimeParams);
@@ -361,7 +364,7 @@ Enclave::init(
 
   if (pDevice->finalize(
           pMemory->getRuntimePhysAddr(), pMemory->getEappPhysAddr(),
-          pMemory->getFreePhysAddr(), runtimeParams) != Error::Success) {
+          pMemory->getFreePhysAddr(), runtimeParams, miscParams) != Error::Success) {
     destroy();
     return Error::DeviceError;
   }
