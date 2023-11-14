@@ -2,8 +2,8 @@
 set(LOADER_SOURCES loader.S loader-binary.c)
 set(LOADER_LINK_SCRIPT loader.lds)
 
-add_executable(loader loader.S loader-binary.c)
-target_link_libraries(loader rt_call ld_mm rt_util rt_loader)
+add_executable(loader ${LOADER_SOURCES})
+target_link_libraries(loader rt_call ld_mm rt_util rt_loader) # NOTE: rt_* is not guaranteed to be PIC
 # All are required. medany is PIC. Adding -fPIC breaks.
 target_compile_options(loader PRIVATE -static -mcmodel=medany)
 target_link_options(loader PRIVATE -static -nostdlib -T ${LOADER_LINK_SCRIPT})
