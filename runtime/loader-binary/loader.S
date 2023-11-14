@@ -1,6 +1,6 @@
 #define __PREPROCESSING__
 #include "mm/vm_defs.h"
-#include "../tmplib/asm/csr.h"
+#include <asm/csr.h>
 
 #if __riscv_xlen == 64
 #define STORE sd

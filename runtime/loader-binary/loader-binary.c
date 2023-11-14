@@ -4,7 +4,7 @@
 #include "mm/common.h"
 #include "mm/freemem.h"
 #include "util/printf.h"
-#include "../tmplib/asm/csr.h"
+#include <asm/csr.h>
 
 /* root page table */
 pte root_page_table_storage[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
