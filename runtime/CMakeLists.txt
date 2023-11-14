@@ -54,7 +54,8 @@ include_directories(include)
 ## Build recipes ##
 ###################
 
-add_compile_options(-Wall -Werror -fno-builtin -std=c11 -g)
+# medany creates PIC w/o a GOT, needed for loader-binary.
+add_compile_options(-Wall -Werror -fno-builtin -static -mcmodel=medany -std=c11 -g)
 
 # Generate all the library targets
 add_subdirectory(call)
