@@ -11,7 +11,11 @@
 #include <sbi/riscv_encoding.h>
 
 #define SMM_BASE  0x80000000
+#ifdef TARGET_SMM_SIZE
+#define SMM_SIZE  TARGET_SMM_SIZE 
+#else
 #define SMM_SIZE  0x200000
+#endif
 
 /* 0-1999 are not used (deprecated) */
 #define FID_RANGE_DEPRECATED      1999

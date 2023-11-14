@@ -9,6 +9,9 @@ endif
 
 platform-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/$(KEYSTONE_PLATFORM)/platform.h\""
 
+# Temporary fix for unmatched
+platform-genflags-y += "-DTARGET_SMM_SIZE=0x80000"
+
 include $(KEYSTONE_SM)/src/objects.mk
 platform-objs-y += $(addprefix ../../src/,$(subst .c,.o,$(keystone-sm-sources)))
 
