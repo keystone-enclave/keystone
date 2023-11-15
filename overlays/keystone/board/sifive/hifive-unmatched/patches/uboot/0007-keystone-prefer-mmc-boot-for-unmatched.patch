@@ -1,8 +1,17 @@
+From 5ab2e687c5ba9ff45af57f29e4973da40e4914cf Mon Sep 17 00:00:00 2001
+From: Akihiro Saiki <saiki@kasahara.cs.waseda.ac.jp>
+Date: Thu, 16 Nov 2023 00:31:32 +0900
+Subject: [PATCH 7/7] keystone: prefer mmc boot for unmatched
+
+---
+ include/configs/sifive-unmatched.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 diff --git a/include/configs/sifive-unmatched.h b/include/configs/sifive-unmatched.h
-index 74150b7d4b..8066c8fd38 100644
+index 5e8fab031a..f73d1a231e 100644
 --- a/include/configs/sifive-unmatched.h
 +++ b/include/configs/sifive-unmatched.h
-@@ -16,10 +16,10 @@
+@@ -20,10 +20,10 @@
  /* Environment options */
  
  #define BOOT_TARGET_DEVICES(func) \
@@ -14,3 +23,6 @@ index 74150b7d4b..8066c8fd38 100644
  	func(SCSI, scsi, 0) \
  	func(PXE, pxe, na) \
  	func(DHCP, dhcp, na)
+-- 
+2.34.1
+

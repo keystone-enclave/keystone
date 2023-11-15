@@ -1,7 +1,7 @@
-From c29e4d84cfa17ab96eff2a9044f486ba3c8b5c43 Mon Sep 17 00:00:00 2001
+From 2aa15bc3e739943d1607ff5b4e6ce7529bed2ef6 Mon Sep 17 00:00:00 2001
 From: Atish Patra <atish.patra@wdc.com>
 Date: Mon, 25 Oct 2021 11:35:41 -0700
-Subject: [PATCH] riscv: dts: Add few PMU events
+Subject: [PATCH 5/7] riscv: dts: Add few PMU events
 
 fu740 has 2 HPM counters and many HPM events defined in the fu740 manual[1].
 This patch adds some of these events and their mapping as per the
@@ -15,6 +15,8 @@ Signed-off-by: Atish Patra <atish.patra@wdc.com>
  arch/riscv/dts/fu740-c000.dtsi | 11 +++++++++++
  1 file changed, 11 insertions(+)
 
+diff --git a/arch/riscv/dts/fu740-c000.dtsi b/arch/riscv/dts/fu740-c000.dtsi
+index 7b77c13496..ea634a3b4c 100644
 --- a/arch/riscv/dts/fu740-c000.dtsi
 +++ b/arch/riscv/dts/fu740-c000.dtsi
 @@ -140,6 +140,17 @@
@@ -35,3 +37,6 @@ Signed-off-by: Atish Patra <atish.patra@wdc.com>
  		plic0: interrupt-controller@c000000 {
  			#interrupt-cells = <1>;
  			#address-cells = <0>;
+-- 
+2.34.1
+

@@ -1,8 +1,8 @@
-From 25e12b623e066c2397a9ae7385d9b8384a2da050 Mon Sep 17 00:00:00 2001
+From b148ef5fdb182fdccee7e10d7abd8ebffd43a79f Mon Sep 17 00:00:00 2001
 From: Vincent Chen <vincent.chen@sifive.com>
 Date: Mon, 24 Jan 2022 02:57:40 -0800
-Subject: [PATCH] board: sifive: spl: Set remote thermal of TMP451 to 85 deg C
- for the unmatched board
+Subject: [PATCH 4/7] board: sifive: spl: Set remote thermal of TMP451 to 85
+ deg C for the unmatched board
 
 For TMP451 on the unmatched board, the default value of the remote
 thermal threshold is 108 deg C. This commit initilizes it to 85 deg C at SPL.
@@ -16,7 +16,7 @@ Signed-off-by: Vincent Chen <vincent.chen@sifive.com>
  3 files changed, 43 insertions(+)
 
 diff --git a/board/sifive/unmatched/spl.c b/board/sifive/unmatched/spl.c
-index f3a661a81eb5..05ba59160a86 100644
+index f3a661a81e..05ba59160a 100644
 --- a/board/sifive/unmatched/spl.c
 +++ b/board/sifive/unmatched/spl.c
 @@ -10,6 +10,8 @@
@@ -70,10 +70,10 @@ index f3a661a81eb5..05ba59160a86 100644
  	if (ret) {
  		debug("Gigabit ethernet PHY (VSC8541) init failed: %d\n", ret);
 diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
-index b5707a15c504..b9807e4d8846 100644
+index 04460f1acb..77d36ed0c5 100644
 --- a/drivers/misc/Kconfig
 +++ b/drivers/misc/Kconfig
-@@ -550,8 +550,18 @@ config SYS_I2C_EEPROM_ADDR
+@@ -557,8 +557,18 @@ config SYS_I2C_EEPROM_ADDR
  	depends on ID_EEPROM || I2C_EEPROM || SPL_I2C_EEPROM || CMD_EEPROM || ENV_IS_IN_EEPROM
  	default 0
  
@@ -93,7 +93,7 @@ index b5707a15c504..b9807e4d8846 100644
  	hex "EEPROM Address Overflow"
  	default 0x0
 diff --git a/include/configs/sifive-unmatched.h b/include/configs/sifive-unmatched.h
-index 78d83a098c06..5e8fab031ad5 100644
+index 78d83a098c..5e8fab031a 100644
 --- a/include/configs/sifive-unmatched.h
 +++ b/include/configs/sifive-unmatched.h
 @@ -13,6 +13,10 @@
@@ -108,5 +108,5 @@ index 78d83a098c06..5e8fab031ad5 100644
  
  #define BOOT_TARGET_DEVICES(func) \
 -- 
-2.40.1
+2.34.1
 
