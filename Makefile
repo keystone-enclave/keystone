@@ -117,9 +117,3 @@ linux-configure: $(BUILDROOT_BUILDDIR)/.config
 
 -include mkutils/plat/$(KEYSTONE_PLATFORM)/run.mk
 
-###################
-## Flush targets ##
-###################
-
--include mkutils/plat/$(KEYSTONE_PLATFORM)/flush.mk
-
