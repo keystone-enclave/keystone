@@ -5,3 +5,4 @@ build/
 riscv/
 riscv64/
 riscv32/
+build-generic64/
