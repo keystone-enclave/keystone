@@ -17,7 +17,7 @@ macro(use_riscv_toolchain bits)
     RESULT_VARIABLE ERROR)
 
   if (NOT "${ERROR}" STREQUAL 0)
-    message(FATAL_ERROR "RISCV Toochain is not found")
+    message(FATAL_ERROR "RISCV Toolchain is not found")
   endif()
 
   string(STRIP ${CROSSCOMPILE} CROSSCOMPILE)
