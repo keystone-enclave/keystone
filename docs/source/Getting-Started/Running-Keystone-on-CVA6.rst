@@ -115,9 +115,15 @@ And when you run the enclave application, such as hello-native, you will see the
   Verifying archive integrity... MD5 checksums are OK. All good.
   Uncompressing Keystone Enclave Package
   [ 2334.409841] rcu: INFO: rcu_sched self-detected stall on CPU
-  [ 2334.416433] rcu:     0-...!: (2100 ticks this GP) idle=a6e4/1/0x402[ 2334.423348]    (t=2100 jiffies g=9217 q=24 ncpus=1)
-  [ 2334.428853] rcu: rcu_sched kthread timer wakeup didn't happen f [ 2334.435566] rcu:  Possible timer handling issue on cpu=0 timer-[ 2334.442017] rcu: rcu_sched kthread starved for 2100 jiffies! g9T[ 2334.448709] rcu:     Unless rcu_sched kthread gets sufficient CPU e[ 2334.455251] rcu: RCU grace-period kthread stack dump:
-  [ 2334.460899] task:rcu_sched       state:I stack:0     pid:12    0[ 2334.467886] Call Trace:
+  [ 2334.416433] rcu:     0-...!: (2100 ticks this GP) idle=a6e4/1/0x402
+  [ 2334.423348]    (t=2100 jiffies g=9217 q=24 ncpus=1)
+  [ 2334.428853] rcu: rcu_sched kthread timer wakeup didn't happen f 
+  [ 2334.435566] rcu:  Possible timer handling issue on cpu=0 timer-
+  [ 2334.442017] rcu: rcu_sched kthread starved for 2100 jiffies! g9T
+  [ 2334.448709] rcu:     Unless rcu_sched kthread gets sufficient CPU e
+  [ 2334.455251] rcu: RCU grace-period kthread stack dump:
+  [ 2334.460899] task:rcu_sched       state:I stack:0     pid:12    0
+  [ 2334.467886] Call Trace:
   [ 2334.470930] [<c04bbb1e>] __schedule+0x1ca/0x46c
   [ 2334.476485] [<c04bbdfa>] schedule+0x3a/0xba
   [ 2334.481575] [<c04c0418>] schedule_timeout+0x62/0xc4
@@ -126,7 +132,8 @@ And when you run the enclave application, such as hello-native, you will see the
   [ 2334.498992] [<c0024c80>] kthread+0x8c/0x98
   [ 2334.504146] [<c0003190>] ret_from_exception+0x0/0x16
   [ 2334.510048] rcu: Stack dump where RCU GP kthread last ran:
-  [ 2334.516218] CPU: 0 PID: 190 Comm: hello-native-ru Tainted: G   3[ 2334.522896] Hardware name: eth,ariane-bare (DT)
+  [ 2334.516218] CPU: 0 PID: 190 Comm: hello-native-ru Tainted: G   3
+  [ 2334.522896] Hardware name: eth,ariane-bare (DT)
   [ 2334.528052] epc : __do_softirq+0xb8/0x25a
   [ 2334.533035]  ra : irq_exit+0x8c/0xbc
   [ 2334.537500] epc : c04c1660 ra : c000f266 sp : c23b7b70
@@ -144,7 +151,8 @@ And when you run the enclave application, such as hello-native, you will see the
   [ 2334.613023] [<c000f266>] irq_exit+0x8c/0xbc
   [ 2334.618117] [<c04bafb2>] generic_handle_arch_irq+0x64/0x74
   [ 2334.624537] [<c0003190>] ret_from_exception+0x0/0x16
-  [ 2334.630814] CPU: 0 PID: 190 Comm: hello-native-ru Tainted: G   2[ 2334.637579] Hardware name: eth,ariane-bare (DT)
+  [ 2334.630814] CPU: 0 PID: 190 Comm: hello-native-ru Tainted: G   2
+  [ 2334.637579] Hardware name: eth,ariane-bare (DT)
   [ 2334.642798] epc : __do_softirq+0xb8/0x25a
   [ 2334.647783]  ra : irq_exit+0x8c/0xbc
   [ 2334.652209] epc : c04c1660 ra : c000f266 sp : c23b7b70
