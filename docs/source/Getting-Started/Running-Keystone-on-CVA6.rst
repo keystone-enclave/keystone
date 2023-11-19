@@ -23,11 +23,13 @@ Building Keystone
 To build the keystone, you need to run this command
 
 .. code-block:: bash
+
     KEYSTONE_PLATFORM=cva6 make
 
 or, if you want to build the 32 bit version of keystone to run on CV32A6
 
 .. code-block:: bash 
+  
     KEYSTONE_PLATFORM=cva6 KEYSTONE_BITS=32 make
 
 
@@ -39,12 +41,14 @@ Flash SD Card
 
 To flash the SD card, you need to run this command
 
-.. code-block:: bash 
+.. code-block:: bash
+
     sudo KEYSTONE_PLATFORM=cva6 SD_DEVICE=/dev/sdb make flash
 
 or, for the 32 bit version
 
-.. code-block:: bash 
+.. code-block:: bash
+   
     sudo KEYSTONE_PLATFORM=cva6 KEYSTONE_BITS=32 SD_DEVICE=/dev/sdb make flash
 
 
