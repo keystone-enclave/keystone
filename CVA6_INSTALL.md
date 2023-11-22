@@ -2,9 +2,8 @@
 ### Setup
 
 ```bash
-git clone https://github.com/andreaskuster/keystone.git
+git clone https://github.com/keystone-enclave/keystone.git
 cd keystone
-git checkout dev-cva6-support
 ./fast-setup.sh
 ```
 
