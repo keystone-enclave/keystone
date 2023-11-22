@@ -183,9 +183,9 @@ The ``Verifier::verify_report`` method accomplishes 3-5:
 	  verify_data(report, nonce);
 	}
 
- First, let's dive into how the Enclave hash is computed. It is done
- by leveraging a simulation mode offered by the ``Keystone:Enclave``
- class:
+First, let's dive into how the Enclave hash is computed. It is done
+by leveraging a simulation mode offered by the ``Keystone:Enclave``
+class:
 
  .. code-block:: cpp
 
