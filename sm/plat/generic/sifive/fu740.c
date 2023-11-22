@@ -241,7 +241,7 @@ static int sifive_fu740_final_init(bool cold_boot,
 				   __func__);
 	}
 
-    sm_init(cold_boot);
+	sm_init(cold_boot);
 
 	return 0;
 }
