@@ -54,7 +54,8 @@ include_directories(include)
 ## Build recipes ##
 ###################
 
-# medany creates PIC w/o a GOT, needed for loader-binary.
+# medany creates PIC w/o a GOT. loader-binary (and thus libs) inherently needs PIC
+# because it's in physical addressing; currently doesn't work with Global Offset Table
 add_compile_options(-Wall -Werror -fno-builtin -static -mcmodel=medany -std=c11 -g)
 
 # Generate all the library targets
