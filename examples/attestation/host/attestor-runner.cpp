@@ -19,10 +19,10 @@
 
 int
 main(int argc, char** argv) {
-  if (argc < 3 || argc > 8) {
+  if (argc < 4 || argc > 9) {
     printf(
-        "Usage: %s <eapp> <runtime> [--utm-size SIZE(K)] [--freemem-size "
-        "SIZE(K)] [--utm-ptr 0xPTR] [--sm-bin SM_BIN_PATH]\n",
+        "Usage: %s <eapp> <runtime> <loader> [--utm-size SIZE(K)] "
+        "[--freemem-size SIZE(K)] [--utm-ptr 0xPTR] [--sm-bin SM_BIN_PATH]\n",
         argv[0]);
     return 0;
   }
@@ -45,10 +45,11 @@ main(int argc, char** argv) {
 
   char* eapp_file   = argv[1];
   char* rt_file     = argv[2];
+  char* ld_file     = argv[3];
   char* sm_bin_file = NULL;
 
   int c;
-  int opt_index = 3;
+  int opt_index = 4;
   while (1) {
     c = getopt_long(argc, argv, "u:p:f:s:", long_options, &opt_index);
 
@@ -72,12 +73,17 @@ main(int argc, char** argv) {
     }
   }
 
+  if (sm_bin_file == NULL) {
+    printf("--sm-bin is missing.\n");
+    return 0;
+  }
+
   Keystone::Params params;
 
   params.setFreeMemSize(freemem_size);
   params.setUntrustedMem(utm_ptr, untrusted_size);
 
-  Verifier verifier{params, eapp_file, rt_file, sm_bin_file};
+  Verifier verifier{params, eapp_file, rt_file, ld_file, sm_bin_file};
   verifier.run();
 
   return 0;

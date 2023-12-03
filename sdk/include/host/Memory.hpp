@@ -77,13 +77,14 @@ class Memory {
   virtual void writeMem(uintptr_t src, uintptr_t dst, size_t size) = 0;
   virtual uintptr_t allocMem(size_t size)                          = 0;
   virtual uintptr_t allocUtm(size_t size)                          = 0;
-  bool allocPage(uintptr_t eva, uintptr_t src, unsigned int mode);
   size_t epmAllocVspace(uintptr_t addr, size_t num_pages);
+  uintptr_t allocPages(size_t size); 
+
 
   // getters to be deprecated
   uintptr_t getStartAddr() { return startAddr; }
-  uintptr_t getCurrentEPMAddress() { return epmFreeList; }
-  uintptr_t getRootPageTable() { return rootPageTable; }
+  uintptr_t getCurrentOffset() { return epmFreeList; }
+  uintptr_t getCurrentEPMAddress() { return epmFreeList + startAddr; }
 
   int validateAndHashEpm(
       hash_ctx_t* hash_ctx, int level, pte* tb, uintptr_t vaddr, int contiguous,
@@ -93,22 +94,16 @@ class Memory {
   void startEappMem();
   void startFreeMem();
 
+  void incrementEPMFreeList();
+
   uintptr_t getRuntimePhysAddr() { return runtimePhysAddr; }
   uintptr_t getEappPhysAddr() { return eappPhysAddr; }
   uintptr_t getFreePhysAddr() { return freePhysAddr; }
-
- protected:
-  pte* __ept_walk_create(uintptr_t addr);
-  pte* __ept_continue_walk_create(uintptr_t addr, pte* pte);
-  pte* __ept_walk_internal(uintptr_t addr, int create);
-  pte* __ept_walk(uintptr_t addr);
-  uintptr_t epm_va_to_pa(uintptr_t addr);
 
   KeystoneDevice* pDevice;
   size_t epmSize;
   uintptr_t epmFreeList;
   uintptr_t utmFreeList;
-  uintptr_t rootPageTable;
   uintptr_t startAddr;
 
   // for hash calculation
@@ -118,13 +113,6 @@ class Memory {
   uintptr_t utmPhysAddr;
   uintptr_t untrustedPtr;
   uintptr_t untrustedSize;
-
- private:
-  pte pte_create(uintptr_t, int);
-  pte ptd_create(uintptr_t);
-  uintptr_t pte_ppn(pte);
-  uintptr_t ppn(uintptr_t);
-  size_t pt_idx(uintptr_t, int);
 };
 
 class PhysicalEnclaveMemory : public Memory {

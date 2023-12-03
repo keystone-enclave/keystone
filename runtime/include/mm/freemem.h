@@ -3,6 +3,9 @@
 #ifndef __FREEMEM_H__
 #define __FREEMEM_H__
 
+#include <stdint.h>
+#include <stddef.h>
+
 #define NEXT_PAGE(page) *((uintptr_t*)page)
 #define LIST_EMPTY(list) ((list).count == 0 || (list).head == 0)
 #define LIST_INIT(list) { (list).count = 0; (list).head = 0; (list).tail = 0; }

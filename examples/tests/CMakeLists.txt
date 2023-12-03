@@ -80,9 +80,9 @@ foreach (test IN ITEMS ${all_test_bins})
   file(APPEND ${test_script_tmp} "echo 'testing ${test}'\n")
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${test}/retval)
     execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/${test}/retval OUTPUT_VARIABLE retval)
-    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt --retval ${retval}")
+    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt loader.bin --retval ${retval}")
   else()
-    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt\n")
+    file(APPEND ${test_script_tmp} "./${host_bin} ${test} eyrie-rt loader.bin\n")
   endif()
 endforeach(test)
 
@@ -102,7 +102,7 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE} ${KE
 
 # add target for Eyrie runtime (see keystone.cmake)
 
-set(eyrie_files_to_copy .options_log eyrie-rt)
+set(eyrie_files_to_copy .options_log eyrie-rt loader.bin)
 add_eyrie_runtime(test-eyrie
   ${eyrie_plugins}
   ${eyrie_files_to_copy})

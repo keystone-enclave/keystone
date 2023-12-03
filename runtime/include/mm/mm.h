@@ -8,6 +8,7 @@
 uintptr_t translate(uintptr_t va);
 pte* pte_of_va(uintptr_t va);
 #ifdef USE_FREEMEM
+uintptr_t map_page(uintptr_t vpn, uintptr_t ppn, int flags);
 uintptr_t alloc_page(uintptr_t vpn, int flags);
 uintptr_t realloc_page(uintptr_t vpn, int flags);
 void free_page(uintptr_t vpn);

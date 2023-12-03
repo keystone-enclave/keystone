@@ -5,7 +5,6 @@
 #include "ElfFile.hpp"
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <cstdio>
 
 namespace Keystone {
 
@@ -37,6 +36,19 @@ ElfFile::ElfFile(std::string filename) {
   if (!ptr) {
     ERROR("mmap failed for %s", filename.c_str());
   }
+    /* preparation for libelf */
+  if (elf_newFile(ptr, fileSize, &elf)) {
+    return;
+  }
+
+  /* get bound vaddrs */
+  elf_getMemoryBounds(&elf, VIRTUAL, &minVaddr, &maxVaddr);
+
+  if (!IS_ALIGNED(minVaddr, PAGE_SIZE)) {
+    return;
+  }
+
+  maxVaddr = ROUND_UP(maxVaddr, PAGE_BITS);
 }
 
 ElfFile::~ElfFile() {
@@ -44,67 +56,4 @@ ElfFile::~ElfFile() {
   munmap(ptr, fileSize);
 }
 
-bool
-ElfFile::isValid() {
-  return (filep > 0 && fileSize > 0 && ptr != NULL);
-}
-
-bool
-ElfFile::initialize(bool _isRuntime) {
-  if (!isValid()) return false;
-
-  /* preparation for libelf */
-  if (elf_newFile(ptr, fileSize, &elf)) {
-    return false;
-  }
-
-  /* get bound vaddrs */
-  elf_getMemoryBounds(&elf, VIRTUAL, &minVaddr, &maxVaddr);
-
-  if (!IS_ALIGNED(minVaddr, PAGE_SIZE)) {
-    return false;
-  }
-
-  maxVaddr = ROUND_UP(maxVaddr, PAGE_BITS);
-
-  isRuntime = _isRuntime;
-
-  return true;
-}
-
-/* Functions below are wrappers for libelf */
-size_t
-ElfFile::getNumProgramHeaders(void) {
-  return elf_getNumProgramHeaders(&elf);
-}
-
-size_t
-ElfFile::getProgramHeaderType(size_t ph) {
-  return elf_getProgramHeaderType(&elf, ph);
-}
-
-size_t
-ElfFile::getProgramHeaderFileSize(size_t ph) {
-  return elf_getProgramHeaderFileSize(&elf, ph);
-}
-
-size_t
-ElfFile::getProgramHeaderMemorySize(size_t ph) {
-  return elf_getProgramHeaderMemorySize(&elf, ph);
-}
-
-uintptr_t
-ElfFile::getProgramHeaderVaddr(size_t ph) {
-  return elf_getProgramHeaderVaddr(&elf, ph);
-}
-
-uintptr_t
-ElfFile::getEntryPoint() {
-  return elf_getEntryPoint(&elf);
-}
-
-void*
-ElfFile::getProgramSegment(size_t ph) {
-  return elf_getProgramSegment(&elf, ph);
-}
 }  // namespace Keystone

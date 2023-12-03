@@ -132,7 +132,7 @@ KeystoneDevice::map(uintptr_t addr, size_t size) {
 }
 
 bool
-KeystoneDevice::initDevice(Params params) {
+KeystoneDevice::initDevice(Params params) { // TODO: why does this need params
   /* open device driver */
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if (fd < 0) {

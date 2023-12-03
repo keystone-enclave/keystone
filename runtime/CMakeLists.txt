@@ -54,11 +54,14 @@ include_directories(include)
 ## Build recipes ##
 ###################
 
-add_compile_options(-Wall -Werror -fPIC -fno-builtin -std=c11 -g)
+# medany creates PIC w/o a GOT. loader-binary (and thus libs) inherently needs PIC
+# because it's in physical addressing; currently doesn't work with Global Offset Table
+add_compile_options(-Wall -Werror -fno-builtin -static -mcmodel=medany -std=c11 -g)
 
 # Generate all the library targets
 add_subdirectory(call)
 add_subdirectory(crypto)
+add_subdirectory(loader)
 add_subdirectory(mm)
 add_subdirectory(tmplib)
 add_subdirectory(util)
@@ -72,5 +75,6 @@ set_target_properties(rt_linkscript PROPERTIES PREFIX "")
 set_target_properties(rt_linkscript PROPERTIES OUTPUT_NAME runtime.ld)
 set_target_properties(rt_linkscript PROPERTIES SUFFIX "")
 
-# Generate final executable
+# Generate final executables
 add_subdirectory(sys)
+add_subdirectory(loader-binary)

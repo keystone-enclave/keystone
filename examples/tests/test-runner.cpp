@@ -55,7 +55,7 @@ copy_report(void* buffer) {
 
 int
 main(int argc, char** argv) {
-  if (argc < 3 || argc > 8) {
+  if (argc < 4 || argc > 9) {
     printf(
         "Usage: %s <eapp> <runtime> [--utm-size SIZE(K)] [--freemem-size "
         "SIZE(K)] [--time] [--load-only] [--utm-ptr 0xPTR] [--retval EXPECTED]\n",
@@ -83,6 +83,7 @@ main(int argc, char** argv) {
 
   char* eapp_file = argv[1];
   char* rt_file   = argv[2];
+  char* ld_file   = argv[3];
 
   int c;
   int opt_index = 3;
@@ -121,7 +122,7 @@ main(int argc, char** argv) {
     asm volatile("rdcycle %0" : "=r"(cycles1));
   }
 
-  enclave.init(eapp_file, rt_file, params);
+  enclave.init(eapp_file, rt_file, ld_file, params);
 
   if (self_timing) {
     asm volatile("rdcycle %0" : "=r"(cycles2));
@@ -133,7 +134,7 @@ main(int argc, char** argv) {
     asm volatile("rdcycle %0" : "=r"(cycles3));
   }
 
-  uintptr_t encl_ret;
+  unsigned long encl_ret;
   if (!load_only) enclave.run(&encl_ret);
 
   if (retval_exist && encl_ret != retval) {

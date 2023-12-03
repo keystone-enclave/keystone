@@ -108,16 +108,24 @@
 .endm
 
 _start:
+  /* set up runtime stack */
   la sp, kernel_stack_end
 
   /* set sscratch zero so that the trap handler can
    * notice that the trap is from S-mode */
   csrw sscratch, x0
 
+  sfence.vma
   jal eyrie_boot
+  sfence.vma
+
+  /* set spp to user */
+  li t0, 0x100
+  csrrc x0, sstatus, t0
 
   /* start running enclave */
   csrrw sp, sscratch, sp
+  li a0, 0 // passed as rtld_fini to entry point/ __libc_start_main
   sret
 
 .align 6

@@ -1,7 +1,6 @@
-#include "util/rt_util.h"
 #include "mm/common.h"
-#include "call/syscall.h"
 #include "mm/mm.h"
+#include "mm/vm.h"
 #include "mm/freemem.h"
 #include "mm/paging.h"
 
@@ -14,11 +13,13 @@ __walk_create(pte* root, uintptr_t addr);
 /* Hacky storage of current u-mode break */
 static uintptr_t current_program_break;
 
-uintptr_t get_program_break(){
+uintptr_t get_program_break()
+{
   return current_program_break;
 }
 
-void set_program_break(uintptr_t new_break){
+void set_program_break(uintptr_t new_break)
+{
   current_program_break = new_break;
 }
 
@@ -67,6 +68,20 @@ __walk_create(pte* root, uintptr_t addr)
   return __walk_internal(root, addr, 1);
 }
 
+/* Create a virtual memory mapping between a physical and virtual page */
+uintptr_t 
+map_page(uintptr_t vpn, uintptr_t ppn, int flags)
+{
+  pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
+
+  // TODO: what is supposed to happen if page is already allocated?
+  if (*pte & PTE_V) {
+    return -1;
+  }
+
+  *pte = pte_create(ppn, PTE_D | PTE_A | PTE_V | flags);
+  return 1;
+}
 
 /* allocate a new page to a given vpn
  * returns VA of the page, (returns 0 if fails) */
@@ -75,8 +90,6 @@ alloc_page(uintptr_t vpn, int flags)
 {
   uintptr_t page;
   pte* pte = __walk_create(root_page_table, vpn << RISCV_PAGE_BITS);
-
-  assert(flags & PTE_U);
 
   if (!pte)
     return 0;
@@ -90,7 +103,7 @@ alloc_page(uintptr_t vpn, int flags)
   page = spa_get_zero();
   assert(page);
 
-  *pte = pte_create(ppn(__pa(page)), flags | PTE_V);
+  *pte = pte_create(ppn(__pa(page)), PTE_D | PTE_A | PTE_V | flags);
 #ifdef USE_PAGING
   paging_inc_user_page();
 #endif
@@ -116,7 +129,8 @@ realloc_page(uintptr_t vpn, int flags)
 }
 
 void
-free_page(uintptr_t vpn){
+free_page(uintptr_t vpn)
+{
 
   pte* pte = __walk(root_page_table, vpn << RISCV_PAGE_BITS);
 

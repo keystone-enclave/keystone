@@ -120,7 +120,7 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
     DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${KEYSTONE_EYRIE_RUNTIME} ${eyrie_src}
     CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${KEYSTONE_EYRIE_RUNTIME} -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR}
     BUILD_IN_SOURCE TRUE
-    BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log
+    BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log ${eyrie_src}/loader.bin
     INSTALL_COMMAND "")
 
   add_custom_target(${target_name} DEPENDS ${ARGN})
@@ -132,6 +132,7 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
 
 endmacro(add_eyrie_runtime)
 
+# CMake macro for Keystone Package
 macro(add_keystone_package target_name package_name package_script) # files are passed via ${ARGN}
   set(pkg_dir ${CMAKE_CURRENT_BINARY_DIR}/pkg)
   add_custom_command(OUTPUT ${pkg_dir} COMMAND mkdir ${pkg_dir})

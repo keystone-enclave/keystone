@@ -1,18 +1,49 @@
+#include <stddef.h>
+#include <stdint.h>
 #include "mm/vm.h"
 
 uintptr_t runtime_va_start;
-uintptr_t kernel_offset;
-uintptr_t load_pa_start;
+
+/* root page table */
+pte* root_page_table;
+
+#ifdef LOADER_BIN
+
+/* no-ops */
+
+uintptr_t kernel_va_to_pa(void* ptr)
+{
+  return (uintptr_t) ptr;
+}
+
+uintptr_t __va(uintptr_t pa)
+{
+  return pa;
+}
+
+uintptr_t __pa(uintptr_t va)
+{
+  return va;
+}
+
+#else // !LOADER_BIN
+
+uintptr_t kernel_va_to_pa(void* ptr)
+{
+  return (uintptr_t) ptr - kernel_offset;
+}
+
+uintptr_t __va(uintptr_t pa)
+{
+  return (pa - load_pa_start) + EYRIE_LOAD_START;
+}
+
+uintptr_t __pa(uintptr_t va)
+{
+  return (va - EYRIE_LOAD_START) + load_pa_start;
+}
 
 #ifdef USE_FREEMEM
-/* root page table */
-pte root_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-/* page tables for kernel remap */
-pte kernel_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte kernel_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-/* page tables for loading physical memory */
-pte load_l2_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
-pte load_l3_page_table[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
 
 /* Program break */
 uintptr_t program_break;
@@ -25,5 +56,10 @@ size_t freemem_size;
 /* shared buffer */
 uintptr_t shared_buffer;
 uintptr_t shared_buffer_size;
+
+uintptr_t kernel_offset;
+uintptr_t load_pa_start;
+
+#endif // LOADER_BIN
 
 

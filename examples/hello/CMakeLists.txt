@@ -3,7 +3,7 @@ set(eapp_src eapp/hello.c)
 set(host_bin hello-runner)
 set(host_src host/host.cpp)
 set(package_name "hello.ke")
-set(package_script "./hello-runner hello eyrie-rt")
+set(package_script "./hello-runner hello eyrie-rt loader.bin")
 
 if(RISCV32)
   set(eyrie_plugins "freemem io_syscall linux_syscall env_setup rv32")
@@ -23,7 +23,7 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE})
 
 # add target for Eyrie runtime (see keystone.cmake)
 
-set(eyrie_files_to_copy .options_log eyrie-rt)
+set(eyrie_files_to_copy .options_log eyrie-rt loader.bin)
 add_eyrie_runtime(${eapp_bin}-eyrie
   ${eyrie_plugins}
   ${eyrie_files_to_copy})

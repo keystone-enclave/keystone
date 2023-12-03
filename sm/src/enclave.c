@@ -51,8 +51,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 
   if(load_parameters) {
     // passing parameters for a first run
-    csr_write(sepc, (uintptr_t) enclaves[eid].params.user_entry);
-    regs->mepc = (uintptr_t) enclaves[eid].params.runtime_entry - 4; // regs->mepc will be +4 before sbi_ecall_handler return
+    regs->mepc = (uintptr_t) enclaves[eid].pa_params.dram_base - 4; // regs->mepc will be +4 before sbi_ecall_handler return
     regs->mstatus = (1 << MSTATUS_MPP_SHIFT);
     // $a1: (PA) DRAM base,
     regs->a1 = (uintptr_t) enclaves[eid].pa_params.dram_base;
@@ -64,13 +63,13 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
     regs->a4 = (uintptr_t) enclaves[eid].pa_params.user_base;
     // $a5: (PA) freemem location,
     regs->a5 = (uintptr_t) enclaves[eid].pa_params.free_base;
-    // $a6: (VA) utm base,
+    // $a6: (PA) utm base,
     regs->a6 = (uintptr_t) enclaves[eid].params.untrusted_ptr;
     // $a7: (size_t) utm size
     regs->a7 = (uintptr_t) enclaves[eid].params.untrusted_size;
 
-    // switch to the initial enclave page table
-    csr_write(satp, enclaves[eid].encl_satp);
+    // enclave will only have physical addresses in the first run
+    csr_write(satp, 0);
   }
 
   switch_vector_enclave();
@@ -410,6 +409,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create c
 
   /* Validate memory, prepare hash and signature for attestation */
   spin_lock(&encl_lock); // FIXME This should error for second enter.
+ 
   ret = validate_and_hash_enclave(&enclaves[eid]);
   /* The enclave is fresh if it has been validated and hashed but not run yet. */
   if (ret)
@@ -503,7 +503,6 @@ unsigned long destroy_enclave(enclave_id eid)
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
-
 
 unsigned long run_enclave(struct sbi_trap_regs *regs, enclave_id eid)
 {

@@ -33,6 +33,7 @@
 /* Starting address of the enclave memory */
 
 #if __riscv_xlen == 64
+#define RUNTIME_VA_START 0xffffffffc0000000
 #define EYRIE_LOAD_START 0xffffffff00000000
 #define EYRIE_PAGING_START 0xffffffff40000000
 #define EYRIE_UNTRUSTED_START 0xffffffff80000000
@@ -40,6 +41,7 @@
 #define EYRIE_ANON_REGION_START \
   0x0000002000000000  // Arbitrary VA to start looking for large mappings
 #elif __riscv_xlen == 32
+#define RUNTIME_VA_START 0xc0000000 
 #define EYRIE_LOAD_START 0xf0000000
 #define EYRIE_PAGING_START 0x40000000
 #define EYRIE_UNTRUSTED_START 0x80000000
