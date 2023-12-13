@@ -1,0 +1,1 @@
+obj-y += fe.o ge.o keypair.o sc.o sign.o verify.o

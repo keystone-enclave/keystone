@@ -7,7 +7,7 @@ index 0ac75f2..9aa9c1a 100644
  
  	PROVIDE(_fw_end = .);
 +
-+  * # Sanctum params */
++  /* # Sanctum params */
 +  /* ================ */
 +  . = 0x801ff000; /* the last page before the payload */
 +

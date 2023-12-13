@@ -7,7 +7,7 @@ ifeq ($(PLATFORM),)
 	$(error PLATFORM not defined for SM)
 endif
 
-platform-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/$(PLATFORM)/platform.h\""
+platform-genflags-y += "-DTARGET_PLATFORM_HEADER=\"platform/$(KEYSTONE_PLATFORM)/platform.h\""
 
 include $(KEYSTONE_SM)/src/objects.mk
 platform-objs-y += $(addprefix ../../src/,$(subst .c,.o,$(keystone-sm-sources)))

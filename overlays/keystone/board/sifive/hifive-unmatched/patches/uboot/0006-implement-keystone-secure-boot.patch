@@ -1,0 +1,89 @@
+From 7fb062c8ab1bacbcfcc64cfb9ad6a84d4ae91854 Mon Sep 17 00:00:00 2001
+From: Akihiro Saiki <saiki@kasahara.cs.waseda.ac.jp>
+Date: Thu, 16 Nov 2023 00:30:28 +0900
+Subject: [PATCH 6/7] implement keystone secure boot
+
+---
+ arch/riscv/Kconfig       | 24 ++++++++++++++++++++++++
+ arch/riscv/lib/Makefile  |  6 ++++++
+ common/spl/spl_opensbi.c | 10 ++++++++++
+ 3 files changed, 40 insertions(+)
+
+diff --git a/arch/riscv/Kconfig b/arch/riscv/Kconfig
+index f6ed05906a..c99d74a7ab 100644
+--- a/arch/riscv/Kconfig
++++ b/arch/riscv/Kconfig
+@@ -405,4 +405,28 @@ config TPL_USE_ARCH_MEMSET
+ 
+ endmenu
+ 
++config SPL_KEYSTONE_SECUREBOOT
++	bool "Secureboot for keystone enclave"
++	default n
++	depends on SPL && SPL_OPENSBI
++	help
++	  Enable secureboot feature for keystone enclave.
++	  This measure the SM binary and create keypair.
++
++config SPL_KEYSTONE_USE_TEST_KEYS
++	bool "Use test keys in keystone secureboot"
++	default y
++	depends on SPL_KEYSTONE_SECUREBOOT
++	help
++	  Use embedded test keys for keystone secureboot feature.
++	  On the practical environment, the platform needs to provide
++	  secure keystore. TEST USE ONLY.
++
++config SPL_KEYSTONE_USE_RNG
++	bool "Use hardware rng to generate random number"
++	default n
++	depends on SPL_KEYSTONE_SECUREBOOT && DM_RNG
++	help
++	  Use hardware rng device to generate random for keypair creation
++
+ endmenu
+diff --git a/arch/riscv/lib/Makefile b/arch/riscv/lib/Makefile
+index e5a81ba722..3ae18c7e16 100644
+--- a/arch/riscv/lib/Makefile
++++ b/arch/riscv/lib/Makefile
+@@ -44,3 +44,9 @@ obj-$(CONFIG_$(SPL_TPL_)USE_ARCH_MEMMOVE) += memmove.o
+ obj-$(CONFIG_$(SPL_TPL_)USE_ARCH_MEMCPY) += memcpy.o
+ 
+ obj-$(CONFIG_$(SPL_TPL_)SEMIHOSTING) += semihosting.o
++
++# For Keystone Enclave
++ifdef CONFIG_SPL_BUILD
++obj-$(CONFIG_SPL_KEYSTONE_SECUREBOOT) += keystone/
++endif
++
+diff --git a/common/spl/spl_opensbi.c b/common/spl/spl_opensbi.c
+index b0f40076c3..5d328c0789 100644
+--- a/common/spl/spl_opensbi.c
++++ b/common/spl/spl_opensbi.c
+@@ -15,6 +15,7 @@
+ #include <asm/smp.h>
+ #include <opensbi.h>
+ #include <linux/libfdt.h>
++#include <asm/keystone.h>
+ 
+ DECLARE_GLOBAL_DATA_PTR;
+ 
+@@ -66,6 +67,15 @@ void spl_invoke_opensbi(struct spl_image_info *spl_image)
+ 	if (ret)
+ 		ret = fit_image_get_load(spl_image->fdt_addr, uboot_node, &uboot_entry);
+ 
++	/* Prepare for Keystone SM */
++#if CONFIG_IS_ENABLED(KEYSTONE_SECUREBOOT)
++	ret = keystone_init();
++	if (ret < 0) {
++		pr_err("Failed to prepare keystone sm\n");
++		hang();
++	}
++#endif
++
+ 	/* Prepare opensbi_info object */
+ 	opensbi_info.magic = FW_DYNAMIC_INFO_MAGIC_VALUE;
+ 	opensbi_info.version = FW_DYNAMIC_INFO_VERSION;
+-- 
+2.34.1
+
