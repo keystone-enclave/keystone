@@ -68,7 +68,7 @@ int epm_init(struct epm* epm, unsigned int min_pages)
   memset((void*)epm_vaddr, 0, PAGE_SIZE*count);
 
   epm->root_page_table = (void*)epm_vaddr;
-  epm->pa = __pa(epm_vaddr);
+  epm->pa = (epm->is_cma) ? device_phys_addr : __pa(epm_vaddr);
   epm->order = order;
   epm->size = count << PAGE_SHIFT;
   epm->ptr = epm_vaddr;

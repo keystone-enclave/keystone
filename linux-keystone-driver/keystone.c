@@ -56,7 +56,7 @@ int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
   if(enclave->is_init){
     if (vsize > PAGE_SIZE)
       return -EINVAL;
-    paddr = __pa(epm->root_page_table) + (vma->vm_pgoff << PAGE_SHIFT);
+    paddr = epm->pa + (vma->vm_pgoff << PAGE_SHIFT);
     remap_pfn_range(vma,
                     vma->vm_start,
                     paddr >> PAGE_SHIFT,
