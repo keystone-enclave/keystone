@@ -24,7 +24,7 @@ int keystone_create_enclave(struct file *filep, unsigned long arg)
   }
 
   /* Pass base page table */
-  enclp->pt_ptr = __pa(enclave->epm->root_page_table);
+  enclp->pt_ptr = enclave->epm->pa;
   enclp->epm_size = enclave->epm->size;
 
   /* allocate UID */
