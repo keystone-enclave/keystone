@@ -27,10 +27,18 @@ endif
 
 run:
 	$(call log,info,Starting QEMU)
-	$(BUILDROOT_BUILDDIR)/host/bin/qemu-system-riscv64 $(QEMU_FLAGS)
+	$(BUILDROOT_BUILDDIR)/host/bin/qemu-system-riscv$(KEYSTONE_BITS) $(QEMU_FLAGS)
+
+CALL_LOGFILE ?= $(shell mktemp)
+call:
+	$(call log,info,Calling command in QEMU)
+	ssh -i $(BUILDROOT_BUILDDIR)/target/root/.ssh/id-rsa \
+		-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+		-p $(QEMU_PORT) root@localhost $(KEYSTONE_COMMAND) 2>&1 | \
+		 grep -v "Warning: Permanently added" | tee -a $(CALL_LOGFILE)
 
 debug-connect:
 	$(call log,info,Connecting to QEMU)
-	$(BUILDROOT_BUILDDIR)/host/bin/riscv64-buildroot-linux-gnu-gdb \
+	$(BUILDROOT_BUILDDIR)/host/bin/riscv$(KEYSTONE_BITS)-buildroot-linux-gnu-gdb \
                 -iex "set KEYSTONE=$(KEYSTONE)" \
                 -x $(KEYSTONE)/scripts/gdb/generic.cfg

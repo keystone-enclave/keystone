@@ -6,14 +6,6 @@ include(macros.cmake)
 # BASIC SETUP
 #-------------------------------------------------------------------------------
 
-if(RISCV32)
-  message(STATUS "riscv32")
-  set(BITS 32)
-else()
-  message(STATUS "riscv64")
-  set(BITS 64)
-endif()
-
 set(prog_name    keystone-sdk)
 set(src_dir      ${CMAKE_CURRENT_LIST_DIR})
 set(scripts_dir  ${src_dir}/scripts)
@@ -53,7 +45,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -g)
 endif()
 
-use_riscv_toolchain(${BITS})
+use_riscv_toolchain(${KEYSTONE_BITS})
 ################################################################################
 # BUILD PROJECTS
 ################################################################################
