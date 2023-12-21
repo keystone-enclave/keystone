@@ -4,11 +4,8 @@
 #############################
 
 # Useful globals
-export SHELL := /bin/bash
-
-ifeq ($(TERM),)
-export TERM := xterm-256color
-endif
+export SHELL    := /bin/bash
+export TERM     := xterm-256color
 
 # Keystone configuration
 export KEYSTONE                 ?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))

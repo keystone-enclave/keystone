@@ -19,7 +19,7 @@ find_package(Git REQUIRED)
 use_riscv_toolchain(${KEYSTONE_BITS})
 if(${KEYSTONE_BITS} EQUAL 32)
 	set(RISCV32 y)
-endif
+endif()
 
 # export include directory
 include_directories(AFTER ${KEYSTONE_SDK_DIR}/include)
