@@ -4,12 +4,7 @@ set(host_bin hello-runner)
 set(host_src host/host.cpp)
 set(package_name "hello.ke")
 set(package_script "./hello-runner hello eyrie-rt loader.bin")
-
-if(RISCV32)
-  set(eyrie_plugins "io_syscall linux_syscall env_setup rv32")
-else()
-  set(eyrie_plugins "io_syscall linux_syscall env_setup")
-endif()
+set(eyrie_plugins "io_syscall linux_syscall env_setup")
 
 # eapp
 

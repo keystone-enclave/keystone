@@ -4,12 +4,7 @@ set(host_bin attestor-runner)
 set(host_src host/attestor-runner.cpp host/host.cpp host/verifier.cpp)
 set(package_name "attestor.ke")
 set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin fw_jump.bin")
-
-if(RISCV32)
-  set(eyrie_plugins "rv32")
-else()
-  set(eyrie_plugins "")
-endif()
+set(eyrie_plugins "none")
 
 # eapp
 
