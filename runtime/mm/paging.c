@@ -119,7 +119,7 @@ __traverse_page_table_and_pick_internal(
 
       /* extending MSB */
       if(level == 3 && (i&0x100))
-        vaddr = 0xffffffffffffffffUL;
+        vaddr = -1;
 
       ret = __traverse_page_table_and_pick_internal(
           level - 1,
