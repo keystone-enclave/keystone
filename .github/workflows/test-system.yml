@@ -1,0 +1,72 @@
+
+on:
+  workflow_call:
+
+jobs:
+  test-system:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [generic]
+        bits: [32, 64]
+
+    steps:
+    # We don't need submodules here since Keystone is a monorepo!
+    - name: Checkout Keystone
+      uses: actions/checkout@v3
+      with:
+        submodules: 'false'
+
+    # Wait a random amount of time so we don't hammer Github with
+    # requests for the build directory artifact
+    - name: Random delay
+      run: |
+        /bin/bash -c "sleep $((RANDOM % 30))"
+
+    - name: Restore build directory
+      uses: actions/download-artifact@v4
+      with:
+        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
+        path: .
+
+    - name: Decompress build directory
+      run: cat build.tar.xz | xz -d -T0 | tar -xf -
+
+    - name: Test Keystone system
+      run: |
+        # Fix permissions on the key
+        chmod 600 build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build/target/root/.ssh/id-rsa
+
+        # Launch QEMU
+        export KEYSTONE_PLATFORM=${{ matrix.platform }}
+        export KEYSTONE_BITS=${{ matrix.bits }}
+        export LD_LIBRARY_PATH=build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build/host/lib
+        screen -L -dmS qemu bash -c "make run 2>&1 | tee run.log"
+
+        # TODO: check for connectivity instead of sleeping
+        sleep 20
+
+        export CALL_LOGFILE=cmd.log
+        echo "" > $CALL_LOGFILE
+
+        KEYSTONE_COMMAND="modprobe keystone-driver" make call
+        KEYSTONE_COMMAND="/usr/share/keystone/examples/tests.ke" make call
+        KEYSTONE_COMMAND="poweroff" make call
+
+    - name: Check expected
+      run: |
+        [[ -z $(diff cmd.log scripts/expected.log) ]]
+
+    - name: Upload run log
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-keystone-${{ matrix.platform }}${{ matrix.bits }}-run.log
+        path: run.log
+
+    - name: Upload cmd log
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-keystone-${{ matrix.platform }}${{ matrix.bits }}-cmd.log
+        path: cmd.log

@@ -1,0 +1,56 @@
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        type: string
+      build-flags:
+        required: false
+        type: string
+
+jobs:
+  build-runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [generic, unmatched]
+        bits: [32, 64]
+        exclude:
+          # unmatched is not 32 bit
+          - platform: unmatched
+            bits: 32
+
+    steps:
+    # We don't need submodules here since Keystone is a monorepo!
+    - name: Checkout Keystone
+      uses: actions/checkout@v3
+      with:
+        submodules: 'false'
+
+    # Wait a random amount of time so we don't hammer Github with
+    # requests for the build directory artifact
+    - name: Random delay
+      run: |
+        /bin/bash -c "sleep $((RANDOM % 30))"
+
+    - name: Restore build directory
+      uses: actions/download-artifact@v4
+      with:
+        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
+        path: .
+
+    - name: Decompress build directory
+      run: cat build.tar.xz | xz -d -T0 | tar -xf -
+
+    - name: Build ${{ inputs.name }}
+      run: |
+        mkdir -p build-runtime
+        cd build-runtime
+        BUILDDIR="$PWD/../build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build"
+        export PATH="$BUILDDIR/host/bin:$PATH"
+        cmake -DCMAKE_C_COMPILER=$(which riscv${{ matrix.bits }}-buildroot-linux-gnu-gcc) \
+          -DCMAKE_OBJCOPY=$(which riscv${{ matrix.bits }}-buildroot-linux-gnu-objcopy) \
+          -DKEYSTONE_SDK_DIR="$BUILDDIR/per-package/keystone-examples/host/usr/share/keystone/sdk" \
+          ${{ inputs.build-flags }} ../runtime
+        make -j$(nproc)
