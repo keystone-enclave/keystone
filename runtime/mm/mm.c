@@ -4,8 +4,6 @@
 #include "mm/freemem.h"
 #include "mm/paging.h"
 
-#ifdef USE_FREEMEM
-
 /* Page table utilities */
 static pte*
 __walk_create(pte* root, uintptr_t addr);
@@ -319,4 +317,3 @@ map_with_reserved_page_table(uintptr_t dram_base,
   #endif
 }
 
-#endif /* USE_FREEMEM */

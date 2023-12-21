@@ -1,4 +1,4 @@
-#if defined(USE_FREEMEM) && defined(USE_PAGING)
+#ifdef USE_PAGING
 
 #ifndef __PAGING_H__
 #define __PAGING_H__

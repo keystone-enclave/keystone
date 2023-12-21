@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(USE_FREEMEM) && defined(USE_PAGING)
+#ifdef USE_PAGING
 
 #include <stdbool.h>
 #include <stdint.h>

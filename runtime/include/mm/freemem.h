@@ -1,5 +1,3 @@
-#ifdef USE_FREEMEM
-
 #ifndef __FREEMEM_H__
 #define __FREEMEM_H__
 
@@ -22,5 +20,4 @@ uintptr_t spa_get(void);
 uintptr_t spa_get_zero(void);
 void spa_put(uintptr_t page);
 unsigned int spa_available();
-#endif
 #endif

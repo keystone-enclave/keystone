@@ -6,9 +6,9 @@ set(package_name "attestor.ke")
 set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin fw_jump.bin")
 
 if(RISCV32)
-  set(eyrie_plugins "freemem rv32")
+  set(eyrie_plugins "rv32")
 else()
-  set(eyrie_plugins "freemem")
+  set(eyrie_plugins "")
 endif()
 
 # eapp

@@ -1,4 +1,3 @@
-#ifdef USE_FREEMEM
 #include "mm/freemem.h"
 #include "mm/common.h"
 #include "mm/vm_defs.h"
@@ -39,5 +38,3 @@ unsigned int spa_available()
 {
   return (freeEnd - freeBase) / RISCV_PAGE_SIZE;
 }
-
-#endif

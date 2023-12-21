@@ -1,8 +1,4 @@
-#if defined(USE_PAGING) && !defined(USE_FREEMEM)
-#error "paging requires freemem"
-#endif
-
-#if defined(USE_FREEMEM) && defined(USE_PAGING)
+#ifdef USE_PAGING
 
 #include "mm/paging.h"
 
@@ -290,4 +286,4 @@ paging_backing_region_size(void) {
   return paging_backing_storage_size;
 }
 
-#endif //USE_FREEMEM
+#endif // USE_PAGING

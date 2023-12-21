@@ -1,6 +1,6 @@
 #include "mm/page_swap.h"
 
-#if defined(USE_FREEMEM) && defined(USE_PAGING)
+#ifdef USE_PAGING
 
 #include <stdatomic.h>
 #include <stddef.h>

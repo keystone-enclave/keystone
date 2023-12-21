@@ -7,7 +7,6 @@
 
 uintptr_t translate(uintptr_t va);
 pte* pte_of_va(uintptr_t va);
-#ifdef USE_FREEMEM
 uintptr_t map_page(uintptr_t vpn, uintptr_t ppn, int flags);
 uintptr_t alloc_page(uintptr_t vpn, int flags);
 uintptr_t realloc_page(uintptr_t vpn, int flags);
@@ -20,6 +19,5 @@ uintptr_t get_program_break();
 void set_program_break(uintptr_t new_break);
 
 void map_with_reserved_page_table(uintptr_t base, uintptr_t size, uintptr_t ptr, pte* l2_pt, pte* l3_pt);
-#endif /* USE_FREEMEM */
 
 #endif /* _MM_H_ */

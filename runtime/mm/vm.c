@@ -43,15 +43,12 @@ uintptr_t __pa(uintptr_t va)
   return (va - EYRIE_LOAD_START) + load_pa_start;
 }
 
-#ifdef USE_FREEMEM
-
 /* Program break */
 uintptr_t program_break;
 
 /* freemem */
 uintptr_t freemem_va_start;
 size_t freemem_size;
-#endif // USE_FREEMEM
 
 /* shared buffer */
 uintptr_t shared_buffer;

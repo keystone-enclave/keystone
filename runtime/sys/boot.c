@@ -24,8 +24,6 @@ size_t utm_size;
 /* defined in entry.S */
 extern void* encl_trap_handler;
 
-#ifdef USE_FREEMEM
-
 int verify_and_load_elf_file(uintptr_t ptr, size_t file_size, bool is_eapp) {
   int ret = 0;
   // validate elf 
@@ -57,27 +55,20 @@ init_freemem()
   spa_init(freemem_va_start, freemem_size);
 }
 
-#endif // USE_FREEMEM
-
 /* initialize user stack */
 void
 init_user_stack_and_env(ELF(Ehdr) *hdr)
 {
   void* user_sp = (void*) EYRIE_USER_STACK_START;
-
-#ifdef USE_FREEMEM
   size_t count;
   uintptr_t stack_end = EYRIE_USER_STACK_END;
   size_t stack_count = EYRIE_USER_STACK_SIZE >> RISCV_PAGE_BITS;
-
 
   // allocated stack pages right below the runtime
   count = alloc_pages(vpn(stack_end), stack_count,
       PTE_R | PTE_W | PTE_D | PTE_A | PTE_U);
 
   assert(count == stack_count);
-
-#endif // USE_FREEMEM
 
   // setup user stack env/aux
   user_sp = setup_start(user_sp, hdr);
@@ -111,7 +102,6 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
 
   /* set trap vector */
   csr_write(stvec, &encl_trap_handler);
-#ifdef USE_FREEMEM
   freemem_va_start = __va(free_paddr);
   freemem_size = dram_base + dram_size - free_paddr;
 
@@ -134,7 +124,6 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   #ifdef USE_PAGING
   init_paging(user_paddr, free_paddr);
   #endif /* USE_PAGING */
-#endif /* USE_FREEMEM */
 
   /* initialize user stack */
   init_user_stack_and_env((ELF(Ehdr) *) __va(user_paddr));
