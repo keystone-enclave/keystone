@@ -16,6 +16,7 @@ Follow :doc:`QEMU-Setup-Repository` to setup the repository.
 After you setup the repository, you can run the following commands to build Keystone.
 
 ::
+
   export BUILD_ROOT=<absolute path to build directory>
   mkdir <build directory>
   cd <build directory>
@@ -61,15 +62,16 @@ bootloader itself. (Likely never)
 
 The CVA6 image uses a simplified structure due to bootloader ROM integration on the device:
 :: code-block:: bash
-#!/bin/bash
 
-set -e
-
-# format disk
-sgdisk --clear --new=1:2048:67583 --new=2 --typecode=1:3000 --typecode=2:8300 /dev/sdc
-
-# flash image
-dd if=sm.build/platform/generic/firmware/fw_payload.bin  of=/dev/sdc1 status=progress oflag=sync bs=1M
+   #!/bin/bash
+   
+   set -e
+   
+   # format disk
+   sgdisk --clear --new=1:2048:67583 --new=2 --typecode=1:3000 --typecode=2:8300 /dev/sdc
+   
+   # flash image
+   dd if=sm.build/platform/generic/firmware/fw_payload.bin  of=/dev/sdc1 status=progress oflag=sync bs=1M
 
 
 Running on the CVA6
