@@ -45,6 +45,7 @@ jobs:
 
         KEYSTONE_COMMAND="modprobe keystone-driver" make call
         KEYSTONE_COMMAND="/usr/share/keystone/examples/tests.ke" make call
+        KEYSTONE_COMMAND="/usr/share/keystone/examples/attestor.ke" make call
         KEYSTONE_COMMAND="poweroff" make call
 
     - name: Check expected
