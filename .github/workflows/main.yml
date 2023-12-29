@@ -14,11 +14,14 @@ jobs:
     # platform that we support here
     strategy:
       matrix:
-        platform: [generic, hifive_unmatched, cva6]
+        platform: [generic, hifive_unmatched, cva6, mpfs]
         bits: [32, 64]
         exclude:
           # unmatched is not 32 bit
           - platform: hifive_unmatched
+            bits: 32
+          # mpfs is not 32 bit
+          - platform: mpfs
             bits: 32
 
     # Output cache keys that were used so we can consolidate them later. Note
@@ -141,6 +144,10 @@ jobs:
         COMPRESSDIRS="$COMPRESSDIRS $PERPACKAGEDIR/keystone-examples/host/usr/share/keystone/sdk"
         # Needed by end-to-end tests
         COMPRESSDIRS="$COMPRESSDIRS $BASEDIR/target/root/"
+
+        if [[ "${{ matrix.platform }}" == "mpfs" ]]; then
+          COMPRESSDIRS="$COMPRESSDIRS $BASEDIR/build/hss-v2023.06"
+        fi
 
         tar -cf - $COMPRESSDIRS | xz -9 -T0 > build.tar.xz
 
@@ -343,7 +350,7 @@ jobs:
     needs: build
     uses: ./.github/workflows/build-runtime.yml
 
-  # System tests, which are run for simulatable platforms
+  # System tests, which are run for simulatable and self-hostable platforms
   test-system:
     needs: build
     uses: ./.github/workflows/test-system.yml

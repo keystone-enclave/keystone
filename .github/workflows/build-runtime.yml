@@ -7,11 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [generic, hifive_unmatched, cva6]
+        platform: [generic, hifive_unmatched, cva6, mpfs]
         bits: [32, 64]
         exclude:
           # unmatched is not 32 bit
           - platform: hifive_unmatched
+            bits: 32
+          # mpfs is not 32 bit
+          - platform: mpfs
             bits: 32
 
     steps:

@@ -56,6 +56,12 @@ Welcome to Keystone Enclave's documentation!
 
    Security-Monitor/index
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Continuous Integration
+   :numbered:
+
+   Continuous-Integration/Custom-Runner
 
 .. toctree::
    :maxdepth: 1
