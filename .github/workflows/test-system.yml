@@ -17,12 +17,6 @@ jobs:
       with:
         submodules: 'false'
 
-    # Wait a random amount of time so we don't hammer Github with
-    # requests for the build directory artifact
-    - name: Random delay
-      run: |
-        /bin/bash -c "sleep $((RANDOM % 30))"
-
     - name: Restore build directory
       uses: actions/download-artifact@v4
       with:
@@ -55,7 +49,7 @@ jobs:
 
     - name: Check expected
       run: |
-        [[ -z $(diff cmd.log scripts/expected.log) ]]
+        [[ -z $(diff cmd.log scripts/ci/expected.log) ]]
 
     - name: Upload run log
       if: failure()

@@ -1,13 +1,6 @@
 
 on:
   workflow_call:
-    inputs:
-      name:
-        required: true
-        type: string
-      build-flags:
-        required: false
-        type: string
 
 jobs:
   build-runtime:
@@ -28,11 +21,9 @@ jobs:
       with:
         submodules: 'false'
 
-    # Wait a random amount of time so we don't hammer Github with
-    # requests for the build directory artifact
-    - name: Random delay
-      run: |
-        /bin/bash -c "sleep $((RANDOM % 30))"
+    # Install build dependencies
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y uuid
 
     - name: Restore build directory
       uses: actions/download-artifact@v4
@@ -43,14 +34,51 @@ jobs:
     - name: Decompress build directory
       run: cat build.tar.xz | xz -d -T0 | tar -xf -
 
-    - name: Build ${{ inputs.name }}
+    - name: Build default
       run: |
-        mkdir -p build-runtime
-        cd build-runtime
-        BUILDDIR="$PWD/../build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build"
-        export PATH="$BUILDDIR/host/bin:$PATH"
-        cmake -DCMAKE_C_COMPILER=$(which riscv${{ matrix.bits }}-buildroot-linux-gnu-gcc) \
-          -DCMAKE_OBJCOPY=$(which riscv${{ matrix.bits }}-buildroot-linux-gnu-objcopy) \
-          -DKEYSTONE_SDK_DIR="$BUILDDIR/per-package/keystone-examples/host/usr/share/keystone/sdk" \
-          ${{ inputs.build-flags }} ../runtime
-        make -j$(nproc)
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }}
+
+    - name: Build USE_ENV_SETUP
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DENV_SETUP=on
+
+    - name: Build USE_LINUX_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DLINUX_SYSCALL=on
+
+    - name: Build USE_IO_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DIO_SYSCALL=on
+
+    - name: Build USE_NET_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DNET_SYSCALL=on
+
+    - name: Build USE_ALL_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DLINUX_SYSCALL=on -DIO_SYSCALL=on -DNET_SYSCALL=on
+
+    - name: Build USE_PAGING
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on
+
+    - name: Build USE_PAGE_CRYPTO
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on -DPAGE_CRYPTO=on
+
+    - name: Build USE_PAGE_HASH
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on -DPAGE_HASH=on
+
+    - name: Build USE_PAGE_CRYPTO_HASH
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on -DPAGE_CRYPTO=on -DPAGE_HASH=on

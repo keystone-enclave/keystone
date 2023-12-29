@@ -155,77 +155,9 @@ jobs:
         popd
 
   # Build tests, which are run for each supported platform
-  test-runtime-build-default:
+  test-runtime-build:
     needs: build
     uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'default'
-
-  test-runtime-build-env:
-    needs: test-runtime-build-default
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_ENV_SETUP'
-      build-flags: '-DENV_SETUP=on'
-
-  test-runtime-build-linux-syscall:
-    needs: test-runtime-build-default
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_LINUX_SYSCALL'
-      build-flags: '-DLINUX_SYSCALL=on'
-
-  test-runtime-build-io-syscall:
-    needs: test-runtime-build-default
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_IO_SYSCALL'
-      build-flags: '-DIO_SYSCALL=on'
-
-  test-runtime-build-net-syscall:
-    needs: test-runtime-build-default
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_NET_SYSCALL'
-      build-flags: '-DNET_SYSCALL=on'
-
-  test-runtime-build-all-syscall:
-    needs:
-    - test-runtime-build-linux-syscall
-    - test-runtime-build-io-syscall
-    - test-runtime-build-net-syscall
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_ALL_SYSCALL'
-      build-flags: '-DLINUX_SYSCALL=on -DIO_SYSCALL=on -DNET_SYSCALL=on'
-
-  test-runtime-build-paging:
-    needs: test-runtime-build-default
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_PAGING'
-      build-flags: '-DPAGING=on'
-
-  test-runtime-build-crypto:
-    needs: test-runtime-build-paging
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_PAGE_CRYPTO'
-      build-flags: '-DPAGING=on -DPAGE_CRYPTO=on'
-
-  test-runtime-build-hash:
-    needs: test-runtime-build-paging
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_PAGE_HASH'
-      build-flags: '-DPAGING=on -DPAGE_HASH=on'
-
-  test-runtime-build-crypto-hash:
-    needs: test-runtime-build-paging
-    uses: ./.github/workflows/build-runtime.yml
-    with:
-      name: 'USE_PAGE_CRYPTO_HASH'
-      build-flags: '-DPAGING=on -DPAGE_CRYPTO=on -DPAGE_HASH=on'
 
   # System tests, which are run for simulatable platforms
   test-system:
