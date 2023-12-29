@@ -14,11 +14,14 @@ jobs:
     # platform that we support here
     strategy:
       matrix:
-        platform: [generic, unmatched]
+        platform: [generic, unmatched, mpfs]
         bits: [32, 64]
         exclude:
           # unmatched is not 32 bit
           - platform: unmatched
+            bits: 32
+          # mpfs is not 32 bit
+          - platform: mpfs
             bits: 32
 
     steps:
@@ -106,6 +109,10 @@ jobs:
         # Needed by end-to-end tests
         COMPRESSDIRS="$COMPRESSDIRS $BASEDIR/target/root/"
 
+        if [[ "${{ matrix.platform }}" == "mpfs" ]]; then
+          COMPRESSDIRS="$COMPRESSDIRS $BASEDIR/build/hss-v2023.06"
+        fi
+
         tar -cf - $COMPRESSDIRS | xz -9 -T0 > build.tar.xz
 
     - name: Upload build directory
@@ -159,7 +166,7 @@ jobs:
     needs: build
     uses: ./.github/workflows/build-runtime.yml
 
-  # System tests, which are run for simulatable platforms
+  # System tests, which are run for simulatable and self-hostable platforms
   test-system:
     needs: build
     uses: ./.github/workflows/test-system.yml
