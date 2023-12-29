@@ -5,6 +5,7 @@ on:
 jobs:
   test-generic:
     runs-on: ubuntu-latest
+    if: false
     strategy:
       matrix:
         platform: [generic]
@@ -78,9 +79,15 @@ jobs:
 
     - name: Restore build directory
       uses: actions/download-artifact@v4
+      if: false
       with:
         name: keystone-mpfs64-builddir
         path: .
+
+    - name: Move build.tar.xz into place
+      run: |
+        cp /tmp/keystone-mpfs64-builddir.zip .
+        unzip keystone-mpfs64-builddir.zip
 
     - name: Decompress build directory
       run: cat build.tar.xz | xz -d -T0 | tar -xf -

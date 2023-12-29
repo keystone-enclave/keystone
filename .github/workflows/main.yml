@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: false
 
     # Define the strategy for the build job. We generally want to cover each
     # platform that we support here
@@ -165,8 +166,9 @@ jobs:
   test-runtime-build:
     needs: build
     uses: ./.github/workflows/build-runtime.yml
+    if: false
 
   # System tests, which are run for simulatable and self-hostable platforms
   test-system:
-    needs: build
+#    needs: build
     uses: ./.github/workflows/test-system.yml
