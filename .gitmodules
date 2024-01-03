@@ -4,3 +4,6 @@
 [submodule "runtime/test/cmocka"]
         path = runtime/test/cmocka
         url = https://gitlab.com/cmocka/cmocka
+[submodule "overlays/keystone/board/cva6/cva6-sdk"]
+	path = overlays/keystone/board/cva6/cva6-sdk
+	url = https://github.com/openhwgroup/cva6-sdk
