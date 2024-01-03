@@ -24,7 +24,7 @@ export BUILDROOT_OVERLAYDIR     ?= $(BUILDDIR)/overlay
 export BUILDROOT_BUILDDIR       ?= $(BUILDDIR)/buildroot.build
 
 
-# options: generic, cva6
+# options: generic, cva6, hifive_unmatched
 export KEYSTONE_PLATFORM        ?= generic
 export KEYSTONE_BITS            ?= 64
 
@@ -34,11 +34,9 @@ export FS_OVERLAY_DIR			?= $(KEYSTONE)/platform/$(KEYSTONE_PLATFORM)/overlay
 include mkutils/args.mk
 include mkutils/log.mk
 
-BUILDROOT_CONFIGFILE    ?= qemu_riscv$(KEYSTONE_BITS)_virt_defconfig
+BUILDROOT_CONFIGFILE    ?= riscv$(KEYSTONE_BITS)_$(KEYSTONE_PLATFORM)_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
 	EXTERNALS += microchip
-else ifeq ($(KEYSTONE_PLATFORM),unmatched)
-    BUILDROOT_CONFIGFILE = riscv64_hifive_unmatched_defconfig
 endif
 
 # Highest priority external
