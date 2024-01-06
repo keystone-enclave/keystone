@@ -3,8 +3,11 @@
 ## Configuration variables ##
 #############################
 
-export SHELL := /bin/bash
+# Useful globals
+export SHELL    := /bin/bash
+export TERM     := xterm-256color
 
+# Keystone configuration
 export KEYSTONE                 ?= $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 export KEYSTONE_BUILDROOT       ?= $(KEYSTONE)/buildroot
 export KEYSTONE_BR2_EXT         ?= $(KEYSTONE)/overlays
@@ -84,7 +87,7 @@ BUILDROOT_TARGET        ?= all
 .PHONY: buildroot
 buildroot: $(BUILDROOT_BUILDDIR)/.config $(BUILDROOT_OVERLAYDIR)/.done
 	$(call log,info,Building Buildroot)
-	$(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_TARGET) 2>&1 | \
+	set -o pipefail ; $(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_TARGET) 2>&1 | \
             tee $(BUILDDIR)/build.log | LC_ALL=C grep -of scripts/grep.patterns
 
 # Useful configuration target. This is meant as a development helper to keep

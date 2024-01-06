@@ -16,15 +16,7 @@ include(${KEYSTONE_SDK_DIR}/cmake/macros.cmake)
 include(ExternalProject)
 find_package(Git REQUIRED)
 
-if(RISCV32)
-  message(STATUS "riscv32")
-  set(BITS 32)
-else()
-  message(STATUS "riscv64")
-  set(BITS 64)
-endif()
-
-use_riscv_toolchain(${BITS})
+use_riscv_toolchain(${KEYSTONE_BITS})
 
 # export include directory
 include_directories(AFTER ${KEYSTONE_SDK_DIR}/include)

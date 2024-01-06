@@ -25,7 +25,6 @@ add_custom_target(options_log
         COMMAND touch ${CMAKE_BINARY_DIR}/.options_log)
 
 # Memory management options
-rt_option(FREEMEM "Use freemem allocator" OFF)
 rt_option(PAGING "Enable runtime paging" OFF)
 rt_option(PAGE_CRYPTO "Enable page confidentiality" OFF)
 rt_option(PAGE_HASH "Enable page integrity" OFF)

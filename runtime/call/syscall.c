@@ -157,7 +157,7 @@ void handle_syscall(struct encl_ctx* ctx)
   uintptr_t arg4 = ctx->regs.a4;
 
   // We only use arg5 in these for now, keep warnings happy.
-#if defined(USE_LINUX_SYSCALL) || defined(USE_IO_SYSCALL)
+#if defined(USE_LINUX_SYSCALL) || defined(USE_NET_SYSCALL)
   uintptr_t arg5 = ctx->regs.a5;
 #endif /* IO_SYSCALL */
   uintptr_t ret = 0;

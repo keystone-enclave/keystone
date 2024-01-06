@@ -1,8 +1,3 @@
 
-set(LOADER_SOURCES elf.c elf32.c elf64.c)
-
-if(FREEMEM)
-    list(APPEND LOADER_SOURCES loader.c)
-endif()
-
+set(LOADER_SOURCES elf.c elf32.c elf64.c loader.c)
 add_library(rt_loader ${LOADER_SOURCES})

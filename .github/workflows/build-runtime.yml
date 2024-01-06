@@ -1,0 +1,84 @@
+
+on:
+  workflow_call:
+
+jobs:
+  build-runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [generic, unmatched]
+        bits: [32, 64]
+        exclude:
+          # unmatched is not 32 bit
+          - platform: unmatched
+            bits: 32
+
+    steps:
+    # We don't need submodules here since Keystone is a monorepo!
+    - name: Checkout Keystone
+      uses: actions/checkout@v3
+      with:
+        submodules: 'false'
+
+    # Install build dependencies
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y uuid
+
+    - name: Restore build directory
+      uses: actions/download-artifact@v4
+      with:
+        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
+        path: .
+
+    - name: Decompress build directory
+      run: cat build.tar.xz | xz -d -T0 | tar -xf -
+
+    - name: Build default
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }}
+
+    - name: Build USE_ENV_SETUP
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DENV_SETUP=on
+
+    - name: Build USE_LINUX_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DLINUX_SYSCALL=on
+
+    - name: Build USE_IO_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DIO_SYSCALL=on
+
+    - name: Build USE_NET_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DNET_SYSCALL=on
+
+    - name: Build USE_ALL_SYSCALL
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DLINUX_SYSCALL=on -DIO_SYSCALL=on -DNET_SYSCALL=on
+
+    - name: Build USE_PAGING
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on
+
+    - name: Build USE_PAGE_CRYPTO
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on -DPAGE_CRYPTO=on
+
+    - name: Build USE_PAGE_HASH
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on -DPAGE_HASH=on
+
+    - name: Build USE_PAGE_CRYPTO_HASH
+      run: |
+        ./scripts/ci/build-runtime.sh $PWD/runtime ${{ matrix.platform }} ${{ matrix.bits }} \
+          -DPAGING=on -DPAGE_CRYPTO=on -DPAGE_HASH=on

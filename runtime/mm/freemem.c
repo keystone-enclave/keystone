@@ -1,4 +1,3 @@
-#ifdef USE_FREEMEM
 #include "util/string.h"
 #include "mm/common.h"
 #include "mm/vm.h"
@@ -110,4 +109,3 @@ spa_init(uintptr_t base, size_t size)
     spa_put(cur);
   }
 }
-#endif // USE_FREEMEM

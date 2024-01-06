@@ -192,7 +192,7 @@ uintptr_t syscall_brk(void* addr){
   uintptr_t req_break = (uintptr_t)addr;
 
   uintptr_t current_break = get_program_break();
-  uintptr_t ret;
+  uintptr_t ret = -1;
   int req_page_count = 0;
 
   // Return current break if null or current break

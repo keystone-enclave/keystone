@@ -1,11 +1,6 @@
 set(host_bin test-runner)
 set(host_src test-runner.cpp edge_wrapper.cpp)
-
-if(RISCV32)
-   set(eyrie_plugins "freemem rv32")
-else()
-   set(eyrie_plugins "freemem")
-endif()
+set(eyrie_plugins "none")
 
 set(package_name "tests.ke")
 set(package_script "./run-test.sh")

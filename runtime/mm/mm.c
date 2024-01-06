@@ -4,8 +4,6 @@
 #include "mm/freemem.h"
 #include "mm/paging.h"
 
-#ifdef USE_FREEMEM
-
 /* Page table utilities */
 static pte*
 __walk_create(pte* root, uintptr_t addr);
@@ -49,7 +47,7 @@ __walk_internal(pte* root, uintptr_t addr, int create)
     t = (pte*) __va(pte_ppn(t[idx]) << RISCV_PAGE_BITS);
   }
 
-  return &t[RISCV_GET_PT_INDEX(addr, 3)];
+  return &t[RISCV_GET_PT_INDEX(addr, RISCV_PT_LEVELS)];
 }
 
 /* walk the page table and return PTE
@@ -319,4 +317,3 @@ map_with_reserved_page_table(uintptr_t dram_base,
   #endif
 }
 
-#endif /* USE_FREEMEM */

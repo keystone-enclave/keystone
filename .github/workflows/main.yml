@@ -1,0 +1,165 @@
+# Run this job on pushes to master and all PRs
+name: Build and Test
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Define the strategy for the build job. We generally want to cover each
+    # platform that we support here
+    strategy:
+      matrix:
+        platform: [generic, unmatched]
+        bits: [32, 64]
+        exclude:
+          # unmatched is not 32 bit
+          - platform: unmatched
+            bits: 32
+
+    steps:
+
+###########
+## Setup ##
+###########
+
+    # First, we need to get the version of Keystone we are working on. We
+    # will also need submodules here since we are doing full builds
+    - name: Checkout Keystone
+      uses: actions/checkout@v3
+      with:
+        submodules: 'true'
+
+    # Get various keys for various caches
+    - name: Get cache keys
+      id: cache-keys
+      run: |
+        # Grab some timestamps for compiler caches
+        echo "YMDH=$(date -u +'%Y-%m-%d-%H')" >> "$GITHUB_OUTPUT"
+        echo "YMD=$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+        echo "YM=$(date -u +'%Y-%m')" >> "$GITHUB_OUTPUT"
+        echo "Y=$(date -u +'%Y')" >> "$GITHUB_OUTPUT"
+
+    # Install build dependencies
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y cpio rsync bc makeself
+
+    # Restore build and download caches. We key these based on timestamps and build
+    # target, since these essentially "accumulate" useful information (such as source
+    # packages or cached compiled objects) over time. With this scheme, we'll pretty
+    # much always be using the max Github Action cache limit (10GB), but this is okay
+    # since we really only care about keeping the latest cache anyways.
+    - name: Restore buildroot packages
+      uses: actions/cache@v3
+      with:
+        path: buildroot/dl
+        key: buildroot-dl-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.YMDH }}
+        restore-keys: |
+          buildroot-dl-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.YMD }}
+          buildroot-dl-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.YM }}
+          buildroot-dl-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.Y }}
+          buildroot-dl-${{ matrix.platform }}${{ matrix.bits }}-
+
+    - name: Restore ccache
+      uses: actions/cache@v3
+      with:
+        path: ~/.buildroot-ccache
+        key: ccache-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.YMDH }}
+        restore-keys: |
+          ccache-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.YMD }}
+          ccache-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.YM }}
+          ccache-${{ matrix.platform }}${{ matrix.bits }}-${{ steps.cache-keys.outputs.Y }}
+          ccache-${{ matrix.platform }}${{ matrix.bits }}-
+
+##############
+## Keystone ##
+##############
+
+    # Build Keystone and upload the results log if we fail to do so
+    - name: Build Keystone
+      run: |
+        KEYSTONE_PLATFORM=${{ matrix.platform }} \
+          KEYSTONE_BITS=${{ matrix.bits }} make -j$(nproc)
+
+    - name: Upload build log
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-keystone-${{ matrix.platform }}${{ matrix.bits }}.log
+        path: build-${{ matrix.platform }}${{ matrix.bits }}/build.log
+
+    # We need parts of the build directory for future tests
+    - name: Compress build directory
+      run: |
+        # Convenient vars
+        BASEDIR="build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build"
+        PERPACKAGEDIR="$BASEDIR/per-package"
+
+        # Needed by most tests
+        COMPRESSDIRS="$BASEDIR/host $BASEDIR/images"
+        # Needed by runtime build tests
+        COMPRESSDIRS="$COMPRESSDIRS $PERPACKAGEDIR/keystone-examples/host/usr/share/keystone/sdk"
+        # Needed by end-to-end tests
+        COMPRESSDIRS="$COMPRESSDIRS $BASEDIR/target/root/"
+
+        tar -cf - $COMPRESSDIRS | xz -9 -T0 > build.tar.xz
+
+    - name: Upload build directory
+      uses: actions/upload-artifact@v4
+      with:
+        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
+        path: build.tar.xz
+        retention-days: 1
+
+###########
+## Tests ##
+###########
+
+  # Generic runtime tests, which only need to run once (on the host)
+  test-runtime-format:
+    runs-on: ubuntu-latest
+    steps:
+    # We don't need submodules here since Keystone is a monorepo!
+    - name: Checkout Keystone
+      uses: actions/checkout@v3
+      with:
+        submodules: 'false'
+
+    - name: Check format
+      run: |
+        sudo apt-get update && sudo apt-get install -y clang-format
+        FORMAT=$(git help -a | grep clang-format | tail -n1)
+        cd runtime ; FORMAT_RESULT=$(git $FORMAT)
+        [ "$FORMAT_RESULT" = "no modified files to format" ] || [ "$FORMAT_RESULT" = "clang-format did not modify any files" ]
+
+  test-runtime-functionality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Keystone
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+
+    - name: Run ctest
+      run: |
+        cd runtime
+        mkdir -p obj/test
+        pushd obj/test
+        cmake ../../test
+        make
+        ctest -VV || ( cat obj/test/Testing/Temporary/LastTest.log && false )
+        popd
+
+  # Build tests, which are run for each supported platform
+  test-runtime-build:
+    needs: build
+    uses: ./.github/workflows/build-runtime.yml
+
+  # System tests, which are run for simulatable platforms
+  test-system:
+    needs: build
+    uses: ./.github/workflows/test-system.yml

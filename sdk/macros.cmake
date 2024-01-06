@@ -118,7 +118,7 @@ macro(add_eyrie_runtime target_name plugins) # the files are passed via ${ARGN}
   ExternalProject_Add(eyrie-${target_name}
     PREFIX ${runtime_prefix}
     DOWNLOAD_COMMAND rm -rf ${eyrie_src} && cp -ar ${KEYSTONE_EYRIE_RUNTIME} ${eyrie_src}
-    CMAKE_ARGS "${PLUGIN_FLAGS}" -DEYRIE_SRCDIR=${KEYSTONE_EYRIE_RUNTIME} -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR}
+    CMAKE_ARGS "${PLUGIN_FLAGS}" -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}" -DEYRIE_SRCDIR=${KEYSTONE_EYRIE_RUNTIME} -DKEYSTONE_SDK_DIR=${KEYSTONE_SDK_DIR}
     BUILD_IN_SOURCE TRUE
     BUILD_BYPRODUCTS ${eyrie_src}/eyrie-rt ${eyrie_src}/.options_log ${eyrie_src}/loader.bin
     INSTALL_COMMAND "")

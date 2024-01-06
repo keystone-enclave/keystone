@@ -3,15 +3,19 @@ OUTPUT_ARCH("riscv")
 ENTRY( _start )
 
 PAGE_SIZE = 0x1000; /* TODO: figure out the page size to use here */ 
-STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x0100; 
+STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x1000;
 
 SECTIONS
 {
   .text :
   {
     PROVIDE( _start = . );
-    *(._start);
-    *(*);
+    *(._start)
+    *(.text)
+    *(.rdata)
+    *(.rodata)
+    *(.data)
+    *(.bss)
 
     /* 
     * Only text section is copied into final loader binary 
