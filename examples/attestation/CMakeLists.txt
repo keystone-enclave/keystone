@@ -3,8 +3,14 @@ set(eapp_src eapp/attestor.c)
 set(host_bin attestor-runner)
 set(host_src host/attestor-runner.cpp host/host.cpp host/verifier.cpp)
 set(package_name "attestor.ke")
-set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin fw_jump.bin")
 set(eyrie_plugins "none")
+
+
+if(NOT DEFINED fw_bin)
+   set(fw_bin ../../../images/fw_jump.bin)
+endif()
+get_filename_component(fw_file ${fw_bin} NAME)
+set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin ${fw_file}")
 
 # eapp
 
