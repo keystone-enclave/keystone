@@ -34,6 +34,7 @@ call:
 	$(call log,info,Calling command in QEMU)
 	ssh -i $(BUILDROOT_BUILDDIR)/target/root/.ssh/id-rsa \
 		-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+		-o ConnectTimeout=5 \
 		-p $(QEMU_PORT) root@localhost $(KEYSTONE_COMMAND) 2>&1 | \
 		 grep -v "Warning: Permanently added" | tee -a $(CALL_LOGFILE)
 
