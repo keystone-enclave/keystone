@@ -23,17 +23,17 @@ export BUILDDIR                 ?= $(KEYSTONE)/build-$(KEYSTONE_PLATFORM)$(KEYST
 export BUILDROOT_OVERLAYDIR     ?= $(BUILDDIR)/overlay
 export BUILDROOT_BUILDDIR       ?= $(BUILDDIR)/buildroot.build
 
+
+# options: generic, cva6, hifive_unmatched
 export KEYSTONE_PLATFORM        ?= generic
 export KEYSTONE_BITS            ?= 64
 
 include mkutils/args.mk
 include mkutils/log.mk
 
-BUILDROOT_CONFIGFILE    ?= qemu_riscv$(KEYSTONE_BITS)_virt_defconfig
+BUILDROOT_CONFIGFILE    ?= riscv$(KEYSTONE_BITS)_$(KEYSTONE_PLATFORM)_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
 	EXTERNALS += microchip
-else ifeq ($(KEYSTONE_PLATFORM),unmatched)
-    BUILDROOT_CONFIGFILE = riscv64_hifive_unmatched_defconfig
 endif
 
 # Highest priority external
@@ -76,7 +76,7 @@ $(BUILDROOT_OVERLAYDIR)/.done: $(BUILDROOT_OVERLAYDIR)
 	$(call log,info,Setting up overlay)
 	mkdir -p $(BUILDROOT_OVERLAYDIR)/root/.ssh
 	ssh-keygen -C 'root@keystone' -t rsa -f $(BUILDROOT_OVERLAYDIR)/root/.ssh/id-rsa -N ''
-	cp $(BUILDROOT_OVERLAYDIR)/root/.ssh/{id-rsa.pub,authorized_keys}
+	cp -f $(BUILDROOT_OVERLAYDIR)/root/.ssh/{id-rsa.pub,authorized_keys} 
 	touch $@
 
 # Main build target for buildroot. The specific subtarget to build can be overriden

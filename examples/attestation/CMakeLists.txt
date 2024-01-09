@@ -3,8 +3,14 @@ set(eapp_src eapp/attestor.c)
 set(host_bin attestor-runner)
 set(host_src host/attestor-runner.cpp host/host.cpp host/verifier.cpp)
 set(package_name "attestor.ke")
-set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin fw_jump.bin")
 set(eyrie_plugins "none")
+
+
+if(NOT DEFINED fw_bin)
+   set(fw_bin ../../../images/fw_jump.bin)
+endif()
+get_filename_component(fw_file ${fw_bin} NAME)
+set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin ${fw_file}")
 
 # eapp
 
@@ -38,7 +44,7 @@ add_eyrie_runtime(${eapp_bin}-eyrie
 # add sm binary -- TODO: fix, should come from upper levels
 if(NOT DEFINED fw_bin)
   message(AUTHOR_WARNING "fw_bin should be defined by upper CMake files/ build system. Setting to default")
-  set(fw_bin ../../../images/fw_jump.bin)
+  set(fw_bin ../../../images/fw_payload.bin)
 endif()
 
 # add target for packaging (see keystone.cmake)

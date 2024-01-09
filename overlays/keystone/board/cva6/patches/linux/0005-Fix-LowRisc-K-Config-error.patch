@@ -1,0 +1,44 @@
+From d111032330c5d2e85e052528e506a3dc3cc6a0ff Mon Sep 17 00:00:00 2001
+From: sahmad <syarif.ahmad@thalesgroup.com>
+Date: Thu, 26 Oct 2023 18:20:53 +0800
+Subject: [PATCH 5/5] Fix LowRisc K Config error
+
+---
+ drivers/net/ethernet/lowrisc/Kconfig | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/net/ethernet/lowrisc/Kconfig b/drivers/net/ethernet/lowrisc/Kconfig
+index 8a6c3e186f43..499a92c197ef 100644
+--- a/drivers/net/ethernet/lowrisc/Kconfig
++++ b/drivers/net/ethernet/lowrisc/Kconfig
+@@ -7,12 +7,12 @@ config NET_VENDOR_LOWRISC
+ 	default y
+ 	depends on RISCV
+ 	help
+-	  If you have a network (Ethernet) card belonging to this class, say Y.
++		If you have a network (Ethernet) card belonging to this class, say Y.
+ 
+-	  Note that the answer to this question doesn't directly affect the
+-	  kernel: saying N will just cause the configurator to skip all
+-	  the questions about Lowrisc devices. If you say Y, you will be asked
+-	  for your specific card in the following questions.
++	  	Note that the answer to this question doesn't directly affect the
++	  	kernel: saying N will just cause the configurator to skip all
++	  	the questions about Lowrisc devices. If you say Y, you will be asked
++	  	for your specific card in the following questions.
+ 
+ if NET_VENDOR_LOWRISC
+ 
+@@ -21,6 +21,6 @@ config LOWRISC_DIGILENT_100MHZ
+ 	depends on RISCV
+ 	select PHYLIB
+ 	help
+-	  This driver supports the 100MHz Ethernet for Nexys4_DDR Digilent boards from Lowrisc.
++	  	This driver supports the 100MHz Ethernet for Nexys4_DDR Digilent boards from Lowrisc.
+ 
+-endif # NET_VENDOR_LOWRISC
+\ No newline at end of file
++endif # NET_VENDOR_LOWRISC
+-- 
+2.34.1
+

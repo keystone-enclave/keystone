@@ -1,0 +1,2335 @@
+From 861d2d52e37164ac0176cba530c07a09e886ca5f Mon Sep 17 00:00:00 2001
+From: sahmad <syarif.ahmad@thalesgroup.com>
+Date: Thu, 26 Oct 2023 17:40:05 +0800
+Subject: [PATCH 1/5] Incorporate-lowrisc-drivers-for-latest-kernel-releas
+
+---
+ arch/riscv/configs/defconfig                  | 428 +++++++++
+ drivers/mmc/host/Kconfig                      |   8 +-
+ drivers/mmc/host/Makefile                     |   2 +-
+ drivers/mmc/host/lowrisc_sd.c                 | 803 +++++++++++++++++
+ drivers/mmc/host/lowrisc_sd.h                 |  52 ++
+ drivers/net/ethernet/Kconfig                  |   1 +
+ drivers/net/ethernet/Makefile                 |   1 +
+ drivers/net/ethernet/lowrisc/Kconfig          |  26 +
+ drivers/net/ethernet/lowrisc/Makefile         |   6 +
+ drivers/net/ethernet/lowrisc/lowrisc_100MHz.c | 830 ++++++++++++++++++
+ drivers/net/ethernet/lowrisc/lowrisc_100MHz.h |  55 ++
+ 11 files changed, 2210 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/mmc/host/lowrisc_sd.c
+ create mode 100644 drivers/mmc/host/lowrisc_sd.h
+ create mode 100644 drivers/net/ethernet/lowrisc/Kconfig
+ create mode 100644 drivers/net/ethernet/lowrisc/Makefile
+ create mode 100644 drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
+ create mode 100644 drivers/net/ethernet/lowrisc/lowrisc_100MHz.h
+
+diff --git a/arch/riscv/configs/defconfig b/arch/riscv/configs/defconfig
+index 05fd5fcf24f9..64f574640574 100644
+--- a/arch/riscv/configs/defconfig
++++ b/arch/riscv/configs/defconfig
+@@ -212,3 +212,431 @@ CONFIG_RCU_EQS_DEBUG=y
+ # CONFIG_FTRACE is not set
+ # CONFIG_RUNTIME_TESTING_MENU is not set
+ CONFIG_MEMTEST=y
++
++
++
++# modification for CVA6 adjusted from CVA6-SDK. refers to https://github.com/openhwgroup/cva6-sdk/blob/master/linux_patch/0001-Incorporate-lowrisc-drivers-for-latest-kernel-releas.patch
++
++CONFIG_CC_IS_GCC=y
++CONFIG_GCC_VERSION=80200
++CONFIG_CLANG_VERSION=0
++CONFIG_CC_HAS_ASM_GOTO=y
++CONFIG_IRQ_WORK=y
++CONFIG_THREAD_INFO_IN_TASK=y
++CONFIG_BROKEN_ON_SMP=y
++CONFIG_INIT_ENV_ARG_LIMIT=32
++CONFIG_LOCALVERSION=""
++CONFIG_LOCALVERSION_AUTO=y
++CONFIG_BUILD_SALT=""
++CONFIG_DEFAULT_HOSTNAME="ariane-fpga"
++CONFIG_SWAP=y
++CONFIG_SYSVIPC_SYSCTL=y
++CONFIG_CROSS_MEMORY_ATTACH=y
++CONFIG_USELIB=y
++CONFIG_HAVE_ARCH_AUDITSYSCALL=y
++CONFIG_GENERIC_IRQ_SHOW=y
++CONFIG_IRQ_DOMAIN=y
++CONFIG_SPARSE_IRQ=y
++CONFIG_GENERIC_IRQ_MULTI_HANDLER=y
++CONFIG_GENERIC_CLOCKEVENTS=y
++CONFIG_TICK_ONESHOT=y
++CONFIG_HZ_PERIODIC=y
++CONFIG_PREEMPT_NONE=y
++CONFIG_PREEMPT_COUNT=y
++CONFIG_TICK_CPU_ACCOUNTING=y
++CONFIG_TINY_RCU=y
++CONFIG_SRCU=y
++CONFIG_TINY_SRCU=y
++CONFIG_BUILD_BIN2C=y
++CONFIG_LOG_BUF_SHIFT=17
++CONFIG_PRINTK_SAFE_LOG_BUF_SHIFT=13
++CONFIG_GENERIC_SCHED_CLOCK=y
++CONFIG_ARCH_SUPPORTS_INT128=y
++CONFIG_PAGE_COUNTER=y
++CONFIG_MEMCG=y
++CONFIG_MEMCG_SWAP=y
++CONFIG_MEMCG_KMEM=y
++CONFIG_BLK_CGROUP=y
++CONFIG_DEBUG_BLK_CGROUP=y
++CONFIG_CGROUP_WRITEBACK=y
++CONFIG_FAIR_GROUP_SCHED=y
++CONFIG_CGROUP_PIDS=y
++CONFIG_CGROUP_RDMA=y
++CONFIG_CGROUP_FREEZER=y
++CONFIG_CGROUP_DEVICE=y
++CONFIG_CGROUP_CPUACCT=y
++CONFIG_SOCK_CGROUP_DATA=y
++CONFIG_INITRAMFS_SOURCE="initramfs.cpio"
++CONFIG_INITRAMFS_FORCE=y
++CONFIG_INITRAMFS_ROOT_UID=0
++CONFIG_INITRAMFS_ROOT_GID=0
++CONFIG_RD_GZIP=y
++CONFIG_RD_BZIP2=y
++CONFIG_RD_LZMA=y
++CONFIG_RD_XZ=y
++CONFIG_RD_LZO=y
++CONFIG_RD_LZ4=y
++CONFIG_INITRAMFS_COMPRESSION=".gz"
++CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
++CONFIG_SYSCTL=y
++CONFIG_ANON_INODES=y
++CONFIG_SYSCTL_EXCEPTION_TRACE=y
++CONFIG_BPF=y
++CONFIG_MULTIUSER=y
++CONFIG_SGETMASK_SYSCALL=y
++CONFIG_SYSFS_SYSCALL=y
++CONFIG_SYSCTL_SYSCALL=y
++CONFIG_FHANDLE=y
++CONFIG_POSIX_TIMERS=y
++CONFIG_PRINTK=y
++CONFIG_BUG=y
++CONFIG_ELF_CORE=y
++CONFIG_BASE_FULL=y
++CONFIG_FUTEX=y
++CONFIG_FUTEX_PI=y
++CONFIG_HAVE_FUTEX_CMPXCHG=y
++CONFIG_EPOLL=y
++CONFIG_SIGNALFD=y
++CONFIG_TIMERFD=y
++CONFIG_EVENTFD=y
++CONFIG_SHMEM=y
++CONFIG_AIO=y
++CONFIG_ADVISE_SYSCALLS=y
++CONFIG_MEMBARRIER=y
++CONFIG_KALLSYMS=y
++CONFIG_KALLSYMS_BASE_RELATIVE=y
++CONFIG_EMBEDDED=y
++CONFIG_HAVE_PERF_EVENTS=y
++CONFIG_VM_EVENT_COUNTERS=y
++CONFIG_SLUB_DEBUG=y
++CONFIG_SLUB_MEMCG_SYSFS_ON=y
++CONFIG_COMPAT_BRK=y
++CONFIG_SLUB=y
++CONFIG_SLAB_MERGE_DEFAULT=y
++CONFIG_64BIT=y
++CONFIG_RISCV=y
++CONFIG_MMU=y
++CONFIG_ZONE_DMA32=y
++CONFIG_PAGE_OFFSET=0xffffffe000000000
++CONFIG_STACKTRACE_SUPPORT=y
++CONFIG_TRACE_IRQFLAGS_SUPPORT=y
++CONFIG_RWSEM_GENERIC_SPINLOCK=y
++CONFIG_GENERIC_BUG=y
++CONFIG_GENERIC_BUG_RELATIVE_POINTERS=y
++CONFIG_GENERIC_CALIBRATE_DELAY=y
++CONFIG_GENERIC_CSUM=y
++CONFIG_GENERIC_HWEIGHT=y
++CONFIG_PGTABLE_LEVELS=3
++CONFIG_ARCH_RV64I=y
++CONFIG_CMODEL_MEDANY=yt
++CONFIG_MAXPHYSMEM_128GB=y
++CONFIG_TUNE_GENERIC=y
++CONFIG_RISCV_ISA_C=y
++CONFIG_RISCV_ISA_A=y
++CONFIG_FPU=y
++CONFIG_HZ_100=y
++CONFIG_HZ=100
++CONFIG_SCHED_HRTICK=y
++CONFIG_CMDLINE="swiotlb=noforce"
++CONFIG_CMDLINE_FORCE=y
++CONFIG_HAVE_64BIT_ALIGNED_ACCESS=y
++CONFIG_HAVE_ARCH_TRACEHOOK=y
++CONFIG_HAVE_DMA_CONTIGUOUS=y
++CONFIG_GENERIC_SMP_IDLE_THREAD=y
++CONFIG_HAVE_CLK=y
++CONFIG_CC_HAS_STACKPROTECTOR_NONE=y
++CONFIG_HAVE_VIRT_CPU_ACCOUNTING_GEN=y
++CONFIG_CLONE_BACKWARDS=y
++CONFIG_PLUGIN_HOSTCC=""
++CONFIG_RT_MUTEXES=y
++CONFIG_BASE_SMALL=0
++CONFIG_BLOCK=y
++CONFIG_BLK_SCSI_REQUEST=y
++CONFIG_BLK_DEV_BSG=y
++CONFIG_PARTITION_ADVANCED=y
++CONFIG_MSDOS_PARTITION=y
++CONFIG_ASN1=y
++CONFIG_INLINE_SPIN_UNLOCK_IRQ=y
++CONFIG_INLINE_READ_UNLOCK=y
++CONFIG_INLINE_READ_UNLOCK_IRQ=y
++CONFIG_INLINE_WRITE_UNLOCK=y
++CONFIG_INLINE_WRITE_UNLOCK_IRQ=y
++CONFIG_FREEZER=y
++CONFIG_BINFMT_ELF=y
++CONFIG_ELFCORE=y
++CONFIG_CORE_DUMP_DEFAULT_ELF_HEADERS=y
++CONFIG_BINFMT_SCRIPT=y
++CONFIG_COREDUMP=y
++CONFIG_FLATMEM=y
++CONFIG_FLAT_NODE_MEM_MAP=y
++CONFIG_HAVE_MEMBLOCK_NODE_MAP=y
++CONFIG_SPLIT_PTLOCK_CPUS=4
++CONFIG_COMPACTION=y
++CONFIG_MIGRATION=y
++CONFIG_PHYS_ADDR_T_64BIT=y
++CONFIG_DEFAULT_MMAP_MIN_ADDR=4096
++CONFIG_NEED_PER_CPU_KM=y
++CONFIG_ARCH_HAS_PTE_SPECIAL=y
++CONFIG_SKB_EXTENSIONS=y
++CONFIG_XFRM=y
++CONFIG_NET_IP_TUNNEL=y
++CONFIG_INET_TUNNEL=y
++CONFIG_TCP_CONG_CUBIC=y
++CONFIG_DEFAULT_TCP_CONG="cubic"
++CONFIG_IPV6=y
++CONFIG_IPV6_ROUTER_PREF=y
++CONFIG_IPV6_ROUTE_INFO=y
++CONFIG_IPV6_OPTIMISTIC_DAD=y
++CONFIG_INET6_XFRM_MODE_TRANSPORT=y
++CONFIG_INET6_XFRM_MODE_TUNNEL=y
++CONFIG_INET6_XFRM_MODE_BEET=y
++CONFIG_IPV6_SIT=y
++CONFIG_IPV6_NDISC_NODETYPE=y
++CONFIG_HAVE_NET_DSA=y
++CONFIG_NET_RX_BUSY_POLL=y
++CONFIG_BQL=y
++CONFIG_WIRELESS=y
++CONFIG_MAC80211_STA_HASH_MAX_SIZE=0
++CONFIG_DST_CACHE=y
++CONFIG_GRO_CELLS=y
++CONFIG_MAY_USE_DEVLINK=y
++CONFIG_HAVE_PCI=y
++CONFIG_UEVENT_HELPER=y
++CONFIG_UEVENT_HELPER_PATH=""
++CONFIG_DEVTMPFS=y
++CONFIG_DEVTMPFS_MOUNT=y
++CONFIG_STANDALONE=y
++CONFIG_PREVENT_FIRMWARE_BUILD=y
++CONFIG_FW_LOADER=y
++CONFIG_EXTRA_FIRMWARE=""
++CONFIG_ALLOW_DEV_COREDUMP=y
++CONFIG_GENERIC_CPU_DEVICES=y
++CONFIG_DTC=y
++CONFIG_OF=y
++CONFIG_OF_FLATTREE=y
++CONFIG_OF_EARLY_FLATTREE=y
++CONFIG_OF_KOBJ=y
++CONFIG_OF_ADDRESS=y
++CONFIG_OF_IRQ=y
++CONFIG_OF_NET=y
++CONFIG_OF_MDIO=y
++CONFIG_BLK_DEV=y
++CONFIG_BLK_DEV_LOOP=y
++CONFIG_BLK_DEV_LOOP_MIN_COUNT=8
++CONFIG_BLK_DEV_NBD=y
++CONFIG_SCSI_MOD=y
++CONFIG_NET_CORE=y
++CONFIG_ETHERNET=y
++CONFIG_NET_VENDOR_CADENCE=y
++CONFIG_NET_VENDOR_CAVIUM=y
++CONFIG_NET_VENDOR_LOWRISC=y
++CONFIG_LOWRISC_DIGILENT_100MHZ=y
++CONFIG_NET_VENDOR_MICROCHIP=y
++CONFIG_MDIO_DEVICE=y
++CONFIG_MDIO_BUS=y
++CONFIG_MDIO_BITBANG=y
++CONFIG_PHYLIB=y
++CONFIG_SWPHY=y
++CONFIG_FIXED_PHY=y
++CONFIG_REALTEK_PHY=y
++CONFIG_SMSC_PHY=y
++CONFIG_INPUT=y
++CONFIG_INPUT_POLLDEV=y
++CONFIG_INPUT_KEYBOARD=y
++CONFIG_SERIO=y
++CONFIG_SERIO_SERPORT=y
++CONFIG_TTY=y
++CONFIG_UNIX98_PTYS=y
++CONFIG_LEGACY_PTYS=y
++CONFIG_LEGACY_PTY_COUNT=256
++CONFIG_LDISC_AUTOLOAD=y
++CONFIG_DEVMEM=y
++CONFIG_DEVKMEM=y
++CONFIG_SERIAL_EARLYCON=y
++CONFIG_SERIAL_8250_DEPRECATED_OPTIONS=y
++CONFIG_SERIAL_8250_NR_UARTS=4
++CONFIG_SERIAL_8250_RUNTIME_UARTS=4
++CONFIG_SERIAL_UARTLITE=y
++CONFIG_SERIAL_UARTLITE_NR_UARTS=1
++CONFIG_SERIAL_CORE=y
++CONFIG_SERIAL_CORE_CONSOLE=y
++CONFIG_HVC_DRIVER=y
++CONFIG_SSB_POSSIBLE=y
++CONFIG_BCMA_POSSIBLE=y
++CONFIG_USB_OHCI_LITTLE_ENDIAN=y
++CONFIG_MMC=y
++CONFIG_MMC_BLOCK=y
++CONFIG_MMC_BLOCK_MINORS=8
++CONFIG_MMC_LOWRISC=y
++CONFIG_VIRTIO_MENU=y
++CONFIG_CLKDEV_LOOKUP=y
++CONFIG_HAVE_CLK_PREPARE=y
++CONFIG_COMMON_CLK=y
++CONFIG_TIMER_OF=y
++CONFIG_TIMER_PROBE=y
++CONFIG_RISCV_TIMER=y
++CONFIG_IOMMU_SUPPORT=y
++CONFIG_IRQCHIP=y
++CONFIG_ARM_GIC_MAX_NR=1
++CONFIG_SIFIVE_PLIC=y
++CONFIG_RAS=y
++CONFIG_FS_IOMAP=y
++CONFIG_EXT2_FS=y
++CONFIG_EXT3_FS=y
++CONFIG_JBD2=y
++CONFIG_FS_MBCACHE=y
++CONFIG_FS_POSIX_ACL=y
++CONFIG_EXPORTFS=y
++CONFIG_EXPORTFS_BLOCK_OPS=y
++CONFIG_FILE_LOCKING=y
++CONFIG_MANDATORY_FILE_LOCKING=y
++CONFIG_FSNOTIFY=y
++CONFIG_INOTIFY_USER=y
++CONFIG_FAT_FS=y
++CONFIG_FAT_DEFAULT_CODEPAGE=437
++CONFIG_FAT_DEFAULT_IOCHARSET="iso8859-1"
++CONFIG_FAT_DEFAULT_UTF8=y
++CONFIG_PROC_FS=y
++CONFIG_PROC_SYSCTL=y
++CONFIG_KERNFS=y
++CONFIG_SYSFS=y
++CONFIG_MEMFD_CREATE=y
++CONFIG_NETWORK_FILESYSTEMS=y
++CONFIG_NFS_V2=y
++CONFIG_NFS_V3=y
++CONFIG_NFS_V3_ACL=y
++CONFIG_DEBUG_VM_PGFLAGS=y
++CONFIG_DEBUG_PER_CPU_MAPS=y
++CONFIG_DEBUG_RWSEMS=y
++CONFIG_DEBUG_PLIST=y
++CONFIG_EFI=y
++CONFIG_PNFS_FILE_LAYOUT=y
++CONFIG_PNFS_FLEXFILE_LAYOUT=y
++CONFIG_NFS_V4_1_IMPLEMENTATION_ID_DOMAIN="kernel.org"
++CONFIG_NFS_V4_1_MIGRATION=y
++CONFIG_NFS_USE_LEGACY_DNS=y
++CONFIG_NFSD=y
++CONFIG_NFSD_V2_ACL=y
++CONFIG_NFSD_V3=y
++CONFIG_NFSD_V3_ACL=y
++CONFIG_NFSD_V4=y
++CONFIG_NFSD_PNFS=y
++CONFIG_NFSD_BLOCKLAYOUT=y
++CONFIG_NFSD_SCSILAYOUT=y
++CONFIG_GRACE_PERIOD=y
++CONFIG_LOCKD=y
++CONFIG_LOCKD_V4=y
++CONFIG_NFS_ACL_SUPPORT=y
++CONFIG_NFS_COMMON=y
++CONFIG_SUNRPC=y
++CONFIG_SUNRPC_GSS=y
++CONFIG_SUNRPC_BACKCHANNEL=y
++CONFIG_NLS=y
++CONFIG_NLS_DEFAULT="iso8859-1"
++CONFIG_NLS_CODEPAGE_437=y
++CONFIG_NLS_ISO8859_1=y
++CONFIG_NLS_UTF8=y
++CONFIG_KEYS=y
++CONFIG_HAVE_HARDENED_USERCOPY_ALLOCATOR=y
++CONFIG_DEFAULT_SECURITY_DAC=y
++CONFIG_DEFAULT_SECURITY=""
++CONFIG_CRYPTO=y
++CONFIG_CRYPTO_ALGAPI=y
++CONFIG_CRYPTO_ALGAPI2=y
++CONFIG_CRYPTO_AEAD2=y
++CONFIG_CRYPTO_BLKCIPHER2=y
++CONFIG_CRYPTO_HASH=y
++CONFIG_CRYPTO_HASH2=y
++CONFIG_CRYPTO_RNG2=y
++CONFIG_CRYPTO_AKCIPHER2=y
++CONFIG_CRYPTO_AKCIPHER=y
++CONFIG_CRYPTO_KPP2=y
++CONFIG_CRYPTO_ACOMP2=y
++CONFIG_CRYPTO_RSA=y
++CONFIG_CRYPTO_MANAGER=y
++CONFIG_CRYPTO_MANAGER2=y
++CONFIG_CRYPTO_MANAGER_DISABLE_TESTS=y
++CONFIG_CRYPTO_NULL2=y
++CONFIG_CRYPTO_WORKQUEUE=y
++CONFIG_CRYPTO_CRC32C=y
++CONFIG_CRYPTO_AES=y
++CONFIG_CRYPTO_HASH_INFO=y
++CONFIG_ASYMMETRIC_KEY_TYPE=y
++CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE=y
++CONFIG_X509_CERTIFICATE_PARSER=y
++CONFIG_PKCS7_MESSAGE_PARSER=y
++CONFIG_SYSTEM_TRUSTED_KEYRING=y
++CONFIG_SYSTEM_TRUSTED_KEYS=""
++CONFIG_BITREVERSE=y
++CONFIG_RATIONAL=y
++CONFIG_GENERIC_STRNCPY_FROM_USER=y
++CONFIG_GENERIC_STRNLEN_USER=y
++CONFIG_GENERIC_NET_UTILS=y
++CONFIG_GENERIC_PCI_IOMAP=y
++CONFIG_CRC16=y
++CONFIG_CRC_ITU_T=y
++CONFIG_CRC32=y
++CONFIG_CRC32_SLICEBY8=y
++CONFIG_CRC7=y
++CONFIG_ZLIB_INFLATE=y
++CONFIG_LZO_DECOMPRESS=y
++CONFIG_LZ4_DECOMPRESS=y
++CONFIG_XZ_DEC=y
++CONFIG_XZ_DEC_X86=y
++CONFIG_XZ_DEC_POWERPC=y
++CONFIG_XZ_DEC_IA64=y
++CONFIG_XZ_DEC_ARM=y
++CONFIG_XZ_DEC_ARMTHUMB=y
++CONFIG_XZ_DEC_SPARC=y
++CONFIG_XZ_DEC_BCJ=y
++CONFIG_DECOMPRESS_GZIP=y
++CONFIG_DECOMPRESS_BZIP2=y
++CONFIG_DECOMPRESS_LZMA=y
++CONFIG_DECOMPRESS_XZ=y
++CONFIG_DECOMPRESS_LZO=y
++CONFIG_DECOMPRESS_LZ4=y
++CONFIG_ASSOCIATIVE_ARRAY=y
++CONFIG_HAS_IOMEM=y
++CONFIG_HAS_IOPORT_MAP=y
++CONFIG_HAS_DMA=y
++CONFIG_NEED_DMA_MAP_STATE=y
++CONFIG_ARCH_DMA_ADDR_T_64BIT=y
++CONFIG_HAVE_GENERIC_DMA_COHERENT=y
++CONFIG_SWIOTLB=y
++CONFIG_SGL_ALLOC=y
++CONFIG_DQL=y
++CONFIG_NLATTR=y
++CONFIG_CLZ_TAB=y
++CONFIG_MPILIB=y
++CONFIG_LIBFDT=y
++CONFIG_OID_REGISTRY=y
++CONFIG_SBITMAP=y
++CONFIG_CONSOLE_LOGLEVEL_DEFAULT=15
++CONFIG_CONSOLE_LOGLEVEL_QUIET=4
++CONFIG_MESSAGE_LOGLEVEL_DEFAULT=7
++CONFIG_DEBUG_INFO=y
++CONFIG_DEBUG_INFO_REDUCED=y
++CONFIG_DEBUG_INFO_SPLIT=y
++CONFIG_FRAME_WARN=2048
++CONFIG_SECTION_MISMATCH_WARN_ONLY=y
++CONFIG_ARCH_WANT_FRAME_POINTERS=y
++CONFIG_FRAME_POINTER=y
++CONFIG_DEBUG_KERNEL=y
++CONFIG_CC_HAS_KASAN_GENERIC=y
++CONFIG_KASAN_STACK=1
++CONFIG_CC_HAS_SANCOV_TRACE_PC=y
++CONFIG_PANIC_ON_OOPS_VALUE=0
++CONFIG_PANIC_TIMEOUT=0
++CONFIG_SCHED_DEBUG=y
++CONFIG_DEBUG_BUGVERBOSE=y
++CONFIG_HAVE_FUNCTION_TRACER=y
++CONFIG_HAVE_FUNCTION_GRAPH_TRACER=y
++CONFIG_HAVE_DYNAMIC_FTRACE=y
++CONFIG_HAVE_DYNAMIC_FTRACE_WITH_REGS=y
++CONFIG_HAVE_FTRACE_MCOUNT_RECORD=y
++CONFIG_HAVE_SYSCALL_TRACEPOINTS=y
++CONFIG_TRACING_SUPPORT=y
++CONFIG_FTRACE=y
++CONFIG_BRANCH_PROFILE_NONE=y
++CONFIG_RUNTIME_TESTING_MENU=y
++CONFIG_TEST_UDELAY=y
+\ No newline at end of file
+diff --git a/drivers/mmc/host/Kconfig b/drivers/mmc/host/Kconfig
+index fb1062a6394c..6f81a87c2104 100644
+--- a/drivers/mmc/host/Kconfig
++++ b/drivers/mmc/host/Kconfig
+@@ -1013,7 +1013,13 @@ config MMC_BCM2835
+ 	  sdhci controller (supported by MMC_SDHCI_IPROC) and a custom
+ 	  sdhost controller (supported by this driver).
+ 
+-	  If unsure, say N.
++	  If unsure, say N.	  
++
++config MMC_LOWRISC
++        tristate "LowRISC SD/MMC Card Interface Driver"
++        depends on RISCV
++        help
++          This selects the LowRISC SD-card driver based on Nexys4-DDR from Digilent
+ 
+ config MMC_MTK
+ 	tristate "MediaTek SD/MMC Card Interface support"
+diff --git a/drivers/mmc/host/Makefile b/drivers/mmc/host/Makefile
+index 4e4ceb32c4b4..a0ceff28fe5d 100644
+--- a/drivers/mmc/host/Makefile
++++ b/drivers/mmc/host/Makefile
+@@ -71,7 +71,7 @@ obj-$(CONFIG_MMC_USDHI6ROL0)	+= usdhi6rol0.o
+ obj-$(CONFIG_MMC_TOSHIBA_PCI)	+= toshsd.o
+ obj-$(CONFIG_MMC_BCM2835)	+= bcm2835.o
+ obj-$(CONFIG_MMC_OWL)		+= owl-mmc.o
+-
++obj-$(CONFIG_MMC_LOWRISC)       += lowrisc_sd.o
+ obj-$(CONFIG_MMC_REALTEK_PCI)	+= rtsx_pci_sdmmc.o
+ obj-$(CONFIG_MMC_REALTEK_USB)	+= rtsx_usb_sdmmc.o
+ 
+diff --git a/drivers/mmc/host/lowrisc_sd.c b/drivers/mmc/host/lowrisc_sd.c
+new file mode 100644
+index 000000000000..d27478a317ed
+--- /dev/null
++++ b/drivers/mmc/host/lowrisc_sd.c
+@@ -0,0 +1,803 @@
++/*
++ *  LowRISC Secure Digital Host Controller Interface driver
++ *
++ *  Copyright (C) 2018 LowRISC CIC
++ *
++ *    Based on toshsd.c
++ *    Copyright (C) 2014 Ondrej Zary
++ *    Copyright (C) 2007 Richard Betts, All Rights Reserved.
++ *
++ *	Based on asic3_mmc.c, copyright (c) 2005 SDG Systems, LLC and,
++ *	sdhci.c, copyright (C) 2005-2006 Pierre Ossman
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or (at
++ * your option) any later version.
++ */
++
++#include <linux/delay.h>
++#include <linux/device.h>
++#include <linux/module.h>
++#include <linux/scatterlist.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/pm.h>
++#include <linux/mmc/host.h>
++#include <linux/mmc/mmc.h>
++#include <linux/platform_device.h>
++
++#include "lowrisc_sd.h"
++
++#define DRIVER_NAME "lowrisc-mmc"
++#define LOG(l) printk l
++#define LOGV(l) pr_debug l
++
++static volatile uint64_t *led_sd_base;
++static uint32_t led_last;
++
++#ifdef CONFIG_LOWRISC_GPIO
++#include <asm/uaccess.h>
++#include <linux/cdev.h>
++#define GPIO_MAJOR  200
++#define GPIO_MINOR  0
++#define GPIO_DEV_COUNT 2
++
++static int     gpio_open( struct inode *, struct file * );
++static ssize_t gpio_read( struct file * ,        char *  , size_t, loff_t *);
++static ssize_t gpio_write(struct file * , const  char *  , size_t, loff_t *);
++static int     gpio_close(struct inode *, struct file * );
++struct file_operations gpio_fops = {
++        read    :       gpio_read,
++        write   :       gpio_write,
++        open    :       gpio_open,
++        release :       gpio_close,
++        owner   :       THIS_MODULE
++};
++
++struct cdev gpio_cdev;
++
++int gpio_init_module(void)
++{
++
++	dev_t devno;
++	unsigned int count = GPIO_DEV_COUNT; // apply for two minor for two LED
++	int err;
++
++	devno = MKDEV(GPIO_MAJOR, GPIO_MINOR);
++	register_chrdev_region(devno, count , "myLED");
++
++	// -- initial the char device 
++	cdev_init(&gpio_cdev, &gpio_fops);
++	gpio_cdev.owner = THIS_MODULE;
++	err = cdev_add(&gpio_cdev, devno, count);
++
++	if (err < 0)
++	{
++		printk("Device Add Error\n");
++		return -1;
++	}
++
++	printk("This is lowrisc-gpio driver.\n");
++
++        return 0;
++}
++
++void gpio_cleanup_module(void)
++{
++	dev_t devno;
++
++	devno = MKDEV(GPIO_MAJOR, GPIO_MINOR);
++
++	unregister_chrdev_region(devno, GPIO_DEV_COUNT);
++	cdev_del(&gpio_cdev);
++}
++
++/*
++ * file operation: OPEN 
++ * */
++static int gpio_open(struct inode *inod, struct file *fil)
++{
++    return 0;
++}
++
++/*
++ * file operation: READ
++ * */
++static ssize_t gpio_read(struct file *filp, char *buff, size_t len, loff_t *off)
++{
++  static const char hex[] = "0123456789ABCDEF";
++  
++	int led_value = 0;
++	short count;
++        char msg[5];
++
++        if (*off)
++          return 0;
++        
++        if (led_sd_base)
++          led_value = led_sd_base[from_dip];
++        
++        msg[0] = hex[(led_value >> 12)&0xF];
++        msg[1] = hex[(led_value >> 8)&0xF];
++        msg[2] = hex[(led_value >> 4)&0xF];
++        msg[3] = hex[(led_value >> 0)&0xF];
++
++        if (len > 4)
++          len = 4;
++
++	count = raw_copy_to_user(buff, msg, len);
++
++	return len;
++}
++
++/*
++ * file operation: WRITE
++ * */
++static ssize_t gpio_write(struct file *filp, const char *buff, size_t len, loff_t *off)
++{
++	short count;
++        char *endp, msg[7];
++
++        if (*off)
++          return 0;
++        
++        if (len > 6)
++          len = 6;
++	count = raw_copy_from_user( msg, buff, len );
++        msg[len] = 0;
++        
++        if (led_sd_base)
++          {
++            led_last = (led_last&red_led) | (simple_strtol(msg, &endp, 16) & ~red_led);
++            printk("User msg %s, led=%X", msg, led_last);
++            led_sd_base[led_reg] = led_last;
++          }
++	return len;
++}
++
++/*
++ * file operation : CLOSE
++ * */
++static int gpio_close(struct inode *inod, struct file *fil)
++{
++	return 0;
++}
++#endif
++
++static void lowrisc_sd_set_led(struct lowrisc_sd_host *host, unsigned char state)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  if (!led_sd_base)
++    led_sd_base = sd_base;
++  if (state)
++    led_last |= red_led;
++  else
++    led_last &= ~red_led;
++  led_sd_base[led_reg] = led_last;
++}
++
++void sd_align(struct lowrisc_sd_host *host, int d_align)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[align_reg] = d_align;
++}
++
++void sd_clk_div(struct lowrisc_sd_host *host, int clk_div)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  /* This section is incomplete */
++  sd_base[clk_din_reg] = clk_div;
++}
++
++void sd_arg(struct lowrisc_sd_host *host, uint32_t arg)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[arg_reg] = arg;
++}
++
++void sd_cmd(struct lowrisc_sd_host *host, uint32_t cmd)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[cmd_reg] = cmd;
++}
++
++void sd_setting(struct lowrisc_sd_host *host, int setting)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[setting_reg] = setting;
++}
++
++void sd_cmd_start(struct lowrisc_sd_host *host, int sd_cmd)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[start_reg] = sd_cmd;
++}
++
++void sd_reset(struct lowrisc_sd_host *host, int sd_rst, int clk_rst, int data_rst, int cmd_rst)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[reset_reg] = ((sd_rst&1) << 3)|((clk_rst&1) << 2)|((data_rst&1) << 1)|((cmd_rst&1) << 0);
++}
++
++void sd_blkcnt(struct lowrisc_sd_host *host, int d_blkcnt)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[blkcnt_reg] = d_blkcnt&0xFFFF;
++}
++
++void sd_blksize(struct lowrisc_sd_host *host, int d_blksize)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[blksiz_reg] = d_blksize&0xFFF;
++}
++
++void sd_timeout(struct lowrisc_sd_host *host, int d_timeout)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[timeout_reg] = d_timeout;
++}
++
++void sd_irq_en(struct lowrisc_sd_host *host, int mask)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  sd_base[irq_en_reg] = mask;
++  host->int_en = mask;
++  pr_debug("sd_irq_en(%X)\n", mask);
++}
++
++static void lowrisc_sd_init(struct lowrisc_sd_host *host)
++{
++
++}
++
++/* Set MMC clock / power */
++static void __lowrisc_sd_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
++{
++	struct lowrisc_sd_host *host = mmc_priv(mmc);
++	switch (ios->power_mode) {
++	case MMC_POWER_OFF:
++	  mdelay(1);
++	  break;
++	case MMC_POWER_UP:
++	  break;
++	case MMC_POWER_ON:
++#if 0
++	  mdelay(20);
++#endif          
++	  break;
++	}
++
++	switch (ios->bus_width) {
++	case MMC_BUS_WIDTH_1:
++	  host->width_setting = 0;
++	  break;
++	case MMC_BUS_WIDTH_4:
++	  host->width_setting = 0x20;
++	  break;
++	}
++}
++
++static void lowrisc_sd_finish_request(struct lowrisc_sd_host *host)
++{
++	struct mmc_request *mrq = host->mrq;
++
++	/* Write something to end the command */
++	host->mrq = NULL;
++	host->cmd = NULL;
++	host->data = NULL;
++
++	sd_reset(host, 0,1,0,1);
++	sd_cmd_start(host, 0);
++	sd_reset(host, 0,1,1,1);
++	lowrisc_sd_set_led(host, 0);
++	mmc_request_done(host->mmc, mrq);
++}
++  
++static void lowrisc_sd_cmd_irq(struct lowrisc_sd_host *host)
++{
++	struct mmc_command *cmd = host->cmd;
++        volatile uint64_t *sd_base = host->ioaddr;
++
++	LOGV (("lowrisc_sd_cmd_irq\n"));
++	
++	if (!host->cmd) {
++		dev_warn(&host->pdev->dev, "Spurious CMD irq\n");
++		return;
++	}
++	host->cmd = NULL;
++
++        LOGV (("lowrisc_sd_cmd_irq IRQ line %d\n", __LINE__));
++	if (cmd->flags & MMC_RSP_PRESENT && cmd->flags & MMC_RSP_136) {
++	  int i;
++	  LOGV (("lowrisc_sd_cmd_irq IRQ line %d\n", __LINE__));
++		/* R2 */
++	  for (i = 0;i < 4;i++)
++	    {
++	    cmd->resp[i] = sd_base[resp0 + (3-i)] << 8;
++	    if (i != 3)
++	      cmd->resp[i] |= sd_base[resp0 + (2-i)] >> 24;
++	    } 
++	} else if (cmd->flags & MMC_RSP_PRESENT) {
++	  LOGV (("lowrisc_sd_cmd_irq IRQ line %d\n", __LINE__));
++		/* R1, R1B, R3, R6, R7 */
++	  cmd->resp[0] = sd_base[resp0];
++	}
++
++LOGV (("Command IRQ complete %d %d %x\n", cmd->opcode, cmd->error, cmd->flags));
++
++	/* If there is data to handle we will
++	 * finish the request in the mmc_data_end_irq handler.*/
++	if (host->data)
++	  {
++	    host->int_en |= SD_CARD_RW_END;
++	  }
++	else
++	  lowrisc_sd_finish_request(host);
++}
++
++static void lowrisc_sd_data_end_irq(struct lowrisc_sd_host *host)
++{
++	struct mmc_data *data = host->data;
++	unsigned long flags;
++	
++	LOGV (("lowrisc_sd_data_end_irq\n"));
++
++	host->data = NULL;
++
++	if (!data) {
++		dev_warn(&host->pdev->dev, "Spurious data end IRQ\n");
++		return;
++	}
++
++        if (data->flags & MMC_DATA_READ)
++	  {
++            volatile uint64_t *sd_base = 0x1000 + (volatile uint64_t *)(host->ioaddr);
++            int len;
++	    size_t blksize = data->blksz;
++
++	    local_irq_save(flags);
++
++            BUG_ON(!sg_miter_next(&host->sg_miter));
++            BUG_ON(host->sg_miter.length < blksize);
++	  	  
++	    if (!((sizeof(u64)-1) & (size_t)(host->sg_miter.addr))) // optimise case for aligned buffer
++	      {
++		u64 *buf = (u64 *)(host->sg_miter.addr);
++		for (len = blksize; len > 0; len -= sizeof(u64))
++		  {
++		  *buf++ = *sd_base++;
++		  }
++	      }
++	    else
++	      {
++		u8 *buf = host->sg_miter.addr;
++		for (len = blksize; len > 0; len -= sizeof(u64))
++		  {
++		  u64 scratch = *sd_base++;
++		  memcpy(buf, &scratch, sizeof(u64));
++		  buf += sizeof(u64);
++		  }
++	      }
++            host->sg_miter.consumed = blksize;
++	    sg_miter_stop(&host->sg_miter);
++
++	    local_irq_restore(flags);
++	  }
++
++	if (data->error == 0)
++		data->bytes_xfered = data->blocks * data->blksz;
++	else
++		data->bytes_xfered = 0;
++
++	LOGV (("Completed data request xfr=%d\n",
++	      data->bytes_xfered));
++
++        //	iowrite16(0, host->ioaddr + SD_STOPINTERNAL);
++
++	lowrisc_sd_finish_request(host);
++}
++
++static irqreturn_t lowrisc_sd_irq(int irq, void *dev_id)
++{
++	struct lowrisc_sd_host *host = dev_id;
++        volatile uint64_t *sd_base = host->ioaddr;
++	u32 int_reg, int_status;
++	int error = 0, ret = IRQ_HANDLED;
++	unsigned long flags;
++
++	spin_lock_irqsave(&host->lock, flags);
++	int_status = sd_base[irq_stat_resp];
++	int_reg = int_status & host->int_en;
++
++	/* nothing to do: it's not our IRQ */
++	if (!int_reg) {
++		ret = IRQ_NONE;
++		goto irq_end;
++	}
++
++	LOGV (("lowrisc_sd IRQ status:%x enabled:%x\n", int_status, host->int_en));
++
++	if (sd_base[wait_resp] >= sd_base[timeout_resp]) {
++		error = -ETIMEDOUT;
++		LOGV (("lowrisc_sd timeout %lld clocks\n", sd_base[timeout_resp]));
++	} else if (int_reg & 0) {
++		error = -EILSEQ;
++		dev_err(&host->pdev->dev, "BadCRC\n");
++        }
++        
++        LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++
++	if (error) {
++	  LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++		if (host->cmd)
++			host->cmd->error = error;
++
++		if (error == -ETIMEDOUT) {
++		  LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++                  sd_cmd_start(host, 0);
++                  sd_setting(host, 0);
++		} else {
++		  LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++			lowrisc_sd_init(host);
++			__lowrisc_sd_set_ios(host->mmc, &host->mmc->ios);
++			goto irq_end;
++		}
++	}
++
++        LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++
++        /* Card insert/remove. The mmc controlling code is stateless. */
++	if (int_reg & SD_CARD_CARD_REMOVED_0)
++	  {
++	    int mask = (host->int_en & ~SD_CARD_CARD_REMOVED_0) | SD_CARD_CARD_INSERTED_0;
++	    sd_irq_en(host, mask);
++	    printk("Card removed, mask changed to %d\n", mask);
++	    mmc_detect_change(host->mmc, 1);
++	  }
++	
++        LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++	if (int_reg & SD_CARD_CARD_INSERTED_0)
++	  {
++	    int mask = (host->int_en & ~SD_CARD_CARD_INSERTED_0) | SD_CARD_CARD_REMOVED_0 ;
++	    sd_irq_en(host, mask);
++	    printk("Card inserted, mask changed to %d\n", mask);
++	    lowrisc_sd_init(host);
++	    mmc_detect_change(host->mmc, 1);
++	  }
++
++        LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++	/* Command completion */
++	if (int_reg & SD_CARD_RESP_END) {
++	  LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++
++		lowrisc_sd_cmd_irq(host);
++		host->int_en &= ~SD_CARD_RESP_END;
++	}
++
++        LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++	/* Data transfer completion */
++	if (int_reg & SD_CARD_RW_END) {
++	  LOGV (("lowrisc_sd IRQ line %d\n", __LINE__));
++
++		lowrisc_sd_data_end_irq(host);
++		host->int_en &= ~SD_CARD_RW_END;
++	}
++irq_end:
++        sd_irq_en(host, host->int_en);
++	spin_unlock_irqrestore(&host->lock, flags);
++	return ret;
++}
++
++static void lowrisc_sd_start_cmd(struct lowrisc_sd_host *host, struct mmc_command *cmd)
++{
++  int setting = 0;
++  int timeout = 1000000;
++  struct mmc_data *data = host->data;
++  volatile uint64_t *sd_base = host->ioaddr;
++  unsigned long flags;
++  spin_lock_irqsave(&host->lock, flags);
++
++  LOGV (("Command opcode: %d\n", cmd->opcode));
++/*
++  if (cmd->opcode == MMC_STOP_TRANSMISSION) {
++    sd_cmd(host, SD_STOPINT_ISSUE_CMD12);
++
++    cmd->resp[0] = cmd->opcode;
++    cmd->resp[1] = 0;
++    cmd->resp[2] = 0;
++    cmd->resp[3] = 0;
++    
++    lowrisc_sd_finish_request(host);
++    return;
++  }
++*/
++  if (!(cmd->flags & MMC_RSP_PRESENT))
++    setting = 0;
++  else if (cmd->flags & MMC_RSP_136)
++    setting = 3;
++  else if (cmd->flags & MMC_RSP_BUSY)
++    setting = 1;
++  else
++    setting = 1;
++  setting |= host->width_setting;
++  
++  host->cmd = cmd;
++  
++  if (cmd->opcode == MMC_APP_CMD)
++    {
++      /* placeholder */
++    }
++  
++  if (cmd->opcode == MMC_GO_IDLE_STATE)
++    {
++      /* placeholder */
++    }
++
++  LOGV (("testing data flags\n"));
++  if (data) {
++    setting |= 0x4;
++    if (data->flags & MMC_DATA_READ)
++      setting |= 0x10;
++    else
++      {
++      setting |= 0x8;
++      }
++  }
++
++  LOGV (("writing registers\n"));
++  /* Send the command */
++  sd_reset(host, 0,1,0,1);
++  sd_align(host, 0);
++  sd_arg(host, cmd->arg);
++  sd_cmd(host, cmd->opcode);
++  sd_setting(host, setting);
++  sd_cmd_start(host, 0);
++  sd_reset(host, 0,1,1,1);
++  sd_timeout(host, timeout);
++  /* start the transaction */ 
++  sd_cmd_start(host, 1);
++  LOGV (("enabling interrupt\n"));
++  sd_irq_en(host, sd_base[irq_en_resp] | SD_CARD_RESP_END);
++  spin_unlock_irqrestore(&host->lock, flags);
++ LOGV (("leaving lowrisc_sd_start_cmd\n"));
++}
++
++static void lowrisc_sd_start_data(struct lowrisc_sd_host *host, struct mmc_data *data)
++{
++	unsigned int flags = SG_MITER_ATOMIC;
++
++	LOGV (("setup data transfer: blocksize %08x  nr_blocks %d, offset: %08x\n",
++	      data->blksz, data->blocks, data->sg->offset));
++
++	host->data = data;
++
++	if (data->flags & MMC_DATA_READ)
++		flags |= SG_MITER_TO_SG;
++	else
++		flags |= SG_MITER_FROM_SG;
++
++	sg_miter_start(&host->sg_miter, data->sg, data->sg_len, flags);
++
++	/* Set transfer length and blocksize */
++	sd_blkcnt(host, data->blocks);
++	sd_blksize(host, data->blksz);
++
++        if (!(data->flags & MMC_DATA_READ))
++	  {
++            volatile uint64_t *sd_base = 0x1000 + (volatile uint64_t *)(host->ioaddr);
++            struct mmc_data *data = host->data;
++            if (sg_miter_next(&host->sg_miter))
++              {
++                int len;
++                size_t blksize = data->blksz;
++                BUG_ON(host->sg_miter.length < blksize);
++		if (!((sizeof(u64)-1) & (size_t)(host->sg_miter.addr))) // optimise case for aligned buffer
++		  {
++		    u64 *buf = (u64 *)(host->sg_miter.addr);
++		    for (len = blksize; len > 0; len -= sizeof(u64))
++		      {
++			*sd_base++ = *buf++;
++		      }
++		  }
++		else
++		  {
++		    u8 *buf = host->sg_miter.addr;
++		    for (len = blksize; len > 0; len -= sizeof(u64))
++		      {
++			u64 scratch;
++			memcpy(&scratch, buf, sizeof(u64));
++			buf += sizeof(u64);
++			*sd_base++ = scratch;
++		      }
++		  }
++                host->sg_miter.consumed = blksize;
++                sg_miter_stop(&host->sg_miter);
++              }
++          }
++}
++
++/* Process requests from the MMC layer */
++static void lowrisc_sd_request(struct mmc_host *mmc, struct mmc_request *mrq)
++{
++	struct lowrisc_sd_host *host = mmc_priv(mmc);
++        volatile uint64_t *sd_base = host->ioaddr;
++	unsigned long flags;
++
++	/* abort if card not present */
++	if (sd_base[detect_resp]) {
++		mrq->cmd->error = -ENOMEDIUM;
++		mmc_request_done(mmc, mrq);
++		return;
++	}
++
++	spin_lock_irqsave(&host->lock, flags);
++
++	WARN_ON(host->mrq != NULL);
++
++	host->mrq = mrq;
++
++	if (mrq->data)
++		lowrisc_sd_start_data(host, mrq->data);
++
++	lowrisc_sd_set_led(host, 1);
++
++	lowrisc_sd_start_cmd(host, mrq->cmd);
++
++	spin_unlock_irqrestore(&host->lock, flags);
++}
++
++static void lowrisc_sd_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
++{
++	struct lowrisc_sd_host *host = mmc_priv(mmc);
++	unsigned long flags;
++
++	spin_lock_irqsave(&host->lock, flags);
++	__lowrisc_sd_set_ios(mmc, ios);
++	spin_unlock_irqrestore(&host->lock, flags);
++}
++
++static int lowrisc_sd_get_ro(struct mmc_host *mmc)
++{
++	struct lowrisc_sd_host *host = mmc_priv(mmc);
++        volatile uint64_t *sd_base = host->ioaddr;
++	return sd_base[detect_resp];
++}
++
++static int lowrisc_sd_get_cd(struct mmc_host *mmc)
++{
++	struct lowrisc_sd_host *host = mmc_priv(mmc);
++        volatile uint64_t *sd_base = host->ioaddr;
++
++	return !sd_base[detect_resp];
++}
++
++static int lowrisc_sd_card_busy(struct mmc_host *mmc)
++{
++	struct lowrisc_sd_host *host = mmc_priv(mmc);
++        volatile uint64_t *sd_base = host->ioaddr;
++	return sd_base[start_resp];
++}
++
++static struct mmc_host_ops lowrisc_sd_ops = {
++	.request = lowrisc_sd_request,
++	.set_ios = lowrisc_sd_set_ios,
++	.get_ro = lowrisc_sd_get_ro,
++	.get_cd = lowrisc_sd_get_cd,
++	.card_busy = lowrisc_sd_card_busy,
++};
++
++
++static void lowrisc_sd_powerdown(struct lowrisc_sd_host *host)
++{
++  volatile uint64_t *sd_base = host->ioaddr;
++  /* mask all interrupts */
++  sd_base[irq_en_reg] = 0;
++  /* disable card clock */
++}
++
++static int lowrisc_sd_probe(struct platform_device *pdev)
++{
++	int ret;
++	struct lowrisc_sd_host *host;
++	struct mmc_host *mmc;
++        struct resource *iomem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	mmc = mmc_alloc_host(sizeof(struct lowrisc_sd_host), &pdev->dev);
++	if (!mmc) {
++		ret = -ENOMEM;
++		goto release;
++	}
++
++	host = mmc_priv(mmc);
++	host->mmc = mmc;
++
++	host->pdev = pdev;
++
++	if (!request_mem_region(iomem->start, resource_size(iomem),
++		mmc_hostname(host->mmc))) {
++		dev_err(&pdev->dev, "cannot request region\n");
++		ret = -EBUSY;
++		goto release;
++	}
++        
++        led_sd_base = host->ioaddr;
++#ifdef CONFIG_LOWRISC_GPIO
++        gpio_init_module();
++#endif
++	host->ioaddr = ioremap(iomem->start, resource_size(iomem));
++	if (!host->ioaddr) {
++		ret = -ENOMEM;
++		goto release;
++	}
++	printk("lowrisc-digilent-sd: Lowrisc sd platform driver (%llX-%llX) mapped to %lx\n",
++               iomem[0].start,
++               iomem[0].end,
++               (size_t)(host->ioaddr));
++        
++        host->irq = platform_get_irq(pdev, 0);
++        
++	/* Set MMC host parameters */
++	mmc->ops = &lowrisc_sd_ops;
++	mmc->caps = MMC_CAP_4_BIT_DATA;
++	mmc->ocr_avail = MMC_VDD_32_33;
++
++	mmc->f_min = 5000000;
++	mmc->f_max = 5000000;
++	mmc->max_blk_count = 1;
++	
++	spin_lock_init(&host->lock);
++
++	lowrisc_sd_init(host);
++
++	ret = request_irq(host->irq, lowrisc_sd_irq, 0, DRIVER_NAME, host);
++        
++	if (ret)
++          {
++            printk("request_irq failed\n");
++            goto unmap;
++          }
++
++	mmc_add_host(mmc);
++
++	printk("lowrisc-sd driver loaded, IRQ %d\n", host->irq);
++	sd_irq_en(host, SD_CARD_CARD_INSERTED_0 | SD_CARD_CARD_REMOVED_0); /* get an interrupt either way */
++	return 0;
++
++unmap:
++release:
++	mmc_free_host(mmc);
++	return ret;
++}
++
++static int lowrisc_sd_remove(struct platform_device *pdev)
++{
++	struct lowrisc_sd_host *host = platform_get_drvdata(pdev);
++
++	mmc_remove_host(host->mmc);
++	lowrisc_sd_powerdown(host);
++	free_irq(host->irq, host);
++	mmc_free_host(host->mmc);
++        return 0;
++}
++
++static const struct of_device_id lowrisc_sd_of_match[] = {
++	{ .compatible = DRIVER_NAME },
++	{ }
++};
++
++MODULE_DEVICE_TABLE(of, lowrisc_sd_of_match);
++
++static struct platform_driver lowrisc_sd_driver = {
++	.driver = {
++		.name = DRIVER_NAME,
++		.of_match_table = lowrisc_sd_of_match,
++	},
++	.probe = lowrisc_sd_probe,
++	.remove = lowrisc_sd_remove,
++};
++
++module_platform_driver(lowrisc_sd_driver);
++
++MODULE_AUTHOR("Jonathan Kimmitt");
++MODULE_DESCRIPTION("LowRISC Secure Digital Host Controller Interface driver");
++MODULE_LICENSE("GPL");
+\ No newline at end of file
+diff --git a/drivers/mmc/host/lowrisc_sd.h b/drivers/mmc/host/lowrisc_sd.h
+new file mode 100644
+index 000000000000..898c714ba905
+--- /dev/null
++++ b/drivers/mmc/host/lowrisc_sd.h
+@@ -0,0 +1,52 @@
++/*
++ *  LowRISC PCI Secure Digital Host Controller Interface driver
++ *
++ *  Based on toshsd.h
++ *
++ *  Copyright (C) 2014 Ondrej Zary
++ *  Copyright (C) 2007 Richard Betts, All Rights Reserved.
++ *
++ *      Based on asic3_mmc.c Copyright (c) 2005 SDG Systems, LLC
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or (at
++ * your option) any later version.
++ */
++
++enum {align_reg,clk_din_reg,arg_reg,cmd_reg,
++      setting_reg,start_reg,reset_reg,blkcnt_reg,
++      blksiz_reg,timeout_reg,clk_pll_reg,irq_en_reg,
++      unused1,unused2,unused3,led_reg};
++
++enum {resp0,resp1,resp2,resp3,
++      wait_resp,status_resp,packet_resp0,packet_resp1,
++      data_wait_resp,trans_cnt_resp,obsolete1,obsolet2,
++      detect_resp,xfr_addr_resp,irq_stat_resp,pll_resp,
++      align_resp,clk_din_resp,arg_resp,cmd_i_resp,
++      setting_resp,start_resp,reset_resp,blkcnt_resp,
++      blksize_resp,timeout_resp,clk_pll_resp,irq_en_resp,
++      dead1,dead2,dead3,from_dip};
++
++enum {SD_APP_OP_COND=41, data_buffer_offset=0x2000};
++
++enum {SD_CARD_RESP_END=1,SD_CARD_RW_END=2, SD_CARD_CARD_REMOVED_0=4, SD_CARD_CARD_INSERTED_0=8};
++
++enum {red_led = 1 << 21};
++
++struct lowrisc_sd_host {
++  struct platform_device *pdev;
++  struct mmc_host *mmc;
++
++  spinlock_t lock;
++
++  struct mmc_request *mrq;/* Current request */
++  struct mmc_command *cmd;/* Current command */
++  struct mmc_data *data;	/* Current data request */
++
++  struct sg_mapping_iter sg_miter; /* for PIO */
++
++  void __iomem *ioaddr; /* mapped address */
++  int irq;
++  int int_en, width_setting;
++};
+\ No newline at end of file
+diff --git a/drivers/net/ethernet/Kconfig b/drivers/net/ethernet/Kconfig
+index 1917da784191..4dc53e88dc38 100644
+--- a/drivers/net/ethernet/Kconfig
++++ b/drivers/net/ethernet/Kconfig
+@@ -121,6 +121,7 @@ config LANTIQ_XRX200
+ 	  Support for the PMAC of the Gigabit switch (GSWIP) inside the
+ 	  Lantiq / Intel VRX200 VDSL SoC
+ 
++source "drivers/net/ethernet/lowrisc/Kconfig"
+ source "drivers/net/ethernet/adi/Kconfig"
+ source "drivers/net/ethernet/litex/Kconfig"
+ source "drivers/net/ethernet/marvell/Kconfig"
+diff --git a/drivers/net/ethernet/Makefile b/drivers/net/ethernet/Makefile
+index 0d872d4efcd1..35388f39b943 100644
+--- a/drivers/net/ethernet/Makefile
++++ b/drivers/net/ethernet/Makefile
+@@ -55,6 +55,7 @@ obj-$(CONFIG_JME) += jme.o
+ obj-$(CONFIG_KORINA) += korina.o
+ obj-$(CONFIG_LANTIQ_ETOP) += lantiq_etop.o
+ obj-$(CONFIG_LANTIQ_XRX200) += lantiq_xrx200.o
++obj-$(CONFIG_NET_VENDOR_LOWRISC) += lowrisc/
+ obj-$(CONFIG_NET_VENDOR_LITEX) += litex/
+ obj-$(CONFIG_NET_VENDOR_MARVELL) += marvell/
+ obj-$(CONFIG_NET_VENDOR_MEDIATEK) += mediatek/
+diff --git a/drivers/net/ethernet/lowrisc/Kconfig b/drivers/net/ethernet/lowrisc/Kconfig
+new file mode 100644
+index 000000000000..247a6fbc3029
+--- /dev/null
++++ b/drivers/net/ethernet/lowrisc/Kconfig
+@@ -0,0 +1,26 @@
++#
++# Xilink device configuration
++#
++
++config NET_VENDOR_LOWRISC
++	bool "Lowrisc devices"
++	default y
++	depends on RISCV
++	---help---
++	  If you have a network (Ethernet) card belonging to this class, say Y.
++
++	  Note that the answer to this question doesn't directly affect the
++	  kernel: saying N will just cause the configurator to skip all
++	  the questions about Lowrisc devices. If you say Y, you will be asked
++	  for your specific card in the following questions.
++
++if NET_VENDOR_LOWRISC
++
++config LOWRISC_DIGILENT_100MHZ
++	tristate "Lowrisc 100MHz Ethernet Nexys4_DDR support"
++	depends on RISCV
++	select PHYLIB
++	---help---
++	  This driver supports the 100MHz Ethernet for Nexys4_DDR Digilent boards from Lowrisc.
++
++endif # NET_VENDOR_LOWRISC
+\ No newline at end of file
+diff --git a/drivers/net/ethernet/lowrisc/Makefile b/drivers/net/ethernet/lowrisc/Makefile
+new file mode 100644
+index 000000000000..d3a863d217c4
+--- /dev/null
++++ b/drivers/net/ethernet/lowrisc/Makefile
+@@ -0,0 +1,6 @@
++#
++# Makefile for the Lowrisc network device driver.
++#
++
++obj-$(CONFIG_LOWRISC_DIGILENT_100MHZ) += lowrisc_100MHz.o
++CFLAGS_lowrisc_100MHz.o := -DDEBUG
+\ No newline at end of file
+diff --git a/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
+new file mode 100644
+index 000000000000..1ce6778ae59f
+--- /dev/null
++++ b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.c
+@@ -0,0 +1,830 @@
++/*
++ * Lowrisc Ether100MHz Linux driver for the Lowrisc Ethernet 100MHz device.
++ *
++ * This is an experimental driver which is based on the original emac_lite
++ * driver from John Williams <john.williams@xilinx.com>.
++ *
++ * 2007 - 2013 (c) Xilinx, Inc.
++ * PHY control portions copyright (C) 2015 Microchip Technology
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version 2
++ * of the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/mii.h>
++#include <linux/ethtool.h>
++#include <linux/phy.h>
++#include <linux/module.h>
++#include <linux/uaccess.h>
++#include <linux/netdevice.h>
++#include <linux/etherdevice.h>
++#include <linux/skbuff.h>
++#include <linux/io.h>
++#include <linux/slab.h>
++#include <linux/of_address.h>
++#include <linux/of_device.h>
++#include <linux/of_platform.h>
++#include <linux/of_mdio.h>
++#include <linux/of_net.h>
++#include <linux/phy.h>
++#include <linux/interrupt.h>
++#include <linux/timer.h>
++#include <linux/spinlock.h>
++#include <linux/gpio.h>
++#include <linux/slab.h>
++#include <linux/delay.h>
++#include <linux/platform_device.h>
++#include <linux/mdio-bitbang.h>
++#include <linux/mdio-gpio.h>
++#include "lowrisc_100MHz.h"
++
++#define DRIVER_AUTHOR	"WOOJUNG HUH <woojung.huh@microchip.com>"
++#define DRIVER_DESC	"Microchip LAN8720 PHY driver"
++#define DRIVER_NAME     "lowrisc-eth"
++
++/* General Ethernet Definitions */
++#define XEL_ARP_PACKET_SIZE		28	/* Max ARP packet size */
++#define XEL_HEADER_IP_LENGTH_OFFSET	16	/* IP Length Offset */
++
++#define TX_TIMEOUT		(60*HZ)		/* Tx timeout is 60 seconds. */
++
++/**
++ * struct net_local - Our private per device data
++ * @ndev:		instance of the network device
++ * @reset_lock:		lock used for synchronization
++ * @phy_dev:		pointer to the PHY device
++ * @phy_node:		pointer to the PHY device node
++ * @mii_bus:		pointer to the MII bus
++ * @last_link:		last link status
++ */
++struct net_local {
++  struct mdiobb_ctrl ctrl; /* must be first for bitbang driver to work */
++  void __iomem *ioaddr;
++  struct net_device *ndev;
++  u32 msg_enable;
++  
++  struct phy_device *phy_dev;
++  struct mii_bus *mii_bus;
++  int last_duplex;
++  int last_carrier;
++  
++  /* Spinlock */
++  struct mutex lock;
++  uint32_t last_mdio_gpio;
++  int irq, num_tests, phy_addr;
++
++  struct napi_struct napi;
++};
++
++static void inline eth_write(struct net_local *priv, size_t addr, int data)
++{
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  eth_base[addr >> 3] = data;
++}
++
++static void inline eth_copyout(struct net_local *priv, uint8_t *data, int len)
++{
++  int i, rnd = ((len-1)|7)+1;
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  if (!(((size_t)data) & 7))
++    {
++      uint64_t *ptr = (uint64_t *)data;
++      for (i = 0; i < rnd/8; i++)
++        eth_base[TXBUFF_OFFSET/8 + i] = ptr[i];
++    }
++  else // We can't unfortunately rely on the skb being word aligned
++    {
++      uint64_t notptr;
++      for (i = 0; i < rnd/8; i++)
++        {
++          memcpy(&notptr, data+(i<<3), sizeof(uint64_t));
++          eth_base[TXBUFF_OFFSET/8 + i] = notptr;
++        }
++    }
++}
++
++static volatile inline int eth_read(struct net_local *priv, size_t addr)
++{
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  return eth_base[addr >> 3];
++}
++
++static inline void eth_copyin(struct net_local *priv, uint8_t *data, int len, int start)
++{
++  int i, rnd = ((len-1)|7)+1;
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  if (!(((size_t)data) & 7))
++    {
++      uint64_t *ptr = (uint64_t *)data;
++      for (i = 0; i < rnd/8; i++)
++        ptr[i] = eth_base[start + i];
++    }
++  else // We can't unfortunately rely on the skb being word aligned
++    {
++      for (i = 0; i < rnd/8; i++)
++        {
++          uint64_t notptr = eth_base[start + i];
++          memcpy(data+(i<<3), &notptr, sizeof(uint64_t));
++        }
++    }
++}
++
++static void inline eth_enable_irq(struct net_local *priv)
++{
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  eth_base[MACHI_OFFSET >> 3] |= MACHI_IRQ_EN;
++  mmiowb();
++}
++
++static void inline eth_disable_irq(struct net_local *priv)
++{
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  eth_base[MACHI_OFFSET >> 3] &= ~MACHI_IRQ_EN;
++  mmiowb();
++}
++
++/**
++ * lowrisc_update_address - Update the MAC address in the device
++ * @drvdata:	Pointer to the Ether100MHz device private data
++ * @address_ptr:Pointer to the MAC address (MAC address is a 48-bit value)
++ *
++ * Tx must be idle and Rx should be idle for deterministic results.
++ * It is recommended that this function should be called after the
++ * initialization and before transmission of any packets from the device.
++ * The MAC address can be programmed using any of the two transmit
++ * buffers (if configured).
++ */
++
++static void lowrisc_update_address(struct net_local *priv, u8 *address_ptr)
++{
++  uint32_t macaddr_lo, macaddr_hi;
++  memcpy (&macaddr_lo, address_ptr+2, sizeof(uint32_t));
++  memcpy (&macaddr_hi, address_ptr+0, sizeof(uint16_t));
++  mutex_lock(&priv->lock);
++  eth_write(priv, MACLO_OFFSET, htonl(macaddr_lo));
++  eth_write(priv, MACHI_OFFSET, htons(macaddr_hi));
++  eth_write(priv, RFCS_OFFSET, 8); /* use 8 buffers */
++  mutex_unlock(&priv->lock);
++}
++
++/**
++ * lowrisc_read_mac_address - Read the MAC address in the device
++ * @drvdata:	Pointer to the Ether100MHz device private data
++ * @address_ptr:Pointer to the 6-byte buffer to receive the MAC address (MAC address is a 48-bit value)
++ *
++ * In lowrisc the starting value is programmed by the boot loader according to DIP switch [15:12]
++ */
++
++static void lowrisc_read_mac_address(struct net_local *priv, u8 *address_ptr)
++{
++  uint32_t macaddr_hi, macaddr_lo;
++  mutex_lock(&priv->lock);
++  macaddr_hi = ntohs(eth_read(priv, MACHI_OFFSET)&MACHI_MACADDR_MASK);
++  macaddr_lo = ntohl(eth_read(priv, MACLO_OFFSET));
++  mutex_unlock(&priv->lock);
++  memcpy (address_ptr+2, &macaddr_lo, sizeof(uint32_t));
++  memcpy (address_ptr+0, &macaddr_hi, sizeof(uint16_t));
++}
++
++/**
++ * lowrisc_set_mac_address - Set the MAC address for this device
++ * @dev:	Pointer to the network device instance
++ * @addr:	Void pointer to the sockaddr structure
++ *
++ * This function copies the HW address from the sockaddr strucutre to the
++ * net_device structure and updates the address in HW.
++ *
++ * Return:	Error if the net device is busy or 0 if the addr is set
++ *		successfully
++ */
++static int lowrisc_set_mac_address(struct net_device *ndev, void *address)
++{
++	struct net_local *priv = netdev_priv(ndev);
++	struct sockaddr *addr = address;
++	memcpy(ndev->dev_addr, addr->sa_data, ndev->addr_len);
++	lowrisc_update_address(priv, ndev->dev_addr);
++	return 0;
++}
++
++/**
++ * lowrisc_tx_timeout - Callback for Tx Timeout
++ * @dev:	Pointer to the network device
++ *
++ * This function is called when Tx time out occurs for Ether100MHz device.
++ */
++static void lowrisc_tx_timeout(struct net_device *ndev)
++{
++	struct net_local *priv = netdev_priv(ndev);
++
++	dev_err(&priv->ndev->dev, "Exceeded transmit timeout of %lu ms\n",
++		TX_TIMEOUT * 1000UL / HZ);
++
++	ndev->stats.tx_errors++;
++
++	/* Reset the device */
++	mutex_lock(&priv->lock);
++
++	/* Shouldn't really be necessary, but shouldn't hurt */
++	netif_stop_queue(ndev);
++
++	/* To exclude tx timeout */
++        netif_trans_update(ndev); /* prevent tx timeout */
++
++	/* We're all ready to go. Start the queue */
++	netif_wake_queue(ndev);
++	mutex_unlock(&priv->lock);
++}
++
++/**
++ * lowrisc_close - Close the network device
++ * @dev:	Pointer to the network device
++ *
++ * This function stops the Tx queue, disables interrupts and frees the IRQ for
++ * the Ether100MHz device.
++ * It also disconnects the phy device associated with the Ether100MHz device.
++ */
++static int lowrisc_close(struct net_device *ndev)
++{
++	struct net_local *priv = netdev_priv(ndev);
++
++	netif_stop_queue(ndev);
++        napi_disable(&priv->napi);
++        mutex_lock(&priv->lock);
++	eth_disable_irq(priv);
++        mutex_unlock(&priv->lock);
++	if (priv->irq)
++		free_irq(priv->irq, priv);
++	priv->irq = 0;
++        printk("Close device, free interrupt\n");
++        
++	if (priv->phy_dev)
++		phy_disconnect(priv->phy_dev);
++	priv->phy_dev = NULL;
++
++	return 0;
++}
++
++/**
++ * lowrisc_remove_ndev - Free the network device
++ * @ndev:	Pointer to the network device to be freed
++ *
++ * This function un maps the IO region of the Ether100MHz device and frees the net
++ * device.
++ */
++static void lowrisc_remove_ndev(struct net_device *ndev)
++{
++	if (ndev) {
++		free_netdev(ndev);
++	}
++}
++
++static void lowrisc_phy_adjust_link(struct net_device *ndev)
++{
++	struct net_local *priv = netdev_priv(ndev);
++	struct phy_device *phy_dev = priv->phy_dev;
++	int carrier;
++
++	if (phy_dev->duplex != priv->last_duplex) {
++		if (phy_dev->duplex) {
++			netif_dbg(priv, link, priv->ndev, "full duplex mode\n");
++		} else {
++			netif_dbg(priv, link, priv->ndev, "half duplex mode\n");
++		}
++
++		priv->last_duplex = phy_dev->duplex;
++	}
++
++	carrier = netif_carrier_ok(ndev);
++	if (carrier != priv->last_carrier) {
++		if (carrier)
++			netif_dbg(priv, link, priv->ndev, "carrier OK\n");
++		else
++			netif_dbg(priv, link, priv->ndev, "no carrier\n");
++		priv->last_carrier = carrier;
++	}
++}
++
++static int lowrisc_mii_probe(struct net_device *ndev)
++{
++	struct net_local *priv = netdev_priv(ndev);
++	struct phy_device *phydev = NULL;
++	const char *phyname;
++
++	BUG_ON(priv->phy_dev);
++
++	/* find the first (lowest address) PHY
++	 * on the current MAC's MII bus
++	 */
++	for (priv->phy_addr = 1; priv->phy_addr < PHY_MAX_ADDR; priv->phy_addr++)
++          {
++            phydev = mdiobus_get_phy(priv->mii_bus, priv->phy_addr);
++            if (phydev) {
++              /* break out with first one found */
++              break;
++            }
++          }
++	if (!phydev) {
++          netdev_err(ndev, "no PHY found in range address 0..%d\n", PHY_MAX_ADDR-1);
++		return -ENODEV;
++	}
++
++	phyname = phydev_name(phydev);
++	printk("Probing %s (address %d)\n", phyname, priv->phy_addr);
++	
++	phydev = phy_connect(ndev, phyname,
++			     lowrisc_phy_adjust_link, PHY_INTERFACE_MODE_MII);
++
++	if (IS_ERR(phydev)) {
++		netdev_err(ndev, "Could not attach to PHY\n");
++		return PTR_ERR(phydev);
++	}
++
++	/* mask with MAC supported features */
++	linkmode_copy(phydev->advertising, phydev->supported);
++
++	phy_attached_info(phydev);
++
++	priv->phy_dev = phydev;
++	priv->last_duplex = -1;
++	priv->last_carrier = -1;
++
++	return 0;
++}
++
++static void mdio_dir(struct mdiobb_ctrl *ctrl, int dir)
++{
++  struct net_local *priv = (struct net_local *)ctrl; /* struct mdiobb_ctrl must be first in net_local for bitbang driver to work */
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  if (dir)
++    priv->last_mdio_gpio |= MDIOCTRL_MDIOOEN_MASK; // output driving
++  else
++    priv->last_mdio_gpio &= ~MDIOCTRL_MDIOOEN_MASK; // input receiving
++  eth_base[MDIOCTRL_OFFSET >> 3] = priv->last_mdio_gpio;
++  mmiowb();
++}
++
++static int mdio_get(struct mdiobb_ctrl *ctrl)
++{
++  int retval;
++  struct net_local *priv = (struct net_local *)ctrl; /* struct mdiobb_ctrl must be first in net_local for bitbang driver to work */
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  retval = eth_base[MDIOCTRL_OFFSET >> 3];
++  return retval & MDIOCTRL_MDIOIN_MASK ? 1:0;
++}
++
++static void mdio_set(struct mdiobb_ctrl *ctrl, int what)
++{
++  struct net_local *priv = (struct net_local *)ctrl; /* struct mdiobb_ctrl must be first in net_local for bitbang driver to work */
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  if (what)
++    priv->last_mdio_gpio |= MDIOCTRL_MDIOOUT_MASK;
++  else
++    priv->last_mdio_gpio &= ~MDIOCTRL_MDIOOUT_MASK;
++  eth_base[MDIOCTRL_OFFSET >> 3] = priv->last_mdio_gpio;
++  mmiowb();
++}
++
++static void mdc_set(struct mdiobb_ctrl *ctrl, int what)
++{
++  struct net_local *priv = (struct net_local *)ctrl; /* struct mdiobb_ctrl must be first in net_local for bitbang driver to work */
++  volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++  if (what)
++    priv->last_mdio_gpio |= MDIOCTRL_MDIOCLK_MASK;
++  else
++    priv->last_mdio_gpio &= ~MDIOCTRL_MDIOCLK_MASK;
++  eth_base[MDIOCTRL_OFFSET >> 3] = priv->last_mdio_gpio;
++  mmiowb();
++}
++
++static struct mdiobb_ops mdio_gpio_ops = {
++        .owner = THIS_MODULE,
++        .set_mdc = mdc_set,
++        .set_mdio_dir = mdio_dir,
++        .set_mdio_data = mdio_set,
++        .get_mdio_data = mdio_get,
++};
++
++static int lowrisc_mii_init(struct net_device *ndev)
++{
++        struct mii_bus *new_bus;
++	struct net_local *priv = netdev_priv(ndev);
++	int err = -ENXIO;
++	
++	priv->ctrl.ops = &mdio_gpio_ops;
++        new_bus = alloc_mdio_bitbang(&(priv->ctrl));
++
++	if (!new_bus) {
++		err = -ENOMEM;
++		goto err_out_1;
++	}
++	snprintf(new_bus->id, MII_BUS_ID_SIZE, "lowrisc-0");
++        new_bus->name = "GPIO Bitbanged LowRISC",
++
++        new_bus->phy_mask = ~(1 << 1);
++        new_bus->phy_ignore_ta_mask = 0;
++
++	mutex_init(&(new_bus->mdio_lock));
++	
++	priv->mii_bus = new_bus;
++	priv->mii_bus->priv = priv;
++
++	/* Mask all PHYs except ID 1 (internal) */
++	priv->mii_bus->phy_mask = ~(1 << 1);
++
++	if (mdiobus_register(priv->mii_bus)) {
++		netif_warn(priv, probe, priv->ndev, "Error registering mii bus\n");
++		goto err_out_free_bus_2;
++	}
++
++	if (lowrisc_mii_probe(ndev) < 0) {
++		netif_warn(priv, probe, priv->ndev, "Error probing mii bus\n");
++		goto err_out_unregister_bus_3;
++	}
++
++	return 0;
++
++err_out_unregister_bus_3:
++	mdiobus_unregister(priv->mii_bus);
++err_out_free_bus_2:
++	mdiobus_free(priv->mii_bus);
++err_out_1:
++	return err;
++}
++/**********************/
++/* Interrupt Handlers */
++/**********************/
++
++/**
++ * lowrisc_ether_isr - Interrupt handler for frames received
++ * @priv:	Pointer to the struct net_local
++ *
++ * This function allocates memory for a socket buffer, fills it with data
++ * received and hands it over to the TCP/IP stack.
++ */
++
++static int lowrisc_ether_poll(struct napi_struct *napiptr, int budget)
++{
++  int rsr, buf, rx_count = 0;
++  struct net_local *priv = container_of(napiptr, struct net_local, napi);
++  struct net_device *ndev = priv->ndev;
++  rsr = eth_read(priv, RSR_OFFSET);
++  buf = rsr & RSR_RECV_FIRST_MASK;
++  /* Check if there is Rx Data available */
++  while ((rsr & RSR_RECV_DONE_MASK) && (rx_count < budget))
++    {
++      int len = eth_read(priv, RPLR_OFFSET+((buf&7)<<3)) - 4; /* discard FCS bytes ?? */
++      if ((len >= 60) && (len <= ETH_FRAME_LEN + ETH_FCS_LEN))
++	{
++	  int rnd = ((len-1)|7)+1; /* round to a multiple of 8 */
++	  struct sk_buff *skb = __napi_alloc_skb(&priv->napi, rnd, GFP_ATOMIC|__GFP_NOWARN); // Don't warn, just drop surplus packets
++	  if (unlikely(!skb))
++	    {
++	      /* Couldn't get memory, we carry on regardless and drop if necessary */
++	      ndev->stats.rx_dropped++;
++	    }
++	  else
++	    {
++	      int start = RXBUFF_OFFSET/8 + ((buf&7)<<8);
++              skb_put(skb, len);	/* Tell the skb how much data we got */
++	      
++              eth_copyin(priv, skb->data, len, start);
++              skb->protocol = eth_type_trans(skb, ndev);
++              netif_receive_skb(skb);
++              ndev->stats.rx_packets++;
++              ndev->stats.rx_bytes += len;
++              ++rx_count;
++            }
++        }
++      else
++	  ndev->stats.rx_errors++;
++      /* acknowledge, even if an error occurs, to reset irq */
++      eth_write(priv, RSR_OFFSET, ++buf);
++      rsr = eth_read(priv, RSR_OFFSET);
++    }
++
++  if (rsr & RSR_RECV_DONE_MASK)
++    {
++      return 1;
++    }
++  else
++    {
++      napi_complete_done(&priv->napi, rx_count);
++      eth_enable_irq(priv);
++      return 0;
++    }
++}
++
++irqreturn_t lowrisc_ether_isr(int irq, void *priv_id)
++{
++  int rsr = 0;
++  struct net_local *priv = priv_id;
++  struct net_device *ndev = priv->ndev;
++  if (napi_schedule_prep(&priv->napi))
++    {
++      eth_disable_irq(priv);
++      __napi_schedule(&priv->napi);
++    }
++  else /* we are in denial of service mode */
++    do
++      {
++        int buf = rsr & RSR_RECV_FIRST_MASK;
++        ndev->stats.rx_dropped++;            
++        eth_write(priv, RSR_OFFSET, ++buf);
++        rsr = eth_read(priv, RSR_OFFSET);
++      }
++    while (rsr & RSR_RECV_DONE_MASK);
++  return IRQ_HANDLED;
++}
++
++static int lowrisc_get_regs_len(struct net_device __always_unused *netdev)
++{
++#define LOWRISC_REGS_LEN 64	/* overestimate */
++  return LOWRISC_REGS_LEN * sizeof(u32);
++}
++
++static void lowrisc_get_regs(struct net_device *ndev,
++			   struct ethtool_regs *regs, void *p)
++{
++  struct net_local *priv = netdev_priv(ndev);
++  struct phy_device *phy = priv->phy_dev;
++
++  u32 *regs_buff = p;
++  int i;
++
++  memset(p, 0, LOWRISC_REGS_LEN * sizeof(u32));
++
++  regs->version = 0;
++  mutex_lock(&priv->lock);
++  for (i = 0; i < LOWRISC_REGS_LEN; i++)
++    {
++      if (i >= 32)
++	regs_buff[i] = eth_read(priv, MACLO_OFFSET+((i-32)<<3));
++      else
++	{
++	regs_buff[i] = phy_read(phy, i);
++	}
++    }
++  mutex_unlock(&priv->lock);
++}
++
++static const struct ethtool_ops lowrisc_ethtool_ops = {
++	.get_regs_len		= lowrisc_get_regs_len,
++	.get_regs		= lowrisc_get_regs,
++        .get_link_ksettings     = phy_ethtool_get_link_ksettings,
++        .set_link_ksettings     = phy_ethtool_set_link_ksettings        
++};
++
++/**
++ * lowrisc_open - Open the network device
++ * @dev:	Pointer to the network device
++ *
++ * This function sets the MAC address, requests an IRQ and enables interrupts
++ * for the Ether100MHz device and starts the Tx queue.
++ * It also connects to the phy device, if MDIO is included in Ether100MHz device.
++ */
++
++static int lowrisc_open(struct net_device *ndev)
++{
++  int retval = 0;
++  struct net_local *priv = netdev_priv(ndev);
++  ndev->ethtool_ops = &lowrisc_ethtool_ops;
++
++  /* Set the MAC address each time opened */
++  lowrisc_update_address(priv, ndev->dev_addr);
++  
++  if (priv->phy_dev) {
++    linkmode_copy(priv->phy_dev->advertising, priv->phy_dev->supported);
++    phy_start(priv->phy_dev);
++  }
++  
++  /* Grab the IRQ */
++  printk("Open device, request interrupt %d\n", priv->irq);
++  retval = request_irq(priv->irq, lowrisc_ether_isr, 0, ndev->name, priv);
++  if (retval) {
++    dev_err(&priv->ndev->dev, "Could not allocate interrupt %d\n", priv->irq);
++    if (priv->phy_dev)
++      phy_disconnect(priv->phy_dev);
++    priv->phy_dev = NULL;
++    return retval;
++  }
++  
++  lowrisc_update_address(priv, ndev->dev_addr);
++
++  /* We're ready to go */
++  napi_enable(&priv->napi);
++  netif_start_queue(ndev);
++
++  /* enable the irq */
++  eth_enable_irq(priv);
++  return 0;
++}
++
++/**
++ * lowrisc_send - Transmit a frame
++ * @orig_skb:	Pointer to the socket buffer to be transmitted
++ * @dev:	Pointer to the network device
++ *
++ * This function checks if the Tx buffer of the Ether100MHz device is free to send
++ * data. If so, it fills the Tx buffer with data from socket buffer data,
++ * updates the stats and frees the socket buffer.
++ * Return:	0, always.
++ */
++static netdev_tx_t lowrisc_send(struct sk_buff *new_skb, struct net_device *ndev)
++{
++	struct net_local *priv = netdev_priv(ndev);
++	unsigned int len = new_skb->len;
++        int rslt;
++	if (mutex_is_locked(&priv->lock))
++          return NETDEV_TX_BUSY;
++        rslt = eth_read(priv, TPLR_OFFSET);
++        if (rslt & TPLR_BUSY_MASK)
++          return NETDEV_TX_BUSY;
++        eth_copyout(priv, new_skb->data, len);
++        eth_write(priv, TPLR_OFFSET, len);
++
++	skb_tx_timestamp(new_skb);
++
++	ndev->stats.tx_bytes += len;
++	ndev->stats.tx_packets++;
++	dev_consume_skb_any(new_skb);
++
++	return NETDEV_TX_OK;
++}
++
++static int lowrisc_mii_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
++{
++        struct net_local *priv = netdev_priv(netdev);
++	struct phy_device *phy = priv->phy_dev;
++        struct mii_ioctl_data *data = if_mii(ifr);
++
++        switch (cmd) {
++        case SIOCGMIIPHY:
++                data->phy_id = 1;
++                break;
++        case SIOCGMIIREG:
++                data->val_out = phy_read(phy, data->reg_num);
++                break;
++        case SIOCSMIIREG:
++                phy_write(phy, data->reg_num, data->val_in);
++                break;
++        default:
++                return -EOPNOTSUPP;
++        }
++        return 0;
++	}
++
++static struct net_device_stats *lowrisc_get_stats(struct net_device *ndev)
++{
++        return &ndev->stats;
++}
++
++static void lowrisc_set_rx_mode(struct net_device *ndev)
++{
++	struct net_local *priv = netdev_priv(ndev);
++        volatile uint64_t *eth_base = (volatile uint64_t *)(priv->ioaddr);
++
++        if (ndev->flags & IFF_PROMISC)
++          {
++            /* Set promiscuous. */
++            eth_base[MACHI_OFFSET >> 3] |= MACHI_ALLPKTS_MASK;
++          }
++        else
++          {
++            eth_base[MACHI_OFFSET >> 3] &= ~MACHI_ALLPKTS_MASK;            
++          }
++}
++static struct net_device_ops lowrisc_netdev_ops = {
++	.ndo_open		= lowrisc_open,
++	.ndo_stop		= lowrisc_close,
++	.ndo_start_xmit		= lowrisc_send,
++        .ndo_get_stats          = lowrisc_get_stats,
++        .ndo_set_rx_mode        = lowrisc_set_rx_mode,
++	.ndo_set_mac_address	= lowrisc_set_mac_address,
++	.ndo_tx_timeout		= lowrisc_tx_timeout,
++	.ndo_do_ioctl           = lowrisc_mii_ioctl,
++};
++
++/**
++ * lowrisc_of_probe - Probe method for the Ether100MHz device.
++ * @ofdev:	Pointer to OF device structure
++ * @match:	Pointer to the structure used for matching a device
++ *
++ * This function probes for the Ether100MHz device in the device tree.
++ * It initializes the driver data structure and the hardware, sets the MAC
++ * address and registers the network device.
++ * It also registers a mii_bus for the Ether100MHz device, if MDIO is included
++ * in the device.
++ *
++ * Return:	0, if the driver is bound to the Ether100MHz device, or
++ *		a negative error if there is failure.
++ */
++static int lowrisc_100MHz_probe(struct platform_device *ofdev)
++{
++	struct net_device *ndev = NULL;
++	struct net_local *priv = NULL;
++	struct device *dev = &ofdev->dev;
++        struct resource *lowrisc_ethernet;
++	unsigned char mac_address[7];
++	int rc = 0;
++
++        lowrisc_ethernet = platform_get_resource(ofdev, IORESOURCE_MEM, 0);
++
++	/* Create an ethernet device instance */
++	ndev = alloc_etherdev(sizeof(struct net_local));
++	if (!ndev)
++		return -ENOMEM;
++
++	dev_set_drvdata(dev, ndev);
++	SET_NETDEV_DEV(ndev, &ofdev->dev);
++        platform_set_drvdata(ofdev, ndev);
++        
++	priv = netdev_priv(ndev);
++	priv->ndev = ndev;
++        priv->ioaddr = devm_ioremap_resource(&ofdev->dev, lowrisc_ethernet);
++	mutex_init(&priv->lock);
++
++        priv->num_tests = 1;
++        
++	ndev->netdev_ops = &lowrisc_netdev_ops;
++	ndev->flags &= ~IFF_MULTICAST;
++	ndev->watchdog_timeo = TX_TIMEOUT;
++        netif_napi_add(ndev, &priv->napi, lowrisc_ether_poll, 64);
++
++	printk("lowrisc-digilent-ethernet: Lowrisc ethernet platform (%llX-%llX) mapped to %lx\n",
++               lowrisc_ethernet[0].start,
++               lowrisc_ethernet[0].end,
++               (size_t)(priv->ioaddr));
++
++        priv->irq = platform_get_irq(ofdev, 0);
++        
++        /* get the MAC address set by the boot loader */
++        lowrisc_read_mac_address(priv, mac_address);
++	memcpy(ndev->dev_addr, mac_address, ETH_ALEN);
++
++	/* Set the MAC address in the Ether100MHz device */
++	lowrisc_update_address(priv, ndev->dev_addr);
++
++	lowrisc_mii_init(ndev);
++
++	/* Finally, register the device */
++	rc = register_netdev(ndev);
++	if (rc) {
++          dev_err(dev,
++                  "Cannot register network device, aborting\n");
++          goto error;
++	}
++
++	dev_info(dev, "Lowrisc Ether100MHz registered\n");
++	
++	return 0;
++
++error:
++	lowrisc_remove_ndev(ndev);
++	return rc;
++}
++
++/* Match table for OF platform binding */
++static const struct of_device_id lowrisc_100MHz_of_match[] = {
++	{ .compatible = DRIVER_NAME },
++	{ /* end of list */ },
++};
++MODULE_DEVICE_TABLE(of, lowrisc_100MHz_of_match);
++
++void lowrisc_100MHz_free(struct platform_device *of_dev)
++{
++        struct resource *iomem = platform_get_resource(of_dev, IORESOURCE_MEM, 0);
++        release_mem_region(iomem->start, resource_size(iomem));
++}
++
++int lowrisc_100MHz_unregister(struct platform_device *of_dev)
++{
++        lowrisc_100MHz_free(of_dev);
++        return 0;
++}
++
++static struct platform_driver lowrisc_100MHz_driver = {
++	.driver = {
++		.name = DRIVER_NAME,
++		.of_match_table = lowrisc_100MHz_of_match,
++	},
++	.probe = lowrisc_100MHz_probe,
++	.remove = lowrisc_100MHz_unregister,
++};
++
++module_platform_driver(lowrisc_100MHz_driver);
++
++MODULE_AUTHOR("Jonathan Kimmitt");
++MODULE_DESCRIPTION("Lowrisc Ethernet 100MHz driver");
++MODULE_LICENSE("GPL");
+\ No newline at end of file
+diff --git a/drivers/net/ethernet/lowrisc/lowrisc_100MHz.h b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.h
+new file mode 100644
+index 000000000000..abfd0b5762f7
+--- /dev/null
++++ b/drivers/net/ethernet/lowrisc/lowrisc_100MHz.h
+@@ -0,0 +1,55 @@
++// See LICENSE for license details.
++
++#ifndef ETH_HEADER_H
++#define ETH_HEADER_H
++
++/* Register offsets for the LowRISC Ethernet Core */
++
++/* Register offsets (in bytes) for the LowRISC Core */
++#define TXBUFF_OFFSET       0x1000          /* Transmit Buffer */
++
++#define MACLO_OFFSET        0x0800          /* MAC address low 32-bits */
++#define MACHI_OFFSET        0x0808          /* MAC address high 16-bits and MAC ctrl */
++#define TPLR_OFFSET         0x0810          /* Tx packet length */
++#define TFCS_OFFSET         0x0818          /* Tx frame check sequence register */
++#define MDIOCTRL_OFFSET     0x0820          /* MDIO Control Register */
++#define RFCS_OFFSET         0x0828          /* Rx frame check sequence register(read) and last register(write) */
++#define RSR_OFFSET          0x0830          /* Rx status and reset register */
++#define RBAD_OFFSET         0x0838          /* Rx bad frame and bad fcs register arrays */
++#define RPLR_OFFSET         0x0840          /* Rx packet length register array */
++
++#define RXBUFF_OFFSET       0x4000          /* Receive Buffer */
++
++/* MAC Ctrl Register (MACHI) Bit Masks */
++#define MACHI_MACADDR_MASK    0x0000FFFF     /* MAC high 16-bits mask */
++#define MACHI_COOKED_MASK     0x00010000     /* obsolete flag */
++#define MACHI_LOOPBACK_MASK   0x00020000     /* Rx loopback packets */
++#define MACHI_ALLPKTS_MASK    0x00400000     /* Rx all packets (promiscuous mode) */
++#define MACHI_IRQ_EN          0x00800000     /* Rx packet interrupt enable */
++
++/* MDIO Control Register Bit Masks */
++#define MDIOCTRL_MDIOCLK_MASK 0x00000001    /* MDIO Clock Mask */
++#define MDIOCTRL_MDIOOUT_MASK 0x00000002    /* MDIO Output Mask */
++#define MDIOCTRL_MDIOOEN_MASK 0x00000004    /* MDIO Output Enable Mask, 3-state enable, high=input, low=output */
++#define MDIOCTRL_MDIORST_MASK 0x00000008    /* MDIO Input Mask */
++#define MDIOCTRL_MDIOIN_MASK  0x00000008    /* MDIO Input Mask */
++
++/* Transmit Status Register (TPLR) Bit Masks */
++#define TPLR_FRAME_ADDR_MASK  0x0FFF0000     /* Tx frame address */
++#define TPLR_PACKET_LEN_MASK  0x00000FFF     /* Tx packet length */
++#define TPLR_BUSY_MASK        0x80000000     /* Tx busy mask */
++
++/* Receive Status Register (RSR) */
++#define RSR_RECV_FIRST_MASK   0x0000000F      /* first available buffer (static) */
++#define RSR_RECV_NEXT_MASK    0x000000F0      /* current rx buffer (volatile) */
++#define RSR_RECV_LAST_MASK    0x00000F00      /* last available rx buffer (static) */
++#define RSR_RECV_DONE_MASK    0x00001000      /* Rx complete */
++#define RSR_RECV_IRQ_MASK     0x00002000      /* Rx irq bit */
++
++/* General Ethernet Definitions */
++#define HEADER_OFFSET               12      /* Offset to length field */
++#define HEADER_SHIFT                16      /* Shift value for length */
++#define ARP_PACKET_SIZE             28      /* Max ARP packet size */
++#define HEADER_IP_LENGTH_OFFSET     16      /* IP Length Offset */
++
++#endif
+\ No newline at end of file
+-- 
+2.34.1
+

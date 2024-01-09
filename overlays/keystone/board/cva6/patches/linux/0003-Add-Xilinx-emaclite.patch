@@ -1,0 +1,33 @@
+From 7ddbbfe0c7969880e0ec9e9a846e1e0e1a48a27b Mon Sep 17 00:00:00 2001
+From: sahmad <syarif.ahmad@thalesgroup.com>
+Date: Thu, 26 Oct 2023 18:09:03 +0800
+Subject: [PATCH 3/5] Add-Xilinx-emaclite
+
+---
+ drivers/net/ethernet/xilinx/Kconfig | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/ethernet/xilinx/Kconfig b/drivers/net/ethernet/xilinx/Kconfig
+index 0014729b8865..04ad75640a6a 100644
+--- a/drivers/net/ethernet/xilinx/Kconfig
++++ b/drivers/net/ethernet/xilinx/Kconfig
+@@ -6,6 +6,7 @@
+ config NET_VENDOR_XILINX
+ 	bool "Xilinx devices"
+ 	default y
++	depends on PPC || PPC32 || MICROBLAZE || ARCH_ZYNQ || MIPS || RISCV
+ 	help
+ 	  If you have a network (Ethernet) card belonging to this class, say Y.
+ 
+@@ -18,7 +19,7 @@ if NET_VENDOR_XILINX
+ 
+ config XILINX_EMACLITE
+ 	tristate "Xilinx 10/100 Ethernet Lite support"
+-	depends on HAS_IOMEM
++	depends on HAS_IOMEM || RISCV
+ 	select PHYLIB
+ 	help
+ 	  This driver supports the 10/100 Ethernet Lite from Xilinx.
+-- 
+2.34.1
+

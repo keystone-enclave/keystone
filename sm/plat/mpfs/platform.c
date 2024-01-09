@@ -42,7 +42,6 @@
 #include <sbi_utils/fdt/fdt_fixup.h>
 #include <sbi_utils/irqchip/plic.h>
 #include <sbi_utils/serial/uart8250.h>
-#include <sbi_utils/sys/clint.h>
 
 #include "uart_helper.h"
 #include "drivers/mss_uart/mss_uart.h"
