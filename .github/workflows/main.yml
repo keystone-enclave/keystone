@@ -14,11 +14,11 @@ jobs:
     # platform that we support here
     strategy:
       matrix:
-        platform: [generic, unmatched]
+        platform: [generic, hifive_unmatched, cva6]
         bits: [32, 64]
         exclude:
           # unmatched is not 32 bit
-          - platform: unmatched
+          - platform: hifive_unmatched
             bits: 32
 
     steps:
