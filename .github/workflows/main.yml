@@ -195,33 +195,7 @@ jobs:
         run: |
           sudo apt-get -y update && sudo apt-get -y install ccache
 
-      # First, fetch the caches themselves. We need both the base cache that
-      # was used as well as the overlay caches. Note that the base caches may
-      # fail, which is okay.
-      - name: Restore buildroot packages
-        uses: actions/cache/restore@v3
-        with:
-          path: dl.tar
-          key: ${{ needs.build.outputs.buildroot-dl-matched-key }}
-
-      - name: Restore ccache
-        uses: actions/cache/restore@v3
-        with:
-          path: ccache.tar.xz
-          key: ${{ needs.build.outputs.ccache-matched-key }}
-
-      - name: Prepare output directories
-        run: |
-          rm -rf buildroot/dl buildroot-ccache
-          mkdir -p buildroot/dl/ buildroot-ccache/
-          if [[ -f dl.tar ]]; then
-            tar -xf dl.tar -C buildroot
-          fi
-
-          if [[ -f ccache.tar.xz ]]; then
-            tar -xf ccache.tar.xz
-          fi
-
+      # Fetch new cache changes from this workflow run, if any
       - name: Fetch updated buildroot packages
         uses: actions/download-artifact@v4
         with:
@@ -232,7 +206,6 @@ jobs:
         with:
           pattern: keystone-*-ccache
 
-      # Then, combine the caches
       - name: Check which caches to update
         id: check-caches
         run: |
@@ -254,6 +227,32 @@ jobs:
             # Merge ccache directories
             echo "BUILDROOT_CCACHE_UPDATE=true" >> "$GITHUB_OUTPUT"
             touch .update-ccache
+          fi
+
+      - name: Restore buildroot packages
+        uses: actions/cache/restore@v3
+        if: ${{ steps.check-caches.outputs.BUILDROOT_DL_UPDATE == 'true' }}
+        with:
+          path: dl.tar
+          key: ${{ needs.build.outputs.buildroot-dl-matched-key }}
+
+      - name: Restore ccache
+        uses: actions/cache/restore@v3
+        if: ${{ steps.check-caches.outputs.BUILDROOT_CCACHE_UPDATE == 'true' }}
+        with:
+          path: ccache.tar.xz
+          key: ${{ needs.build.outputs.ccache-matched-key }}
+
+      - name: Prepare output directories
+        run: |
+          rm -rf buildroot/dl buildroot-ccache
+          mkdir -p buildroot/dl/ buildroot-ccache/
+          if [[ -f dl.tar ]]; then
+            tar -xf dl.tar -C buildroot
+          fi
+
+          if [[ -f ccache.tar.xz ]]; then
+            tar -xf ccache.tar.xz
           fi
 
       - name: Merge caches
