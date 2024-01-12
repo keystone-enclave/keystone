@@ -44,9 +44,6 @@ struct keystone_ioctl_create_enclave {
   uintptr_t min_pages;
 
   // virtual addresses
-  uintptr_t runtime_vaddr;
-  uintptr_t user_vaddr;
-
   uintptr_t pt_ptr;
   uintptr_t utm_free_ptr;
 
