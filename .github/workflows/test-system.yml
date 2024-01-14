@@ -187,7 +187,7 @@ jobs:
 
     - name: Check expected
       run: |
-        [[ -z $(diff cmd.log scripts/ci/expected.log) ]]
+        [[ -z $(diff cmd.log scripts/ci/expected-mpfs.log) ]]
 
     - name: Upload run log
       if: failure()
