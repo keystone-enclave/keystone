@@ -151,8 +151,17 @@ jobs:
 
         # Wait a bit for the USB to connect then flash
         sleep 10
-        dd if=build-mpfs64/buildroot.build/images/sdcard.img of=/dev/sda bs=4M oflag=direct
+        FOUND_DEVICE=""
+        for d in /dev/sd? ; do
+          if [[ ! -z $(udevadm info --query=all -n "$d" | grep -i polarfire) ]]; then
+            FOUND_DEVICE="yes"
+            dd if=build-mpfs64/buildroot.build/images/sdcard.img of="$d" bs=4M oflag=direct
+            break
+          fi
+        done
+
         $POWER_OFF_CMD
+        [[ ! -z "$FOUND_DEVICE" ]]
 
     - name: Test Keystone system
       env:
