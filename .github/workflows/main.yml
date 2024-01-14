@@ -162,7 +162,9 @@ jobs:
         fi
 
         if [[ $(du -s buildroot-ccache | awk -F' ' '{ print $1 }') -gt 4 ]]; then
-          tar -cf - buildroot-ccache | xz -9 -T0 > ccache.tar.xz
+          # Ignore character device files, which are used as "whiteouts" in overlayfs
+          find buildroot-ccache -type f -not -type c -print0 | \
+            tar --null -cf - -T - | xz -9 -T0 > ccache.tar.xz
         fi
 
     - name: Upload build directory
