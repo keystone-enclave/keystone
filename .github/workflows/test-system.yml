@@ -34,6 +34,7 @@ jobs:
         # Launch QEMU
         export KEYSTONE_PLATFORM=${{ matrix.platform }}
         export KEYSTONE_BITS=${{ matrix.bits }}
+        export QEMU_PORT=$(( RANDOM + 1024 ))
         export LD_LIBRARY_PATH=build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build/host/lib
         screen -L -dmS qemu bash -c "make run 2>&1 | tee run.log"
 
