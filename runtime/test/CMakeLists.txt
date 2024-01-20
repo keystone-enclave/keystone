@@ -9,6 +9,7 @@ include(AddCMockaTest)
 enable_testing()
 
 include_directories(../include)
+include_directories(../../sdk/include/shared/)
 
 add_cmocka_test(test_string SOURCES string.c COMPILE_OPTIONS -I${CMAKE_BINARY_DIR}/cmocka/include LINK_LIBRARIES cmocka)
 add_cmocka_test(test_merkle

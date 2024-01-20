@@ -8,6 +8,12 @@ ifneq ($(KERNELRELEASE),)
 		keystone-enclave.o \
 	  keystone-sbi.o
 	obj-m += keystone-driver.o
+
+ifeq ($(KEYSTONE_SDK_DIR),)
+    $(error KEYSTONE_SDK_DIR not defined)
+endif
+
+	ccflags-y := -I$(KEYSTONE_SDK_DIR)/include/shared
 else
 
 PWD := $(shell pwd)

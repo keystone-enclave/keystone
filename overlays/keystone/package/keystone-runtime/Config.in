@@ -1,4 +1,5 @@
 config BR2_PACKAGE_KEYSTONE_RUNTIME
         bool "Keystone Eyrie runtime"
+        depends on BR2_PACKAGE_HOST_KEYSTONE_SDK
         help
           Eyrie runtime

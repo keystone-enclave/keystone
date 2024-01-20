@@ -2,8 +2,6 @@
 
 #include "mm/vm_defs.h"
 
-#define SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE 0x08424b45
-
 #define SBI_CALL(___ext, ___which, ___arg0, ___arg1, ___arg2)    \
   ({                                                             \
     register uintptr_t a0 __asm__("a0") = (uintptr_t)(___arg0);  \

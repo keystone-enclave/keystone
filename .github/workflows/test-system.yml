@@ -38,7 +38,7 @@ jobs:
         screen -L -dmS qemu bash -c "make run 2>&1 | tee run.log"
 
         # TODO: check for connectivity instead of sleeping
-        sleep 20
+        sleep 60
 
         export CALL_LOGFILE=cmd.log
         echo "" > $CALL_LOGFILE

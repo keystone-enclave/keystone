@@ -33,4 +33,4 @@ cmake "$@" \
 	../runtime
 
 # Build
-make -j$(nproc)
+make -j$(( 2 * $(nproc) ))
