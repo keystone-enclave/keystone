@@ -11,13 +11,15 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include <cerrno>
 #include <cstring>
 #include <iostream>
+
 #include "./common.h"
-#include "./keystone_user.h"
 #include "Error.hpp"
 #include "Params.hpp"
+#include "shared/keystone_user.h"
 
 namespace Keystone {
 

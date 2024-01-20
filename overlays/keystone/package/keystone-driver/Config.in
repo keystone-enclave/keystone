@@ -1,4 +1,5 @@
 config BR2_PACKAGE_KEYSTONE_DRIVER
         bool "Keystone driver"
+        depends on BR2_PACKAGE_HOST_KEYSTONE_SDK
         help
           Linux driver for the Keystone TEE system

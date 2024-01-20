@@ -14,7 +14,7 @@
 
 unsigned long sbi_sm_create_enclave(unsigned long* eid, uintptr_t create_args)
 {
-  struct keystone_sbi_create create_args_local;
+  struct keystone_sbi_create_t create_args_local;
   unsigned long ret;
 
   ret = copy_enclave_create_args(create_args, &create_args_local);

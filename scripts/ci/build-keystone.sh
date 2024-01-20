@@ -42,7 +42,7 @@ mount -t overlay overlay \
 	-o lowerdir="$CCACHE_LOWER",upperdir="$CCACHE_UPPER",workdir="$CCACHE_WORK" \
 	"$PWD/buildroot-ccache"
 
-BUILDROOT_CCACHE="$PWD/buildroot-ccache" make -j$(nproc)
+BUILDROOT_CCACHE="$PWD/buildroot-ccache" make -j$(( 2 * $(nproc) ))
 
 EOF
 

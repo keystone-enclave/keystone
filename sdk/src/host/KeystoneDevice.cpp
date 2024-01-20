@@ -95,11 +95,11 @@ KeystoneDevice::__run(bool resume, uintptr_t* ret) {
   }
 
   switch (encl.error) {
-    case KEYSTONE_ENCLAVE_EDGE_CALL_HOST:
+    case SBI_ERR_SM_ENCLAVE_EDGE_CALL_HOST:
       return Error::EdgeCallHost;
-    case KEYSTONE_ENCLAVE_INTERRUPTED:
+    case SBI_ERR_SM_ENCLAVE_INTERRUPTED:
       return Error::EnclaveInterrupted;
-    case KEYSTONE_ENCLAVE_DONE:
+    case SBI_ERR_SM_ENCLAVE_SUCCESS:
       if (ret) {
         *ret = encl.value;
       }

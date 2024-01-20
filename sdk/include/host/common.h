@@ -1,6 +1,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include "shared/sm_err.h"
+
 #define RT_NOEXEC 0
 #define USER_NOEXEC 1
 #define RT_FULL 2
@@ -24,11 +26,5 @@
 #define ERROR(str, ...) fprintf(stderr, MSG(str) "\n", ##__VA_ARGS__)
 #define PERROR(str) perror(MSG(str))
 #define IS_ALIGNED(x, align) (!((x) & (align - 1)))
-
-/* Currently we have only one command avaiable from the enclave.
- * We need to move it out to other header file (e.g., keystone-sm.h) */
-#define KEYSTONE_ENCLAVE_DONE 0
-#define KEYSTONE_ENCLAVE_INTERRUPTED 100002
-#define KEYSTONE_ENCLAVE_EDGE_CALL_HOST 100011
 
 #endif
