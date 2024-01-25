@@ -14,11 +14,14 @@ jobs:
     # platform that we support here
     strategy:
       matrix:
-        platform: [generic, hifive_unmatched, cva6]
+        platform: [generic, hifive_unmatched, cva6, mpfs]
         bits: [32, 64]
         exclude:
           # unmatched is not 32 bit
           - platform: hifive_unmatched
+            bits: 32
+          # mpfs is not 32 bit
+          - platform: mpfs
             bits: 32
 
     # Output cache keys that were used so we can consolidate them later. Note
@@ -43,7 +46,7 @@ jobs:
     # First, we need to get the version of Keystone we are working on. We
     # will also need submodules here since we are doing full builds
     - name: Checkout Keystone
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'true'
 
@@ -72,7 +75,7 @@ jobs:
     # since we really only care about keeping the latest cache anyways.
     - name: Restore buildroot packages
       id: restore-buildroot-dl
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: dl.tar
         key: buildroot-dl-${{ steps.cache-keys.outputs.YMDH }}
@@ -84,7 +87,7 @@ jobs:
 
     - name: Restore ccache
       id: restore-ccache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       with:
         path: ccache.tar.xz
         key: ccache-${{ steps.cache-keys.outputs.YMDH }}
@@ -142,6 +145,10 @@ jobs:
         # Needed by end-to-end tests
         COMPRESSDIRS="$COMPRESSDIRS $BASEDIR/target/root/"
 
+        if [[ "${{ matrix.platform }}" == "mpfs" ]]; then
+          COMPRESSDIRS="$COMPRESSDIRS $BASEDIR/build/hss-v2023.06"
+        fi
+
         tar -cf - $COMPRESSDIRS | xz -9 -T0 > build.tar.xz
 
     - name: Compress cache directories
@@ -155,7 +162,9 @@ jobs:
         fi
 
         if [[ $(du -s buildroot-ccache | awk -F' ' '{ print $1 }') -gt 4 ]]; then
-          tar -cf - buildroot-ccache | xz -9 -T0 > ccache.tar.xz
+          # Ignore character device files, which are used as "whiteouts" in overlayfs
+          find buildroot-ccache -type f -not -type c -print0 | \
+            tar --null -cf - -T - | xz -9 -T0 > ccache.tar.xz
         fi
 
     - name: Upload build directory
@@ -230,14 +239,14 @@ jobs:
           fi
 
       - name: Restore buildroot packages
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         if: ${{ steps.check-caches.outputs.BUILDROOT_DL_UPDATE == 'true' }}
         with:
           path: dl.tar
           key: ${{ needs.build.outputs.buildroot-dl-matched-key }}
 
       - name: Restore ccache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         if: ${{ steps.check-caches.outputs.BUILDROOT_CCACHE_UPDATE == 'true' }}
         with:
           path: ccache.tar.xz
@@ -286,14 +295,14 @@ jobs:
           fi
 
       - name: Save buildroot download cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: ${{ steps.check-caches.outputs.BUILDROOT_DL_UPDATE == 'true' }}
         with:
           path: dl.tar
           key: ${{ needs.build.outputs.buildroot-dl-primary-key }}
 
       - name: Save ccache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: ${{ steps.check-caches.outputs.BUILDROOT_CCACHE_UPDATE == 'true' }}
         with:
           path: ccache.tar.xz
@@ -309,7 +318,7 @@ jobs:
     steps:
     # We don't need submodules here since Keystone is a monorepo!
     - name: Checkout Keystone
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'false'
 
@@ -324,7 +333,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Keystone
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'true'
 
@@ -343,7 +352,7 @@ jobs:
     needs: build
     uses: ./.github/workflows/build-runtime.yml
 
-  # System tests, which are run for simulatable platforms
+  # System tests, which are run for simulatable and self-hostable platforms
   test-system:
     needs: build
     uses: ./.github/workflows/test-system.yml

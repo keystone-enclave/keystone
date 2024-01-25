@@ -24,7 +24,7 @@ export BUILDROOT_OVERLAYDIR     ?= $(BUILDDIR)/overlay
 export BUILDROOT_BUILDDIR       ?= $(BUILDDIR)/buildroot.build
 
 
-# options: generic, cva6, hifive_unmatched
+# options: generic, cva6, hifive_unmatched, mpfs
 export KEYSTONE_PLATFORM        ?= generic
 export KEYSTONE_BITS            ?= 64
 
@@ -33,7 +33,8 @@ include mkutils/log.mk
 
 BUILDROOT_CONFIGFILE    ?= riscv$(KEYSTONE_BITS)_$(KEYSTONE_PLATFORM)_defconfig
 ifeq ($(KEYSTONE_PLATFORM),mpfs)
-	EXTERNALS += microchip
+	EXTERNALS		+= microchip
+	ADDITIONAL_OVERLAYS  	:= \$$(BR2_EXTERNAL_MCHP_PATH)/board/microchip/icicle/rootfs-overlay
 endif
 
 # Highest priority external
@@ -69,7 +70,7 @@ BUILDROOT_CCACHE ?= $(HOME)/.buildroot-ccache
 $(BUILDROOT_BUILDDIR)/.config: $(BUILDROOT_BUILDDIR)
 	$(call log,info,Configuring Buildroot with $(BUILDROOT_CONFIGFILE))
 	$(MAKE) $(BUILDROOT_MAKEFLAGS) $(BUILDROOT_CONFIGFILE)
-	echo "BR2_ROOTFS_OVERLAY=\"$(BUILDROOT_OVERLAYDIR)\"" >> $(BUILDROOT_BUILDDIR)/.config
+	echo "BR2_ROOTFS_OVERLAY=\"$(BUILDROOT_OVERLAYDIR) $(ADDITIONAL_OVERLAYS)\"" >> $(BUILDROOT_BUILDDIR)/.config
 	echo "BR2_CCACHE_DIR=$(BUILDROOT_CCACHE)" >> $(BUILDROOT_BUILDDIR)/.config
 
 # Overlay

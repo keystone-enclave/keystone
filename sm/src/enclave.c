@@ -13,10 +13,11 @@
 #include <sbi/riscv_locks.h>
 #include <sbi/sbi_console.h>
 
-#define ENCL_MAX  16
-
 struct enclave enclaves[ENCL_MAX];
-#define ENCLAVE_EXISTS(eid) (eid >= 0 && eid < ENCL_MAX && enclaves[eid].state >= 0)
+
+// Enclave IDs are unsigned ints, so we do not need to check if eid is
+// greater than or equal to 0
+#define ENCLAVE_EXISTS(eid) (eid < ENCL_MAX && enclaves[eid].state >= 0)
 
 static spinlock_t encl_lock = SPIN_LOCK_INITIALIZER;
 
@@ -141,7 +142,7 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
  * Init all metadata as needed for keeping track of enclaves
  * Called once by the SM on startup
  */
-void enclave_init_metadata(){
+void enclave_init_metadata(void){
   enclave_id eid;
   int i=0;
 

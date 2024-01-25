@@ -1,0 +1,17 @@
+#
+# HSS Payload Generator - buildroot configuration file
+#
+
+# This configuration file is almost verbatim copied from the one in overlays/microchip/board/microchip/icicle/config.yaml,
+# with the only changes being to u-boot's starting addresses. Since we need quite a lot of contiguous physical memory
+# (for VTA and Keystone), we've had to shift some of the firmwares around in order to make room. This configuration file
+# simply causes u-boot to be loaded at 0x90200000 rather that 0x80200000. See this spreadsheet for memory maps:
+#
+# https://docs.google.com/spreadsheets/d/1udkXU-yJFux_UKdjfGWhB8Kl4OM-iYosNJppex-5UYA
+
+set-name: 'PolarFire-SoC-HSS::U-Boot'
+
+hart-entry-points: {u54_1: '0x90200000', u54_2: '0x90200000', u54_3: '0x90200000', u54_4: '0x90200000'}
+
+payloads:
+  src.bin: {exec-addr: '0x90200000', owner-hart: u54_1, secondary-hart: u54_2, secondary-hart: u54_3, secondary-hart: u54_4, priv-mode: prv_s, ancilliary-data: mpfs-icicle-kit.dtb}

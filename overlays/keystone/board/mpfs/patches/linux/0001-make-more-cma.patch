@@ -1,0 +1,118 @@
+diff --git a/arch/riscv/boot/dts/microchip/mpfs-icicle-kit.dts b/arch/riscv/boot/dts/microchip/mpfs-icicle-kit.dts
+index 518780fca665..4133621e3488 100644
+--- a/arch/riscv/boot/dts/microchip/mpfs-icicle-kit.dts
++++ b/arch/riscv/boot/dts/microchip/mpfs-icicle-kit.dts
+@@ -41,19 +41,14 @@ cpus {
+ 		timebase-frequency = <MTIMER_FREQ>;
+ 	};
+ 
+-	kernel: memory@80000000 {
++	ddr_cached_low: memory@90000000 {
+ 		device_type = "memory";
+-		reg = <0x0 0x80000000 0x0 0x4000000>;
++		reg = <0x0 0x90000000 0x0 0x10000000>;
+ 	};
+ 
+-	ddr_cached_low: memory@8a000000 {
++	ddr_non_cached_low: memory@c0000000 {
+ 		device_type = "memory";
+-		reg = <0x0 0x8a000000 0x0 0x8000000>;
+-	};
+-
+-	ddr_non_cached_low: memory@c4000000 {
+-		device_type = "memory";
+-		reg = <0x0 0xc4000000 0x0 0x6000000>;
++		reg = <0x0 0xc0000000 0x0 0x10000000>;
+ 	};
+ 
+ 	ddr_cached_high: memory@1022000000 {
+@@ -77,14 +72,6 @@ hss: hss-buffer@103fc00000 {
+ 			no-map;
+ 		};
+ 
+-		dma_non_cached_low: non-cached-low-buffer {
+-			compatible = "shared-dma-pool";
+-			size = <0x0 0x4000000>;
+-			no-map;
+-			linux,dma-default;
+-			alloc-ranges = <0x0 0xc4000000 0x0 0x4000000>;
+-		};
+-
+ 		dma_non_cached_high: non-cached-high-buffer {
+ 			compatible = "shared-dma-pool";
+ 			size = <0x0 0x10000000>;
+@@ -92,26 +79,29 @@ dma_non_cached_high: non-cached-high-buffer {
+ 			linux,dma-default;
+ 			alloc-ranges = <0x14 0x12000000 0x0 0x10000000>;
+ 		};
+-
++/*
+ 		fabricbuf0ddrc: buffer@88000000 {
+ 			compatible = "shared-dma-pool";
+ 			reg = <0x0 0x88000000 0x0 0x2000000>;
+ 			no-map;
+ 		};
++*/
+ 
+-		fabricbuf1ddrnc: buffer@c8000000 {
++		fabricbuf1ddrnc: buffer@c0000000 {
+ 			compatible = "shared-dma-pool";
+-			reg = <0x0 0xc8000000 0x0 0x2000000>;
++			reg = <0x0 0xc0000000 0x0 0x10000000>;
+ 			no-map;
+ 		};
+ 
++/*
+ 		fabricbuf2ddrncwcb: buffer@d8000000 {
+ 			compatible = "shared-dma-pool";
+ 			reg = <0x0 0xd8000000 0x0 0x2000000>;
+ 			no-map;
+ 		};
++*/
+ 	};
+-
++/*
+ 	udmabuf0 {
+ 		compatible = "ikwzm,u-dma-buf";
+ 		device-name = "udmabuf-ddr-c0";
+@@ -120,16 +110,16 @@ udmabuf0 {
+ 		memory-region = <&fabricbuf0ddrc>;
+ 		sync-mode = <3>;
+ 	};
+-
++*/
+ 	udmabuf1 {
+ 		compatible = "ikwzm,u-dma-buf";
+ 		device-name = "udmabuf-ddr-nc0";
+ 		minor-number = <1>;
+-		size = <0x0 0x2000000>;
++		size = <0x0 0x10000000>;
+ 		memory-region = <&fabricbuf1ddrnc>;
+ 		sync-mode = <3>;
+ 	};
+-
++/*
+ 	udmabuf2 {
+ 		compatible = "ikwzm,u-dma-buf";
+ 		device-name = "udmabuf-ddr-nc-wcb0";
+@@ -138,6 +128,7 @@ udmabuf2 {
+ 		memory-region = <&fabricbuf2ddrncwcb>;
+ 		sync-mode = <3>;
+ 	};
++ */
+ };
+ 
+ &can0 {
+diff --git a/arch/riscv/mm/init.c b/arch/riscv/mm/init.c
+index ebabd2750a99..abd65f78827c 100644
+--- a/arch/riscv/mm/init.c
++++ b/arch/riscv/mm/init.c
+@@ -242,7 +242,7 @@ static void __init setup_bootmem(void)
+ 			memblock_reserve(dtb_early_pa, fdt_totalsize(dtb_early_va));
+ 	}
+ 
+-	dma_contiguous_reserve(dma32_phys_limit);
++	dma_contiguous_reserve(phys_ram_end);
+ 	if (IS_ENABLED(CONFIG_64BIT))
+ 		hugetlb_cma_reserve(PUD_SHIFT - PAGE_SHIFT);
+ 	memblock_allow_resize();

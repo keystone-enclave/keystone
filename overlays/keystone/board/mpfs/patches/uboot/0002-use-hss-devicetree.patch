@@ -1,0 +1,53 @@
+diff --git a/board/microchip/mpfs_icicle/mpfs_icicle.c b/board/microchip/mpfs_icicle/mpfs_icicle.c
+index 4244ab0647..cd1a6af81d 100644
+--- a/board/microchip/mpfs_icicle/mpfs_icicle.c
++++ b/board/microchip/mpfs_icicle/mpfs_icicle.c
+@@ -11,6 +11,7 @@
+ #include <malloc.h>
+ #include <asm/global_data.h>
+ #include <asm/io.h>
++#include <asm/sections.h>
+ 
+ DECLARE_GLOBAL_DATA_PTR;
+ 
+@@ -295,6 +296,17 @@ static void get_device_tree_overlays(void)
+ 	env_set("dtbo_size", dtbo_size);
+ }
+ 
++void *board_fdt_blob_setup(int *err)
++{
++	*err = 0;
++	if (IS_ENABLED(CONFIG_OF_SEPARATE) || IS_ENABLED(CONFIG_OF_BOARD)) {
++		if (gd->arch.firmware_fdt_addr)
++			return (ulong *)(uintptr_t)gd->arch.firmware_fdt_addr;
++	}
++
++	return (ulong *)&_end;
++}
++
+ int board_init(void)
+ {
+ 	/* For now nothing to do here. */
+diff --git a/configs/microchip_mpfs_icicle_defconfig b/configs/microchip_mpfs_icicle_defconfig
+index d72e44e2fc..727577e201 100644
+--- a/configs/microchip_mpfs_icicle_defconfig
++++ b/configs/microchip_mpfs_icicle_defconfig
+@@ -3,16 +3,17 @@ CONFIG_SYS_TEXT_BASE=0x90200000
+ CONFIG_SYS_MALLOC_LEN=0x800000
+ CONFIG_SYS_MALLOC_F_LEN=0x2000
+ CONFIG_ENV_SIZE=0x2000
+-CONFIG_DEFAULT_DEVICE_TREE="microchip-mpfs-icicle-kit"
+ CONFIG_TARGET_MICROCHIP_ICICLE=y
+ CONFIG_ARCH_RV64I=y
+ CONFIG_RISCV_SMODE=y
++CONFIG_OF_BOARD_FIXUP=y
+ CONFIG_DISTRO_DEFAULTS=y
+ CONFIG_SYS_LOAD_ADDR=0x90200000
+ CONFIG_FIT=y
+ CONFIG_DISPLAY_CPUINFO=y
+ CONFIG_DISPLAY_BOARDINFO=y
+ CONFIG_SYS_PROMPT="RISC-V # "
++CONFIG_OF_BOARD=y
+ CONFIG_SYS_RELOC_GD_ENV_ADDR=y
+ CONFIG_BOOTP_SEND_HOSTNAME=y
+ CONFIG_DM_MTD=y

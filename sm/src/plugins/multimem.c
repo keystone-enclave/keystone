@@ -3,7 +3,7 @@
 #include <sbi/sbi_console.h>
 #include "mprv.h"
 
-uintptr_t multimem_get_other_region_size(enclave_id eid, size_t *size_out)
+static uintptr_t multimem_get_other_region_size(enclave_id eid, size_t *size_out)
 {
   int mem_id = get_enclave_region_index(eid, REGION_OTHER);
   if (mem_id == -1)
@@ -12,7 +12,7 @@ uintptr_t multimem_get_other_region_size(enclave_id eid, size_t *size_out)
   return copy_word_from_sm((uintptr_t)size_out, &out);
 }
 
-uintptr_t multimem_get_other_region_addr(enclave_id eid, size_t *size_out)
+static uintptr_t multimem_get_other_region_addr(enclave_id eid, size_t *size_out)
 {
   int mem_id = get_enclave_region_index(eid, REGION_OTHER);
   if (mem_id == -1)

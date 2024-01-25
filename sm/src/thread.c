@@ -6,13 +6,11 @@
 #include <sbi/sbi_console.h>
 #include "thread.h"
 
-void switch_vector_enclave(){
-  extern void trap_vector_enclave();
+void switch_vector_enclave(void){
   csr_write(mtvec, &trap_vector_enclave);
 }
 
-void switch_vector_host(){
-  extern void _trap_handler();
+void switch_vector_host(void){
   csr_write(mtvec, &_trap_handler);
 }
 

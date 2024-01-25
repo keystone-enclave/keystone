@@ -1,6 +1,5 @@
 config BR2_TARGET_KEYSTONE_SM
         bool "Keystone security monitor"
-        select BR2_TARGET_OPENSBI
         depends on BR2_PACKAGE_HOST_KEYSTONE_SDK
         help
           Keystone security monitor augmentations

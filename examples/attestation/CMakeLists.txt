@@ -47,6 +47,9 @@ if(NOT DEFINED fw_bin)
   set(fw_bin ../../../images/fw_payload.bin)
 endif()
 
+get_filename_component(fw_file ${fw_bin} NAME)
+set(package_script "./attestor-runner attestor eyrie-rt loader.bin --sm-bin ${fw_file}")
+
 # add target for packaging (see keystone.cmake)
 
 add_keystone_package(${eapp_bin}-package

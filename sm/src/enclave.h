@@ -12,13 +12,12 @@
 #include "sm.h"
 #include "pmp.h"
 #include "thread.h"
-#include "crypto.h"
+#include <crypto.h>
 
 // Special target platform header, set by configure script
 #include TARGET_PLATFORM_HEADER
 
 #define ATTEST_DATA_MAXLEN  1024
-#define ENCLAVE_REGIONS_MAX 8
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
 
@@ -120,10 +119,12 @@ unsigned long attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, e
 // attestation
 unsigned long validate_and_hash_enclave(struct enclave* enclave);
 // TODO: These functions are supposed to be internal functions.
-void enclave_init_metadata();
+void enclave_init_metadata(void);
 unsigned long copy_enclave_create_args(uintptr_t src, struct keystone_sbi_create_t* dest);
 int get_enclave_region_index(enclave_id eid, enum enclave_region_type type);
 uintptr_t get_enclave_region_base(enclave_id eid, int memid);
 uintptr_t get_enclave_region_size(enclave_id eid, int memid);
 unsigned long get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid);
+// interrupt handlers
+void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs);
 #endif

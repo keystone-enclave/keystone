@@ -7,3 +7,6 @@
 [submodule "overlays/keystone/board/cva6/cva6-sdk"]
 	path = overlays/keystone/board/cva6/cva6-sdk
 	url = https://github.com/openhwgroup/cva6-sdk
+[submodule "overlays/microchip"]
+	path = overlays/microchip
+	url = https://github.com/linux4microchip/buildroot-external-microchip

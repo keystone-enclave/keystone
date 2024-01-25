@@ -5,7 +5,7 @@
 #include "ipi.h"
 #include "sm.h"
 #include "pmp.h"
-#include "crypto.h"
+#include <crypto.h>
 #include "enclave.h"
 #include "platform-hook.h"
 #include "sm-sbi-opensbi.h"
@@ -18,12 +18,12 @@
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
 
-/* from Sanctum BootROM */
-extern byte sanctum_sm_hash[MDSIZE];
-extern byte sanctum_sm_signature[SIGNATURE_SIZE];
-extern byte sanctum_sm_secret_key[PRIVATE_KEY_SIZE];
-extern byte sanctum_sm_public_key[PUBLIC_KEY_SIZE];
-extern byte sanctum_dev_public_key[PUBLIC_KEY_SIZE];
+#ifndef TARGET_PLATFORM_HEADER
+#error "SM requires a defined platform to build"
+#endif
+
+// Special target platform header, set by configure script
+#include TARGET_PLATFORM_HEADER
 
 byte sm_hash[MDSIZE] = { 0, };
 byte sm_signature[SIGNATURE_SIZE] = { 0, };
@@ -37,7 +37,7 @@ int osm_pmp_set(uint8_t perm)
   return pmp_set_keystone(os_region_id, perm);
 }
 
-int smm_init()
+static int smm_init(void)
 {
   int region = -1;
   int ret = pmp_region_init_atomic(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region, 0);
@@ -47,7 +47,7 @@ int smm_init()
   return region;
 }
 
-int osm_init()
+static int osm_init(void)
 {
   int region = -1;
   int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
@@ -80,16 +80,7 @@ int sm_derive_sealing_key(unsigned char *key, const unsigned char *key_ident,
              info, MDSIZE + key_ident_size, key, SEALING_KEY_SIZE);
 }
 
-void sm_copy_key()
-{
-  sbi_memcpy(sm_hash, sanctum_sm_hash, MDSIZE);
-  sbi_memcpy(sm_signature, sanctum_sm_signature, SIGNATURE_SIZE);
-  sbi_memcpy(sm_public_key, sanctum_sm_public_key, PUBLIC_KEY_SIZE);
-  sbi_memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
-  sbi_memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
-}
-
-void sm_print_hash()
+static void sm_print_hash(void)
 {
   for (int i=0; i<MDSIZE; i++)
   {

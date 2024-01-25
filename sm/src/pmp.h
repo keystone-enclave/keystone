@@ -8,9 +8,6 @@
 #include "sm.h"
 #include <sbi/riscv_atomic.h>
 
-#define PMP_N_REG         8 //number of PMP registers
-#define PMP_MAX_N_REGION  16 //maximum number of PMP regions
-
 #define SET_BIT(bitmap, n) (bitmap |= (0x1 << (n)))
 #define UNSET_BIT(bitmap, n) (bitmap &= ~(0x1 << (n)))
 #define TEST_BIT(bitmap, n) (bitmap & (0x1 << (n)))
@@ -89,7 +86,7 @@ typedef int pmpreg_id;
 typedef int region_id;
 
 /* external functions */
-void pmp_init();
+void pmp_init(void);
 int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri, region_id* rid, int allow_overlap);
 int pmp_region_free_atomic(region_id region);
@@ -98,7 +95,7 @@ int pmp_set_global(region_id n, uint8_t perm);
 int pmp_unset(region_id n);
 int pmp_unset_global(region_id n);
 int pmp_detect_region_overlap_atomic(uintptr_t base, uintptr_t size);
-void handle_pmp_ipi();
+void handle_pmp_ipi(void);
 
 uintptr_t pmp_region_get_addr(region_id i);
 uint64_t pmp_region_get_size(region_id i);
