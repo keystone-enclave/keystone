@@ -3,13 +3,8 @@ set(eapp_src eapp/devshare.c)
 set(host_bin devshare-runner)
 set(host_src host/host.cpp)
 set(package_name "devshare.ke")
-set(package_script "./devshare-runner devshare eyrie-rt")
-
-if(RISCV32)
-  set(eyrie_plugins "freemem io_syscall linux_syscall env_setup rv32")
-else()
-  set(eyrie_plugins "freemem io_syscall linux_syscall env_setup")
-endif()
+set(package_script "./devshare-runner devshare eyrie-rt loader.bin")
+set(eyrie_plugins "freemem io_syscall linux_syscall env_setup")
 
 # eapp
 
@@ -23,7 +18,7 @@ target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE})
 
 # add target for Eyrie runtime (see keystone.cmake)
 
-set(eyrie_files_to_copy .options_log eyrie-rt)
+set(eyrie_files_to_copy .options_log eyrie-rt loader.bin)
 add_eyrie_runtime(${eapp_bin}-eyrie
   ${eyrie_plugins}
   ${eyrie_files_to_copy})

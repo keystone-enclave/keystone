@@ -30,7 +30,7 @@ struct platform_enclave_data{
 #define NUM_DISABLED_DEVS       0
 
 // Search for FPGA devices
-#define DEV_SEARCH_BASE         "fabric-bus@40000000"
+#define DEV_SEARCH_BASE         "/fabric-bus@40000000"
 #define DEV_IGNORED             { "microchip,mpfs-ccc", "microchip,mpfs-qspi" }
 
 // Initialization functions

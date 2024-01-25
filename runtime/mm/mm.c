@@ -3,6 +3,7 @@
 #include "mm/vm.h"
 #include "mm/freemem.h"
 #include "mm/paging.h"
+#include "util/rt_util.h"
 
 /* Page table utilities */
 static pte*
