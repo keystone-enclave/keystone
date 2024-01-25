@@ -7,7 +7,7 @@
 
 int main()
 {
-  int ret, i;
+  int ret, fd, i;
   ret = claim_mmio(SECURE_DEVICE,
                    strlen(SECURE_DEVICE));
   if(ret < 0) {
@@ -15,9 +15,15 @@ int main()
     return -1;
   }
 
+  fd = openat(-2, "uart8250", 0, 0);
+  if(fd < 0) {
+    printf("Failed to get fd for device\n");
+    return -1;
+  }
+
   for(i = 0; i < 1000; i++) {
-    printf("Writing to UART: %i!\n", i);
-    fflush(stdout);
+    fprintf(fd, "Writing to UART: %i!\n", i);
+    fflush(fd);
   }
 
   // todo do something with the device
