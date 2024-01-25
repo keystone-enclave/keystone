@@ -13,7 +13,7 @@ jobs:
     steps:
     # We don't need submodules here since Keystone is a monorepo!
     - name: Checkout Keystone
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'false'
 
@@ -73,7 +73,7 @@ jobs:
     steps:
     # We don't need submodules here since Keystone is a monorepo!
     - name: Checkout Keystone
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: 'false'
 
