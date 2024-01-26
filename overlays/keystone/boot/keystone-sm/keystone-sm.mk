@@ -17,7 +17,16 @@ endif
 KEYSTONE_SM_DEPENDENCIES += host-keystone-sdk
 $(KEYSTONE_SM_CONFIGURE): host-keystone-sdk-install
 
-ifeq ($(KEYSTONE_PLATFORM),generic)
+ifeq ($(KEYSTONE_PLATFORM),mpfs)
+HSS_DEPENDENCIES += keystone-sm
+$(HSS_TARGET_CONFIGURE): keystone-sm-install
+
+# Point HSS at the SM
+HSS_MAKE_OPTS += KEYSTONE_SM=$(KEYSTONE_SM_BUILDDIR)
+
+# Make keystone-sm dircleans also trigger hss-dircleans
+keystone-sm-dirclean: hss-dirclean
+else
 OPENSBI_DEPENDENCIES += keystone-sm
 $(OPENSBI_TARGET_CONFIGURE): keystone-sm-install
 
@@ -29,17 +38,6 @@ OPENSBI_MAKE_ENV += PLATFORM_RISCV_TOOLCHAIN_DEFAULT=1
 
 # Make keystone-sm dircleans also trigger opensbi-dirclean
 keystone-sm-dirclean: opensbi-dirclean
-endif
-
-ifeq ($(KEYSTONE_PLATFORM),mpfs)
-HSS_DEPENDENCIES += keystone-sm
-$(HSS_TARGET_CONFIGURE): keystone-sm-install
-
-# Point HSS at the SM
-HSS_MAKE_OPTS += KEYSTONE_SM=$(KEYSTONE_SM_BUILDDIR)
-
-# Make keystone-sm dircleans also trigger hss-dircleans
-keystone-sm-dirclean: hss-dirclean
 endif
 
 $(eval $(keystone-package))
