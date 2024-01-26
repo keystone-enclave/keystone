@@ -19,7 +19,7 @@ QEMU_FLAGS := -m $(QEMU_MEM) -smp $(QEMU_SMP) -display none \
                 -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::$(QEMU_PORT)-:22 \
                 -device virtio-net-device,netdev=net0 \
                 -device virtio-rng-pci \
-                -serial stdio -serial file:/tmp/serial.out
+                -serial mon:stdio -serial file:/tmp/serial.out
 
 ifneq ($(KEYSTONE_DEBUG),)
         QEMU_FLAGS += $(QEMU_DEBUG)
