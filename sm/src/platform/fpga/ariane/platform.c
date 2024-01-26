@@ -1,5 +1,6 @@
 /* Default platform does nothing special here */
 #include "../../../enclave.h"
+#include <sbi/sbi_string.h>
 
 unsigned long platform_init_global_once(){
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
@@ -41,4 +42,17 @@ uint64_t platform_random(){
   x *= x;
   x += (w += s);
   return (x>>32) | (x<<32);
+}
+
+// Initialization functions
+extern byte dev_public_key[PUBLIC_KEY_SIZE];
+
+// Todo secure boot
+void sm_copy_key(void)
+{
+  sbi_memset(sm_hash, 0, MDSIZE);
+  sbi_memset(sm_signature, 0, SIGNATURE_SIZE);
+  sbi_memset(sm_public_key, 0, PUBLIC_KEY_SIZE);
+  sbi_memset(sm_private_key, 0, PRIVATE_KEY_SIZE);
+  sbi_memset(dev_public_key, 0, PUBLIC_KEY_SIZE);
 }
