@@ -43,6 +43,7 @@
 struct runtime_params_t {
   uintptr_t dram_base;
   uintptr_t dram_size;
+  uintptr_t loader_base;
   uintptr_t runtime_base;
   uintptr_t user_base;
   uintptr_t free_base;
@@ -59,11 +60,34 @@ struct keystone_sbi_pregion_t {
 struct keystone_sbi_create_t {
   struct keystone_sbi_pregion_t epm_region;
   struct keystone_sbi_pregion_t utm_region;
-
-  uintptr_t runtime_paddr;
-  uintptr_t user_paddr;
   uintptr_t free_paddr;
-  uintptr_t free_requested;
 };
+
+// TODO(Evgeny): how do we ensure no compiler re-ordering?
+#define MSR_NAME_LEN 64
+typedef struct {
+  char name[MSR_NAME_LEN];
+  uintptr_t type;
+  char hash[MDSIZE];
+} resource_hash_t;
+
+typedef struct {
+  char name[MSR_NAME_LEN];
+  uintptr_t type;
+  uintptr_t offset;
+  uintptr_t size;
+} resource_ptr_t;
+
+// TODO(Evgeny): a way to make this more convenient? should I make the pointers typed?
+typedef struct {
+  uintptr_t runtime_arr, id_res_arr,
+    id_abs_arr, res_arr, abs_arr, data;
+  // resource_value_t runtime_values[];
+  // resource_ptr_t identity_resident[];
+  // resource_hash_t identity_absent[];
+  // resource_ptr_t resident[];
+  // resource_hash_t absent[];
+  // byte data[];
+} enclave_bundle_header_t;
 
 #endif  // __SM_CALL_H__

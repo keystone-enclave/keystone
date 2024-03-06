@@ -56,6 +56,7 @@ int keystone_finalize_enclave(unsigned long arg)
   /* SBI Call */
   create_args.epm_region.paddr = enclave->epm->pa;
   create_args.epm_region.size = enclave->epm->size;
+  create_args.free_paddr = enclave->free_paddr;
 
   utm = enclave->utm;
 
@@ -66,12 +67,6 @@ int keystone_finalize_enclave(unsigned long arg)
     create_args.utm_region.paddr = 0;
     create_args.utm_region.size = 0;
   }
-
-  // physical addresses for runtime, user, and freemem
-  create_args.runtime_paddr = enclp->runtime_paddr;
-  create_args.user_paddr = enclp->user_paddr;
-  create_args.free_paddr = enclp->free_paddr;
-  create_args.free_requested = enclp->free_requested;
 
   ret = sbi_sm_create_enclave(&create_args);
 

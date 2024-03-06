@@ -41,6 +41,7 @@ class Enclave {
   size_t shared_buffer_size;
   OcallFunc oFuncDispatch;
   bool mapUntrusted(size_t size);
+  void copyMem(uintptr_t dest_offset, uintptr_t src, size_t size);
   void copyFile(uintptr_t filePtr, size_t fileSize);
   void allocUninitialized(ElfFile* elfFile);
   void loadElf(ElfFile* elfFile);
@@ -49,6 +50,19 @@ class Enclave {
   bool initDevice();
   bool prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr);
   bool initMemory();
+
+  typedef struct {
+    char name[MSR_NAME_LEN];
+    uintptr_t type;
+    std::string filepath;
+  } resource_info_t;
+  std::vector<resource_info_t> identityResident;
+  std::vector<resource_hash_t> identityAbsent;
+  std::vector<resource_info_t> resident;
+  std::vector<resource_hash_t> absent;
+  void* enclave_base = 0;
+  uintptr_t materializeResourceInfo(std::vector<resource_ptr_t> tempResidentResourcePtrs,
+    ElfFile* allElfFiles, std::vector<resource_info_t> resInfos);
 
  public:
   Enclave();
@@ -66,6 +80,11 @@ class Enclave {
       uintptr_t alternatePhysAddr);
   Error destroy();
   Error run(uintptr_t* ret = nullptr);
+
+  // TODO(Evgeny): switch to errors. Currently, 0 = success, 1 = error.
+  uintptr_t addResidentResource(const char* name, uintptr_t type, const char* filepath, bool identity);
+  uintptr_t addAbsentResource(const char* name, uintptr_t type, const char* hash, bool identity);
+  void finalize(uintptr_t alternatePhysAddr = 0);
 };
 
 uint64_t

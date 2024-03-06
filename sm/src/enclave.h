@@ -64,6 +64,7 @@ struct enclave
   struct enclave_region regions[ENCLAVE_REGIONS_MAX];
 
   /* measurement */
+  byte identity[MDSIZE];
   byte hash[MDSIZE];
   byte sign[SIGNATURE_SIZE];
 
