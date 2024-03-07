@@ -9,9 +9,35 @@
 
 Keystone is an open-source project that builds trusted execution environments (TEEs) based on RISC-V. Its hardware-enforced and software-defined memory isolation enables trusted computing (a.k.a. confidential computing) with various threat models and functionalities. The implementation is platform-agnostic, making Keystone portable across different RISC-V platforms with minimal engineering efforts.
 
-Keystone started as an academic project that helps researchers to build and test their ideas. Now, Keystone is a part of Confidential Computing Consortium (CCC) under Linux Foundation. We are currently trying to make Keystone industry-ready.
 
-You can find the latest general roadmap of Keystone [here](https://docs.google.com/document/d/1E-982564GvOcWzdCqM7TXCJV_7uWy2F8NiwglWorjFA/edit#heading=h.xa3pe84ubay4)
+## Goals
+
+Keystone aims to be a free and open framework for architecting and deploying TEEs on RISC-V hardware platforms. To summarize, our goals are:
+
+* **Enable TEE on (almost) all RISC-V processors**: Keystone aims to support as many RISC-V processor cores by following RISC-V standard ISA and sub-ISAs. This will help hardware designers and manufacturers to enable TEE with minimal efforts.
+
+* **Make TEE easy to customize depending on needs**: while providing effortless TEE enablement, Keystone also aims to allow various customization that depends on platform-specific features or non-standard sub-ISAs. We borrow the concept from software-defined network, where hardware platform provides *primitives* and the software leverages the primitives to implement specific functionalities or meet certain security requirements.
+
+* **Reduce the cost of building TEE**: Keystone aims to reduce the cost of building TEE or TEE-based system. We hope to achieve it by reusing the implementation across multiple different platforms, reducing hardware integration cost, reducing verification cost, and integrating with existing software tools. We hope that anyone can simply extend Keystone to build their own TEE with very low cost.
+
+
+## Status
+
+Keystone started as an academic project that helps researchers to build and test their ideas. 
+Now, Keystone is an **Incubation Stage** open-source project of Confidential Computing Consortium (CCC) under Linux Foundation. 
+
+Keystone helped many researchers focus on their creative ideas instead of building TEE by themselves from scratch.
+This resulted in many innovative research projects and publications, which have been pushing the technical advancement of TEEs.
+
+We are currently trying to make Keystone production-ready. You can find the latest general roadmap of Keystone [here](https://docs.google.com/document/d/1E-982564GvOcWzdCqM7TXCJV_7uWy2F8NiwglWorjFA/edit#heading=h.xa3pe84ubay4)
+
+Here are some ongoing and/or planned efforts towards the goal:
+
+* **Technical Improvements**: Make Keystone more usable and on par with existing industry solutions, including memory isolation improvement, better application and hardware support, and additional features.
+
+* **Parity with Industry Standards**: Make Keystone follow the industry standard. This includes standard cryptography, measured boot, and remote attestation protocols. 
+
+* **Hardware Integration**: Partner with RISC-V hardware designer/vendor to fully integrate with the hardware. This includes integration with hardware root-of-trust, memory encryption engine, and crypto accelerators.
 
 ## Documentation
 
@@ -37,33 +63,28 @@ Keystone doesn’t provide high-performance hardware-based memory encryption, as
 
 ## Team
 
-Active Contributors
+Contributors and Maintainers
 
 - Gregor Haas
 - Evgeny Pobachienko
 - Jakob Sorensen
-
-Past Contributors
-
 - Dayeol Lee
 - David Kholbrenner
 - Alex Thomas
+
+Past Contributors
+
 - Cathy Lu
 - Gui Andrade
 - Kevin Chen
 - Stephan Kaminsky
 
-Maintainers
+Advisors
 
-- Dayeol Lee
-- Gregor Haas
-
-Active Academic Advisors
-
-- David Kohlbrenner
-- Shweta Shinde
-- Krste Asanovic
-- Dawn Song
+- David Kohlbrenner @ UW
+- Shweta Shinde @ ETH Zurich
+- Krste Asanovic @ UC Berkeley
+- Dawn Song @ UC Berkeley
 
 ## License
 
