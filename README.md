@@ -7,7 +7,7 @@
 
 ## Introduction
 
-Keystone is an open-source project that builds trusted execution environments (TEEs) based on RISC-V. Its hardware-enforced and software-defined memory isolation enables trusted computing (a.k.a. confidential computing) with various threat models and functionalities. The implementation is platform-agnostic, making Keystone portable across different RISC-V platforms with minimal engineering efforts.
+Keystone is an open-source project that builds trusted execution environments (TEEs) for RISC-V systems. Its hardware-enforced and software-defined memory isolation enables trusted computing (a.k.a. confidential computing) with various threat models and functionalities. The implementation is platform-agnostic, making Keystone portable across different RISC-V platforms with minimal engineering efforts.
 
 
 ## Goals
