@@ -45,7 +45,7 @@ See [docs](http://docs.keystone-enclave.org) for getting started.
 
 ## Hardware Support
 
-Keystone requires standard RISC-V platform with *hardware root of trust*, which includes a secure key storage and measured boot. Currently, no hardware root of trust has been designed or manufactured specifically for Keystone. We hope to integrate Keystone with a standard root-of-trust when it becomes available.
+Keystone requires a standard RISC-V platform with a *hardware root of trust* --- including secure key storage and measured boot. Currently, no hardware root of trust has been designed or manufactured specifically for Keystone. If you have a open-source root-of-trust we'd love to integrate with it!
 
 As this project focuses more on the software stack and the toolchain, you can still run the full Keystone software stack on top of a few RISC-V platforms. See https://github.com/keystone-enclave/keystone/tree/master/sm/plat for the supported platforms. In general, `generic` should work with most of the standard RISC-V cores as long as they support:
 
