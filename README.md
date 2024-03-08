@@ -63,28 +63,25 @@ Keystone doesn’t provide high-performance hardware-based memory encryption, as
 
 ## Team
 
-Contributors and Maintainers
+Contributors
 
 - Gregor Haas
 - Evgeny Pobachienko
 - Jakob Sorensen
-- Dayeol Lee
 - David Kholbrenner
 - Alex Thomas
-
-Past Contributors
-
 - Cathy Lu
 - Gui Andrade
 - Kevin Chen
 - Stephan Kaminsky
+- Dayeol Lee (Maintainer)
 
 Advisors
 
 - David Kohlbrenner @ UW
 - Shweta Shinde @ ETH Zurich
-- Krste Asanovic @ UC Berkeley
-- Dawn Song @ UC Berkeley
+- Krste Asanovic @ UCB
+- Dawn Song @ UCB
 
 ## License
 
