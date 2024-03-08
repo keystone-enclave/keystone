@@ -55,11 +55,11 @@ As this project focuses more on the software stack and the toolchain, you can st
 
 For full security, platform architect needs to provide the followings
 
-- Entropy source (random number generator)
+- Entropy source (and ideally a platform specific random number generator)
 - Measured boot
 - Secure on-chip key storage
 
-Keystone doesn’t provide high-performance hardware-based memory encryption, as it requires a proprietary memory controller. Instead, it provides software-based encryption, which uses scratchpad SRAM (if any) to encrypt physical pages.
+Keystone doesn’t provide high-performance hardware-based memory encryption, as it requires a proprietary memory controller. Instead, it provides an example software-based encryption, which uses scratchpad SRAM (if any) to encrypt physical pages.
 
 ## Team
 
