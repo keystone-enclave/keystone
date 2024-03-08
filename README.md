@@ -16,7 +16,7 @@ Keystone is a free and open framework for architecting and deploying TEEs on RIS
 
 * **Enable TEE on (almost) all RISC-V processors**: Keystone aims to support as many RISC-V processor cores that follow RISC-V standard ISA and sub-ISAs as possible. This will help hardware designers and manufacturers to enable TEE with minimal efforts.
 
-* **Make TEE easy to customize depending on needs**: while providing effortless TEE enablement, Keystone also aims to allow various customization that depends on platform-specific features or non-standard sub-ISAs. We borrow the concept from software-defined network, where hardware platform provides *primitives* and the software leverages the primitives to implement specific functionalities or meet certain security requirements.
+* **Make TEE easy to customize depending on needs**: while providing simple TEE features, Keystone also aims to allow various customization that depends on platform-specific features or non-standard sub-ISAs. We borrow the concept from software-defined network, where hardware platform provides *primitives* and the software leverages the primitives to implement specific functionalities or meet security requirements.
 
 * **Reduce the cost of building TEE**: Keystone aims to reduce the cost of building TEE or TEE-based system. We hope to achieve it by reusing the implementation across multiple different platforms, reducing hardware integration cost, reducing verification cost, and integrating with existing software tools. We hope that anyone can simply extend Keystone to build their own TEE with very low cost.
 
