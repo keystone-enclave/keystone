@@ -14,7 +14,7 @@ Keystone is an open-source project that builds trusted execution environments (T
 
 Keystone is a free and open framework for architecting and deploying TEEs on RISC-V hardware platforms. The project's goals are:
 
-* **Enable TEE on (almost) all RISC-V processors**: Keystone aims to support as many RISC-V processor cores by following RISC-V standard ISA and sub-ISAs. This will help hardware designers and manufacturers to enable TEE with minimal efforts.
+* **Enable TEE on (almost) all RISC-V processors**: Keystone aims to support as many RISC-V processor cores that follow RISC-V standard ISA and sub-ISAs as possible. This will help hardware designers and manufacturers to enable TEE with minimal efforts.
 
 * **Make TEE easy to customize depending on needs**: while providing effortless TEE enablement, Keystone also aims to allow various customization that depends on platform-specific features or non-standard sub-ISAs. We borrow the concept from software-defined network, where hardware platform provides *primitives* and the software leverages the primitives to implement specific functionalities or meet certain security requirements.
 
