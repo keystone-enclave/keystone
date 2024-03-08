@@ -26,7 +26,7 @@ Keystone is a free and open framework for architecting and deploying TEEs on RIS
 Keystone started as an academic project that helps researchers to build and test their ideas. 
 Now, Keystone is an **Incubation Stage** open-source project of the Confidential Computing Consortium (CCC) under the Linux Foundation. 
 
-Keystone helped many researchers focus on their creative ideas instead of building TEE by themselves from scratch.
+Keystone has helped many researchers focus on their creative ideas instead of building TEE by themselves from scratch.
 This resulted in many innovative research projects and publications, which have been pushing the technical advancement of TEEs.
 
 We are currently trying to make Keystone production-ready. You can find the latest general roadmap of Keystone [here](https://docs.google.com/document/d/1E-982564GvOcWzdCqM7TXCJV_7uWy2F8NiwglWorjFA/edit#heading=h.xa3pe84ubay4)
