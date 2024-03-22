@@ -54,6 +54,7 @@ class Memory {
   size_t epmSize;
   uintptr_t epmFreeList;
   uintptr_t startAddr;
+  uintptr_t vaStartAddr;
 
   // Keystone Device runtime params
   uintptr_t runtimePhysAddr;

@@ -52,7 +52,7 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 
   if(load_parameters) {
     // passing parameters for a first run
-    regs->mepc = (uintptr_t) enclaves[eid].params.dram_base - 4; // regs->mepc will be +4 before sbi_ecall_handler return
+    regs->mepc = (uintptr_t) enclaves[eid].params.loader_base - 4; // regs->mepc will be +4 before sbi_ecall_handler return
     regs->mstatus = (1 << MSTATUS_MPP_SHIFT);
     // $a1: (PA) DRAM base,
     regs->a1 = (uintptr_t) enclaves[eid].params.dram_base;
@@ -275,7 +275,7 @@ static unsigned long copy_enclave_report(struct enclave* enclave,
 
 static int is_create_args_valid(struct keystone_sbi_create_t* args)
 {
-  uintptr_t epm_start, epm_end;
+  uintptr_t epm_size;
 
   /* printm("[create args info]: \r\n\tepm_addr: %llx\r\n\tepmsize: %llx\r\n\tutm_addr: %llx\r\n\tutmsize: %llx\r\n\truntime_addr: %llx\r\n\tuser_addr: %llx\r\n\tfree_addr: %llx\r\n", */
   /*        args->epm_region.paddr, */
@@ -298,25 +298,12 @@ static int is_create_args_valid(struct keystone_sbi_create_t* args)
       args->utm_region.paddr + args->utm_region.size)
     return 0;
 
-  epm_start = args->epm_region.paddr;
-  epm_end = args->epm_region.paddr + args->epm_region.size;
+  epm_size = args->epm_region.size;
 
-  // check if physical addresses are in the range
-  if (args->runtime_paddr < epm_start ||
-      args->runtime_paddr >= epm_end)
-    return 0;
-  if (args->user_paddr < epm_start ||
-      args->user_paddr >= epm_end)
-    return 0;
-  if (args->free_paddr < epm_start ||
-      args->free_paddr > epm_end)
-      // note: free_paddr == epm_end if there's no free memory
-    return 0;
-
-  // check the order of physical addresses
-  if (args->runtime_paddr > args->user_paddr)
-    return 0;
-  if (args->user_paddr > args->free_paddr)
+  // check if free_offset is in range
+  if (args->free_offset <= 0 ||
+      args->free_offset > epm_size)
+      // note: free_offset == epm_size if there's no free memory
     return 0;
   
   return 1;
@@ -355,7 +342,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
   struct runtime_params_t params;
   params.dram_base = base;
   params.dram_size = size;
-  params.free_base = create_args.free_paddr;
+  params.free_base = base + create_args.free_offset;
   params.untrusted_base = utbase;
   params.untrusted_size = utsize;
 

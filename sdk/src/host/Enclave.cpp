@@ -23,12 +23,12 @@ Enclave::~Enclave() {
 }
 
 uint64_t
-calculate_required_pages(ElfFile* elfFiles, size_t numElfFiles) {
+calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
   uint64_t req_pages = 0;
 
   for (int i = 0; i < numElfFiles; i++) {
-    ElfFile& elfFile = elfFiles[i];
-    req_pages += ceil(elfFile.getFileSize() / PAGE_SIZE);
+    ElfFile* elfFile = elfFiles[i];
+    req_pages += ceil(elfFile->getFileSize() / PAGE_SIZE);
   }
   /* FIXME: calculate the required number of pages for the page table.
    * We actually don't know how many page tables the enclave might need,
@@ -72,18 +72,6 @@ Enclave::prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr)
 
   pMemory->init(pDevice, physAddr, minPages);
   return true;
-}
-
-void
-Enclave::copyMem(uintptr_t dest_offset, uintptr_t src, size_t size) {
-  size_t bytesRemaining = size;
-  while (bytesRemaining > 0) {
-    size_t bytesToWrite = (bytesRemaining > PAGE_SIZE) ? PAGE_SIZE : bytesRemaining;
-    pMemory->writeMem(src, dest_offset, bytesToWrite);
-    src += bytesToWrite;
-    dest_offset += bytesToWrite;
-    bytesRemaining -= bytesToWrite;
-  }
 }
 
 void
@@ -194,34 +182,42 @@ Enclave::addAbsentResource(const char* name, uintptr_t type, const char* hash, b
 }
 
 uintptr_t
-Enclave::materializeResourceInfo(std::vector<resource_ptr_t> tempResidentResourcePtrs, ElfFile* elfFiles,
+Enclave::materializeResourceInfo(resource_ptr_t* residentResPtrs, ElfFile** elfFiles,
   std::vector<resource_info_t> resInfos) {
   for (uintptr_t i = 0; i < resInfos.size(); i++) {
     const resource_info_t& resInfo = resInfos[i];
-    ElfFile& elfFile = elfFiles[i];
-    tempResidentResourcePtrs.push_back({0});
-    resource_ptr_t& tempResourcePtr = tempResidentResourcePtrs.back();
-    strcpy(tempResourcePtr.name, resInfo.name);
-    tempResourcePtr.type = resInfo.type;
-    tempResourcePtr.offset = pMemory->getCurrentOffset();
-    tempResourcePtr.size = (uintptr_t) elfFile.getFileSize();
-    copyFile((uintptr_t) elfFile.getPtr(), elfFile.getFileSize()); // TODO(Evgeny): incorporate cur into inside
+    ElfFile* elfFile = elfFiles[i];
+    resource_ptr_t* resPtr = residentResPtrs + i;
+    strcpy(resPtr->name, resInfo.name);
+    resPtr->type = resInfo.type;
+    resPtr->offset = pMemory->getCurrentOffset();
+    resPtr->size = (uintptr_t) elfFile->getFileSize();
+    copyFile((uintptr_t) elfFile->getPtr(), elfFile->getFileSize());
   }
   return 0;
 }
 
 uintptr_t
-Enclave::finalize(uintptr_t alternatePhysAddr = 0) {
+Enclave::finalize(uintptr_t alternatePhysAddr) {
   // TODO(Evgeny): ensure this is not called twice, no adds after, etc.
   // TODO(Evgeny): how is alternatePhysAddr useful?
+  
+  pMemory = new PhysicalEnclaveMemory();
+  pDevice = new KeystoneDevice();
+
+  if (!pDevice->initDevice(params)) {
+    destroy();
+    return 1;
+    // return Error::DeviceInitFailure;
+  }
 
   // allocate enclave memory
-  std::vector<ElfFile> allElfFiles;
+  std::vector<ElfFile*> allElfFiles;
   for (const resource_info_t& res_info : identityResident) {
-    allElfFiles.push_back(ElfFile(res_info.filepath));
+    allElfFiles.push_back(new ElfFile(res_info.filepath));
   }
   for (const resource_info_t& res_info : resident) {
-    allElfFiles.push_back(ElfFile(res_info.filepath));
+    allElfFiles.push_back(new ElfFile(res_info.filepath));
   }
   size_t requiredPages = calculate_required_pages(&allElfFiles[0], allElfFiles.size());
   if (!prepareEnclaveMemory(requiredPages, alternatePhysAddr)) {
@@ -236,34 +232,33 @@ Enclave::finalize(uintptr_t alternatePhysAddr = 0) {
     // return Error::DeviceError;
   }
 
-  enclave_bundle_header_t ebundle_h;
+  uintptr_t va_epm = pMemory->vaStartAddr;
+  enclave_bundle_header_t* ebundle_h = (enclave_bundle_header_t*) va_epm;
 
   // space out the arrays
-  ebundle_h.runtime_arr = (uintptr_t) sizeof(enclave_bundle_header_t);
-  ebundle_h.id_res_arr = ebundle_h.runtime_arr + 0; // TODO(Evgeny)
-  ebundle_h.id_abs_arr = ebundle_h.id_res_arr 
+  ebundle_h->runtime_arr = (uintptr_t) sizeof(enclave_bundle_header_t);
+  ebundle_h->id_res_arr = ebundle_h->runtime_arr + 0; // TODO(Evgeny)
+  ebundle_h->id_abs_arr = ebundle_h->id_res_arr 
     + (uintptr_t) (sizeof(resource_ptr_t) * identityResident.size());
-  ebundle_h.res_arr = ebundle_h.id_abs_arr 
+  ebundle_h->res_arr = ebundle_h->id_abs_arr 
     + (uintptr_t) (sizeof(resource_hash_t) * identityAbsent.size());
-  ebundle_h.abs_arr = ebundle_h.res_arr 
+  ebundle_h->abs_arr = ebundle_h->res_arr 
     + (uintptr_t) (sizeof(resource_ptr_t) * resident.size());
-  ebundle_h.data = ebundle_h.abs_arr 
+  ebundle_h->data = ebundle_h->abs_arr 
     + (uintptr_t) (sizeof(resource_hash_t) * absent.size());
-  
-  copyMem(0, (uintptr_t) &ebundle_h, sizeof(ebundle_h));
+  pMemory->epmFreeList = ROUND_UP(ebundle_h->data, PAGE_BITS);
 
   // fill in the arrays & data
   // TODO(Evgeny): runtime values
-  copyMem(ebundle_h.id_abs_arr, (uintptr_t) &identityAbsent[0], sizeof(resource_hash_t) * identityAbsent.size());
-  copyMem(ebundle_h.abs_arr, (uintptr_t) &absent[0], sizeof(resource_hash_t) * absent.size());
-  std::vector<resource_ptr_t> tempIdentityResidentResourcePtrs;
-  materializeResourceInfo(tempIdentityResidentResourcePtrs, &allElfFiles[0], identityResident);
-  copyMem(ebundle_h.id_res_arr, (uintptr_t) &tempIdentityResidentResourcePtrs[0], sizeof(resource_hash_t) * tempIdentityResidentResourcePtrs.size());
-  std::vector<resource_ptr_t> tempResidentResourcePtrs;
-  materializeResourceInfo(tempResidentResourcePtrs, &allElfFiles[identityResident.size()], resident);
-  copyMem(ebundle_h.res_arr, (uintptr_t) &tempResidentResourcePtrs[0], sizeof(resource_hash_t) * tempResidentResourcePtrs.size());
+  memcpy((void*) (va_epm + ebundle_h->id_abs_arr), &identityAbsent[0], sizeof(resource_hash_t) * identityAbsent.size());
+  memcpy((void*) (va_epm + ebundle_h->abs_arr), &absent[0], sizeof(resource_hash_t) * absent.size());
+  materializeResourceInfo((resource_ptr_t*) (va_epm + ebundle_h->id_res_arr), &allElfFiles[0], identityResident);
+  // copyFile((uintptr_t) &tempIdentityResidentResourcePtrs[0], sizeof(resource_hash_t) * tempIdentityResidentResourcePtrs.size());
+  // std::vector<resource_ptr_t> tempResidentResourcePtrs;
+  // materializeResourceInfo(tempResidentResourcePtrs, &allElfFiles[identityResident.size()], resident);
+  // copyFile((uintptr_t) &tempResidentResourcePtrs[0], sizeof(resource_hash_t) * tempResidentResourcePtrs.size());
 
-  if (pDevice->finalize(pMemory->getCurrentEPMAddress()) != Error::Success) {
+  if (pDevice->finalize(pMemory->getCurrentOffset()) != Error::Success) {
     destroy();
     return 1;
     // return Error::DeviceError;
@@ -292,19 +287,11 @@ Enclave::init(
     uintptr_t alternatePhysAddr) {
   params = _params;
 
-  pMemory = new PhysicalEnclaveMemory();
-  pDevice = new KeystoneDevice();
-
-  if (!pDevice->initDevice(params)) {
-    destroy();
-    return Error::DeviceInitFailure;
-  }
-
   // TODO(Evgeny): errors
-  addResidentResource("eapp", 0, eapppath, true);
-  addResidentResource("runtime", 0, runtimepath, true);
   addResidentResource("loader", 0, loaderpath, true);
-  finalize();
+  addResidentResource("runtime", 0, runtimepath, true);
+  addResidentResource("eapp", 0, eapppath, true);
+  finalize(alternatePhysAddr);
 
   return Error::Success;
 }

@@ -60,11 +60,13 @@ struct keystone_sbi_pregion_t {
 struct keystone_sbi_create_t {
   struct keystone_sbi_pregion_t epm_region;
   struct keystone_sbi_pregion_t utm_region;
-  uintptr_t free_paddr;
+  uintptr_t free_offset;
 };
 
 // TODO(Evgeny): how do we ensure no compiler re-ordering?
 #define MSR_NAME_LEN 64
+// #include "../common/sha3.h" // TODO(Evgeny): fix the include
+#define MDSIZE 64
 typedef struct {
   char name[MSR_NAME_LEN];
   uintptr_t type;
@@ -77,6 +79,11 @@ typedef struct {
   uintptr_t offset;
   uintptr_t size;
 } resource_ptr_t;
+
+typedef struct {
+  char name[MSR_NAME_LEN];
+  uintptr_t val;
+} runtime_val_t;
 
 // TODO(Evgeny): a way to make this more convenient? should I make the pointers typed?
 typedef struct {

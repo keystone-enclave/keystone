@@ -15,6 +15,7 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <vector>
 
 #include "./common.h"
 extern "C" {
@@ -61,8 +62,8 @@ class Enclave {
   std::vector<resource_info_t> resident;
   std::vector<resource_hash_t> absent;
   void* enclave_base = 0;
-  uintptr_t materializeResourceInfo(std::vector<resource_ptr_t> tempResidentResourcePtrs,
-    ElfFile* allElfFiles, std::vector<resource_info_t> resInfos);
+  uintptr_t materializeResourceInfo(resource_ptr_t* residentResPtrs,
+    ElfFile** allElfFiles, std::vector<resource_info_t> resInfos);
 
  public:
   Enclave();
@@ -84,7 +85,7 @@ class Enclave {
   // TODO(Evgeny): switch to errors. Currently, 0 = success, 1 = error.
   uintptr_t addResidentResource(const char* name, uintptr_t type, const char* filepath, bool identity);
   uintptr_t addAbsentResource(const char* name, uintptr_t type, const char* hash, bool identity);
-  void finalize(uintptr_t alternatePhysAddr = 0);
+  uintptr_t finalize(uintptr_t alternatePhysAddr = 0);
 };
 
 uint64_t

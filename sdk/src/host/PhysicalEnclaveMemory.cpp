@@ -10,10 +10,12 @@ void
 PhysicalEnclaveMemory::init(
     KeystoneDevice* dev, uintptr_t phys_addr, size_t min_pages) {
   pDevice = dev;
+  assert(pDevice);
   // TODO(dayeol): need to set actual EPM size
   epmSize       = PAGE_SIZE * min_pages;
   epmFreeList   = 0; 
   startAddr 		= phys_addr;
+  vaStartAddr   = reinterpret_cast<uintptr_t>(pDevice->map(0, epmSize));
 }
 
 uintptr_t
@@ -51,8 +53,7 @@ PhysicalEnclaveMemory::readMem(uintptr_t src, size_t size) {
 void
 PhysicalEnclaveMemory::writeMem(uintptr_t src, uintptr_t offset, size_t size) {
   assert(pDevice);
-  void* va_dst = pDevice->map(offset, size);
-  memcpy(va_dst, reinterpret_cast<void*>(src), size);
+  memcpy(reinterpret_cast<void*>(vaStartAddr + offset), reinterpret_cast<void*>(src), size);
 }
 
 }  // namespace Keystone

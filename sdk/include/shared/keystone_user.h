@@ -39,7 +39,7 @@ struct keystone_ioctl_create_enclave {
   // host -> driver
   uintptr_t min_pages; // create
   uintptr_t utm_size; // utm_init
-  uintptr_t free_paddr; // finalize
+  uintptr_t free_offset; // finalize
 
   // driver -> host
   uintptr_t epm_paddr;

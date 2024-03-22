@@ -40,7 +40,7 @@ class KeystoneDevice {
   virtual bool initDevice(Params params);
   virtual Error create(uint64_t minPages);
   virtual uintptr_t initUTM(size_t size);
-  virtual Error finalize(uintptr_t free_paddr);
+  virtual Error finalize(uintptr_t free_offset);
   virtual Error destroy();
   virtual Error run(uintptr_t* ret);
   virtual Error resume(uintptr_t* ret);

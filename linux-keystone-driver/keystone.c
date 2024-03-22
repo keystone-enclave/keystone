@@ -41,7 +41,7 @@ int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
   struct utm* utm;
   struct epm* epm;
   struct enclave* enclave;
-  unsigned long vsize, psize;
+  unsigned long vsize, psize, offset;
   vaddr_t paddr;
   enclave = get_enclave_by_id((unsigned long) filp->private_data);
   if(!enclave) {
@@ -54,9 +54,11 @@ int keystone_mmap(struct file* filp, struct vm_area_struct *vma)
   vsize = vma->vm_end - vma->vm_start;
 
   if(enclave->is_init){
-    if (vsize > PAGE_SIZE)
+    psize = epm->size;
+    offset = vma->vm_pgoff << PAGE_SHIFT;
+    if (offset >= psize || vsize + offset > psize)
       return -EINVAL;
-    paddr = epm->pa + (vma->vm_pgoff << PAGE_SHIFT);
+    paddr = epm->pa + offset;
     remap_pfn_range(vma,
                     vma->vm_start,
                     paddr >> PAGE_SHIFT,

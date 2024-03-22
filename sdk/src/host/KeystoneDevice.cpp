@@ -39,10 +39,10 @@ KeystoneDevice::initUTM(size_t size) {
 }
 
 Error
-KeystoneDevice::finalize(uintptr_t free_paddr) {
+KeystoneDevice::finalize(uintptr_t free_offset) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid            = eid;
-  encl.free_paddr     = free_paddr;
+  encl.free_offset    = free_offset;
 
   if (ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl)) {
     perror("ioctl error");
