@@ -11,7 +11,6 @@ extern "C" {
 #include "shared/keystone_user.h"
 }
 #include "ElfFile.hpp"
-#include "hash_util.hpp"
 
 namespace Keystone {
 
@@ -23,12 +22,11 @@ Enclave::~Enclave() {
 }
 
 uint64_t
-calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
-  uint64_t req_pages = 0;
+Enclave::calculateEpmPages(std::vector<ElfFile*> allElfFiles, size_t freeMemSize) {
+  uint64_t pages = 0;
 
-  for (int i = 0; i < numElfFiles; i++) {
-    ElfFile* elfFile = elfFiles[i];
-    req_pages += ceil(elfFile->getFileSize() / PAGE_SIZE);
+  for (ElfFile* elfFile : allElfFiles) {
+    pages += PAGE_UP(elfFile->getFileSize()) / PAGE_SIZE;
   }
   /* FIXME: calculate the required number of pages for the page table.
    * We actually don't know how many page tables the enclave might need,
@@ -45,65 +43,18 @@ calculate_required_pages(ElfFile** elfFiles, size_t numElfFiles) {
 
   /* Add one page each for bss segments of runtime and eapp */ 
   // TODO: add space for stack?
-  req_pages += 16;
-  return req_pages;
-}
+  pages += 16;
 
-bool
-Enclave::prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr) {
   // FIXME: this will be deprecated with complete freemem support.
   // We just add freemem size for now.
-  uint64_t minPages;
-  minPages = ROUND_UP(params.getFreeMemSize(), PAGE_BITS) / PAGE_SIZE; 
-  minPages += requiredPages;
-
-  /* Call Enclave Driver */
-  if (pDevice->create(minPages) != Error::Success) {
-    return false;
-  }
-
-  /* We switch out the phys addr as needed */
-  uintptr_t physAddr;
-  if (alternatePhysAddr) {
-    physAddr = alternatePhysAddr;
-  } else {
-    physAddr = pDevice->getPhysAddr();
-  }
-
-  pMemory->init(pDevice, physAddr, minPages);
-  return true;
+  pages += PAGE_UP(freeMemSize) / PAGE_SIZE;
+  return pages;
 }
 
 void
-Enclave::copyFile(uintptr_t filePtr, size_t fileSize) {
-	uintptr_t startOffset = pMemory->getCurrentOffset(); 
-  size_t bytesRemaining = fileSize; 
-	
-	uintptr_t currOffset;
-	while (bytesRemaining > 0) {
-		currOffset = pMemory->getCurrentOffset(); 
-    pMemory->incrementEPMFreeList();
-
-		size_t bytesToWrite = (bytesRemaining > PAGE_SIZE) ? PAGE_SIZE : bytesRemaining;
-		size_t bytesWritten = fileSize - bytesRemaining;
-
-    // need 0 padding for hashes to be consistent,
-    // and to keep code aligned to be able to map page-wise without copying.
-    if (bytesToWrite < PAGE_SIZE) {
-      char page[PAGE_SIZE];
-      memset(page, 0, PAGE_SIZE);
-      memcpy(page, (const void*) (filePtr + bytesWritten), (size_t)(bytesToWrite));
-      pMemory->writeMem((uintptr_t) page, currOffset, PAGE_SIZE);
-    } else {
-		  pMemory->writeMem(filePtr + bytesWritten, currOffset, bytesToWrite);
-    }
-		bytesRemaining -= bytesToWrite;
-	}
-}
-
-static void measureElfFile(hash_ctx_t* hash_ctx, ElfFile* file) {
-  uintptr_t fptr = (uintptr_t) file->getPtr();
-  uintptr_t fend = fptr + (uintptr_t) file->getFileSize();
+Enclave::measureElfFile(hash_ctx_t* hash_ctx, ElfFile& file) {
+  uintptr_t fptr = (uintptr_t) file.getPtr();
+  uintptr_t fend = fptr + (uintptr_t) file.getFileSize();
 
   for (; fptr < fend; fptr += PAGE_SIZE) {
     if (fend - fptr < PAGE_SIZE) {
@@ -130,11 +81,11 @@ Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, cons
                           PAGE_UP(eapp->getFileSize()) };
   hash_extend(&hash_ctx, (void*) sizes, sizeof(sizes));
 
-  measureElfFile(&hash_ctx, loader);
+  measureElfFile(&hash_ctx, *loader);
   delete loader;
-  measureElfFile(&hash_ctx, runtime);
+  measureElfFile(&hash_ctx, *runtime);
   delete runtime;
-  measureElfFile(&hash_ctx, eapp);
+  measureElfFile(&hash_ctx, *eapp);
   delete eapp;
 
   hash_finalize(hash, &hash_ctx);
@@ -142,11 +93,10 @@ Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, cons
   return Error::Success;
 }
 
-// TODO(Evgeny): switch to errors. Currently, 0 = success, 1 = error.
-uintptr_t
+Error
 Enclave::addResidentResource(const char* name, uintptr_t type, const char* filepath, bool identity) {
   if (strlen(name) >= MSR_NAME_LEN) {
-    return 1;
+    return Error::BadArgument;
   }
   resource_info_t* resInfo = 0;
   if (identity) {
@@ -159,13 +109,13 @@ Enclave::addResidentResource(const char* name, uintptr_t type, const char* filep
   strcpy(resInfo->name, name);
   resInfo->type = type;
   resInfo->filepath = std::string(filepath);
-  return 0;
+  return Error::Success;
 }
 
-uintptr_t
+Error
 Enclave::addAbsentResource(const char* name, uintptr_t type, const char* hash, bool identity) {
   if (strlen(name) >= MSR_NAME_LEN) {
-    return 1;
+    return Error::BadArgument;
   }
   resource_hash_t* resHash = 0;
   if (identity) {
@@ -178,11 +128,29 @@ Enclave::addAbsentResource(const char* name, uintptr_t type, const char* hash, b
   strcpy(resHash->name, name);
   resHash->type = type;
   memcpy(resHash->hash, hash, MDSIZE);
-  return 0;
+  return Error::Success;
 }
 
 uintptr_t
-Enclave::materializeResourceInfo(resource_ptr_t* residentResPtrs, ElfFile** elfFiles,
+Enclave::useEpm(uintptr_t src, uintptr_t size) {
+  if (!size) {
+    return pDevice->getEpmVirtAddr() + epmFreeOffset;
+  }
+  uintptr_t allocatedOffset = epmFreeOffset;
+  epmFreeOffset = PAGE_UP(epmFreeOffset + size);
+  assert(epmFreeOffset > allocatedOffset); // no overflow
+  assert(epmFreeOffset <= pDevice->getEpmSize() - params.getFreeMemSize()); // free mem remaining
+  uintptr_t dest_va = pDevice->getEpmVirtAddr() + allocatedOffset;
+  if (src) {
+    memcpy((void*) dest_va, (void*) src, size);
+    uintptr_t end_va = dest_va + size;
+    memset((void*) end_va, 0, pDevice->getEpmVirtAddr() + epmFreeOffset - end_va);
+  }
+  return dest_va;
+}
+
+Error
+Enclave::materializeResourceInfo(resource_ptr_t residentResPtrs[], ElfFile* elfFiles[],
   std::vector<resource_info_t> resInfos) {
   for (uintptr_t i = 0; i < resInfos.size(); i++) {
     const resource_info_t& resInfo = resInfos[i];
@@ -190,50 +158,50 @@ Enclave::materializeResourceInfo(resource_ptr_t* residentResPtrs, ElfFile** elfF
     resource_ptr_t* resPtr = residentResPtrs + i;
     strcpy(resPtr->name, resInfo.name);
     resPtr->type = resInfo.type;
-    resPtr->offset = pMemory->getCurrentOffset();
+    resPtr->offset = useEpm((uintptr_t) elfFile->getPtr(), elfFile->getFileSize()) - pDevice->getEpmVirtAddr();
     resPtr->size = (uintptr_t) elfFile->getFileSize();
-    copyFile((uintptr_t) elfFile->getPtr(), elfFile->getFileSize());
   }
-  return 0;
+  return Error::Success;
 }
 
-uintptr_t
-Enclave::finalize(uintptr_t alternatePhysAddr) {
+Error
+Enclave::finalize() {
   // TODO(Evgeny): ensure this is not called twice, no adds after, etc.
-  // TODO(Evgeny): how is alternatePhysAddr useful?
+  // TODO(Evgeny): improve error messages
+  // TODO(Evgeny): add comments to functions
   
-  pMemory = new PhysicalEnclaveMemory();
+  Error err = Error::Success;
   pDevice = new KeystoneDevice();
+  epmFreeOffset = 0;
 
-  if (!pDevice->initDevice(params)) {
+  err = pDevice->initDevice(params);
+  if (err != Error::Success) {
     destroy();
-    return 1;
-    // return Error::DeviceInitFailure;
+    return err;
   }
 
   // allocate enclave memory
-  std::vector<ElfFile*> allElfFiles;
   for (const resource_info_t& res_info : identityResident) {
     allElfFiles.push_back(new ElfFile(res_info.filepath));
   }
   for (const resource_info_t& res_info : resident) {
     allElfFiles.push_back(new ElfFile(res_info.filepath));
   }
-  size_t requiredPages = calculate_required_pages(&allElfFiles[0], allElfFiles.size());
-  if (!prepareEnclaveMemory(requiredPages, alternatePhysAddr)) {
+  uint64_t requiredPages = calculateEpmPages(allElfFiles, params.getFreeMemSize());
+  err = pDevice->create(requiredPages);
+  if (err != Error::Success) {
     destroy();
-    return 1;
-    // return Error::DeviceError;
+    return err;
   }
-  if (!pMemory->allocUtm(params.getUntrustedSize())) {
+  err = pDevice->initUTM(params.getUntrustedSize());
+  if (err != Error::Success) {
     ERROR("failed to init untrusted memory - ioctl() failed");
     destroy();
-    return 1;
-    // return Error::DeviceError;
+    return err;
   }
 
-  uintptr_t va_epm = pMemory->vaStartAddr;
-  enclave_bundle_header_t* ebundle_h = (enclave_bundle_header_t*) va_epm;
+  uintptr_t ebase = useEpm(0, 0);
+  enclave_bundle_header_t* ebundle_h = (enclave_bundle_header_t*) ebase;
 
   // space out the arrays
   ebundle_h->runtime_arr = (uintptr_t) sizeof(enclave_bundle_header_t);
@@ -246,76 +214,68 @@ Enclave::finalize(uintptr_t alternatePhysAddr) {
     + (uintptr_t) (sizeof(resource_ptr_t) * resident.size());
   ebundle_h->data = ebundle_h->abs_arr 
     + (uintptr_t) (sizeof(resource_hash_t) * absent.size());
-  pMemory->epmFreeList = ROUND_UP(ebundle_h->data, PAGE_BITS);
+  useEpm(0, ebundle_h->data); // contiguous ebundle_h and arrays, then page padding
 
   // fill in the arrays & data
   // TODO(Evgeny): runtime values
-  memcpy((void*) (va_epm + ebundle_h->id_abs_arr), &identityAbsent[0], sizeof(resource_hash_t) * identityAbsent.size());
-  memcpy((void*) (va_epm + ebundle_h->abs_arr), &absent[0], sizeof(resource_hash_t) * absent.size());
-  materializeResourceInfo((resource_ptr_t*) (va_epm + ebundle_h->id_res_arr), &allElfFiles[0], identityResident);
-  // copyFile((uintptr_t) &tempIdentityResidentResourcePtrs[0], sizeof(resource_hash_t) * tempIdentityResidentResourcePtrs.size());
-  // std::vector<resource_ptr_t> tempResidentResourcePtrs;
-  // materializeResourceInfo(tempResidentResourcePtrs, &allElfFiles[identityResident.size()], resident);
-  // copyFile((uintptr_t) &tempResidentResourcePtrs[0], sizeof(resource_hash_t) * tempResidentResourcePtrs.size());
+  memcpy((void*) (ebase + ebundle_h->id_abs_arr), &identityAbsent[0], sizeof(resource_hash_t) * identityAbsent.size());
+  memcpy((void*) (ebase + ebundle_h->abs_arr), &absent[0], sizeof(resource_hash_t) * absent.size());
+  materializeResourceInfo((resource_ptr_t*) (ebase + ebundle_h->id_res_arr), &allElfFiles[0], identityResident);
+  materializeResourceInfo((resource_ptr_t*) (ebase + ebundle_h->res_arr), &allElfFiles[identityResident.size()], resident);
 
-  if (pDevice->finalize(pMemory->getCurrentOffset()) != Error::Success) {
+  // finalize creating enclave
+  err = pDevice->finalize(epmFreeOffset);
+  if (err != Error::Success) {
     destroy();
-    return 1;
-    // return Error::DeviceError;
+    return err;
   }
-  if (!mapUntrusted(params.getUntrustedSize())) {
+  err = pDevice->mapUtm();
+  if (err != Error::Success) {
     ERROR(
         "failed to finalize enclave - cannot obtain the untrusted buffer "
         "pointer \n");
     destroy();
-    return 1;
-    // return Error::DeviceMemoryMapError;
+    return err;
   }
 
-  // TODO(Evgeny): validate that loader, runtime, and eapp are present
-  return 0;
+  // TODO(Evgeny): validate that loader is present
+  return Error::Success;
 }
 
 Error
 Enclave::init(const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params) {
-  return this->init(eapppath, runtimepath, loaderpath, _params, (uintptr_t)0);
-}
-
-Error
-Enclave::init(
-    const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params,
-    uintptr_t alternatePhysAddr) {
   params = _params;
 
-  // TODO(Evgeny): errors
-  addResidentResource("loader", 0, loaderpath, true);
-  addResidentResource("runtime", 0, runtimepath, true);
-  addResidentResource("eapp", 0, eapppath, true);
-  finalize(alternatePhysAddr);
-
-  return Error::Success;
-}
-
-bool
-Enclave::mapUntrusted(size_t size) {
-  if (size == 0) {
-    return true;
+  Error err = Error::Success;
+  err = addResidentResource("loader", 0, loaderpath, true);
+  if (err != Error::Success) {
+    ERROR("failed to add loader with path %s", loaderpath);
+    return err;
   }
-
-  shared_buffer = pDevice->map(0, size);
-
-  if (shared_buffer == NULL) {
-    return false;
+  err = addResidentResource("runtime", 0, runtimepath, true);
+  if (err != Error::Success) {
+    ERROR("failed to add runtime with path %s", loaderpath);
+    return err;
   }
-
-  shared_buffer_size = size;
-
-  return true;
+  err = addResidentResource("eapp", 0, eapppath, true);
+  if (err != Error::Success) {
+    ERROR("failed to add eapp with path %s", loaderpath);
+    return err;
+  }
+  err = finalize();
+  
+  return err;
 }
 
 Error
 Enclave::destroy() {
-  return pDevice->destroy();
+  for (ElfFile* elfFile : allElfFiles) {
+    delete elfFile;
+  }
+  allElfFiles.clear();
+  Error err = pDevice->destroy();
+  delete pDevice;
+  return err;
 }
 
 Error
@@ -340,17 +300,14 @@ Enclave::run(uintptr_t* retval) {
 
 void*
 Enclave::getSharedBuffer() {
-  return shared_buffer;
+  assert(pDevice->getUtmVirtAddr());
+  return (void*) pDevice->getUtmVirtAddr();
 }
 
 size_t
 Enclave::getSharedBufferSize() {
-  return shared_buffer_size;
-}
-
-Memory*
-Enclave::getMemory() {
-  return pMemory;
+  assert(pDevice->getUtmSize());
+  return pDevice->getUtmSize();
 }
 
 Error

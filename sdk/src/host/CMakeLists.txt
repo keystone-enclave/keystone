@@ -11,9 +11,6 @@ set(SOURCE_FILES
   ElfFile.cpp
   KeystoneDevice.cpp
   Enclave.cpp
-  Memory.cpp
-  PhysicalEnclaveMemory.cpp
-  SimulatedEnclaveMemory.cpp
   )
 
 set(INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include/host)
