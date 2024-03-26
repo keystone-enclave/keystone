@@ -53,6 +53,8 @@ int measure_resident_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t star
   }
   resource_ptr_t* elem = (resource_ptr_t*) (ebase + start_off);
   resource_ptr_t* end = (resource_ptr_t*) (ebase + end_off);
+  hash_ctx file_ctx;
+  char file_hash[MDSIZE];
   for (; elem < end; elem++) {
       hash_extend(ctx, (char*) elem->name, sizeof(elem->name));
       hash_extend(ctx, (char*) &elem->type, sizeof(elem->type));
@@ -60,7 +62,11 @@ int measure_resident_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t star
         || elem->offset + elem->size > efilled_size) {
           return 1;
       }
-      hash_extend(ctx, (char*) (ebase + elem->offset), elem->size); // TODO(Evgeny): is > page ok?
+      // hash file
+      hash_init(&file_ctx);
+      hash_extend(&file_ctx, (char*) (ebase + elem->offset), elem->size);
+      hash_finalize(file_hash, &file_ctx);
+      hash_extend(ctx, file_hash, sizeof(file_hash));
   }
   return 0;
 }

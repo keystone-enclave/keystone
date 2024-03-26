@@ -34,7 +34,7 @@ typedef std::function<void(void*)> OcallFunc;
 class Enclave {
  private:
   Params params;
-  KeystoneDevice* pDevice;
+  KeystoneDevice pDevice;
   OcallFunc oFuncDispatch;
 
   // track added resources
@@ -59,11 +59,12 @@ class Enclave {
      and their pointers into the enclave bundle in epm. */
   Error materializeResourceInfo(resource_ptr_t residentResPtrs[],
     ElfFile* allElfFiles[], std::vector<resource_info_t> resInfos);
-  static void measureElfFile(hash_ctx_t* hash_ctx, ElfFile& file);
+  static Error measureResidentArr(hash_ctx_t& hash_ctx, std::vector<resource_info_t> resident);
 
  public:
   Enclave();
   ~Enclave();
+  Error measureSelf(char* hash);
   static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath);
   // shared buffer is utm
   void* getSharedBuffer();
