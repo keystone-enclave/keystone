@@ -93,20 +93,8 @@ Enclave::measureSelf(char* hash) {
 Error
 Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath) {
   Enclave enclave;
-  Error err = Error::Success;
-  err = enclave.addResidentResource("loader", 0, loaderpath, true);
+  Error err = enclave.addStandard(eapppath, runtimepath, loaderpath);
   if (err != Error::Success) {
-    ERROR("failed to add loader with path %s", loaderpath);
-    return err;
-  }
-  err = enclave.addResidentResource("runtime", 0, runtimepath, true);
-  if (err != Error::Success) {
-    ERROR("failed to add runtime with path %s", loaderpath);
-    return err;
-  }
-  err = enclave.addResidentResource("eapp", 0, eapppath, true);
-  if (err != Error::Success) {
-    ERROR("failed to add eapp with path %s", loaderpath);
     return err;
   }
   enclave.measureSelf(hash);
@@ -151,6 +139,27 @@ Enclave::addAbsentResource(const char* name, uintptr_t type, const char* hash, b
   return Error::Success;
 }
 
+Error
+Enclave::addStandard(const char* eapppath, const char* runtimepath, const char* loaderpath) {
+  Error err = Error::Success;
+  err = addResidentResource(MSR_START_FILENAME, 0, loaderpath, true);
+  if (err != Error::Success) {
+    ERROR("failed to add loader with path %s", loaderpath);
+    return err;
+  }
+  err = addResidentResource(MSR_RUNTIME_FILENAME, 0, runtimepath, true);
+  if (err != Error::Success) {
+    ERROR("failed to add runtime with path %s", loaderpath);
+    return err;
+  }
+  err = addResidentResource(MSR_EAPP_FILENAME, 0, eapppath, true);
+  if (err != Error::Success) {
+    ERROR("failed to add eapp with path %s", loaderpath);
+    return err;
+  }
+  return err;
+}
+
 uintptr_t
 Enclave::useEpm(uintptr_t src, uintptr_t size) {
   if (!size) {
@@ -189,6 +198,7 @@ Enclave::finalize() {
   // TODO(Evgeny): ensure this is not called twice, no adds after, etc.
   // TODO(Evgeny): improve error messages
   // TODO(Evgeny): add comments to functions
+  // TODO(Evgeny): sort by filename
   
   Error err = Error::Success;
   pDevice = KeystoneDevice();
@@ -266,25 +276,11 @@ Error
 Enclave::init(const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params) {
   params = _params;
 
-  Error err = Error::Success;
-  err = addResidentResource("loader", 0, loaderpath, true);
+  Error err = addStandard(eapppath, runtimepath, loaderpath);
   if (err != Error::Success) {
-    ERROR("failed to add loader with path %s", loaderpath);
     return err;
   }
-  err = addResidentResource("runtime", 0, runtimepath, true);
-  if (err != Error::Success) {
-    ERROR("failed to add runtime with path %s", loaderpath);
-    return err;
-  }
-  err = addResidentResource("eapp", 0, eapppath, true);
-  if (err != Error::Success) {
-    ERROR("failed to add eapp with path %s", loaderpath);
-    return err;
-  }
-  err = finalize();
-  
-  return err;
+  return finalize();
 }
 
 Error

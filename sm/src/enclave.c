@@ -52,22 +52,18 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 
   if(load_parameters) {
     // passing parameters for a first run
-    regs->mepc = (uintptr_t) enclaves[eid].params.loader_base - 4; // regs->mepc will be +4 before sbi_ecall_handler return
+    regs->mepc = (uintptr_t) enclaves[eid].params.start_pc - 4; // regs->mepc will be +4 before sbi_ecall_handler return
     regs->mstatus = (1 << MSTATUS_MPP_SHIFT);
     // $a1: (PA) DRAM base,
     regs->a1 = (uintptr_t) enclaves[eid].params.dram_base;
     // $a2: DRAM size,
     regs->a2 = (uintptr_t) enclaves[eid].params.dram_size;
-    // $a3: (PA) kernel location,
-    regs->a3 = (uintptr_t) enclaves[eid].params.runtime_base;
-    // $a4: (PA) user location,
-    regs->a4 = (uintptr_t) enclaves[eid].params.user_base;
-    // $a5: (PA) freemem location,
-    regs->a5 = (uintptr_t) enclaves[eid].params.free_base;
-    // $a6: (PA) utm base,
-    regs->a6 = (uintptr_t) enclaves[eid].params.untrusted_base;
-    // $a7: utm size
-    regs->a7 = (uintptr_t) enclaves[eid].params.untrusted_size;
+    // $a3: (PA) freemem base,
+    regs->a3 = (uintptr_t) enclaves[eid].params.free_base;
+    // $a4: (PA) utm base,
+    regs->a4 = (uintptr_t) enclaves[eid].params.untrusted_base;
+    // $a5: utm size
+    regs->a5 = (uintptr_t) enclaves[eid].params.untrusted_size;
 
     // enclave will only have physical addresses in the first run
     csr_write(satp, 0);

@@ -43,9 +43,7 @@
 struct runtime_params_t {
   uintptr_t dram_base;
   uintptr_t dram_size;
-  uintptr_t loader_base;
-  uintptr_t runtime_base;
-  uintptr_t user_base;
+  uintptr_t start_pc;
   uintptr_t free_base;
   uintptr_t untrusted_base;
   uintptr_t untrusted_size;
@@ -67,6 +65,9 @@ struct keystone_sbi_create_t {
 #define MSR_NAME_LEN 64
 // #include "../common/sha3.h" // TODO(Evgeny): fix the include
 #define MDSIZE 64
+#define MSR_START_FILENAME "__0start"
+#define MSR_RUNTIME_FILENAME "__1runtime"
+#define MSR_EAPP_FILENAME "__2eapp"
 typedef struct {
   char name[MSR_NAME_LEN];
   uintptr_t type;

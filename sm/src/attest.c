@@ -6,9 +6,9 @@
 #include <crypto.h>
 #include "page.h"
 #include <sbi/sbi_console.h>
-// #include <sbi/sbi_string.h>
+// #include <sbi/sbi_string.h> // TODO(Evgeny): try to replace manual strcmp
 
-int strcmp(const char* left, const char* right) {
+static int strcmp(const char* left, const char* right) {
   for (; *left != '\0'; left++, right++) {
     if (*left != *right) {
       return (*left - *right);
@@ -23,7 +23,7 @@ int strcmp(const char* left, const char* right) {
   return 0;
 }
 
-int validate_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, uintptr_t elem_size) {
+static int validate_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, uintptr_t elem_size) {
   uintptr_t start = ebase + start_off;
   uintptr_t end = ebase + end_off;
   if (start_off > end_off // bad loop condition
@@ -35,7 +35,7 @@ int validate_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, u
   return 0;
 }
 
-int measure_absent_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, hash_ctx* ctx) {
+static int measure_absent_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, hash_ctx* ctx) {
   if(validate_arr(ebase, efilled_size, start_off, end_off, sizeof(resource_hash_t))) {
     return 1;
   }
@@ -47,7 +47,7 @@ int measure_absent_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_
   return 0;
 }
 
-int measure_resident_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, hash_ctx* ctx) {
+static int measure_resident_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, hash_ctx* ctx) {
   if(validate_arr(ebase, efilled_size, start_off, end_off, sizeof(resource_ptr_t))) {
     return 1;
   }
@@ -71,7 +71,7 @@ int measure_resident_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t star
   return 0;
 }
 
-int measure_runtime_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, hash_ctx* ctx) {
+static int measure_runtime_arr(uintptr_t ebase, uintptr_t efilled_size, uintptr_t start_off, uintptr_t end_off, hash_ctx* ctx) {
   if(validate_arr(ebase, efilled_size, start_off, end_off, sizeof(runtime_val_t))) {
     return 1;
   }
@@ -111,16 +111,13 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
   resource_ptr_t* id_abs_arr = (resource_ptr_t*) (ebase + ebundle_h->id_abs_arr);
   // note: no overflow/ out of bounds possible because measure_resident_arr would have failed
   for (; id_res_resource < id_abs_arr; id_res_resource++) {
-    if (strcmp(id_res_resource->name, "loader") == 0) {
-      enclave->params.loader_base = ebase + id_res_resource->offset;
-    } else if (strcmp(id_res_resource->name, "runtime") == 0) {
-      enclave->params.runtime_base = ebase + id_res_resource->offset;
-    } else if (strcmp(id_res_resource->name, "eapp") == 0) {
-      enclave->params.user_base = ebase + id_res_resource->offset;
+    if (strcmp(id_res_resource->name, MSR_START_FILENAME) == 0) {
+      enclave->params.start_pc = ebase + id_res_resource->offset;
+      break;
     }
   }
-  if (!enclave->params.loader_base || !enclave->params.runtime_base || !enclave->params.user_base) {
-    return SBI_ERR_SM_ENCLAVE_ILLEGAL_PTE; // TODO(Evgeny): incorrect error type
+  if (!enclave->params.start_pc) {
+    return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
   }
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;

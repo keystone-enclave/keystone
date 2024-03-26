@@ -49,6 +49,7 @@ class Enclave {
   std::vector<resource_hash_t> absent;
   std::vector<ElfFile*> allElfFiles;
 
+  Error addStandard(const char* eapppath, const char* runtimepath, const char* loaderpath);
   static uint64_t calculateEpmPages(std::vector<ElfFile*> allElfFiles, size_t freeMemSize);
   // linearly advances as we write to epm
   uintptr_t epmFreeOffset;
