@@ -56,6 +56,7 @@ int keystone_finalize_enclave(unsigned long arg)
   /* SBI Call */
   create_args.epm_region.paddr = enclave->epm->pa;
   create_args.epm_region.size = enclave->epm->size;
+  create_args.free_offset = enclp->free_offset;
 
   utm = enclave->utm;
 
@@ -67,16 +68,10 @@ int keystone_finalize_enclave(unsigned long arg)
     create_args.utm_region.size = 0;
   }
 
-  // physical addresses for runtime, user, and freemem
-  create_args.runtime_paddr = enclp->runtime_paddr;
-  create_args.user_paddr = enclp->user_paddr;
-  create_args.free_paddr = enclp->free_paddr;
-  create_args.free_requested = enclp->free_requested;
-
   ret = sbi_sm_create_enclave(&create_args);
 
   if (ret.error) {
-    keystone_err("keystone_create_enclave: SBI call failed with error code %ld\n", ret.error);
+    keystone_err("keystone_finalize_enclave: SBI create call failed with error code %ld\n", ret.error);
     goto error_destroy_enclave;
   }
 
