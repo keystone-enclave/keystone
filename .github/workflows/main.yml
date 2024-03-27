@@ -240,14 +240,14 @@ jobs:
 
       - name: Restore buildroot packages
         uses: actions/cache/restore@v4
-        if: ${{ steps.check-caches.outputs.BUILDROOT_DL_UPDATE == 'true' }}
+        if: ${{ needs.build.outputs.buildroot-dl-matched-key && steps.check-caches.outputs.BUILDROOT_DL_UPDATE == 'true' }}
         with:
           path: dl.tar
           key: ${{ needs.build.outputs.buildroot-dl-matched-key }}
 
       - name: Restore ccache
         uses: actions/cache/restore@v4
-        if: ${{ steps.check-caches.outputs.BUILDROOT_CCACHE_UPDATE == 'true' }}
+        if: ${{ needs.build.outputs.ccache-matched-key && steps.check-caches.outputs.BUILDROOT_CCACHE_UPDATE == 'true' }}
         with:
           path: ccache.tar.xz
           key: ${{ needs.build.outputs.ccache-matched-key }}
