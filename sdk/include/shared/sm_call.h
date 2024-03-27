@@ -68,6 +68,8 @@ struct keystone_sbi_create_t {
 #define MSR_START_FILENAME "__0start"
 #define MSR_RUNTIME_FILENAME "__1runtime"
 #define MSR_EAPP_FILENAME "__2eapp"
+#define MSR_FREE_MEM "free_mem"
+#define MSR_UT_MEM "ut_mem"
 typedef struct {
   char name[MSR_NAME_LEN];
   uintptr_t type;
@@ -89,7 +91,7 @@ typedef struct {
 // TODO(Evgeny): a way to make this more convenient? should I make the pointers typed?
 typedef struct {
   uintptr_t runtime_arr, id_res_arr,
-    id_abs_arr, res_arr, abs_arr, data;
+    id_abs_arr, res_arr, abs_arr, pad_start;
   // resource_value_t runtime_values[];
   // resource_ptr_t identity_resident[];
   // resource_hash_t identity_absent[];

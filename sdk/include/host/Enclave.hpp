@@ -66,7 +66,7 @@ class Enclave {
   Enclave();
   ~Enclave();
   Error measureSelf(char* hash);
-  static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath);
+  static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath, Params params);
   // shared buffer is utm
   void* getSharedBuffer();
   size_t getSharedBufferSize();

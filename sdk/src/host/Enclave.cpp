@@ -76,6 +76,12 @@ Enclave::measureSelf(char* hash) {
   hash_ctx_t hash_ctx;
   hash_init(&hash_ctx);
 
+  // runtime vals
+  runtime_val_t runtime_val = {.name = MSR_FREE_MEM, .val = params.getFreeMemSize()};
+  hash_extend(&hash_ctx, &runtime_val, sizeof(runtime_val));
+  runtime_val = {.name = MSR_UT_MEM, .val = params.getUntrustedSize()};
+  hash_extend(&hash_ctx, &runtime_val, sizeof(runtime_val));
+
   measureResidentArr(hash_ctx, identityResident);
   for (resource_hash_t& rHash : identityAbsent) {
     hash_extend(&hash_ctx, &rHash, sizeof(rHash));
@@ -91,8 +97,9 @@ Enclave::measureSelf(char* hash) {
 }
 
 Error
-Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath) {
+Enclave::measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath, Params params) {
   Enclave enclave;
+  enclave.params = params;
   Error err = enclave.addStandard(eapppath, runtimepath, loaderpath);
   if (err != Error::Success) {
     return err;
@@ -235,19 +242,22 @@ Enclave::finalize() {
 
   // space out the arrays
   ebundle_h->runtime_arr = (uintptr_t) sizeof(enclave_bundle_header_t);
-  ebundle_h->id_res_arr = ebundle_h->runtime_arr + 0; // TODO(Evgeny)
+  ebundle_h->id_res_arr = ebundle_h->runtime_arr
+    + (uintptr_t) (sizeof(runtime_val_t) * 2);
   ebundle_h->id_abs_arr = ebundle_h->id_res_arr 
     + (uintptr_t) (sizeof(resource_ptr_t) * identityResident.size());
   ebundle_h->res_arr = ebundle_h->id_abs_arr 
     + (uintptr_t) (sizeof(resource_hash_t) * identityAbsent.size());
   ebundle_h->abs_arr = ebundle_h->res_arr 
     + (uintptr_t) (sizeof(resource_ptr_t) * resident.size());
-  ebundle_h->data = ebundle_h->abs_arr 
+  ebundle_h->pad_start = ebundle_h->abs_arr 
     + (uintptr_t) (sizeof(resource_hash_t) * absent.size());
-  useEpm(0, ebundle_h->data); // contiguous ebundle_h and arrays, then page padding
+  useEpm(0, ebundle_h->pad_start); // contiguous ebundle_h and arrays, then page padding
 
   // fill in the arrays & data
-  // TODO(Evgeny): runtime values
+  runtime_val_t* runtime_arr = (runtime_val_t*) (ebase + ebundle_h->runtime_arr);
+  runtime_arr[0] = {.name = MSR_FREE_MEM, .val = params.getFreeMemSize()};
+  runtime_arr[1] = {.name = MSR_UT_MEM, .val = params.getUntrustedSize()};
   memcpy((void*) (ebase + ebundle_h->id_abs_arr), &identityAbsent[0], sizeof(resource_hash_t) * identityAbsent.size());
   memcpy((void*) (ebase + ebundle_h->abs_arr), &absent[0], sizeof(resource_hash_t) * absent.size());
   materializeResourceInfo((resource_ptr_t*) (ebase + ebundle_h->id_res_arr), &allElfFiles[0], identityResident);

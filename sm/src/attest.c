@@ -88,8 +88,6 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
   enclave_bundle_header_t* ebundle_h = (enclave_bundle_header_t*) ebase;
   uintptr_t efilled_size = enclave->params.free_base - ebase;
 
-  // TODO(Evgeny): ensure untrusted and free sizes
-
   // hash the epm contents
   hash_ctx ctx;
   hash_init(&ctx);
@@ -98,16 +96,30 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
   fail_state |= measure_resident_arr(ebase, efilled_size, ebundle_h->id_res_arr, ebundle_h->id_abs_arr, &ctx);
   fail_state |= measure_absent_arr(ebase, efilled_size, ebundle_h->id_abs_arr, ebundle_h->res_arr, &ctx);
   hash_ctx ctx_copy = ctx;
-  hash_finalize(enclave->identity, &ctx_copy);
   fail_state |= measure_resident_arr(ebase, efilled_size, ebundle_h->res_arr, ebundle_h->abs_arr, &ctx);
-  fail_state |= measure_absent_arr(ebase, efilled_size, ebundle_h->abs_arr, ebundle_h->data, &ctx);
+  fail_state |= measure_absent_arr(ebase, efilled_size, ebundle_h->abs_arr, ebundle_h->pad_start, &ctx);
   if (fail_state) {
       return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
   }
-  hash_finalize(enclave->hash, &ctx);
 
-  // TODO(Evgeny): move discovery into enclave
+  // confirm the runtime value claims
+  runtime_val_t* runtime_val = (runtime_val_t*) (ebase + ebundle_h->runtime_arr);
   resource_ptr_t* id_res_resource = (resource_ptr_t*) (ebase + ebundle_h->id_res_arr);
+  for (; runtime_val < (runtime_val_t*) id_res_resource; runtime_val++) {
+    if (strcmp(runtime_val->name, MSR_FREE_MEM) == 0) {
+      if (runtime_val->val > enclave->params.dram_size - enclave->params.free_base) {
+        return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+      }
+    } else if (strcmp(runtime_val->name, MSR_UT_MEM) == 0) {
+      if (runtime_val->val != enclave->params.untrusted_size) {
+        return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+      }
+    } else {
+      // claim unsupported by platform
+      return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
+    }
+  }
+
   resource_ptr_t* id_abs_arr = (resource_ptr_t*) (ebase + ebundle_h->id_abs_arr);
   // note: no overflow/ out of bounds possible because measure_resident_arr would have failed
   for (; id_res_resource < id_abs_arr; id_res_resource++) {
@@ -119,6 +131,9 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
   if (!enclave->params.start_pc) {
     return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
   }
+
+  hash_finalize(enclave->identity, &ctx_copy); // TODO(Evgeny): use identity for sealing key derivation
+  hash_finalize(enclave->hash, &ctx);
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }
