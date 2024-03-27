@@ -132,7 +132,7 @@ unsigned long validate_and_hash_enclave(struct enclave* enclave){
     return SBI_ERR_SM_ENCLAVE_ILLEGAL_ARGUMENT;
   }
 
-  hash_finalize(enclave->identity, &ctx_copy); // TODO(Evgeny): use identity for sealing key derivation
+  hash_finalize(enclave->identity, &ctx_copy);
   hash_finalize(enclave->hash, &ctx);
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;

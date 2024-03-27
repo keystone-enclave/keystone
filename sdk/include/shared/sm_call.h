@@ -63,7 +63,7 @@ struct keystone_sbi_create_t {
 
 // TODO(Evgeny): how do we ensure no compiler re-ordering?
 #define MSR_NAME_LEN 64
-// #include "../common/sha3.h" // TODO(Evgeny): fix the include
+// #include "common/sha3.h" // TODO(Evgeny): fix the include
 #define MDSIZE 64
 #define MSR_START_FILENAME "__0start"
 #define MSR_RUNTIME_FILENAME "__1runtime"
@@ -88,7 +88,7 @@ typedef struct {
   uintptr_t val;
 } runtime_val_t;
 
-// TODO(Evgeny): a way to make this more convenient? should I make the pointers typed?
+// TODO(Evgeny): a way to make this more convenient?
 typedef struct {
   uintptr_t runtime_arr, id_res_arr,
     id_abs_arr, res_arr, abs_arr, pad_start;
@@ -97,7 +97,7 @@ typedef struct {
   // resource_hash_t identity_absent[];
   // resource_ptr_t resident[];
   // resource_hash_t absent[];
-  // byte data[];
+  // byte pad_start[];
 } enclave_bundle_header_t;
 
 #endif  // __SM_CALL_H__

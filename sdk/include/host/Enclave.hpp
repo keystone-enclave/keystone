@@ -49,7 +49,6 @@ class Enclave {
   std::vector<resource_hash_t> absent;
   std::vector<ElfFile*> allElfFiles;
 
-  Error addStandard(const char* eapppath, const char* runtimepath, const char* loaderpath);
   static uint64_t calculateEpmPages(std::vector<ElfFile*> allElfFiles, size_t freeMemSize);
   // linearly advances as we write to epm
   uintptr_t epmFreeOffset;
@@ -61,6 +60,9 @@ class Enclave {
   Error materializeResourceInfo(resource_ptr_t residentResPtrs[],
     ElfFile* allElfFiles[], std::vector<resource_info_t> resInfos);
   static Error measureResidentArr(hash_ctx_t& hash_ctx, std::vector<resource_info_t> resident);
+  static bool resourceInfoCompare(const resource_info_t& a, const resource_info_t& b);
+  static bool resourceHashCompare(const resource_hash_t& a, const resource_hash_t& b);
+  void sortAllResources();
 
  public:
   Enclave();
@@ -72,14 +74,15 @@ class Enclave {
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   Error registerOcallDispatch(OcallFunc func);
-  Error finalize(const char* filepath, const char* runtime, const char* loaderpath, Params _params);
   Error destroy();
   Error run(uintptr_t* ret = nullptr);
 
   Error addResidentResource(const char* name, uintptr_t type, const char* filepath, bool identity);
   Error addAbsentResource(const char* name, uintptr_t type, const char* hash, bool identity);
+  Error addStandard(const char* eapppath, const char* runtimepath, const char* loaderpath);
   // Call after adding all needed resources to fully create the enclave.
   Error finalize();
+  Error finalize(const char* filepath, const char* runtime, const char* loaderpath, Params _params);
 };
 
 }  // namespace Keystone

@@ -650,7 +650,7 @@ unsigned long get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
   /* derive key */
   ret = sm_derive_sealing_key((unsigned char *)key_struct->key,
                               (const unsigned char *)key_ident, key_ident_size,
-                              (const unsigned char *)enclaves[eid].hash);
+                              (const unsigned char *)enclaves[eid].identity);
   if (ret)
     return SBI_ERR_SM_ENCLAVE_UNKNOWN_ERROR;
 

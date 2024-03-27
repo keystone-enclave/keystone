@@ -76,6 +76,8 @@ Enclave::measureResidentArr(hash_ctx_t& hash_ctx, std::vector<resource_info_t> r
 
 Error
 Enclave::measureSelf(char* hash) {
+  sortAllResources();
+
   hash_ctx_t hash_ctx;
   hash_init(&hash_ctx);
 
@@ -203,12 +205,40 @@ Enclave::materializeResourceInfo(resource_ptr_t residentResPtrs[], ElfFile* elfF
   return Error::Success;
 }
 
+bool
+Enclave::resourceInfoCompare(const resource_info_t& a, const resource_info_t& b) {
+  return strcmp(a.name, b.name) < 0;
+}
+
+bool
+Enclave::resourceHashCompare(const resource_hash_t& a, const resource_hash_t& b) {
+  return strcmp(a.name, b.name) < 0;
+}
+
+void
+Enclave::sortAllResources() {
+  // sort by filename
+  std::sort(identityResident.begin(), identityResident.end(), resourceInfoCompare);
+  std::sort(identityAbsent.begin(), identityAbsent.end(), resourceHashCompare);
+  std::sort(resident.begin(), resident.end(), resourceInfoCompare);
+  std::sort(absent.begin(), absent.end(), resourceHashCompare);
+}
+
 Error
 Enclave::finalize() {
-  // TODO(Evgeny): ensure this is not called twice, no adds after, etc.
-  // TODO(Evgeny): improve error messages
-  // TODO(Evgeny): add comments to functions
-  // TODO(Evgeny): sort by filename
+  sortAllResources();
+
+  // confirm start executable is present
+  bool startExecutablePresent = false;
+  for (const resource_info_t& resInfo : identityResident) {
+    if (strcmp(resInfo.name, MSR_START_FILENAME) == 0) {
+      startExecutablePresent = true;
+      break;
+    }
+  }
+  if (!startExecutablePresent) {
+    return Error::BadArgument;
+  }
   
   Error err = Error::Success;
   pDevice = KeystoneDevice();
@@ -221,11 +251,11 @@ Enclave::finalize() {
   }
 
   // allocate enclave memory
-  for (const resource_info_t& res_info : identityResident) {
-    allElfFiles.push_back(new ElfFile(res_info.filepath));
+  for (const resource_info_t& resInfo : identityResident) {
+    allElfFiles.push_back(new ElfFile(resInfo.filepath));
   }
-  for (const resource_info_t& res_info : resident) {
-    allElfFiles.push_back(new ElfFile(res_info.filepath));
+  for (const resource_info_t& resInfo : resident) {
+    allElfFiles.push_back(new ElfFile(resInfo.filepath));
   }
   uint64_t requiredPages = calculateEpmPages(allElfFiles, params.getFreeMemSize());
   err = pDevice.create(requiredPages);
@@ -257,7 +287,7 @@ Enclave::finalize() {
     + (uintptr_t) (sizeof(resource_hash_t) * absent.size());
   useEpm(0, ebundle_h->pad_start); // contiguous ebundle_h and arrays, then page padding
 
-  // fill in the arrays & data
+  // fill in the arrays and copy files
   runtime_val_t* runtime_arr = (runtime_val_t*) (ebase + ebundle_h->runtime_arr);
   runtime_arr[0] = {.name = MSR_FREE_MEM, .val = params.getFreeMemSize()};
   runtime_arr[1] = {.name = MSR_UT_MEM, .val = params.getUntrustedSize()};
@@ -275,13 +305,12 @@ Enclave::finalize() {
   err = pDevice.mapUtm();
   if (err != Error::Success) {
     ERROR(
-        "failed to finalize enclave - cannot obtain the untrusted buffer "
+        "failed to finalize enclave - cannot map the untrusted buffer "
         "pointer \n");
     destroy();
     return err;
   }
 
-  // TODO(Evgeny): validate that loader is present
   return Error::Success;
 }
 
