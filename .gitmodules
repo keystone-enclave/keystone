@@ -10,3 +10,6 @@
 [submodule "overlays/microchip"]
 	path = overlays/microchip
 	url = https://github.com/linux4microchip/buildroot-external-microchip
+[submodule "scripts/ci/utils/relay_ft245r"]
+	path = scripts/ci/utils/relay_ft245r
+	url = https://github.com/vpatron/relay_ft245r

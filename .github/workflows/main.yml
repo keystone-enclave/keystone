@@ -222,7 +222,7 @@ jobs:
   # Combine cache directories to save space
   combine-caches:
     runs-on: ubuntu-latest
-    if: ${{ always() }}
+    if: success() || failure()
     needs: build
     steps:
       - name: Install dependencies
@@ -378,6 +378,6 @@ jobs:
     uses: ./.github/workflows/build-runtime.yml
 
   # System tests, which are run for simulatable and self-hostable platforms
-  test-system:
+  test-system-functionality:
     needs: build
     uses: ./.github/workflows/test-system.yml

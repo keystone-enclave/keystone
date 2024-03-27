@@ -3,19 +3,27 @@ on:
   workflow_call:
 
 jobs:
-  test-generic:
-    runs-on: ubuntu-latest
+  test-system:
+    runs-on: ${{ matrix.platform == 'generic' && 'ubuntu-latest' || matrix.platform }}
+    environment: ${{ matrix.platform != 'generic' && 'track' || null }}
     strategy:
       matrix:
-        platform: [generic]
+        platform: [generic, mpfs] #cva6]
         bits: [32, 64]
+        exclude:
+          # mpfs is not 32 bit
+          - platform: mpfs
+            bits: 32
 
     steps:
-    # We don't need submodules here since Keystone is a monorepo!
     - name: Checkout Keystone
       uses: actions/checkout@v4
       with:
-        submodules: 'false'
+        submodules: 'true'
+        sparse-checkout: |
+          .
+          scripts/
+          mkutils/
 
     - name: Restore build directory
       uses: actions/download-artifact@v4
@@ -26,32 +34,52 @@ jobs:
     - name: Decompress build directory
       run: cat build.tar.xz | xz -d -T0 | tar -xf -
 
-    - name: Test Keystone system
+    - name: Flash and check firmware
+      env:
+        KEYSTONE_PLATFORM: ${{ matrix.platform }}
+        KEYSTONE_BITS: ${{ matrix.bits }}
+        LOGFILE: fw-program.log
       run: |
-        # Fix permissions on the key
-        chmod 600 build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build/target/root/.ssh/id-rsa
+        if [[ -f scripts/ci/plat/${{ matrix.platform }}/flash-firmware.sh ]]; then
+          scripts/ci/plat/${{ matrix.platform }}/flash-firmware.sh
+        fi
 
-        # Launch QEMU
-        export KEYSTONE_PLATFORM=${{ matrix.platform }}
-        export KEYSTONE_BITS=${{ matrix.bits }}
-        export QEMU_PORT=$(( RANDOM + 1024 ))
-        export LD_LIBRARY_PATH=build-${{ matrix.platform }}${{ matrix.bits }}/buildroot.build/host/lib
-        screen -L -dmS qemu bash -c "make run 2>&1 | tee run.log"
+    - name: Upload firmware programming log
+      if: ${{ matrix.platform != 'generic' && failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-keystone-${{ matrix.platform }}${{ matrix.bits }}-fw-program.log
+        path: fw-program.log
 
-        # TODO: check for connectivity instead of sleeping
-        sleep 60
+    - name: Flash and check OS
+      env:
+        KEYSTONE_PLATFORM: ${{ matrix.platform }}
+        KEYSTONE_BITS: ${{ matrix.bits }}
+        LOGFILE: os-program.log
+      run: |
+        if [[ -f scripts/ci/plat/${{ matrix.platform }}/flash-os.sh ]]; then
+          scripts/ci/plat/${{ matrix.platform }}/flash-os.sh
+        fi
 
-        export CALL_LOGFILE=cmd.log
-        echo "" > $CALL_LOGFILE
+    - name: Upload OS programming log
+      if: ${{ matrix.platform != 'generic' && failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-keystone-${{ matrix.platform }}${{ matrix.bits }}-os-program.log
+        path: os-program.log
 
-        KEYSTONE_COMMAND="modprobe keystone-driver" make call
-        KEYSTONE_COMMAND="/usr/share/keystone/examples/tests.ke" make call
-        KEYSTONE_COMMAND="/usr/share/keystone/examples/attestor.ke" make call
-        KEYSTONE_COMMAND="poweroff" make call
+    - name: Test Keystone system
+      env:
+        KEYSTONE_PLATFORM: ${{ matrix.platform }}
+        KEYSTONE_BITS: ${{ matrix.bits }}
+        LOGFILE: run.log
+        CMD_LOGFILE: cmd.log
+      run: |
+        scripts/ci/plat/${{ matrix.platform }}/test.sh
 
     - name: Check expected
       run: |
-        [[ -z $(diff cmd.log scripts/ci/expected.log) ]]
+        [[ -z $(diff cmd.log scripts/ci/plat/${{ matrix.platform }}/expected.log) ]]
 
     - name: Upload run log
       if: failure()
@@ -65,149 +93,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-keystone-${{ matrix.platform }}${{ matrix.bits }}-cmd.log
-        path: cmd.log
-
-  test-mpfs:
-    runs-on: [self-hosted, mpfs]
-    environment: track
-    steps:
-    # We don't need submodules here since Keystone is a monorepo!
-    - name: Checkout Keystone
-      uses: actions/checkout@v4
-      with:
-        submodules: 'false'
-
-    - name: Restore build directory
-      uses: actions/download-artifact@v4
-      with:
-        name: keystone-mpfs64-builddir
-        path: .
-
-    - name: Decompress build directory
-      run: cat build.tar.xz | xz -d -T0 | tar -xf -
-
-    # Test the firmware, first by flashing it
-    - name: Flash HSS
-      env:
-        POWER_ON_CMD: ${{ vars.POWER_ON_CMD_MPFS }}
-        POWER_OFF_CMD: ${{ vars.POWER_OFF_CMD_MPFS }}
-        SC_INSTALL_DIR: ${{ vars.SC_INSTALL_DIR }}
-      run: |
-        $POWER_ON_CMD
-        export FPGENPROG=$(which fpgenprog)
-        make -C build-mpfs64/buildroot.build/build/hss-v2023.06 program 2>/dev/null >program.log
-        $POWER_OFF_CMD
-
-        # Check if we succeeded
-        [[ ! -z $(cat program.log | grep "mpfsBootmodeProgrammer completed successfully") ]]
-
-    - name: Upload HSS program log
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-keystone-mpfs64-prog-hss.log
-        path: program.log
-
-    # And then verifying that we can actually get to the command line
-    - name: Check HSS ok
-      env:
-        POWER_ON_CMD: ${{ vars.POWER_ON_CMD_MPFS }}
-        POWER_OFF_CMD: ${{ vars.POWER_OFF_CMD_MPFS }}
-        FIND_TTY_CMD: ${{ vars.FIND_TTY_CMD }}
-      run: |
-        # Collect serial output
-        TTYDEV=$($FIND_TTY_CMD 0)
-        screen -L -dmS mpfs-tty bash -c "stty raw -echo 115200 < $TTYDEV ; cat $TTYDEV > run-hss.log"
-        $POWER_ON_CMD ; sleep 30 ; $POWER_OFF_CMD
-        screen -XS mpfs-tty quit
-
-        # At least the first hart should have started
-        [[ ! -z $(cat run-hss.log | sed -e 's/\x1b\[[0-9;]*m//g' | grep "u54 State Change:  \[Running\]") ]]
-
-    - name: Upload HSS run log
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-keystone-mpfs64-run-hss.log
-        path: run-hss.log
-
-    # Now we also need to flash the disk. First, get into usbdmsc
-    - name: Flash OS
-      env:
-        POWER_ON_CMD: ${{ vars.POWER_ON_CMD_MPFS }}
-        POWER_OFF_CMD: ${{ vars.POWER_OFF_CMD_MPFS }}
-        FIND_TTY_CMD: ${{ vars.FIND_TTY_CMD }}
-      run: |
-        # Wait for the board to come up a bit. We'll hammer it with serial
-        # input to ensure that we halt the boot at HSS
-        TTYDEV=$($FIND_TTY_CMD 0)
-        $POWER_ON_CMD
-        NOW=$(date +%s)
-        stty raw -echo 115200 < "$TTYDEV"
-        while [[ $(( $(date +%s) - $NOW )) -lt 10 ]]; do echo 'a' > "$TTYDEV" ; done
-
-        echo "" > "$TTYDEV"
-        echo "usbdmsc" > "$TTYDEV"
-
-        # Wait a bit for the USB to connect then flash
-        sleep 10
-        FOUND_DEVICE=""
-        for d in /dev/sd? ; do
-          if [[ ! -z $(udevadm info --query=all -n "$d" | grep -i polarfire) ]]; then
-            FOUND_DEVICE="yes"
-            dd if=build-mpfs64/buildroot.build/images/sdcard.img of="$d" bs=4M oflag=direct
-            break
-          fi
-        done
-
-        $POWER_OFF_CMD
-        [[ ! -z "$FOUND_DEVICE" ]]
-
-    - name: Test Keystone system
-      env:
-        POWER_ON_CMD: ${{ vars.POWER_ON_CMD_MPFS }}
-        POWER_OFF_CMD: ${{ vars.POWER_OFF_CMD_MPFS }}
-        FIND_TTY_CMD: ${{ vars.FIND_TTY_CMD }}
-        KEYSTONE_IP: ${{ vars.BOARD_IP_MPFS }}
-      run: |
-        # Fix permissions on the key
-        chmod 600 build-mpfs64/buildroot.build/target/root/.ssh/id-rsa
-
-        # Start the board
-        TTYDEV=$($FIND_TTY_CMD 1)
-        export KEYSTONE_PLATFORM=mpfs
-        export KEYSTONE_BITS=64
-        screen -L -dmS mpfs-tty bash -c "stty raw -echo 115200 < $TTYDEV ; cat $TTYDEV > run.log"
-        $POWER_ON_CMD
-
-        # TODO: check for connectivity instead of sleeping
-        sleep 60
-
-        export CALL_LOGFILE=cmd.log
-        echo "" > $CALL_LOGFILE
-
-        KEYSTONE_COMMAND="modprobe keystone-driver" make call
-        KEYSTONE_COMMAND="/usr/share/keystone/examples/tests.ke" make call
-        # Todo: attestation does not yet work in mpfs
-        #KEYSTONE_COMMAND="/usr/share/keystone/examples/attestor.ke" make call
-
-        $POWER_OFF_CMD
-        screen -XS mpfs-tty quit
-
-    - name: Check expected
-      run: |
-        [[ -z $(diff cmd.log scripts/ci/expected-mpfs.log) ]]
-
-    - name: Upload run log
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-keystone-mpfs64-run.log
-        path: run.log
-
-    - name: Upload cmd log
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-keystone-mpfs64-cmd.log
         path: cmd.log

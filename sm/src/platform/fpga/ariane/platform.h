@@ -13,7 +13,7 @@ struct platform_enclave_data{
 
 // SM configuration
 #define SMM_BASE                0x80000000
-#define SMM_SIZE                0x200000
+#define SMM_SIZE                0x100000
 
 // PMP configuration
 #define PMP_N_REG               8
