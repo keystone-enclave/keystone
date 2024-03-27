@@ -17,6 +17,9 @@ namespace Keystone {
 Enclave::Enclave() {
 }
 
+Enclave::Enclave(Params params) : params(params) {
+}
+
 Enclave::~Enclave() {
   assert(destroy() == Error::Success);
 }
@@ -283,7 +286,7 @@ Enclave::finalize() {
 }
 
 Error
-Enclave::init(const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params) {
+Enclave::finalize(const char* eapppath, const char* runtimepath, const char* loaderpath, Params _params) {
   params = _params;
 
   Error err = addStandard(eapppath, runtimepath, loaderpath);

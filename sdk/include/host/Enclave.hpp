@@ -64,6 +64,7 @@ class Enclave {
 
  public:
   Enclave();
+  Enclave(Params params);
   ~Enclave();
   Error measureSelf(char* hash);
   static Error measure(char* hash, const char* eapppath, const char* runtimepath, const char* loaderpath, Params params);
@@ -71,8 +72,7 @@ class Enclave {
   void* getSharedBuffer();
   size_t getSharedBufferSize();
   Error registerOcallDispatch(OcallFunc func);
-  // TODO(Evgeny): rename init to something else. finalize?
-  Error init(const char* filepath, const char* runtime, const char* loaderpath, Params parameters);
+  Error finalize(const char* filepath, const char* runtime, const char* loaderpath, Params _params);
   Error destroy();
   Error run(uintptr_t* ret = nullptr);
 
