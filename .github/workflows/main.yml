@@ -64,6 +64,25 @@ jobs:
         rm -rf buildroot/dl*
         rm -rf buildroot-ccache*
 
+    - name: Clear storage space
+      run: |
+        # Miscellaneous chunky packages
+        sudo apt remove -y 'dotnet*' 'temurin*' '*llvm*' '*libclang*' '*mono*' \
+          'google-cloud-cli' 'azure-cli' 'powershell' 'msbuild' \
+          'microsoft-edge-stable' 'google-chrome-stable' 'firefox' 'nginx-core'
+
+        sudo apt autoremove
+        dpkg --list |grep "^rc" | cut -d " " -f 3 | xargs sudo dpkg --purge
+
+        # 8.4G: Contains a bunch of cached tools (none of which we use)
+        sudo rm -rf /opt/hostedtoolcache
+
+        # 10.1G: Android and javascript
+        sudo rm -rf /usr/local/lib/{android,node_modules}
+
+        # 1.9G: Powrshell documentation??
+        sudo rm -rf /usr/local/share/powershell
+
     # Install build dependencies
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y cpio rsync bc makeself
