@@ -59,7 +59,6 @@ class Enclave {
      and their pointers into the enclave bundle in epm. */
   Error materializeResourceInfo(resource_ptr_t residentResPtrs[],
     ElfFile* allElfFiles[], std::vector<resource_info_t> resInfos);
-  static Error measureResidentArr(hash_ctx_t& hash_ctx, std::vector<resource_info_t> resident);
   static bool resourceInfoCompare(const resource_info_t& a, const resource_info_t& b);
   static bool resourceHashCompare(const resource_hash_t& a, const resource_hash_t& b);
   void sortAllResources();
@@ -83,6 +82,24 @@ class Enclave {
   // Call after adding all needed resources to fully create the enclave.
   Error finalize();
   Error finalize(const char* filepath, const char* runtime, const char* loaderpath, Params _params);
+
+  class Checkpoint {
+   public:
+    Checkpoint(Params& params, std::vector<resource_hash_t>& identityResident,
+      std::vector<resource_hash_t>& identityAbsent, std::vector<resource_hash_t>& resident,
+      std::vector<resource_hash_t>& absent) : params(params), identityResident(identityResident),
+      resident(resident), absent(absent) {};
+    Params params;
+    std::vector<resource_hash_t> identityResident;
+    std::vector<resource_hash_t> identityAbsent;
+    std::vector<resource_hash_t> resident;
+    std::vector<resource_hash_t> absent;
+    void measurement(char* hash);
+    void sortAllResources();
+   private:
+    void assertSorted();
+  };
+  Checkpoint makeCheckpoint();
 };
 
 }  // namespace Keystone

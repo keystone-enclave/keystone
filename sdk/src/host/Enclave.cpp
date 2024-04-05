@@ -54,50 +54,41 @@ Enclave::calculateEpmPages(std::vector<ElfFile*> allElfFiles, size_t freeMemSize
   return pages;
 }
 
-Error
-Enclave::measureResidentArr(hash_ctx_t& hash_ctx, std::vector<resource_info_t> resident) {
-  char sub_hash[MDSIZE];
+Enclave::Checkpoint
+Enclave::makeCheckpoint() {
+  std::vector<resource_hash_t> emptyVec;
+  Checkpoint checkpoint(params, emptyVec, identityAbsent, emptyVec, absent);
+
+  // hash files to convert resource_info_t to resource_hash_t
   hash_ctx_t file_hash_ctx;
-  for (resource_info_t& rInfo : resident) {
-    hash_extend(&hash_ctx, &rInfo.name, sizeof(rInfo.name));
-    hash_extend(&hash_ctx, &rInfo.type, sizeof(rInfo.type));
+  for (int i = 0; i < 2; i++) {
+    std::vector<resource_info_t>* vectIn = &identityResident;
+    std::vector<resource_hash_t>* vectOut = &checkpoint.identityResident;
+    if (i == 1) {
+      vectIn = &resident;
+      vectOut = &checkpoint.resident;
+    }
+    for (resource_info_t& rInfo : *vectIn) {
+      vectOut->push_back({});
+      resource_hash_t& rOut = vectOut->back();
+      strcpy(rOut.name, rInfo.name);
+      rOut.type = rInfo.type;
 
-    // hash file
-    ElfFile elfFile(rInfo.filepath);
-    hash_init(&file_hash_ctx);
-    hash_extend(&file_hash_ctx, elfFile.getPtr(), elfFile.getFileSize());
-    hash_finalize(sub_hash, &file_hash_ctx);
-
-    // hash(file hash)
-    hash_extend(&hash_ctx, sub_hash, sizeof(sub_hash));
+      // hash file
+      ElfFile elfFile(rInfo.filepath);
+      hash_init(&file_hash_ctx);
+      hash_extend(&file_hash_ctx, elfFile.getPtr(), elfFile.getFileSize());
+      hash_finalize(rOut.hash, &file_hash_ctx);
+    }
   }
-  return Error::Success;
+
+  checkpoint.sortAllResources();
+  return checkpoint;
 }
 
 Error
 Enclave::measureSelf(char* hash) {
-  sortAllResources();
-
-  hash_ctx_t hash_ctx;
-  hash_init(&hash_ctx);
-
-  // runtime vals
-  runtime_val_t runtime_val = {.name = MSR_FREE_MEM, .val = params.getFreeMemSize()};
-  hash_extend(&hash_ctx, &runtime_val, sizeof(runtime_val));
-  runtime_val = {.name = MSR_UT_MEM, .val = params.getUntrustedSize()};
-  hash_extend(&hash_ctx, &runtime_val, sizeof(runtime_val));
-
-  measureResidentArr(hash_ctx, identityResident);
-  for (resource_hash_t& rHash : identityAbsent) {
-    hash_extend(&hash_ctx, &rHash, sizeof(rHash));
-  }
-  measureResidentArr(hash_ctx, resident);
-  for (resource_hash_t& rHash : absent) {
-    hash_extend(&hash_ctx, &rHash, sizeof(rHash));
-  }
-
-  hash_finalize(hash, &hash_ctx);
-  
+  makeCheckpoint().measurement(hash);
   return Error::Success;
 }
 
@@ -370,6 +361,46 @@ Error
 Enclave::registerOcallDispatch(OcallFunc func) {
   oFuncDispatch = func;
   return Error::Success;
+}
+
+void
+Enclave::Checkpoint::measurement(char* hash) {
+  assertSorted();
+  hash_ctx_t hash_ctx;
+  hash_init(&hash_ctx);
+
+  // runtime vals
+  runtime_val_t runtimeVal = {.name = MSR_FREE_MEM, .val = params.getFreeMemSize()};
+  hash_extend(&hash_ctx, &runtimeVal, sizeof(runtimeVal));
+  runtimeVal = {.name = MSR_UT_MEM, .val = params.getUntrustedSize()};
+  hash_extend(&hash_ctx, &runtimeVal, sizeof(runtimeVal));
+  
+  // resources
+  for (const std::vector<resource_hash_t>& vect : {identityResident, identityAbsent, resident, absent}) {
+    for (const resource_hash_t& rHash : vect) {
+      hash_extend(&hash_ctx, &rHash, sizeof(rHash));
+    }
+  }
+
+  hash_finalize(hash, &hash_ctx);
+}
+
+void
+Enclave::Checkpoint::sortAllResources() {
+  // sort by filename
+  std::sort(identityResident.begin(), identityResident.end(), resourceHashCompare);
+  std::sort(identityAbsent.begin(), identityAbsent.end(), resourceHashCompare);
+  std::sort(resident.begin(), resident.end(), resourceHashCompare);
+  std::sort(absent.begin(), absent.end(), resourceHashCompare);
+}
+
+void
+Enclave::Checkpoint::assertSorted() {
+  for (const std::vector<resource_hash_t>& vect : {identityResident, identityAbsent, resident, absent}) {
+    for (int i = 1; i < vect.size(); i++) {
+      assert(resourceHashCompare(vect[i-1], vect[i]));
+    }
+  }
 }
 
 }  // namespace Keystone
