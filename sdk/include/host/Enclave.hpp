@@ -36,6 +36,7 @@ class Enclave {
   Params params;
   KeystoneDevice pDevice;
   OcallFunc oFuncDispatch;
+  Enclave* deltaEnclave = nullptr;
 
   // track added resources
   typedef struct {
@@ -85,10 +86,11 @@ class Enclave {
 
   class Checkpoint {
    public:
+    Checkpoint() {}
     Checkpoint(Params& params, std::vector<resource_hash_t>& identityResident,
       std::vector<resource_hash_t>& identityAbsent, std::vector<resource_hash_t>& resident,
       std::vector<resource_hash_t>& absent) : params(params), identityResident(identityResident),
-      resident(resident), absent(absent) {};
+      resident(resident), absent(absent) {}
     Params params;
     std::vector<resource_hash_t> identityResident;
     std::vector<resource_hash_t> identityAbsent;
@@ -96,9 +98,12 @@ class Enclave {
     std::vector<resource_hash_t> absent;
     void measurement(char* hash);
     void sortAllResources();
+    void addFromCheckpoint(Checkpoint other);
    private:
     void assertSorted();
   };
+  void startDelta();
+  Checkpoint makeDeltaCheckpoint();
   Checkpoint makeCheckpoint();
 };
 

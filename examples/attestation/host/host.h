@@ -56,31 +56,31 @@ class SharedBuffer {
 // and the remote verifier.
 class Host {
 public:
-Host(
+  Host(
     const Keystone::Params& params, const std::string& eapp_file,
-    const std::string& rt_file, const std::string& ld_file)
-    : params_(params), eapp_file_(eapp_file), rt_file_(rt_file),
-      ld_file_(ld_file) {}
-    // Given a random nonce from the remote verifier, this method leaves
-    // it for the enclave to fetch, and returns the attestation report
-    // from the enclave to the verifier.
-    Report run(const std::string& nonce);
+    const std::string& rt_file, const std::string& ld_file) {
+      enclave = Keystone::Enclave(params);
+      enclave.addStandard(
+        eapp_file.c_str(), rt_file.c_str(), ld_file.c_str());
+    }
+  // Given a random nonce from the remote verifier, this method leaves
+  // it for the enclave to fetch, and returns the attestation report
+  // from the enclave to the verifier.
+  Report run(const std::string& nonce);
+  Keystone::Enclave& getEnclave() { return enclave; }
 
 private:
- struct RunData {
-   SharedBuffer shared_buffer;
-   const std::string& nonce;
-   std::unique_ptr<Report> report;
- };
- static void dispatch_ocall(RunData& run_data);
- static void print_buffer_wrapper(RunData& run_data);
- static void print_value_wrapper(RunData& run_data);
- static void copy_report_wrapper(RunData& run_data);
- static void get_host_string_wrapper(RunData& run_data);
- const Keystone::Params params_;
- const std::string eapp_file_;
- const std::string rt_file_;
- const std::string ld_file_;
+  struct RunData {
+    SharedBuffer shared_buffer;
+    const std::string& nonce;
+    std::unique_ptr<Report> report;
+  };
+  static void dispatch_ocall(RunData& run_data);
+  static void print_buffer_wrapper(RunData& run_data);
+  static void print_value_wrapper(RunData& run_data);
+  static void copy_report_wrapper(RunData& run_data);
+  static void get_host_string_wrapper(RunData& run_data);
+  Keystone::Enclave enclave;
 };
 
 #endif /* _ATTESTATION_HOST_H_ */

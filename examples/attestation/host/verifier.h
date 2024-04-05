@@ -22,12 +22,13 @@ class Verifier {
  public:
   Verifier(
       const Keystone::Params& params, const std::string& eapp_file,
-      const std::string& rt_file, const std::string& ld_file, const std::string& sm_bin_file)
-      : params_(params),
-        eapp_file_(eapp_file),
-        rt_file_(rt_file),
-        ld_file_(ld_file),
-        sm_bin_file_(sm_bin_file) {}
+      const std::string& rt_file, const std::string& ld_file,
+      const std::string& sm_bin_file)
+      : params(params),
+        eapp_file(eapp_file),
+        rt_file(rt_file),
+        ld_file(ld_file),
+        sm_bin_file(sm_bin_file) {}
   // This method generates a random nonce, invokes the run() method
   // of the Host, and verifies that the returned attestation report
   // is valid.
@@ -49,17 +50,19 @@ class Verifier {
   static void verify_data(Report& report, const std::string& nonce);
 
   // Verifies the hashes and the nonce in the attestation report.
-  void verify_report(Report& report, const std::string& nonce);
+  void verify_report(Report& report, const std::string& nonce,
+      Keystone::Enclave::Checkpoint checkpoint_additions);
 
   // Computes the hash of the expected EApp running in the enclave.
-  void compute_expected_enclave_hash(byte* expected_enclave_hash);
+  void compute_expected_enclave_hash(byte* expected_enclave_hash,
+      Keystone::Enclave::Checkpoint checkpoint_additions);
 
   // Computes the hash of the expected Security Monitor (SM).
   void compute_expected_sm_hash(byte* expected_sm_hash);
 
-  const Keystone::Params params_;
-  const std::string eapp_file_;
-  const std::string rt_file_;
-  const std::string ld_file_;
-  const std::string sm_bin_file_;
+  const Keystone::Params params;
+  const std::string eapp_file;
+  const std::string rt_file;
+  const std::string ld_file;
+  const std::string sm_bin_file;
 };

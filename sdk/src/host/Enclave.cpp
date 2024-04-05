@@ -86,6 +86,18 @@ Enclave::makeCheckpoint() {
   return checkpoint;
 }
 
+void
+Enclave::startDelta() {
+  assert(deltaEnclave == nullptr);
+  deltaEnclave = new Enclave();
+}
+
+Enclave::Checkpoint
+Enclave::makeDeltaCheckpoint() {
+  assert(deltaEnclave);
+  return deltaEnclave->makeCheckpoint();
+}
+
 Error
 Enclave::measureSelf(char* hash) {
   makeCheckpoint().measurement(hash);
@@ -109,6 +121,9 @@ Enclave::addResidentResource(const char* name, uintptr_t type, const char* filep
   if (strlen(name) >= MSR_NAME_LEN) {
     return Error::BadArgument;
   }
+  if (deltaEnclave) {
+    deltaEnclave->addResidentResource(name, type, filepath, identity);
+  }
   resource_info_t* resInfo = 0;
   if (identity) {
     identityResident.push_back({});
@@ -127,6 +142,9 @@ Error
 Enclave::addAbsentResource(const char* name, uintptr_t type, const char* hash, bool identity) {
   if (strlen(name) >= MSR_NAME_LEN) {
     return Error::BadArgument;
+  }
+  if (deltaEnclave) {
+    deltaEnclave->addAbsentResource(name, type, hash, identity);
   }
   resource_hash_t* resHash = 0;
   if (identity) {
@@ -322,6 +340,10 @@ Enclave::destroy() {
     delete elfFile;
   }
   allElfFiles.clear();
+  if (deltaEnclave) {
+    delete deltaEnclave;
+    deltaEnclave = nullptr;
+  }
   return pDevice.destroy();
 }
 
@@ -401,6 +423,19 @@ Enclave::Checkpoint::assertSorted() {
       assert(resourceHashCompare(vect[i-1], vect[i]));
     }
   }
+}
+
+void
+Enclave::Checkpoint::addFromCheckpoint(Checkpoint other) {
+  auto add_resources = [](std::vector<resource_hash_t>& base,
+    std::vector<resource_hash_t>& additions) -> void {
+      base.insert(base.end(), additions.begin(), additions.end());
+  };
+  add_resources(identityResident, other.identityResident);
+  add_resources(identityAbsent, other.identityAbsent);
+  add_resources(resident, other.resident);
+  add_resources(absent, other.absent);
+  sortAllResources();
 }
 
 }  // namespace Keystone

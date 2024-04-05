@@ -23,17 +23,49 @@
 void
 Verifier::run() {
   const std::string nonce = std::to_string(random() % 0x100000000);
-  Host host(params_, eapp_file_, rt_file_, ld_file_);
+  Host host(params, eapp_file, rt_file, ld_file);
+  Keystone::Enclave::Checkpoint checkpoint_additions;
+  {
+    // create a random file, not used by enclave
+    const std::string extra_filename = "extra_file.txt";
+    // random contents
+    std::string extra_contents;
+    int extra_contents_length = 10;
+    extra_contents.reserve(extra_contents_length);
+    for (int i = 0; i < extra_contents_length; i++) {
+      extra_contents += (char) (random() % 128);
+    }
+    // write to file
+    FILE* extra_file = fopen(extra_filename.c_str(), "w");
+    if (!extra_file)
+      throw std::runtime_error(
+          "Error opening extra_file: " + extra_filename + ", " +
+          std::strerror(errno));
+    if (fwrite(extra_contents.data(), 1, extra_contents.size(), extra_file)
+        != extra_contents.size()) {
+      throw std::runtime_error(
+          "Error writing extra_file: " + extra_filename + ", " +
+          std::strerror(errno));
+      }
+    fclose(extra_file);
+    // use Keystone::Enclave to create the delta, and add to existing enclave
+    Keystone::Enclave& enclave = host.getEnclave();
+    enclave.startDelta();
+    enclave.addResidentResource(extra_filename.c_str(), 0,
+      extra_filename.c_str(), 1);
+    checkpoint_additions = enclave.makeDeltaCheckpoint();
+  }
   Report report = host.run(nonce);
-  verify_report(report, nonce);
+  verify_report(report, nonce, checkpoint_additions);
 }
 
 void
-Verifier::verify_report(Report& report, const std::string& nonce) {
+Verifier::verify_report(Report& report, const std::string& nonce,
+    Keystone::Enclave::Checkpoint checkpoint_additions) {
   debug_verify(report, _sanctum_dev_public_key);
 
   byte expected_enclave_hash[MDSIZE];
-  compute_expected_enclave_hash(expected_enclave_hash);
+  compute_expected_enclave_hash(expected_enclave_hash, checkpoint_additions);
 
   byte expected_sm_hash[MDSIZE];
   compute_expected_sm_hash(expected_sm_hash);
@@ -77,8 +109,17 @@ Verifier::verify_data(Report& report, const std::string& nonce) {
 }
 
 void
-Verifier::compute_expected_enclave_hash(byte* expected_enclave_hash) {
-  Keystone::Enclave::measure((char*) expected_enclave_hash, eapp_file_.c_str(), rt_file_.c_str(), ld_file_.c_str(), params_);
+Verifier::compute_expected_enclave_hash(byte* expected_enclave_hash,
+    Keystone::Enclave::Checkpoint checkpoint_additions) {
+  // create base
+  Keystone::Enclave enclave(params);
+  enclave.addStandard(
+    eapp_file.c_str(), rt_file.c_str(), ld_file.c_str());
+  Keystone::Enclave::Checkpoint checkpoint = enclave.makeCheckpoint();
+  // add additions & calculate hash
+  // in reality, would also validate checkpoint_additions is allowed
+  checkpoint.addFromCheckpoint(checkpoint_additions);
+  checkpoint.measurement((char *) expected_enclave_hash);
 }
 
 void
@@ -92,14 +133,14 @@ Verifier::compute_expected_sm_hash(byte* expected_sm_hash) {
 
   {
     // Reading SM content from file.
-    FILE* sm_bin = fopen(sm_bin_file_.c_str(), "rb");
+    FILE* sm_bin = fopen(sm_bin_file.c_str(), "rb");
     if (!sm_bin)
       throw std::runtime_error(
-          "Error opening sm_bin_file_: " + sm_bin_file_ + ", " +
+          "Error opening sm_bin_file: " + sm_bin_file + ", " +
           std::strerror(errno));
     if (fread(sm_content.data(), 1, sm_content.size(), sm_bin) <= 0)
       throw std::runtime_error(
-          "Error reading sm_bin_file_: " + sm_bin_file_ + ", " +
+          "Error reading sm_bin_file: " + sm_bin_file + ", " +
           std::strerror(errno));
     fclose(sm_bin);
   }
