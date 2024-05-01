@@ -6,6 +6,7 @@
 #include <linux/kernel.h>
 #include "keystone.h"
 #include <linux/dma-mapping.h>
+#include <linux/version.h>
 
 /* Destroy all memory associated with an EPM */
 int epm_destroy(struct epm* epm) {
@@ -40,7 +41,11 @@ int epm_init(struct epm* epm, unsigned int min_pages)
   count = 0x1 << order;
 
   /* prevent kernel from complaining about an invalid argument */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 8, 0)
+  if (order < MAX_PAGE_ORDER)
+#else
   if (order < MAX_ORDER)
+#endif
     epm_vaddr = (vaddr_t) __get_free_pages(GFP_HIGHUSER, order);
 
 #ifdef CONFIG_CMA
