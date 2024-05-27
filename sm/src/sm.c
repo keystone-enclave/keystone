@@ -5,6 +5,7 @@
 #include "ipi.h"
 #include "sm.h"
 #include "pmp.h"
+#include "lpmp.h"
 #include <crypto.h>
 #include "enclave.h"
 #include "platform-hook.h"
@@ -16,7 +17,6 @@
 #include <sbi/sbi_hart.h>
 
 static int sm_init_done = 0;
-static int sm_region_id = 0, os_region_id = 0;
 
 #ifndef TARGET_PLATFORM_HEADER
 #error "SM requires a defined platform to build"
@@ -124,17 +124,6 @@ void sm_init(bool cold_boot)
 
     sbi_ecall_register_extension(&ecall_keystone_enclave);
 
-    sm_region_id = smm_init();
-    if(sm_region_id < 0) {
-      sbi_printf("[SM] intolerable error - failed to initialize SM memory");
-      sbi_hart_hang();
-    }
-
-    os_region_id = osm_init();
-    if(os_region_id < 0) {
-      sbi_printf("[SM] intolerable error - failed to initialize OS memory");
-      sbi_hart_hang();
-    }
 
     if (platform_init_global_once() != SBI_ERR_SM_ENCLAVE_SUCCESS) {
       sbi_printf("[SM] platform global init fatal error");
@@ -158,8 +147,12 @@ void sm_init(bool cold_boot)
 
   /* below are executed by all harts */
   pmp_init();
-  pmp_set_keystone(sm_region_id, PMP_NO_PERM);
-  pmp_set_keystone(os_region_id, PMP_ALL_PERM);
+
+  /* initialize lpmp_region of host */
+  host_regions_init();
+  
+  /* activate lpmp after reset */
+  activate_host_lpmp();
 
   /* Fire platform specific global init */
   if (platform_init_global() != SBI_ERR_SM_ENCLAVE_SUCCESS) {
