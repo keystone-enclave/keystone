@@ -15,7 +15,12 @@ keystone-sm-headers += crypto.h ed25519/ed25519.h ed25519/fe.h ed25519/fixedint.
 endif
 
 # Platform headers
-keystone-sm-headers += platform/$(KEYSTONE_PLATFORM)/platform.h
+ifeq ($(KEYSTONE_PLATFORM),cva6)
+    #for CVA6, the actual target platform is fpga/ariane, so PLATFORM variable is used
+    keystone-sm-headers += platform/$(PLATFORM)/platform.h
+else
+    keystone-sm-headers += platform/$(KEYSTONE_PLATFORM)/platform.h
+endif
 
 ifeq ($(KEYSTONE_PLATFORM),sifive/fu540)
 	keystone-sm-headers += platform/sifive/fu540/waymasks.h
