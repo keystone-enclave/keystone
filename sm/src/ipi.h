@@ -27,6 +27,6 @@ void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm);
 
 void sbi_flush_tlb_local(struct sbi_tlb_info *__info);
 
-void send_flush_tlb_ipi();
+void send_flush_tlb_ipi(void);
 
 #endif

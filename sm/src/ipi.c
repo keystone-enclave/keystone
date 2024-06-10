@@ -35,7 +35,7 @@ void sbi_flush_tlb_local(struct sbi_tlb_info *__info)
   asm volatile("sfence.vma");
 }
 
-void send_flush_tlb_ipi()
+void send_flush_tlb_ipi(void)
 {
   ulong mask = 0;
   ulong source_hart = current_hartid();

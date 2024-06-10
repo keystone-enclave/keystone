@@ -132,7 +132,7 @@ static int search_rightmost_unset(uint64_t bitmap, int max, uint64_t mask)
   return -1;
 }
 
-static region_id get_free_region_idx()
+static region_id get_free_region_idx(void)
 {
   return search_rightmost_unset(region_def_bitmap, PMP_MAX_N_REGION, 0x1);
 }

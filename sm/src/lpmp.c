@@ -231,7 +231,7 @@ static int __host_hit_region(uintptr_t pa)
     return 0;
 }
 
-int host_hit_region(uintptr_t pa)
+static int host_hit_region(uintptr_t pa)
 {
     spin_lock(&region_lock);
     int ret = __host_hit_region(pa);
@@ -239,7 +239,9 @@ int host_hit_region(uintptr_t pa)
     return ret;  // ret: 1 (hit), 0 (miss)
 }
 
-void host_free_regions(void)
+
+__attribute__((unused))
+static void host_free_regions(void)
 {
     spin_lock(&region_lock);
     lpmp_region_t *cur;
@@ -344,14 +346,14 @@ void pmp_dump(void)
         if (rc) {
             sbi_panic("PMP info read error!\n");
         }
-		char *pmpmode = ((prot & PMP_A) == 0) 			? "Off" :
+		const char *pmpmode = ((prot & PMP_A) == 0) 			? "Off" :
 						((prot & PMP_A) == PMP_A_NA4) 	? "NA4" :
 						((prot & PMP_A) == PMP_A_NAPOT) ? "NAPOT" :
 						((prot & PMP_A) == PMP_A_TOR) 	? "TOR" :
 						"Error";
-		char *perm_r = (prot & PMP_R) ? "R" : "-";
-		char *perm_w = (prot & PMP_W) ? "W" : "-";
-		char *perm_x = (prot & PMP_X) ? "X" : "-";
+		const char *perm_r = (prot & PMP_R) ? "R" : "-";
+		const char *perm_w = (prot & PMP_W) ? "W" : "-";
+		const char *perm_x = (prot & PMP_X) ? "X" : "-";
 		sbi_printf("PMP %u: Mode: %s, Permission: %s%s%s, "
 			"addr: 0x%lx, len: 0x%lx\n",
 			i, pmpmode, perm_r, perm_w, perm_x,
@@ -397,7 +399,7 @@ found:
     return pa;
 }
 
-static inline void flush_tlb()
+static inline void flush_tlb(void)
 {
          asm volatile("sfence.vma");
 }
