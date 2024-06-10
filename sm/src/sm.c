@@ -31,32 +31,6 @@ byte sm_public_key[PUBLIC_KEY_SIZE] = { 0, };
 byte sm_private_key[PRIVATE_KEY_SIZE] = { 0, };
 byte dev_public_key[PUBLIC_KEY_SIZE] = { 0, };
 
-int osm_pmp_set(uint8_t perm)
-{
-  /* in case of OSM, PMP cfg is exactly the opposite.*/
-  return pmp_set_keystone(os_region_id, perm);
-}
-
-static int smm_init(void)
-{
-  int region = -1;
-  int ret = pmp_region_init_atomic(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region, 0);
-  if(ret)
-    return -1;
-
-  return region;
-}
-
-static int osm_init(void)
-{
-  int region = -1;
-  int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
-  if(ret)
-    return -1;
-
-  return region;
-}
-
 void sm_sign(void* signature, const void* data, size_t len)
 {
   sign(signature, data, len, sm_public_key, sm_private_key);
