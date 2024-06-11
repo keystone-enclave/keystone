@@ -172,7 +172,16 @@ jobs:
 
         tar -cf - $COMPRESSDIRS | xz -9 -T0 > build.tar.xz
 
+    - name: Upload build directory
+      uses: actions/upload-artifact@v4
+      with:
+        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
+        path: build.tar.xz
+        retention-days: 7
+        compression-level: 0A
+
     - name: Compress cache directories
+      if: success() || failure()
       run: |
         # Clear out old bundles
         rm -f dl.tar ccache.tar.xz
@@ -188,15 +197,8 @@ jobs:
             tar --null -cf - -T - | xz -9 -T0 > ccache.tar.xz
         fi
 
-    - name: Upload build directory
-      uses: actions/upload-artifact@v4
-      with:
-        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
-        path: build.tar.xz
-        retention-days: 7
-        compression-level: 0
-
     - name: Upload buildroot package directory
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: keystone-${{ matrix.platform }}${{ matrix.bits }}-buildroot-dl
@@ -205,6 +207,7 @@ jobs:
         compression-level: 0
 
     - name: Upload ccache directory
+      if: success() || failure()
       uses: actions/upload-artifact@v4
       with:
         name: keystone-${{ matrix.platform }}${{ matrix.bits }}-ccache
@@ -219,6 +222,7 @@ jobs:
   # Combine cache directories to save space
   combine-caches:
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     needs: build
     steps:
       - name: Install dependencies
