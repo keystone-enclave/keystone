@@ -68,6 +68,7 @@ jobs:
     - name: Clear storage space
       run: |
         # Miscellaneous chunky packages
+        sudo apt update
         sudo apt remove -y 'dotnet*' 'temurin*' '*llvm*' '*libclang*' '*mono*' \
           'google-cloud-cli' 'azure-cli' 'powershell' 'msbuild' \
           'microsoft-edge-stable' 'google-chrome-stable' 'firefox' 'nginx-core'
@@ -86,7 +87,7 @@ jobs:
 
     # Install build dependencies
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y cpio rsync bc makeself
+      run: sudo apt-get install -y cpio rsync bc makeself
 
     # Restore build and download caches. We key these based on timestamps and build
     # target, since these essentially "accumulate" useful information (such as source
