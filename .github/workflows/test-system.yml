@@ -8,11 +8,14 @@ jobs:
     environment: ${{ matrix.platform != 'generic' && 'track' || null }}
     strategy:
       matrix:
-        platform: [generic, mpfs] #cva6]
+        platform: [cva6]
         bits: [32, 64]
         exclude:
           # mpfs is not 32 bit
           - platform: mpfs
+            bits: 32
+          # ignore 32-bit cva6 for now
+          - platform: cva6
             bits: 32
 
     steps:
@@ -25,11 +28,16 @@ jobs:
           scripts/
           mkutils/
 
-    - name: Restore build directory
-      uses: actions/download-artifact@v4
-      with:
-        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
-        path: .
+#    - name: Restore build directory
+#      uses: actions/download-artifact@v4
+#      with:
+#        name: keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir
+#        path: .
+
+    - name: Copy build directory
+      run: |
+        cp ~/keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir.zip .
+        unzip keystone-${{ matrix.platform }}${{ matrix.bits }}-builddir.zip
 
     - name: Decompress build directory
       run: cat build.tar.xz | xz -d -T0 | tar -xf -

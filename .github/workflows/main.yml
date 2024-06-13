@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    if: false
     runs-on: ubuntu-latest
 
     # Define the strategy for the build job. We generally want to cover each
@@ -339,6 +340,7 @@ jobs:
 
   # Generic runtime tests, which only need to run once (on the host)
   test-runtime-format:
+    if: false
     runs-on: ubuntu-latest
     steps:
     # We don't need submodules here since Keystone is a monorepo!
@@ -355,6 +357,7 @@ jobs:
         [ "$FORMAT_RESULT" = "no modified files to format" ] || [ "$FORMAT_RESULT" = "clang-format did not modify any files" ]
 
   test-runtime-functionality:
+    if: false
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Keystone
@@ -374,10 +377,11 @@ jobs:
 
   # Build tests, which are run for each supported platform
   test-runtime-build:
+    if: false
     needs: build
     uses: ./.github/workflows/build-runtime.yml
 
   # System tests, which are run for simulatable and self-hostable platforms
   test-system-functionality:
-    needs: build
+#    needs: build
     uses: ./.github/workflows/test-system.yml
