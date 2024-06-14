@@ -25,48 +25,38 @@ namespace Keystone {
 
 class KeystoneDevice {
  protected:
-  int eid;
-  uintptr_t physAddr;
+  int eid = 0;
+  bool finalizeDone = false;
+  uintptr_t epmPhysAddr = 0, epmSize = 0, epmVirtAddr = 0;
+  uintptr_t utmPhysAddr = 0, utmSize = 0, utmVirtAddr = 0;
 
  private:
   int fd;
   Error __run(bool resume, uintptr_t* ret);
+  // map maps epm before finalize and utm after.
+  virtual uintptr_t map(uintptr_t addr, size_t size);
 
  public:
-  virtual uintptr_t getPhysAddr() { return physAddr; }
+  uintptr_t getEpmPhysAddr() { return epmPhysAddr; }
+  uintptr_t getEpmSize() { return epmSize; }
+  uintptr_t getEpmVirtAddr() { return epmVirtAddr; }
+  uintptr_t getUtmPhysAddr() { return utmPhysAddr; }
+  uintptr_t getUtmSize() { return utmSize; }
+  uintptr_t getUtmVirtAddr() { return utmVirtAddr; }
 
   KeystoneDevice();
   virtual ~KeystoneDevice() {}
-  virtual bool initDevice(Params params);
+  virtual Error initDevice(Params params);
   virtual Error create(uint64_t minPages);
-  virtual uintptr_t initUTM(size_t size);
-  virtual Error finalize(
-      uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-      uintptr_t freeRequested);
+  virtual Error initUTM(size_t size);
+  virtual Error finalize(uintptr_t freeOffset);
   virtual Error destroy();
   virtual Error run(uintptr_t* ret);
   virtual Error resume(uintptr_t* ret);
-  virtual void* map(uintptr_t addr, size_t size);
-};
-
-class MockKeystoneDevice : public KeystoneDevice {
- private:
-  /* allocated buffer with map() */
-  void* sharedBuffer;
-
- public:
-  MockKeystoneDevice() {}
-  ~MockKeystoneDevice();
-  bool initDevice(Params params);
-  Error create(uint64_t minPages);
-  uintptr_t initUTM(size_t size);
-  Error finalize(
-      uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-      uintptr_t freeRequested);
-  Error destroy();
-  Error run(uintptr_t* ret);
-  Error resume(uintptr_t* ret);
-  void* map(uintptr_t addr, size_t size);
+  // pre-finalize only
+  virtual Error mapEpm();
+  // post-finalize only
+  virtual Error mapUtm();
 };
 
 }  // namespace Keystone

@@ -117,7 +117,7 @@ main(int argc, char** argv) {
     asm volatile("rdcycle %0" : "=r"(cycles1));
   }
 
-  enclave.init(eapp_file, rt_file, ld_file, params);
+  enclave.finalize(eapp_file, rt_file, ld_file, params);
 
   if (self_timing) {
     asm volatile("rdcycle %0" : "=r"(cycles2));
