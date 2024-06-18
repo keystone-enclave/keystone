@@ -83,7 +83,7 @@ jobs:
 
     - name: Check expected
       run: |
-        [[ -z $(diff -w cmd.log scripts/ci/plat/${{ matrix.platform }}/expected.log) ]]
+        [[ -z $(diff -wB cmd.log scripts/ci/plat/${{ matrix.platform }}/expected.log) ]]
 
     - name: Upload run log
       if: failure()
