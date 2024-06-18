@@ -22,7 +22,7 @@ chmod 600 "build-generic$KEYSTONE_BITS/buildroot.build/target/root/.ssh/id-rsa"
 # Launch QEMU
 export KEYSTONE_PLATFORM="generic"
 export QEMU_PORT=$(( RANDOM + 1024 ))
-export LD_LIBDRARY_PATH="build-generic$KEYSTONE_BITS/buildroot.build/host/lib"
+export LD_LIBRARY_PATH="build-generic$KEYSTONE_BITS/buildroot.build/host/lib"
 screen -L -dmS qemu bash -c "make run 2>&1 | tee $LOGFILE"
 
 # TODO: check for connectivity instead of sleeping
