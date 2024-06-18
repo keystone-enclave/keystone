@@ -20,7 +20,7 @@ run:
 
 CALL_LOGFILE ?= $(shell mktemp)
 call:
-	$(call log,info,Calling command in QEMU)
+	$(call log,info,Calling command on the MPFS board)
 	ssh -i $(BUILDROOT_BUILDDIR)/target/root/.ssh/id-rsa \
 		-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
 		 root@$(KEYSTONE_IP) $(KEYSTONE_COMMAND) 2>&1 | \

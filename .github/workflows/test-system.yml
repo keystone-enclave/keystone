@@ -7,6 +7,7 @@ jobs:
     runs-on: ${{ matrix.platform == 'generic' && 'ubuntu-latest' || matrix.platform }}
     environment: ${{ matrix.platform != 'generic' && 'track' || null }}
     strategy:
+      fail-fast: false
       matrix:
         platform: [generic, mpfs, cva6]
         bits: [32, 64]
@@ -82,7 +83,7 @@ jobs:
 
     - name: Check expected
       run: |
-        [[ -z $(diff cmd.log scripts/ci/plat/${{ matrix.platform }}/expected.log) ]]
+        [[ -z $(diff -w cmd.log scripts/ci/plat/${{ matrix.platform }}/expected.log) ]]
 
     - name: Upload run log
       if: failure()

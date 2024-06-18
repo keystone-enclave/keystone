@@ -9,8 +9,6 @@ KERNEL			= $(BUILDROOT_BUILDDIR)/images/uImage
 SDDEVICE_PART1          = $(shell lsblk $(SD_DEVICE) -no PATH | head -2 | tail -1)
 SDDEVICE_PART2          = $(shell lsblk $(SD_DEVICE) -no PATH | head -3 | tail -1)
 
-
-
 flash: $(SD_DEVICE)
 	$(info PAYLOAD INFORMATION)
 	$(info $(PAYLOAD))
@@ -20,6 +18,14 @@ flash: $(SD_DEVICE)
 	sgdisk --clear -g --new=1:2048:4M --new=2:512M:0 --typecode=1:3000 --typecode=2:8300 $(SD_DEVICE)
 	dd if=$(PAYLOAD) of=$(SDDEVICE_PART1) status=progress oflag=sync bs=1M
 	dd if=$(KERNEL) of=$(SDDEVICE_PART2) status=progress oflag=sync bs=1M
+
+CALL_LOGFILE ?= $(shell mktemp)
+call:
+	$(call log,info,Calling command on the CVA6 board)
+	ssh -i $(BUILDROOT_BUILDDIR)/target/root/.ssh/id-rsa \
+                -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                 root@$(KEYSTONE_IP) $(KEYSTONE_COMMAND) 2>&1 | \
+                 grep -v "Warning: Permanently added" | tee -a $(CALL_LOGFILE)
 
 debug-connect:
 	$(call log,info,Connecting to OpenOCD)
