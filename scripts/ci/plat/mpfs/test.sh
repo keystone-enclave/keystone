@@ -32,7 +32,7 @@ power_on
 sleep 60
 
 export CALL_LOGFILE="$CMD_LOGFILE"
-echo "" > "$CALL_LOGFILE"
+touch "$CALL_LOGFILE"
 
 KEYSTONE_COMMAND="modprobe keystone-driver" make call
 KEYSTONE_COMMAND="/usr/share/keystone/examples/tests.ke" make call
