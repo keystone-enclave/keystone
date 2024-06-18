@@ -1,19 +1,14 @@
 #!/bin/bash
 set -e
 
-# Arguments
-#	1. Bitness (i.e. 32, 64)
-
-if [[ "$#" -lt 1 ]]; then
-	echo "usage: test-generic.sh [bits]"
-	exit 1
-fi
-
-export KEYSTONE_BITS="$1"
-
 if [[ -z "$CMD_LOGFILE" ]]; then
 	echo "CMD_LOGFILE undefined"
 	exit 1
+fi
+
+if [[ -z "$KEYSTONE_BITS" ]]; then
+        echo "KEYSTONE_BITS undefined"
+        exit 1
 fi
 
 ###############
