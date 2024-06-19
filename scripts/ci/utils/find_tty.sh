@@ -11,7 +11,6 @@ TTY_IDPRODUCT="$1"; shift
 
 # See if we can find the correct TTYs
 TTYS=()
-SELECTED_TTYS=()
 
 for f in /sys/class/tty/ttyUSB* ; do
         if [[ $(cat $f/../../../../idVendor) == "$TTY_IDVENDOR" ]] && \

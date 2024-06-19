@@ -22,7 +22,7 @@ get_platform_var BOARD_IP
 set -x
 
 # Fix permissions on the key
-chmod 600 build-mpfs64/buildroot.build/target/root/.ssh/id-rsa
+chmod 600 "build-cva6$KEYSTONE_BITS/buildroot.build/target/root/.ssh/id-rsa"
 
 # Start the board
 export KEYSTONE_PLATFORM=cva6
