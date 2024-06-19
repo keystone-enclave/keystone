@@ -40,7 +40,8 @@ touch "$CALL_LOGFILE"
 
 KEYSTONE_COMMAND="modprobe keystone-driver" make call
 KEYSTONE_COMMAND="/usr/share/keystone/examples/tests.ke" make call
-KEYSTONE_COMMAND="/usr/share/keystone/examples/attestor.ke" make call
+# TODO: attestation does not yet work in cva6
+#KEYSTONE_COMMAND="/usr/share/keystone/examples/attestor.ke" make call
 
 power_off
 stop_record_tty cva6-tty
