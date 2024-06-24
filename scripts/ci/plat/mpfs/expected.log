@@ -1,0 +1,17 @@
+Verifying archive integrity... MD5 checksums are OK. All good.
+Uncompressing Keystone Enclave Package
+testing test-stack
+testing test-loop
+testing test-malloc
+testing test-long-nop
+testing test-fibonacci
+testing test-fib-bench
+testing test-attestation
+Attestation report is invalid
+testing test-untrusted
+Enclave said: hello world!
+Enclave said: 2nd hello world!
+Enclave said value: 13
+Enclave said value: 20
+testing test-data-sealing
+Enclave said: Sealing key derivation successful!
