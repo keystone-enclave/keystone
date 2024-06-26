@@ -33,3 +33,11 @@ get_sealing_key(
       sealing_key_struct, sealing_key_struct_size,
       key_ident, key_ident_size);
 }
+
+int claim_mmio(const char *devname, size_t namelen) {
+  return SYSCALL_2(RUNTIME_SYSCALL_CLAIM_MMIO, devname, namelen);
+}
+
+int release_mmio(const char *devname, size_t namelen) {
+  return SYSCALL_2(RUNTIME_SYSCALL_RELEASE_MMIO, devname, namelen);
+}

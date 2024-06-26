@@ -53,4 +53,7 @@ get_sealing_key(
     struct sealing_key* sealing_key_struct, size_t sealing_key_struct_size,
     void* key_ident, size_t key_ident_size);
 
+int claim_mmio(const char *devname, size_t namelen);
+int release_mmio(const char *devname, size_t namelen);
+
 #endif /* syscall.h */
