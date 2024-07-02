@@ -3,11 +3,14 @@
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
 #include "enclave.h"
+#include "lpmp.h"
+#include "ipi.h"
 #include "mprv.h"
 #include "pmp.h"
 #include "page.h"
 #include "cpu.h"
 #include "platform-hook.h"
+#include <sbi/riscv_barrier.h>
 #include <sbi/sbi_string.h>
 #include <sbi/riscv_asm.h>
 #include <sbi/riscv_locks.h>
@@ -76,7 +79,8 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
   switch_vector_enclave();
 
   // set PMP
-  osm_pmp_set(PMP_NO_PERM);
+  pmp_clear();
+  smp_mb();
   int memid;
   for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
     if(enclaves[eid].regions[memid].type != REGION_INVALID) {
@@ -94,13 +98,7 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     int return_on_resume){
 
   // set PMP
-  int memid;
-  for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
-    if(enclaves[eid].regions[memid].type != REGION_INVALID) {
-      pmp_set_keystone(enclaves[eid].regions[memid].pmp_rid, PMP_NO_PERM);
-    }
-  }
-  osm_pmp_set(PMP_ALL_PERM);
+  activate_host_lpmp();
 
   uintptr_t interrupts = MIP_SSIP | MIP_STIP | MIP_SEIP;
   csr_write(mideleg, interrupts);
@@ -370,20 +368,21 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
 
   // create a PMP region bound to the enclave
   ret = SBI_ERR_SM_ENCLAVE_PMP_FAILURE;
-  if(pmp_region_init_atomic(base, size, PMP_PRI_ANY, &region, 0))
+  if(pmp_region_init_atomic(eid, base, size, PMP_PRI_ANY, &region, 0))
     goto free_encl_idx;
 
   // create PMP region for shared memory
-  if(pmp_region_init_atomic(utbase, utsize, PMP_PRI_BOTTOM, &shared_region, 0))
+  if(pmp_region_init_atomic(eid, utbase, utsize, PMP_PRI_BOTTOM, &shared_region, 0))
     goto free_region;
 
-  // set pmp registers for private region (not shared)
-  if(pmp_set_global(region, PMP_NO_PERM))
-    goto free_shared_region;
+  // maintain host LPMP regions.
+  host_split_region(base, size, 0);
 
   // cleanup some memory regions for sanity See issue #38
   clean_enclave_memory(utbase, utsize);
 
+  // send ipi to flush tlb for all harts.
+  send_flush_tlb_ipi();
 
   // initialize enclave metadata
   enclaves[eid].eid = eid;
@@ -392,6 +391,7 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
   enclaves[eid].regions[0].type = REGION_EPM;
   enclaves[eid].regions[1].pmp_rid = shared_region;
   enclaves[eid].regions[1].type = REGION_UTM;
+
 #if __riscv_xlen == 32
   enclaves[eid].encl_satp = ((base >> RISCV_PGSHIFT) | (SATP_MODE_SV32 << HGATP_MODE_SHIFT));
 #else
@@ -429,14 +429,13 @@ unlock:
 // free_platform:
   platform_destroy_enclave(&enclaves[eid]);
 unset_region:
-  pmp_unset_global(region);
-free_shared_region:
-  pmp_region_free_atomic(shared_region);
+  pmp_region_free_atomic(eid, shared_region);
 free_region:
-  pmp_region_free_atomic(region);
+  pmp_region_free_atomic(eid, region);
 free_encl_idx:
   encl_free_eid(eid);
 error:
+  host_add_region((uintptr_t)base, (uint64_t)size, 0);
   return ret;
 }
 
@@ -483,14 +482,16 @@ unsigned long destroy_enclave(enclave_id eid)
     sbi_memset((void*) base, 0, size);
 
     //1.b free pmp region
-    pmp_unset_global(rid);
-    pmp_region_free_atomic(rid);
+    pmp_region_free_atomic(eid, rid);
+
+    // maintain host_regions
+    host_add_region((uintptr_t)base, (uint64_t)size, 0);
   }
 
   // 2. free pmp region for UTM
   rid = get_enclave_region_index(eid, REGION_UTM);
   if(rid != -1)
-    pmp_region_free_atomic(enclaves[eid].regions[rid].pmp_rid);
+    pmp_region_free_atomic(eid, enclaves[eid].regions[rid].pmp_rid);
 
   enclaves[eid].encl_satp = 0;
   enclaves[eid].n_thread = 0;
@@ -498,6 +499,9 @@ unsigned long destroy_enclave(enclave_id eid)
   for(i=0; i < ENCLAVE_REGIONS_MAX; i++){
     enclaves[eid].regions[i].type = REGION_INVALID;
   }
+
+  // send ipi to flash tlb for all harts.
+  send_flush_tlb_ipi();
 
   // 3. release eid
   encl_free_eid(eid);
