@@ -73,6 +73,16 @@ function power_off {
 	./scripts/ci/utils/relay_power.py "$RELAY_SERIAL" "$RELAY_ID" off
 }
 
+function power_on_btn {
+	# Very temporarily close the power on circuit
+	power_on ; power_off
+}
+
+function power_off_btn {
+	# Simulate holding the power button to force off
+	power_on ; sleep 3 ; power_off
+}
+
 # Serial functions
 
 get_platform_var TTY_IDVENDOR
@@ -135,4 +145,14 @@ function wait_for {
 #############
 
 # Make sure we turn off the boards if we die early
-trap power_off EXIT
+function final_shutdown {
+	if [[ $? -ne 0 ]]; then
+		if [[ "$KEYSTONE_PLATFORM" == "hifive_unmatched" ]]; then
+			power_off_btn
+		else
+			power_off
+		fi
+	fi
+}
+
+trap final_shutdown EXIT

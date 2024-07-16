@@ -123,3 +123,23 @@ linux-configure: $(BUILDROOT_BUILDDIR)/.config
 
 -include mkutils/plat/$(KEYSTONE_PLATFORM)/run.mk
 
+PORT_ARGS :=
+ifneq ($(KEYSTONE_PORT),)
+	PORT_ARGS += -p $(KEYSTONE_PORT)
+endif
+
+IP_ARGS :=
+ifeq ($(KEYSTONE_IP),)
+	IP_ARGS += localhost
+else
+	IP_ARGS += $(KEYSTONE_IP)
+endif
+
+CALL_LOGFILE ?= $(shell mktemp)
+call:
+	$(call log,info,Calling command)
+	ssh -i $(BUILDROOT_BUILDDIR)/target/root/.ssh/id-rsa \
+		-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+		-o ConnectTimeout=5 \
+		$(PORT_ARGS) root@$(IP_ARGS) $(KEYSTONE_COMMAND) 2>&1 | \
+		 grep -v "Warning: Permanently added" | tee -a $(CALL_LOGFILE)

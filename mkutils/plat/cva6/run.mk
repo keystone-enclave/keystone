@@ -19,14 +19,6 @@ flash: $(SD_DEVICE)
 	dd if=$(PAYLOAD) of=$(SDDEVICE_PART1) status=progress oflag=sync bs=1M
 	dd if=$(KERNEL) of=$(SDDEVICE_PART2) status=progress oflag=sync bs=1M
 
-CALL_LOGFILE ?= $(shell mktemp)
-call:
-	$(call log,info,Calling command on the CVA6 board)
-	ssh -i $(BUILDROOT_BUILDDIR)/target/root/.ssh/id-rsa \
-                -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-                 root@$(KEYSTONE_IP) $(KEYSTONE_COMMAND) 2>&1 | \
-                 grep -v "Warning: Permanently added" | tee -a $(CALL_LOGFILE)
-
 debug-connect:
 	$(call log,info,Connecting to OpenOCD)
 	$(BUILDROOT_BUILDDIR)/host/bin/riscv64-buildroot-linux-gnu-gdb \

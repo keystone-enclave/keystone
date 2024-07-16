@@ -9,11 +9,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [generic, mpfs, cva6]
+        platform: [generic, mpfs, cva6, hifive_unmatched]
         bits: [32, 64]
         exclude:
           # mpfs is not 32 bit
           - platform: mpfs
+            bits: 32
+          # unmatched is not 32 bit
+          - platform: hifive_unmatched
             bits: 32
           # ignore 32-bit cva6 for now
           - platform: cva6
