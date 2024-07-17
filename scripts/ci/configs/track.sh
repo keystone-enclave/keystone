@@ -5,6 +5,7 @@ export RELAY_SERIAL="AH02O23H"
 export RELAY_ID_global=1
 export RELAY_ID_mpfs=8
 export RELAY_ID_cva6=4
+export RELAY_ID_hifive_unmatched=5
 
 # MPFS configuration
 
@@ -20,3 +21,8 @@ export TFTP_DIR="/srv/tftp"
 
 export HOST_IP_cva6="10.42.1.1"
 export BOARD_IP_cva6="10.42.1.171"
+
+# Unmatched configuration
+
+export HOST_IP_hifive_unmatched="10.42.1.1"
+export BOARD_IP_hifive_unmatched="10.42.1.27"

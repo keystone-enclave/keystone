@@ -18,14 +18,6 @@ run:
 	$(call log,info,Starting OpenOCD)
 	$(SC_INSTALL_DIR)/openocd/bin/openocd $(OPENOCD_FLAGS)
 
-CALL_LOGFILE ?= $(shell mktemp)
-call:
-	$(call log,info,Calling command on the MPFS board)
-	ssh -i $(BUILDROOT_BUILDDIR)/target/root/.ssh/id-rsa \
-		-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-		 root@$(KEYSTONE_IP) $(KEYSTONE_COMMAND) 2>&1 | \
-		 grep -v "Warning: Permanently added" | tee -a $(CALL_LOGFILE)
-
 debug-connect:
 	$(call log,info,Connecting to OpenOCD)
 	PYTHONPATH=$(BUILDROOT_BUILDDIR)/build/host-gcc-final-11.4.0/libstdc++-v3/python \
