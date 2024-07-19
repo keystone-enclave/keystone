@@ -2,6 +2,7 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
+#include "sbi/sbi_console.h"
 #include "sm_assert.h"
 #include "pmp.h"
 #include "cpu.h"
@@ -26,8 +27,8 @@ static spinlock_t pmp_lock = SPIN_LOCK_INITIALIZER;
 
 /* PMP region getter/setters */
 static struct pmp_region regions[PMP_MAX_N_REGION];
-static uint32_t reg_bitmap = 0;
-static uint32_t region_def_bitmap = 0;
+static uint32_t reg_bitmap[ENCL_MAX] = { 0 };
+static uint64_t region_def_bitmap = 0UL;
 
 static inline int region_register_idx(region_id i)
 {
@@ -109,19 +110,19 @@ static void region_init(region_id i,
   regions[i].reg_idx = (addrmode == PMP_A_TOR && reg_idx > 0 ? reg_idx + 1 : reg_idx);
 }
 
-static int is_pmp_region_valid(region_id region_idx)
+static uint64_t is_pmp_region_valid(region_id region_idx)
 {
   return TEST_BIT(region_def_bitmap, region_idx);
 }
 
-static int search_rightmost_unset(uint32_t bitmap, int max, uint32_t mask)
+static int search_rightmost_unset(uint64_t bitmap, int max, uint64_t mask)
 {
   int i = 0;
 
-  sm_assert(max < 32);
+  sm_assert(max <= 64);  // 64-bit bitmap
   sm_assert(!((mask + 1) & mask));
 
-  while(mask < (1UL << max)) {
+  while(mask <= ((1UL << max) - 1)) {
     if((~bitmap & mask) == mask)
       return i;
     mask = mask << 1;
@@ -136,14 +137,14 @@ static region_id get_free_region_idx(void)
   return search_rightmost_unset(region_def_bitmap, PMP_MAX_N_REGION, 0x1);
 }
 
-static pmpreg_id get_free_reg_idx(void)
+static pmpreg_id get_free_reg_idx(enclave_id eid)
 {
-  return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x1);
+  return search_rightmost_unset(reg_bitmap[eid], PMP_N_REG, 0x1);
 }
 
-static pmpreg_id get_conseq_free_reg_idx(void)
+static pmpreg_id get_conseq_free_reg_idx(enclave_id eid)
 {
-  return search_rightmost_unset(reg_bitmap, PMP_N_REG, 0x3);
+  return search_rightmost_unset(reg_bitmap[eid], PMP_N_REG, 0x3);
 }
 
 /* We do an integery overflow safety check here for the inputs (addr +
@@ -310,16 +311,18 @@ int pmp_unset(int region_idx)
   return SBI_ERR_SM_PMP_SUCCESS;
 }
 
-int pmp_region_init_atomic(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap)
+int pmp_region_init_atomic(enclave_id eid, uintptr_t start, uint64_t size,
+  enum pmp_priority priority, region_id* rid, int allow_overlap)
 {
   int ret;
   spin_lock(&pmp_lock);
-  ret = pmp_region_init(start, size, priority, rid, allow_overlap);
+  ret = pmp_region_init(eid, start, size, priority, rid, allow_overlap);
   spin_unlock(&pmp_lock);
   return ret;
 }
 
-static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap)
+static int tor_region_init(enclave_id eid, uintptr_t start, uint64_t size,
+  enum pmp_priority priority, region_id* rid, int allow_overlap)
 {
   pmpreg_id reg_idx = -1;
   region_id region_idx = -1;
@@ -338,10 +341,10 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
   switch(priority)
   {
     case(PMP_PRI_ANY): {
-      reg_idx = get_conseq_free_reg_idx();
+      reg_idx = get_conseq_free_reg_idx(eid);
       if(reg_idx < 0)
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "No available PMP register");
-      if(TEST_BIT(reg_bitmap, reg_idx) || TEST_BIT(reg_bitmap, reg_idx + 1) || reg_idx + 1 >= PMP_N_REG)
+      if(TEST_BIT(reg_bitmap[eid], reg_idx) || TEST_BIT(reg_bitmap[eid], reg_idx + 1) || reg_idx + 1 >= PMP_N_REG)
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
 
       break;
@@ -349,7 +352,7 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
     case(PMP_PRI_TOP): {
       sm_assert(start == 0);
       reg_idx = 0;
-      if(TEST_BIT(reg_bitmap, reg_idx))
+      if(TEST_BIT(reg_bitmap[eid], reg_idx))
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
@@ -361,15 +364,16 @@ static int tor_region_init(uintptr_t start, uint64_t size, enum pmp_priority pri
   // initialize the region
   region_init(region_idx, start, size, PMP_A_TOR, allow_overlap, reg_idx);
   SET_BIT(region_def_bitmap, region_idx);
-  SET_BIT(reg_bitmap, reg_idx);
+  SET_BIT(reg_bitmap[eid], reg_idx);
 
   if(reg_idx > 0)
-    SET_BIT(reg_bitmap, reg_idx + 1);
+    SET_BIT(reg_bitmap[eid], reg_idx + 1);
 
   return SBI_ERR_SM_PMP_SUCCESS;
 }
 
-static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, region_id* rid, int allow_overlap)
+static int napot_region_init(enclave_id eid, uintptr_t start, uint64_t size,
+  enum pmp_priority priority, region_id* rid, int allow_overlap)
 {
   pmpreg_id reg_idx = -1;
   region_id region_idx = -1;
@@ -395,16 +399,16 @@ static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority p
   switch(priority)
   {
     case(PMP_PRI_ANY): {
-      reg_idx = get_free_reg_idx();
+      reg_idx = get_free_reg_idx(eid);
       if(reg_idx < 0)
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "No available PMP register");
-      if(TEST_BIT(reg_bitmap, reg_idx) || reg_idx >= PMP_N_REG)
+      if(TEST_BIT(reg_bitmap[eid], reg_idx) || reg_idx >= PMP_N_REG)
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
     case(PMP_PRI_TOP): {
       reg_idx = 0;
-      if(TEST_BIT(reg_bitmap, reg_idx))
+      if(TEST_BIT(reg_bitmap[eid], reg_idx))
         PMP_ERROR(SBI_ERR_SM_PMP_REGION_MAX_REACHED, "PMP register unavailable");
       break;
     }
@@ -422,12 +426,12 @@ static int napot_region_init(uintptr_t start, uint64_t size, enum pmp_priority p
   // initialize the region
   region_init(region_idx, start, size, PMP_A_NAPOT, allow_overlap, reg_idx);
   SET_BIT(region_def_bitmap, region_idx);
-  SET_BIT(reg_bitmap, reg_idx);
+  SET_BIT(reg_bitmap[eid], reg_idx);
 
   return SBI_ERR_SM_PMP_SUCCESS;
 }
 
-int pmp_region_free_atomic(int region_idx)
+int pmp_region_free_atomic(enclave_id eid, int region_idx)
 {
 
   spin_lock(&pmp_lock);
@@ -440,9 +444,9 @@ int pmp_region_free_atomic(int region_idx)
 
   pmpreg_id reg_idx = region_register_idx(region_idx);
   UNSET_BIT(region_def_bitmap, region_idx);
-  UNSET_BIT(reg_bitmap, reg_idx);
+  UNSET_BIT(reg_bitmap[eid], reg_idx);
   if(region_needs_two_entries(region_idx))
-    UNSET_BIT(reg_bitmap, reg_idx - 1);
+    UNSET_BIT(reg_bitmap[eid], reg_idx - 1);
 
   region_clear_all(region_idx);
 
@@ -451,7 +455,8 @@ int pmp_region_free_atomic(int region_idx)
   return SBI_ERR_SM_PMP_SUCCESS;
 }
 
-int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, int* rid, int allow_overlap)
+int pmp_region_init(enclave_id eid, uintptr_t start, uint64_t size,
+  enum pmp_priority priority, int* rid, int allow_overlap)
 {
   if(!size)
     PMP_ERROR(SBI_ERR_SM_PMP_REGION_SIZE_INVALID, "Invalid PMP size");
@@ -472,7 +477,7 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
   /* if the address covers the entire RAM or it's NAPOT */
   if ((size == -1UL && start == 0) ||
       (!(size & (size - 1)) && !(start & (size - 1)))) {
-    return napot_region_init(start, size, priority, rid, allow_overlap);
+    return napot_region_init(eid, start, size, priority, rid, allow_overlap);
   }
   else
   {
@@ -481,7 +486,7 @@ int pmp_region_init(uintptr_t start, uint64_t size, enum pmp_priority priority, 
       PMP_ERROR(SBI_ERR_SM_PMP_REGION_IMPOSSIBLE_TOR, "The top-priority TOR PMP entry must start from address 0");
     }
 
-    return tor_region_init(start, size, priority, rid, allow_overlap);
+    return tor_region_init(eid, start, size, priority, rid, allow_overlap);
   }
 }
 
