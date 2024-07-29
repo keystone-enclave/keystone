@@ -6,6 +6,7 @@
 #include "sm.h"
 #include "pmp.h"
 #include <crypto.h>
+#include "device.h"
 #include "enclave.h"
 #include "platform-hook.h"
 #include "sm-sbi-opensbi.h"
@@ -15,8 +16,10 @@
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_hart.h>
 
+
 static int sm_init_done = 0;
 static int sm_region_id = 0, os_region_id = 0;
+
 
 #ifndef TARGET_PLATFORM_HEADER
 #error "SM requires a defined platform to build"
@@ -115,8 +118,9 @@ void sm_print_cert()
 }
 */
 
-void sm_init(bool cold_boot)
+void sm_init(bool cold_boot, void *fdt)
 {
+  int ret;
 	// initialize SMM
   if (cold_boot) {
     /* only the cold-booting hart will execute these */
@@ -134,6 +138,12 @@ void sm_init(bool cold_boot)
     if(os_region_id < 0) {
       sbi_printf("[SM] intolerable error - failed to initialize OS memory");
       sbi_hart_hang();
+    }
+
+    ret = fdt_init_pmp_devices(fdt);
+    if(ret < 0) {
+        sbi_printf("[SM] intolerable error - failed to initialize secured devices");
+        sbi_hart_hang();
     }
 
     if (platform_init_global_once() != SBI_ERR_SM_ENCLAVE_SUCCESS) {
@@ -160,6 +170,7 @@ void sm_init(bool cold_boot)
   pmp_init();
   pmp_set_keystone(sm_region_id, PMP_NO_PERM);
   pmp_set_keystone(os_region_id, PMP_ALL_PERM);
+  device_switch_to_host();
 
   /* Fire platform specific global init */
   if (platform_init_global() != SBI_ERR_SM_ENCLAVE_SUCCESS) {

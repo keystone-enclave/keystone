@@ -1,0 +1,112 @@
+diff --git a/hw/riscv/virt.c b/hw/riscv/virt.c
+index a5bc7353b4..f61a6423b6 100644
+--- a/hw/riscv/virt.c
++++ b/hw/riscv/virt.c
+@@ -85,7 +85,8 @@ static const MemMapEntry virt_memmap[] = {
+     [VIRT_APLIC_M] =      {  0xc000000, APLIC_SIZE(VIRT_CPUS_MAX) },
+     [VIRT_APLIC_S] =      {  0xd000000, APLIC_SIZE(VIRT_CPUS_MAX) },
+     [VIRT_UART0] =        { 0x10000000,         0x100 },
+-    [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
++    [VIRT_UART1] =        { 0x10001000,         0x100 },
++    [VIRT_VIRTIO] =       { 0x10002000,        0x1000 },
+     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
+     [VIRT_FLASH] =        { 0x20000000,     0x4000000 },
+     [VIRT_IMSIC_M] =      { 0x24000000, VIRT_IMSIC_MAX_SIZE },
+@@ -95,6 +96,11 @@ static const MemMapEntry virt_memmap[] = {
+     [VIRT_DRAM] =         { 0x80000000,           0x0 },
+ };
+ 
++static const int uart_irqs[] = {
++    [VIRT_UART0] = UART0_IRQ,
++    [VIRT_UART1] = UART1_IRQ
++};
++
+ /* PCIe high mmio is fixed for RV32 */
+ #define VIRT32_HIGH_PCIE_MMIO_BASE  0x300000000ULL
+ #define VIRT32_HIGH_PCIE_MMIO_SIZE  (4 * GiB)
+@@ -921,27 +927,36 @@ static void create_fdt_reset(RISCVVirtState *s, const MemMapEntry *memmap,
+ }
+ 
+ static void create_fdt_uart(RISCVVirtState *s, const MemMapEntry *memmap,
+-                            uint32_t irq_mmio_phandle)
++                            uint32_t irq_mmio_phandle, int uart)
+ {
+     char *name;
+     MachineState *mc = MACHINE(s);
+ 
+-    name = g_strdup_printf("/soc/serial@%lx", (long)memmap[VIRT_UART0].base);
++    name = g_strdup_printf("/soc/serial@%lx", (long)memmap[uart].base);
+     qemu_fdt_add_subnode(mc->fdt, name);
+     qemu_fdt_setprop_string(mc->fdt, name, "compatible", "ns16550a");
++
++    if(uart == VIRT_UART1) {
++        qemu_fdt_setprop_string(mc->fdt, name, "status", "disabled");
++        qemu_fdt_setprop_string(mc->fdt, name, "secure-status", "okay");
++    }
++
+     qemu_fdt_setprop_cells(mc->fdt, name, "reg",
+-        0x0, memmap[VIRT_UART0].base,
+-        0x0, memmap[VIRT_UART0].size);
++        0x0, memmap[uart].base,
++        0x0, memmap[uart].size);
+     qemu_fdt_setprop_cell(mc->fdt, name, "clock-frequency", 3686400);
+     qemu_fdt_setprop_cell(mc->fdt, name, "interrupt-parent", irq_mmio_phandle);
+     if (s->aia_type == VIRT_AIA_TYPE_NONE) {
+-        qemu_fdt_setprop_cell(mc->fdt, name, "interrupts", UART0_IRQ);
++        qemu_fdt_setprop_cell(mc->fdt, name, "interrupts", uart_irqs[uart]);
+     } else {
+-        qemu_fdt_setprop_cells(mc->fdt, name, "interrupts", UART0_IRQ, 0x4);
++        qemu_fdt_setprop_cells(mc->fdt, name, "interrupts", uart_irqs[uart], 0x4);
++    }
++
++    if(uart == VIRT_UART0) {
++        qemu_fdt_add_subnode(mc->fdt, "/chosen");
++        qemu_fdt_setprop_string(mc->fdt, "/chosen", "stdout-path", name);
+     }
+ 
+-    qemu_fdt_add_subnode(mc->fdt, "/chosen");
+-    qemu_fdt_setprop_string(mc->fdt, "/chosen", "stdout-path", name);
+     g_free(name);
+ }
+ 
+@@ -1045,7 +1060,8 @@ static void create_fdt(RISCVVirtState *s, const MemMapEntry *memmap,
+ 
+     create_fdt_reset(s, memmap, &phandle);
+ 
+-    create_fdt_uart(s, memmap, irq_mmio_phandle);
++    create_fdt_uart(s, memmap, irq_mmio_phandle, VIRT_UART0);
++    create_fdt_uart(s, memmap, irq_mmio_phandle, VIRT_UART1);
+ 
+     create_fdt_rtc(s, memmap, irq_mmio_phandle);
+ 
+@@ -1510,6 +1526,10 @@ static void virt_machine_init(MachineState *machine)
+         0, qdev_get_gpio_in(DEVICE(mmio_irqchip), UART0_IRQ), 399193,
+         serial_hd(0), DEVICE_LITTLE_ENDIAN);
+ 
++    serial_mm_init(system_memory, memmap[VIRT_UART1].base,
++        0, qdev_get_gpio_in(DEVICE(mmio_irqchip), UART1_IRQ), 399193,
++        serial_hd(1), DEVICE_LITTLE_ENDIAN);
++
+     sysbus_create_simple("goldfish_rtc", memmap[VIRT_RTC].base,
+         qdev_get_gpio_in(DEVICE(mmio_irqchip), RTC_IRQ));
+ 
+diff --git a/include/hw/riscv/virt.h b/include/hw/riscv/virt.h
+index be4ab8fe7f..8a01dab7fc 100644
+--- a/include/hw/riscv/virt.h
++++ b/include/hw/riscv/virt.h
+@@ -69,6 +69,7 @@ enum {
+     VIRT_APLIC_M,
+     VIRT_APLIC_S,
+     VIRT_UART0,
++    VIRT_UART1,
+     VIRT_VIRTIO,
+     VIRT_FW_CFG,
+     VIRT_IMSIC_M,
+@@ -83,6 +84,7 @@ enum {
+ 
+ enum {
+     UART0_IRQ = 10,
++    UART1_IRQ = 9,
+     RTC_IRQ = 11,
+     VIRTIO_IRQ = 1, /* 1 to 8 */
+     VIRTIO_COUNT = 8,

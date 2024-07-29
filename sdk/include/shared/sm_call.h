@@ -23,6 +23,8 @@
 #define SBI_SM_GET_SEALING_KEY   3003
 #define SBI_SM_STOP_ENCLAVE      3004
 #define SBI_SM_EXIT_ENCLAVE      3006
+#define SBI_SM_CLAIM_MMIO        3007
+#define SBI_SM_RELEASE_MMIO      3008
 #define FID_RANGE_ENCLAVE        3999
 
 /* 4000-4999 are experimental */

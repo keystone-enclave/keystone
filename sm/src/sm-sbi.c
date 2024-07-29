@@ -86,6 +86,20 @@ unsigned long sbi_sm_get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
   return ret;
 }
 
+unsigned long sbi_sm_claim_mmio(uintptr_t dev_string)
+{
+    unsigned long ret;
+    ret = claim_mmio(dev_string, cpu_get_enclave_id());
+    return ret;
+}
+
+unsigned long sbi_sm_release_mmio(uintptr_t dev_string)
+{
+    unsigned long ret;
+    ret = release_mmio(dev_string, cpu_get_enclave_id());
+    return ret;
+}
+
 unsigned long sbi_sm_random(void)
 {
   return (unsigned long) platform_random();
