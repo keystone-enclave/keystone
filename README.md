@@ -29,7 +29,7 @@ Now, Keystone is an **Incubation Stage** open-source project of the Confidential
 Keystone has helped many researchers focus on their creative ideas instead of building TEE by themselves from scratch.
 This resulted in many innovative research projects and publications, which have been pushing the technical advancement of TEEs.
 
-We are currently trying to make Keystone production-ready. You can find the latest general roadmap of Keystone [here](https://docs.google.com/document/d/1E-982564GvOcWzdCqM7TXCJV_7uWy2F8NiwglWorjFA/edit#heading=h.xa3pe84ubay4)
+We are currently trying to make Keystone production-ready. You can find the latest general roadmap of Keystone [here](https://docs.google.com/document/d/1AxT0w6NCtfvZcFE1wbZAkAODftqRYhpHaj63mvnQQqA/edit?usp=sharing)
 
 Here are some ongoing and/or planned efforts towards the goal:
 
