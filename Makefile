@@ -24,7 +24,7 @@ export BUILDROOT_OVERLAYDIR     ?= $(BUILDDIR)/overlay
 export BUILDROOT_BUILDDIR       ?= $(BUILDDIR)/buildroot.build
 
 
-# options: generic, cva6, hifive_unmatched, mpfs
+# options: generic, cva6, hifive_unmatched, mpfs, starfive/visionfive2
 export KEYSTONE_PLATFORM        ?= generic
 export KEYSTONE_BITS            ?= 64
 
