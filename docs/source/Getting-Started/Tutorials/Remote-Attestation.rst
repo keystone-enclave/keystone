@@ -132,7 +132,7 @@ The main job of the host is to relay messages from the remote verifier
 to the EApp, and vice-versa.
 
 Remote Verifier: verifier.cpp
-=============================
+-----------------------------
 
 The remote verifier is the most interesting part of this tutorial. As
 mentioned above, although the remote verifier is actually implemented
