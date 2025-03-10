@@ -2,6 +2,7 @@
 
 ![Documentation Status](https://readthedocs.org/projects/keystone-enclave/badge/)
 [![Build Status](https://travis-ci.org/keystone-enclave/keystone.svg?branch=master)](https://travis-ci.org/keystone-enclave/keystone/)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8916/badge)](https://www.bestpractices.dev/projects/8916)
 
 > Visit [Project Website](https://keystone-enclave.org) for more information.
 
