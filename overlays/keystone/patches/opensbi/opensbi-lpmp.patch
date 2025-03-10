@@ -1,0 +1,23 @@
+diff --git a/lib/sbi/sbi_trap.c b/lib/sbi/sbi_trap.c
+index ee3e4e9..0ac34f9 100644
+--- a/lib/sbi/sbi_trap.c
++++ b/lib/sbi/sbi_trap.c
+@@ -21,6 +21,7 @@
+ #include <sbi/sbi_scratch.h>
+ #include <sbi/sbi_timer.h>
+ #include <sbi/sbi_trap.h>
++#include "lpmp.h"
+ 
+ static void __noreturn sbi_trap_error(const char *msg, int rc,
+ 				      ulong mcause, ulong mtval, ulong mtval2,
+@@ -304,6 +305,10 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
+ 		sbi_pmu_ctr_incr_fw(mcause == CAUSE_LOAD_ACCESS ?
+ 			SBI_PMU_FW_ACCESS_LOAD : SBI_PMU_FW_ACCESS_STORE);
+ 		/* fallthrough */
++    case CAUSE_FETCH_ACCESS:
++		rc = pmp_fault_handler(mtval);
++		msg = "access fault (PMP)";
++		break;
+ 	default:
+ 		/* If the trap came from S or U mode, redirect it there */
+ 		trap.epc = regs->mepc;

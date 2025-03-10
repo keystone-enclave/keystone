@@ -8,7 +8,7 @@ struct platform_enclave_data{
 };
 
 // Enclave configuration
-#define ENCL_MAX                16
+#define ENCL_MAX                32
 #define ENCLAVE_REGIONS_MAX     8
 
 // SM configuration
@@ -17,7 +17,7 @@ struct platform_enclave_data{
 
 // PMP configuration
 #define PMP_N_REG               8
-#define PMP_MAX_N_REGION        16
+#define PMP_MAX_N_REGION        64
 
 // CPU configuration
 #define MAX_HARTS               16
