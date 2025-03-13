@@ -23,6 +23,16 @@ struct platform_enclave_data{
 // CPU configuration
 #define MAX_HARTS               5
 
+// Device configuration
+#define DEV_NAMELEN             64
+#define NUM_SECURE_DEVS         3
+#define NUM_NONSECURE_DEVS      0
+#define NUM_DISABLED_DEVS       0
+
+// Search for FPGA devices
+#define DEV_SEARCH_BASE         "/fabric-bus@40000000"
+#define DEV_IGNORED             { "microchip,mpfs-ccc", "microchip,mpfs-qspi" }
+
 // Initialization functions
 void sm_copy_key(void);
 

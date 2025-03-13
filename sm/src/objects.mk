@@ -35,7 +35,7 @@ keystone-sm-headers += plugins/multimem.h plugins/plugins.h
 
 # Core files
 keystone-sm-sources += attest.c cpu.c enclave.c pmp.c sm.c sm-sbi.c sm-sbi-opensbi.c \
-                        thread.c mprv.c sbi_trap_hack.c trap.c ipi.c
+                        thread.c mprv.c sbi_trap_hack.c trap.c ipi.c device.c
 
 # Crypto
 ifneq ($(KEYSTONE_SM_NO_CRYPTO),y)

@@ -2,6 +2,7 @@
 // Copyright (c) 2018, The Regents of the University of California (Regents).
 // All Rights Reserved. See LICENSE for license details.
 //------------------------------------------------------------------------------
+#include "device.h"
 #include "enclave.h"
 #include "mprv.h"
 #include "pmp.h"
@@ -84,6 +85,9 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
     }
   }
 
+  // ensure nonsecure-only devices are unmapped
+  device_switch_to_enclave();
+
   // Setup any platform specific defenses
   platform_switch_to_enclave(&(enclaves[eid]));
   cpu_enter_enclave_context(eid);
@@ -92,6 +96,9 @@ static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
 static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     enclave_id eid,
     int return_on_resume){
+
+  // ensure nonsecure-only devices are remapped
+  device_switch_to_host();
 
   // set PMP
   int memid;
@@ -474,17 +481,25 @@ unsigned long destroy_enclave(enclave_id eid)
   region_id rid;
   for(i = 0; i < ENCLAVE_REGIONS_MAX; i++){
     if(enclaves[eid].regions[i].type == REGION_INVALID ||
-       enclaves[eid].regions[i].type == REGION_UTM)
+       enclaves[eid].regions[i].type == REGION_UTM) {
       continue;
-    //1.a Clear all pages
-    rid = enclaves[eid].regions[i].pmp_rid;
-    base = (void*) pmp_region_get_addr(rid);
-    size = (size_t) pmp_region_get_size(rid);
-    sbi_memset((void*) base, 0, size);
+    }
 
-    //1.b free pmp region
-    pmp_unset_global(rid);
-    pmp_region_free_atomic(rid);
+    rid = enclaves[eid].regions[i].pmp_rid;
+    if(enclaves[eid].regions[i].type == REGION_EPM) {
+      //1.a Clear all pages
+      base = (void*) pmp_region_get_addr(rid);
+      size = (size_t) pmp_region_get_size(rid);
+      sbi_memset((void*) base, 0, size);
+
+      //1.b free pmp region
+      pmp_unset_global(rid);
+      pmp_region_free_atomic(rid);
+    } else if (enclaves[eid].regions[i].type == REGION_MMIO) {
+      // todo: reset the hardware device so that state is not leaked
+      // for now, just release the device
+      sm_release_secure_device(device_name_from_region(enclaves[eid].regions[i].pmp_rid));
+    }
   }
 
   // 2. free pmp region for UTM
@@ -679,4 +694,45 @@ unsigned long get_sealing_key(uintptr_t sealing_key, uintptr_t key_ident,
           SEALING_KEY_SIZE);
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
+}
+
+unsigned long claim_mmio(uintptr_t dev_string, enclave_id eid) {
+    int i;
+    region_id rid;
+
+    for(i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
+        if(enclaves[eid].regions[i].type == REGION_INVALID) {
+            // Find the region now that we know we have a slot for it
+            rid = sm_claim_secure_device((const char *) dev_string);
+            if(rid < 0) {
+                return rid;
+            }
+
+            // Register this region
+            enclaves[eid].regions[i].pmp_rid = rid;
+            enclaves[eid].regions[i].type = REGION_MMIO;
+            return 0;
+        }
+    }
+
+    // No free regions found
+    return -1;
+}
+
+unsigned long release_mmio(uintptr_t dev_string, enclave_id eid) {
+    int i;
+    region_id rid = region_from_device_name((const char *) dev_string);
+
+    for(i = 0; i < ENCLAVE_REGIONS_MAX; i++) {
+        if(enclaves[eid].regions[i].type == REGION_MMIO && enclaves[eid].regions[i].pmp_rid == rid) {
+            // This is the correct region to deregister
+            sm_release_secure_device((const char *) dev_string);
+            enclaves[eid].regions[i].pmp_rid = -1;
+            enclaves[eid].regions[i].type = REGION_INVALID;
+            return 0;
+        }
+    }
+
+    // Could not find the region to release
+    return -1;
 }
