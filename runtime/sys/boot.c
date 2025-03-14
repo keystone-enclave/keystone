@@ -39,7 +39,7 @@ int verify_and_load_elf_file(uintptr_t ptr, size_t file_size, bool is_eapp) {
   }
 
   // parse and load elf file
-  ret = loadElf(&elf_file, 1);
+  ret = loadElf(&elf_file, is_eapp);
 
   if (is_eapp) { // setup entry point
     uintptr_t entry = elf_getEntryPoint(&elf_file);
@@ -81,22 +81,28 @@ void
 eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
            uintptr_t dram_base,
            uintptr_t dram_size,
-           uintptr_t runtime_paddr,
-           uintptr_t user_paddr,
            uintptr_t free_paddr,
-           uintptr_t utm_vaddr,
+           uintptr_t utm_paddr,
            uintptr_t utm_size)
 {
+  /* find runtime and eapp */
+  resource_ptr_t* runtime_ptr = findIdentityResident(EYRIE_LOAD_START, MSR_RUNTIME_FILENAME);
+  resource_ptr_t* eapp_ptr = findIdentityResident(EYRIE_LOAD_START, MSR_EAPP_FILENAME);
+  assert(runtime_ptr);
+  assert(eapp_ptr);
+
   /* set initial values */
-  load_pa_start = dram_base;
+  load_pa_start = dram_base; // used by __va
   root_page_table = (pte*) __va(csr_read(satp) << RISCV_PAGE_BITS);
   shared_buffer = EYRIE_UNTRUSTED_START;
   shared_buffer_size = utm_size;
   runtime_va_start = (uintptr_t) &rt_base;
+  uintptr_t runtime_paddr = dram_base + runtime_ptr->offset;
+  uintptr_t user_paddr = dram_base + eapp_ptr->offset;
   kernel_offset = runtime_va_start - runtime_paddr;
 
   debug("ROOT PAGE TABLE: 0x%lx", root_page_table);
-  debug("UTM : 0x%lx-0x%lx (%u KB)", utm_vaddr, utm_vaddr+utm_size, utm_size/1024);
+  debug("UTM : 0x%lx-0x%lx (%u KB)", utm_paddr, utm_paddr+utm_size, utm_size/1024);
   debug("DRAM: 0x%lx-0x%lx (%u KB)", dram_base, dram_base + dram_size, dram_size/1024);
   debug("USER: 0x%lx-0x%lx (%u KB)", user_paddr, free_paddr, (free_paddr-user_paddr)/1024);
 
@@ -111,7 +117,7 @@ eyrie_boot(uintptr_t dummy, // $a0 contains the return value from the SBI
   init_freemem();
 
   /* load eapp elf */
-  assert(!verify_and_load_elf_file(__va(user_paddr), free_paddr-user_paddr, true));
+  assert(!verify_and_load_elf_file(__va(user_paddr), eapp_ptr->size, true));
 
   /* free leaking memory */
   // TODO: clean up after loader -- entire file no longer needed

@@ -20,39 +20,39 @@ KeystoneDevice::create(uint64_t minPages) {
     return Error::IoctlErrorCreate;
   }
 
-  eid      = encl.eid;
-  physAddr = encl.epm_paddr;
+  eid         = encl.eid;
+  epmPhysAddr = encl.epm_paddr;
+  epmSize     = encl.epm_size;
+  mapEpm();
 
   return Error::Success;
 }
 
-uintptr_t
+Error
 KeystoneDevice::initUTM(size_t size) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid      = eid;
   encl.utm_size = size;
   if (ioctl(fd, KEYSTONE_IOC_UTM_INIT, &encl)) {
-    return 0;
+    return Error::DeviceError;
   }
+  utmPhysAddr = encl.utm_paddr;
+  utmSize = size;
 
-  return encl.utm_paddr;
+  return Error::Success;
 }
 
 Error
-KeystoneDevice::finalize(
-    uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    uintptr_t freeRequested) {
+KeystoneDevice::finalize(uintptr_t freeOffset) {
   struct keystone_ioctl_create_enclave encl;
   encl.eid            = eid;
-  encl.runtime_paddr  = runtimePhysAddr;
-  encl.user_paddr     = eappPhysAddr;
-  encl.free_paddr     = freePhysAddr;
-  encl.free_requested = freeRequested;
+  encl.free_offset    = freeOffset;
 
   if (ioctl(fd, KEYSTONE_IOC_FINALIZE_ENCLAVE, &encl)) {
     perror("ioctl error");
     return Error::IoctlErrorFinalize;
   }
+  finalizeDone = true;
   return Error::Success;
 }
 
@@ -122,72 +122,45 @@ KeystoneDevice::resume(uintptr_t* ret) {
   return __run(true, ret);
 }
 
-void*
+uintptr_t
 KeystoneDevice::map(uintptr_t addr, size_t size) {
   assert(fd >= 0);
   void* ret;
   ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
   assert(ret != MAP_FAILED);
-  return ret;
+  assert(ret != 0);
+  return (uintptr_t) ret;
 }
 
-bool
+Error
+KeystoneDevice::mapEpm() {
+  assert(!finalizeDone);
+  if (!epmPhysAddr || !epmSize) {
+    return Error::DeviceError;
+  }
+  epmVirtAddr = map(0, epmSize);
+  return Error::Success;
+}
+
+Error
+KeystoneDevice::mapUtm() {
+  assert(finalizeDone);
+  if (!utmPhysAddr || !utmSize) {
+    return Error::DeviceError;
+  }
+  utmVirtAddr = map(0, utmSize);
+  return Error::Success;
+}
+
+Error
 KeystoneDevice::initDevice(Params params) { // TODO: why does this need params
   /* open device driver */
   fd = open(KEYSTONE_DEV_PATH, O_RDWR);
   if (fd < 0) {
     PERROR("cannot open device file");
-    return false;
+    return Error::DeviceInitFailure;
   }
-  return true;
-}
-
-Error
-MockKeystoneDevice::create(uint64_t minPages) {
-  eid = -1;
   return Error::Success;
-}
-
-uintptr_t
-MockKeystoneDevice::initUTM(size_t size) {
-  return 0;
-}
-
-Error
-MockKeystoneDevice::finalize(
-    uintptr_t runtimePhysAddr, uintptr_t eappPhysAddr, uintptr_t freePhysAddr,
-    uintptr_t freeRequested) {
-  return Error::Success;
-}
-
-Error
-MockKeystoneDevice::destroy() {
-  return Error::Success;
-}
-
-Error
-MockKeystoneDevice::run(uintptr_t* ret) {
-  return Error::Success;
-}
-
-Error
-MockKeystoneDevice::resume(uintptr_t* ret) {
-  return Error::Success;
-}
-
-bool
-MockKeystoneDevice::initDevice(Params params) {
-  return true;
-}
-
-void*
-MockKeystoneDevice::map(uintptr_t addr, size_t size) {
-  sharedBuffer = malloc(size);
-  return sharedBuffer;
-}
-
-MockKeystoneDevice::~MockKeystoneDevice() {
-  if (sharedBuffer) free(sharedBuffer);
 }
 
 }  // namespace Keystone

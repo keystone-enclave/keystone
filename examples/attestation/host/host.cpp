@@ -235,7 +235,7 @@ Host::dispatch_ocall(RunData& run_data) {
 Report
 Host::run(const std::string& nonce) {
   Keystone::Enclave enclave;
-  enclave.init(eapp_file_.c_str(), rt_file_.c_str(), ld_file_.c_str(), params_);
+  enclave.finalize(eapp_file_.c_str(), rt_file_.c_str(), ld_file_.c_str(), params_);
 
   RunData run_data{
       SharedBuffer{enclave.getSharedBuffer(), enclave.getSharedBufferSize()},

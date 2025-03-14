@@ -5,6 +5,7 @@
 #include "mm/freemem.h"
 #include "util/printf.h"
 #include <asm/csr.h>
+#include "sm_call.h"
 
 /* root page table */
 pte root_page_table_storage[BIT(RISCV_PT_INDEX_BITS)] __attribute__((aligned(RISCV_PAGE_SIZE)));
@@ -40,9 +41,8 @@ int map_untrusted_memory(uintptr_t untrusted_ptr, uintptr_t untrusted_size) {
 }
 
 int load_runtime(uintptr_t dummy,
-                uintptr_t dram_base, uintptr_t dram_size, 
-                uintptr_t runtime_base, uintptr_t user_base, 
-                uintptr_t free_base, uintptr_t untrusted_ptr, 
+                uintptr_t dram_base, uintptr_t dram_size,
+                uintptr_t free_base, uintptr_t untrusted_base,
                 uintptr_t untrusted_size) {
   int ret = 0;
 
@@ -51,15 +51,15 @@ int load_runtime(uintptr_t dummy,
   // initialize freemem
   spa_init(free_base, dram_base + dram_size - free_base);
 
-  // validate runtime elf 
-  size_t runtime_size = user_base - runtime_base;
-  if (((void*) runtime_base == NULL) || (runtime_size <= 0)) {
-    return -1; 
+  // find runtime
+  resource_ptr_t* runtime_ptr = findIdentityResident(dram_base, MSR_RUNTIME_FILENAME);
+  if (!runtime_ptr) {
+    return -1;
   }
 
   // create runtime elf struct
   elf_t runtime_elf;
-  ret = elf_newFile((void*) runtime_base, runtime_size, &runtime_elf);
+  ret = elf_newFile((void*) (dram_base + runtime_ptr->offset), runtime_ptr->size, &runtime_elf);
   if (ret != 0) {
     return ret;
   }
@@ -74,7 +74,7 @@ int load_runtime(uintptr_t dummy,
   map_physical_memory(dram_base, dram_size);
 
   // map untrusted memory
-  ret = map_untrusted_memory(untrusted_ptr, untrusted_size);
+  ret = map_untrusted_memory(untrusted_base, untrusted_size);
   if (ret != 0) {
     return ret;
   }

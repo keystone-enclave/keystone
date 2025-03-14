@@ -43,8 +43,7 @@
 struct runtime_params_t {
   uintptr_t dram_base;
   uintptr_t dram_size;
-  uintptr_t runtime_base;
-  uintptr_t user_base;
+  uintptr_t start_pc;
   uintptr_t free_base;
   uintptr_t untrusted_base;
   uintptr_t untrusted_size;
@@ -59,11 +58,46 @@ struct keystone_sbi_pregion_t {
 struct keystone_sbi_create_t {
   struct keystone_sbi_pregion_t epm_region;
   struct keystone_sbi_pregion_t utm_region;
-
-  uintptr_t runtime_paddr;
-  uintptr_t user_paddr;
-  uintptr_t free_paddr;
-  uintptr_t free_requested;
+  uintptr_t free_offset;
 };
+
+// TODO(Evgeny): how do we ensure no compiler re-ordering?
+#define MSR_NAME_LEN 64
+// #include "common/sha3.h" // TODO(Evgeny): fix the include
+#define MDSIZE 64
+#define MSR_START_FILENAME "__0start"
+#define MSR_RUNTIME_FILENAME "__1runtime"
+#define MSR_EAPP_FILENAME "__2eapp"
+#define MSR_FREE_MEM "free_mem"
+#define MSR_UT_MEM "ut_mem"
+typedef struct {
+  char name[MSR_NAME_LEN];
+  uintptr_t type;
+  char hash[MDSIZE];
+} resource_hash_t;
+
+typedef struct {
+  char name[MSR_NAME_LEN];
+  uintptr_t type;
+  uintptr_t offset;
+  uintptr_t size;
+} resource_ptr_t;
+
+typedef struct {
+  char name[MSR_NAME_LEN];
+  uintptr_t val;
+} runtime_val_t;
+
+// TODO(Evgeny): a way to make this more convenient?
+typedef struct {
+  uintptr_t runtime_arr, id_res_arr,
+    id_abs_arr, res_arr, abs_arr, pad_start;
+  // resource_value_t runtime_values[];
+  // resource_ptr_t identity_resident[];
+  // resource_hash_t identity_absent[];
+  // resource_ptr_t resident[];
+  // resource_hash_t absent[];
+  // byte pad_start[];
+} enclave_bundle_header_t;
 
 #endif  // __SM_CALL_H__

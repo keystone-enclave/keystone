@@ -64,6 +64,7 @@ struct enclave
   struct enclave_region regions[ENCLAVE_REGIONS_MAX];
 
   /* measurement */
+  byte identity[MDSIZE];
   byte hash[MDSIZE];
   byte sign[SIGNATURE_SIZE];
 
@@ -116,7 +117,7 @@ unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 unsigned long exit_enclave(struct sbi_trap_regs *regs, enclave_id eid);
 unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave_id eid);
 unsigned long attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size, enclave_id eid);
-// attestation
+// attestation. validates that all pointers and sizes are inside epm
 unsigned long validate_and_hash_enclave(struct enclave* enclave);
 // TODO: These functions are supposed to be internal functions.
 void enclave_init_metadata(void);
