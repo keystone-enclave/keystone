@@ -5,6 +5,7 @@
 #include "ipi.h"
 #include "sm.h"
 #include "pmp.h"
+#include "lpmp.h"
 #include <crypto.h>
 #include "enclave.h"
 #include "platform-hook.h"
@@ -16,7 +17,6 @@
 #include <sbi/sbi_hart.h>
 
 static int sm_init_done = 0;
-static int sm_region_id = 0, os_region_id = 0;
 
 #ifndef TARGET_PLATFORM_HEADER
 #error "SM requires a defined platform to build"
@@ -30,32 +30,6 @@ byte sm_signature[SIGNATURE_SIZE] = { 0, };
 byte sm_public_key[PUBLIC_KEY_SIZE] = { 0, };
 byte sm_private_key[PRIVATE_KEY_SIZE] = { 0, };
 byte dev_public_key[PUBLIC_KEY_SIZE] = { 0, };
-
-int osm_pmp_set(uint8_t perm)
-{
-  /* in case of OSM, PMP cfg is exactly the opposite.*/
-  return pmp_set_keystone(os_region_id, perm);
-}
-
-static int smm_init(void)
-{
-  int region = -1;
-  int ret = pmp_region_init_atomic(SMM_BASE, SMM_SIZE, PMP_PRI_TOP, &region, 0);
-  if(ret)
-    return -1;
-
-  return region;
-}
-
-static int osm_init(void)
-{
-  int region = -1;
-  int ret = pmp_region_init_atomic(0, -1UL, PMP_PRI_BOTTOM, &region, 1);
-  if(ret)
-    return -1;
-
-  return region;
-}
 
 void sm_sign(void* signature, const void* data, size_t len)
 {
@@ -124,17 +98,6 @@ void sm_init(bool cold_boot)
 
     sbi_ecall_register_extension(&ecall_keystone_enclave);
 
-    sm_region_id = smm_init();
-    if(sm_region_id < 0) {
-      sbi_printf("[SM] intolerable error - failed to initialize SM memory");
-      sbi_hart_hang();
-    }
-
-    os_region_id = osm_init();
-    if(os_region_id < 0) {
-      sbi_printf("[SM] intolerable error - failed to initialize OS memory");
-      sbi_hart_hang();
-    }
 
     if (platform_init_global_once() != SBI_ERR_SM_ENCLAVE_SUCCESS) {
       sbi_printf("[SM] platform global init fatal error");
@@ -158,8 +121,12 @@ void sm_init(bool cold_boot)
 
   /* below are executed by all harts */
   pmp_init();
-  pmp_set_keystone(sm_region_id, PMP_NO_PERM);
-  pmp_set_keystone(os_region_id, PMP_ALL_PERM);
+
+  /* initialize lpmp_region of host */
+  host_regions_init();
+  
+  /* activate lpmp after reset */
+  activate_host_lpmp();
 
   /* Fire platform specific global init */
   if (platform_init_global() != SBI_ERR_SM_ENCLAVE_SUCCESS) {

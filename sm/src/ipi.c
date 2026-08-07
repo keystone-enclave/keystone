@@ -30,3 +30,20 @@ void send_and_sync_pmp_ipi(int region_idx, int type, uint8_t perm)
   sbi_tlb_request(mask, 0, &tlb_info);
 }
 
+void sbi_flush_tlb_local(struct sbi_tlb_info *__info)
+{
+  asm volatile("sfence.vma");
+}
+
+void send_flush_tlb_ipi(void)
+{
+  ulong mask = 0;
+  ulong source_hart = current_hartid();
+  struct sbi_tlb_info tlb_info;
+  sbi_hsm_hart_interruptible_mask(sbi_domain_thishart_ptr(), 0, &mask);
+
+  SBI_TLB_INFO_INIT(&tlb_info, 0, 0, 0, 0,
+      sbi_flush_tlb_local, source_hart);
+  sbi_tlb_request(mask, 0, &tlb_info);
+}
+
