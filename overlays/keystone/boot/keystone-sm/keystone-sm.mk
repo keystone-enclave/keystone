@@ -38,6 +38,12 @@ OPENSBI_MAKE_ENV += PLATFORM_RISCV_TOOLCHAIN_DEFAULT=1
 
 # Make keystone-sm dircleans also trigger opensbi-dirclean
 keystone-sm-dirclean: opensbi-dirclean
+
+ifeq ($(BR2_TARGET_UBOOT),y)
+# Make opensbi dircleans also trigger uboot-dirclean
+opensbi-dirclean: uboot-dirclean
+endif
+
 endif
 
 $(eval $(keystone-package))
