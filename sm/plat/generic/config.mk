@@ -1,5 +1,9 @@
 # Here, we just include the config.mk from the standard generic implementation
+# No longer supported in newer OpenSBI versions
+# For now, only include this file for other platforms than VF2
+ifneq ($(KEYSTONE_PLATFORM),starfive/visionfive2)
 include $(src_dir)/platform/$(PLATFORM)/config.mk
+endif
 
 # We do need to make sure to include headers for the SM
 ifeq ($(KEYSTONE_SM),)
