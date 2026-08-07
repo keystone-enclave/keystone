@@ -6,6 +6,20 @@
 #include "mm/vm_defs.h"
 #include "mm/vm.h"
 
+resource_ptr_t* findIdentityResident(uintptr_t dram_base, const char* filename) {
+  // note: SM validates all pointers and sizes are within epm
+  enclave_bundle_header_t* ebundle_h = (enclave_bundle_header_t*) dram_base;
+  resource_ptr_t* id_res_resource = (resource_ptr_t*) (dram_base + ebundle_h->id_res_arr);
+  resource_ptr_t* id_abs_arr = (resource_ptr_t*) (dram_base + ebundle_h->id_abs_arr);
+  for (; id_res_resource < id_abs_arr; id_res_resource++) {
+    if (strcmp(id_res_resource->name, filename) == 0) {
+      return id_res_resource;
+    }
+  }
+  printf("findIdentityResident: filename \"%s\" not found\n", filename);
+  return 0;
+}
+
 static inline int pt_mode_from_elf(int elf_pt_mode) {
   return 
     (((elf_pt_mode & PF_X) > 0) * PTE_X) |
@@ -31,7 +45,7 @@ int loadElf(elf_t* elf, bool user) {
     /* va is not page-aligned, so it doesn't own some of the page. Page may already be mapped. */
     if (RISCV_PAGE_OFFSET(va)) {
       if (RISCV_PAGE_OFFSET(va) != RISCV_PAGE_OFFSET((uintptr_t) src)) {
-        printf("loadElf: va and src are misaligned");
+        printf("loadElf: va and src are misaligned\n");
         return -1;
       }
       uintptr_t new_page = alloc_page(vpn(va), pt_mode);

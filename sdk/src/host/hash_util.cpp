@@ -5,7 +5,6 @@
 extern "C" {
 #include "common/sha3.h"
 }
-#include "Memory.hpp"
 #include "hash_util.hpp"
 
 #define RISCV_PGSIZE (1 << 12)

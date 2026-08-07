@@ -7,24 +7,20 @@
 _start:
   // a1: dram_base
   // a2: dram_size
-  // a3: runtime_base
-  // a4: user_base
-  // a5: free_base
-  // a6: untrusted_ptr
-  // a7: untrusted_size
+  // a3: free_base
+  // a4: untrusted_base
+  // a5: untrusted_size
 
   // use designated stack
   la sp, _estack
 
   // save all args to stack 
-  addi sp, sp, -(REGBYTES*7)
+  addi sp, sp, -(REGBYTES*5)
   STORE a1, 0(sp)
   STORE a2, 1*REGBYTES(sp)
   STORE a3, 2*REGBYTES(sp)
   STORE a4, 3*REGBYTES(sp)
   STORE a5, 4*REGBYTES(sp)
-  STORE a6, 5*REGBYTES(sp)
-  STORE a7, 6*REGBYTES(sp)
 
   // call load_runtime
   call load_runtime 
@@ -52,11 +48,9 @@ _start:
   // set arguments for eyrie_boot
   LOAD a1, 0(sp)
   LOAD a2, 1*REGBYTES(sp)
-  LOAD a3, 2*REGBYTES(sp)
+  LOAD a3, free_base_final
   LOAD a4, 3*REGBYTES(sp)
-  LOAD a5, free_base_final
-  LOAD a6, 5*REGBYTES(sp)
-  LOAD a7, 6*REGBYTES(sp)
+  LOAD a5, 4*REGBYTES(sp)
 
   // flush TLB's just in case
   fence.i

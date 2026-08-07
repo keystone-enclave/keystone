@@ -43,6 +43,10 @@ class ElfFile {
   uintptr_t getEntryPoint();
   void* getProgramSegment(size_t ph);
 
+  // delete copy constructors because ~ElfFile() unmaps
+  ElfFile (const ElfFile&) = delete;
+  ElfFile& operator= (const ElfFile&) = delete;
+
  private:
   int filep;
 
