@@ -9,8 +9,7 @@ QEMU_DEBUG      := -gdb tcp::$(QEMU_DBG_PORT) -S
 QEMU_MEM        ?= 2G
 QEMU_SMP        ?= 4
 
-
-QEMU_FLAGS := -m $(QEMU_MEM) -smp $(QEMU_SMP) -nographic \
+QEMU_FLAGS := -m $(QEMU_MEM) -smp $(QEMU_SMP) -display none \
                 -machine virt,rom=$(BUILDROOT_BUILDDIR)/images/bootrom.bin \
                 -bios $(BUILDROOT_BUILDDIR)/images/fw_jump.elf \
                 -kernel $(BUILDROOT_BUILDDIR)/images/Image \
@@ -20,6 +19,7 @@ QEMU_FLAGS := -m $(QEMU_MEM) -smp $(QEMU_SMP) -nographic \
                 -netdev user,id=net0,net=192.168.100.1/24,dhcpstart=192.168.100.128,hostfwd=tcp::$(KEYSTONE_PORT)-:22 \
                 -device virtio-net-device,netdev=net0 \
                 -device virtio-rng-pci \
+                -serial mon:stdio -serial file:/tmp/serial.out
 
 ifneq ($(KEYSTONE_DEBUG),)
         QEMU_FLAGS += $(QEMU_DEBUG)

@@ -5,6 +5,9 @@
 #ifndef _PMP_H_
 #define _PMP_H_
 
+typedef int pmpreg_id;
+typedef int region_id;
+
 #include "sm.h"
 #include <sbi/riscv_atomic.h>
 
@@ -81,9 +84,6 @@ struct pmp_region
   int allow_overlap;
   int reg_idx;
 };
-
-typedef int pmpreg_id;
-typedef int region_id;
 
 /* external functions */
 void pmp_init(void);

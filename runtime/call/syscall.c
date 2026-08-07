@@ -26,6 +26,10 @@
 #include "call/net_wrap.h"
 #endif /* USE_NET_SYSCALL */
 
+#ifdef USE_DRIVERS
+#include "drivers/drivers.h"
+#endif
+
 extern void exit_enclave(uintptr_t arg0);
 
 uintptr_t dispatch_edgecall_syscall(struct edge_syscall* syscall_data_ptr, size_t data_len){
@@ -209,6 +213,42 @@ void handle_syscall(struct encl_ctx* ctx)
 
     break;
 
+  case(RUNTIME_SYSCALL_CLAIM_MMIO):
+    if(arg1 > sizeof(rt_copy_buffer_1)) {
+      ret = -1;
+      break;
+    }
+
+    uintptr_t devstr_claim_pa = kernel_va_to_pa(rt_copy_buffer_1);
+    copy_from_user(rt_copy_buffer_1, (void *) arg0, arg1);
+
+    ret = sbi_claim_mmio(devstr_claim_pa);
+
+#ifdef USE_DRIVERS
+    // Initialize the hardware
+    if(ret == 0) {
+      ret = init_driver((char *) rt_copy_buffer_1);
+    }
+#endif
+
+    break;
+
+  case(RUNTIME_SYSCALL_RELEASE_MMIO):
+    if(arg1 > sizeof(rt_copy_buffer_1)) {
+      ret = -1;
+      break;
+    }
+
+    uintptr_t devstr_release_pa = kernel_va_to_pa(rt_copy_buffer_1);
+    copy_from_user(rt_copy_buffer_1, (void *) arg0, arg1);
+
+#ifdef USE_DRIVERS
+    // Teardown the hardware
+    fini_driver((char *) rt_copy_buffer_1);
+#endif
+
+    ret = sbi_release_mmio(devstr_release_pa);
+    break;
 
 #ifdef USE_LINUX_SYSCALL
   case(SYS_clock_gettime):
@@ -263,21 +303,43 @@ void handle_syscall(struct encl_ctx* ctx)
     break;
 #endif /* USE_LINUX_SYSCALL */
 
-#ifdef USE_IO_SYSCALL
+#if defined(USE_IO_SYSCALL) || defined(USE_DRIVERS)
   case(SYS_read):
+#ifdef USE_DRIVERS
+    ret = drivers_read_override((int)arg0, (void *)arg1, (size_t)arg2);
+#else
     ret = io_syscall_read((int)arg0, (void*)arg1, (size_t)arg2);
+#endif
     break;
   case(SYS_write):
+#ifdef USE_DRIVERS
+    ret = drivers_write_override((int)arg0, (void *)arg1, (size_t)arg2);
+#else
     ret = io_syscall_write((int)arg0, (void*)arg1, (size_t)arg2);
+#endif
     break;
+  case(SYS_openat):
+#ifdef USE_DRIVERS
+    ret = drivers_openat_override((int)arg0, (char *)arg1, (int)arg2, (mode_t)arg3);
+#else
+    ret = io_syscall_openat((int)arg0, (char*)arg1, (int)arg2, (mode_t)arg3);
+#endif
+    break;
+  case(SYS_close):
+#ifdef USE_DRIVERS
+    ret = drivers_close_override((int)arg0);
+#else
+    ret = io_syscall_close((int)arg0);
+#endif
+    break;
+#endif
+
+#ifdef USE_IO_SYSCALL
   case(SYS_writev):
     ret = io_syscall_writev((int)arg0, (const struct iovec*)arg1, (int)arg2);
     break;
   case(SYS_readv):
     ret = io_syscall_readv((int)arg0, (const struct iovec*)arg1, (int)arg2);
-    break;
-  case(SYS_openat):
-    ret = io_syscall_openat((int)arg0, (char*)arg1, (int)arg2, (mode_t)arg3);
     break;
   case(SYS_unlinkat):
     ret = io_syscall_unlinkat((int)arg0, (char*)arg1, (int)arg2);
@@ -299,9 +361,6 @@ void handle_syscall(struct encl_ctx* ctx)
     break;
   case(SYS_fsync):
     ret = io_syscall_fsync((int)arg0);
-    break;
-  case(SYS_close):
-    ret = io_syscall_close((int)arg0);
     break;
   case(SYS_epoll_create1):
     ret = io_syscall_epoll_create((int) arg0); 

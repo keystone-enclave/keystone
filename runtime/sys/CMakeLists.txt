@@ -6,7 +6,7 @@ add_executable(eyrie-build EXCLUDE_FROM_ALL ${SYS_SOURCES})
 # required by one library are defined by the time that it is added to this list
 
 target_link_libraries(eyrie-build
-        rt_call rt_mm rt_crypto rt_tmplib rt_util rt_loader
+        rt_call rt_mm rt_crypto rt_drivers rt_tmplib rt_util rt_loader
         gcc ${KEYSTONE_SDK_DIR}/lib/libkeystone-edge.a)
 target_link_options(eyrie-build PRIVATE -static -nostdlib -T $<TARGET_OBJECTS:rt_linkscript>)
 add_dependencies(eyrie-build rt_linkscript)

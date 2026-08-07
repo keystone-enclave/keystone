@@ -2,7 +2,7 @@
 #include "sm.h"
 
 static int unmatched_final_init(bool cold_boot, const struct fdt_match *match) {
-	sm_init(cold_boot);
+	sm_init(cold_boot, fdt_get_address());
 	return sifive_fu740_final_init(cold_boot, match);
 }
 

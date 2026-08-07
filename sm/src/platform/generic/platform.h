@@ -22,6 +22,12 @@ struct platform_enclave_data{
 // CPU configuration
 #define MAX_HARTS               16
 
+// Device configuration
+#define DEV_NAMELEN             64
+#define NUM_SECURE_DEVS         8
+#define NUM_NONSECURE_DEVS      8
+#define NUM_DISABLED_DEVS       8
+
 // Initialization functions
 void sm_copy_key(void);
 

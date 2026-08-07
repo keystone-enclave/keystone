@@ -73,12 +73,11 @@ static int ariane_early_init(bool cold_boot)
  */
 static int ariane_final_init(bool cold_boot)
 {
-	void *fdt;
-	sm_init(cold_boot);
+	void *fdt = fdt_get_address();
+	sm_init(cold_boot, fdt);
 	if (!cold_boot)
 		return 0;
 
-	fdt = fdt_get_address();
 	fdt_fixups(fdt);
 
 	return 0;

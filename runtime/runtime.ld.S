@@ -25,5 +25,13 @@ SECTIONS
     PROVIDE(kernel_stack_end = .);
   }
 
+#ifdef USE_DRIVERS
+  .drivers : {
+    PROVIDE(drivers_start = .);
+    *(.drivers)
+    PROVIDE(drivers_end = .);
+  }
+#endif
+
   _end = .;
 }

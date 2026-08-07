@@ -37,6 +37,9 @@ rt_option(NET_SYSCALL "Wrap Linux net syscalls" OFF)
 # System options
 rt_option(ENV_SETUP "Set up stack environments like glibc expects" OFF)
 
+# Driver options
+rt_option(DRIVERS "Include support for hardware drivers" OFF)
+
 # Debugging options
 rt_option(INTERNAL_STRACE "Debug syscalls" OFF)
 rt_option(DEBUG "Enable debugging" OFF)
@@ -61,6 +64,7 @@ add_compile_options(-Wall -Werror -fno-builtin -static -mcmodel=medany -std=c11 
 # Generate all the library targets
 add_subdirectory(call)
 add_subdirectory(crypto)
+add_subdirectory(drivers)
 add_subdirectory(loader)
 add_subdirectory(mm)
 add_subdirectory(tmplib)

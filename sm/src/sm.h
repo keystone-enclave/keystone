@@ -13,7 +13,7 @@
 #include "sm_call.h"
 #include "sm_err.h"
 
-void sm_init(bool cold_boot);
+void sm_init(bool cold_boot, void *fdt);
 
 /* platform specific functions */
 #define ATTESTATION_KEY_LENGTH  64
