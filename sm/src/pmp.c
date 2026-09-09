@@ -83,7 +83,7 @@ static inline uintptr_t region_pmpaddr_val(region_id i)
 
 static inline uintptr_t region_pmpcfg_val(region_id i, pmpreg_id reg_idx, uint8_t perm_bits)
 {
-  return (uintptr_t) (regions[i].addrmode | perm_bits) << (8*(reg_idx%PMP_PER_GROUP));
+  return (uintptr_t) (PMP_L | regions[i].addrmode | perm_bits) << (8*(reg_idx%PMP_PER_GROUP));
 }
 
 static void region_clear_all(region_id i)

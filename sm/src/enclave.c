@@ -93,7 +93,12 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     enclave_id eid,
     int return_on_resume){
 
-  // set PMP
+  // Suppress interrupts during PMP reconfiguration to close the
+  // multi-hart race window where remote harts still observe the old
+  // PMP state while the local hart has already changed it.
+  uintptr_t saved_mie = csr_read(mie);
+  csr_write(mie, 0);
+
   int memid;
   for(memid=0; memid < ENCLAVE_REGIONS_MAX; memid++) {
     if(enclaves[eid].regions[memid].type != REGION_INVALID) {
@@ -101,6 +106,9 @@ static inline void context_switch_to_host(struct sbi_trap_regs *regs,
     }
   }
   osm_pmp_set(PMP_ALL_PERM);
+
+  RISCV_FENCE(rw, rw);
+  csr_write(mie, saved_mie);
 
   uintptr_t interrupts = MIP_SSIP | MIP_STIP | MIP_SEIP;
   csr_write(mideleg, interrupts);
