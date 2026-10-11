@@ -440,9 +440,16 @@ int pmp_region_free_atomic(int region_idx)
 
   pmpreg_id reg_idx = region_register_idx(region_idx);
   UNSET_BIT(region_def_bitmap, region_idx);
-  UNSET_BIT(reg_bitmap, reg_idx);
-  if(region_needs_two_entries(region_idx))
-    UNSET_BIT(reg_bitmap, reg_idx - 1);
+  /* The bottom register is shared by every PMP_PRI_BOTTOM region: the OS
+   * region, which lives for as long as the machine does, and the UTM region
+   * of each enclave. No single region owns it, so freeing one must not
+   * release it, or the allocator would later hand it to a PMP_PRI_ANY
+   * caller and two regions would write the same pmpcfg entry. */
+  if(reg_idx != PMP_N_REG - 1) {
+    UNSET_BIT(reg_bitmap, reg_idx);
+    if(region_needs_two_entries(region_idx))
+      UNSET_BIT(reg_bitmap, reg_idx - 1);
+  }
 
   region_clear_all(region_idx);
 
