@@ -20,7 +20,9 @@
 #define ATTEST_DATA_MAXLEN  1024
 /* TODO: does not support multithreaded enclave yet */
 #define MAX_ENCL_THREADS 1
-
+//Oussama
+#define MCALL_SET_ENCLAVE_CONFIG 0x1000
+//fin Oussama
 typedef enum {
   INVALID = -1,
   DESTROYING = 0,
@@ -29,6 +31,15 @@ typedef enum {
   STOPPED,
   RUNNING,
 } enclave_state;
+
+//Oussama
+typedef enum {
+  Cache_Locking = 1,
+  Noise_Injection,
+  Virtual_Time,
+  RANDOM_Cache,
+} enclave_countermeasure;
+//fin Oussama
 
 /* For now, eid's are a simple unsigned int */
 typedef unsigned int enclave_id;
@@ -59,9 +70,12 @@ struct enclave
   enclave_id eid; //enclave id
   unsigned long encl_satp; // enclave's page table base
   enclave_state state; // global state of the enclave
-
+  //Oussama
+  unsigned long config_id;
+  //Fin Oussama
   /* Physical memory regions associate with this enclave */
   struct enclave_region regions[ENCLAVE_REGIONS_MAX];
+ 
 
   /* measurement */
   byte hash[MDSIZE];
@@ -127,4 +141,7 @@ uintptr_t get_enclave_region_size(enclave_id eid, int memid);
 unsigned long get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident_size, enclave_id eid);
 // interrupt handlers
 void sbi_trap_handler_keystone_enclave(struct sbi_trap_regs *regs);
+//Oussama
+unsigned long set_enclave_config(unsigned int eid, unsigned long config_id);
+//FIn Oussama
 #endif

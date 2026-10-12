@@ -26,7 +26,10 @@
   _IOR(KEYSTONE_IOC_MAGIC, 0x06, struct keystone_ioctl_create_enclave)
 #define KEYSTONE_IOC_UTM_INIT \
   _IOR(KEYSTONE_IOC_MAGIC, 0x07, struct keystone_ioctl_create_enclave)
-
+//Oussama
+#define KEYSTONE_IOC_SET_ENCLAVE_CONFIG \
+  _IOW(KEYSTONE_IOC_MAGIC, 0x08, struct keystone_ioctl_set_config)
+//fin Oussama
 #define RT_NOEXEC 0
 #define USER_NOEXEC 1
 #define RT_FULL 2
@@ -58,4 +61,17 @@ struct keystone_ioctl_run_enclave {
   uintptr_t value;
 };
 
+//Oussama
+struct keystone_ioctl_set_config {
+  uintptr_t eid;
+  uintptr_t config_id;
+};
+
+typedef enum {
+  Cache_Locking = 1,
+  Noise_Injection,
+  Virtual_Time,
+  RANDOM_Cache,
+} enclave_countermeasure;
+//Oussama
 #endif

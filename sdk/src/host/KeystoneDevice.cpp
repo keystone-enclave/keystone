@@ -189,5 +189,23 @@ MockKeystoneDevice::map(uintptr_t addr, size_t size) {
 MockKeystoneDevice::~MockKeystoneDevice() {
   if (sharedBuffer) free(sharedBuffer);
 }
+//Oussama
+Error KeystoneDevice::setEnclaveConfig(unsigned long config_id) {
+  if (eid < 0) {
+    return Error::EnclaveInterrupted;  
+  }
 
-}  // namespace Keystone
+  struct keystone_ioctl_set_config config_arg;
+  config_arg.eid = eid;            
+  config_arg.config_id = config_id;
+
+  int ret = ioctl(fd, KEYSTONE_IOC_SET_ENCLAVE_CONFIG, &config_arg);
+  if (ret) {
+    perror("ioctl(KEYSTONE_IOC_SET_ENCLAVE_CONFIG) failed");
+    return Error::IoctlErrorRun;
+  }
+
+  return Error::Success; 
+}
+//Fin Oussama
+} // namespace Keystone

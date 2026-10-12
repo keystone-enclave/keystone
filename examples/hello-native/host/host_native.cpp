@@ -30,7 +30,13 @@ main(int argc, char** argv) {
   params.setFreeMemSize(1024 * 1024);
   params.setUntrustedSize(1024 * 1024);
 
-  enclave.init(argv[1], argv[2], argv[3], params);
+  enclave.init(argv[1], argv[2], argv[3], params); 
+  Keystone::Error err = enclave.setEnclaveConfig(Cache_Locking);
+
+   if (err == Keystone::Error::Success) {
+    printf("[HOST] Configuration appliquée avec succès.\n");}
+   else {
+    printf("[HOST] Échec de la configuration ! Code d'erreur : %d\n", static_cast<int>(err));}
 
   enclave.registerOcallDispatch(incoming_call_dispatch);
 
@@ -40,9 +46,8 @@ main(int argc, char** argv) {
 
   edge_call_init_internals(
       (uintptr_t)enclave.getSharedBuffer(), enclave.getSharedBufferSize());
-
   enclave.run();
-
+  
   return 0;
 }
 

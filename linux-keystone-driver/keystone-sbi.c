@@ -23,3 +23,10 @@ struct sbiret sbi_sm_resume_enclave(unsigned long eid) {
       SBI_SM_RESUME_ENCLAVE,
       eid, 0, 0, 0, 0, 0);
 }
+//Oussama
+struct sbiret sbi_sm_set_enclave_config(unsigned long eid, unsigned long config_id) {
+  return sbi_ecall(SBI_EXT_EXPERIMENTAL_KEYSTONE_ENCLAVE,
+                   SBI_SM_SET_ENCLAVE_CONFIG,
+                   eid, config_id, 0, 0, 0, 0);
+}
+//Fin Oussama

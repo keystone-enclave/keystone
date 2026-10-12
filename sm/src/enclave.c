@@ -19,6 +19,11 @@ struct enclave enclaves[ENCL_MAX];
 // greater than or equal to 0
 #define ENCLAVE_EXISTS(eid) (eid < ENCL_MAX && enclaves[eid].state >= 0)
 
+/* CSR numbers*/
+#define CSR_MHPMEVENT3 0x323
+#define CSR_MHPMEVENT4 0x324
+#define CSR_MHPMEVENT5 0x325
+
 static spinlock_t encl_lock = SPIN_LOCK_INITIALIZER;
 
 extern void save_host_regs(void);
@@ -39,6 +44,54 @@ extern byte dev_public_key[PUBLIC_KEY_SIZE];
  *
  * Expects that eid has already been valided, and it is OK to run this enclave
 */
+//Oussama
+/* Write to CSR  */
+static inline void write_csr(unsigned long csr, unsigned long val)
+{
+    asm volatile ("csrw %0, %1" :: "i"(csr), "r"(val));
+}
+
+/* Set enclave ID (bits [26:23] in MHPMEVENT4) */
+static inline void hc_set_enclave_id(uint8_t id)
+{
+    unsigned long v = ((unsigned long)(id & 0xF)) << 23;
+    write_csr(CSR_MHPMEVENT4, v);
+}
+
+/* Clear enclave ID (zero out bits [26:23]) */
+static inline void hc_clear_enclave_id(void)
+{
+    unsigned long v = (0x0ul << 23); 
+    write_csr(CSR_MHPMEVENT3, v);
+}
+
+/* Enable secure flag (bit 23 of MHPMEVENT3) */
+static inline void hc_enable_countermeasure(void)
+{
+    write_csr(CSR_MHPMEVENT3, (1ul << 23));
+}
+
+/* Disable secure flag (clear bit 23) */
+static inline void hc_disable_countermeasure(void)
+{
+    unsigned long v = (0x0ul << 23); 
+    write_csr(CSR_MHPMEVENT3, v);
+}
+
+
+static inline void hc_flush_enclave(void)
+{
+    unsigned long v = (0x1ul << 23); 
+    write_csr(CSR_MHPMEVENT5, v);
+}
+
+static inline void hc_disble_flush(void)
+{
+    unsigned long v = (0x0ul << 23); 
+    write_csr(CSR_MHPMEVENT5, v);
+}
+//Fin Oussama
+
 static inline void context_switch_to_enclave(struct sbi_trap_regs* regs,
                                                 enclave_id eid,
                                                 int load_parameters){
@@ -233,6 +286,7 @@ uintptr_t get_enclave_region_base(enclave_id eid, int memid)
   return 0;
 }
 
+
 // TODO: This function is externally used by sm-sbi.c.
 // Change it to be internal (remove from the enclave.h and make static)
 /* Internal function enforcing a copy source is from the untrusted world.
@@ -420,7 +474,11 @@ unsigned long create_enclave(unsigned long *eidptr, struct keystone_sbi_create_t
   enclaves[eid].state = FRESH;
   /* EIDs are unsigned int in size, copy via simple copy */
   *eidptr = eid;
-
+  
+  /* EID matériel = eid + 1 (0x0 réservé au monde non sécurisé) */
+  //Oussama
+  hc_set_enclave_id((uint8_t)(eid + 1));
+  //Fin Oussama
   spin_unlock(&encl_lock);
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 
@@ -440,6 +498,51 @@ error:
   return ret;
 }
 
+//Oussama
+unsigned long set_enclave_config(enclave_id eid, unsigned long config_id)
+{
+    unsigned long ret = 0;
+    int runable;
+    spin_lock(&encl_lock);
+    runable = (ENCLAVE_EXISTS(eid)
+            && enclaves[eid].state == FRESH);
+    if (runable) {
+        switch(config_id) {
+            case Cache_Locking:
+                enclaves[eid].config_id = config_id;
+                hc_enable_countermeasure();
+                ret = config_id;
+                break;
+
+            case Noise_Injection:
+                enclaves[eid].config_id = config_id;
+                ret = config_id;
+                break;
+
+            case Virtual_Time :
+                enclaves[eid].config_id = config_id;
+                ret = config_id;
+                break;
+
+            case RANDOM_Cache:
+                enclaves[eid].config_id = config_id;
+                ret = config_id;
+                break;
+                
+            default:
+                ret = 0;
+                break;
+        }
+    }
+    spin_unlock(&encl_lock);
+
+    if(!runable) {
+    return SBI_ERR_SM_ENCLAVE_NOT_FRESH;
+   }
+    return ret;
+}
+//Fin Oussama
+
 /*
  * Fully destroys an enclave
  * Deallocates EID, clears epm, etc
@@ -450,6 +553,7 @@ unsigned long destroy_enclave(enclave_id eid)
   int destroyable;
 
   spin_lock(&encl_lock);
+  
   destroyable = (ENCLAVE_EXISTS(eid)
                  && enclaves[eid].state <= STOPPED);
   /* update the enclave state first so that
@@ -461,6 +565,12 @@ unsigned long destroy_enclave(enclave_id eid)
   if(!destroyable)
     return SBI_ERR_SM_ENCLAVE_NOT_DESTROYABLE;
 
+  //Oussama
+  hc_flush_enclave();
+  hc_disable_countermeasure();
+  hc_clear_enclave_id();
+  hc_disble_flush();
+  //Fin Oussama
 
   // 0. Let the platform specifics do cleanup/modifications
   platform_destroy_enclave(&enclaves[eid]);
@@ -485,6 +595,7 @@ unsigned long destroy_enclave(enclave_id eid)
     //1.b free pmp region
     pmp_unset_global(rid);
     pmp_region_free_atomic(rid);
+
   }
 
   // 2. free pmp region for UTM
@@ -544,6 +655,9 @@ unsigned long exit_enclave(struct sbi_trap_regs *regs, enclave_id eid)
   if(!exitable)
     return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
 
+  hc_disable_countermeasure();
+  hc_clear_enclave_id();
+
   context_switch_to_host(regs, eid, 0);
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
@@ -564,6 +678,11 @@ unsigned long stop_enclave(struct sbi_trap_regs *regs, uint64_t request, enclave
 
   if(!stoppable)
     return SBI_ERR_SM_ENCLAVE_NOT_RUNNING;
+  
+  //Oussama
+  hc_disable_countermeasure();
+  hc_clear_enclave_id();
+  //Fin Oussama
 
   context_switch_to_host(regs, eid, request == STOP_EDGE_CALL_HOST);
 
@@ -594,9 +713,16 @@ unsigned long resume_enclave(struct sbi_trap_regs *regs, enclave_id eid)
     enclaves[eid].state = RUNNING;
   }
   spin_unlock(&encl_lock);
-
+  
+  //Oussama
+  hc_set_enclave_id((uint8_t)(eid + 1));
+  if (enclaves[eid].config_id == 1) {
+      hc_enable_countermeasure();
+  }
+  //Fin Oussama
   // Enclave is OK to resume, context switch to it
   context_switch_to_enclave(regs, eid, 0);
+
 
   return SBI_ERR_SM_ENCLAVE_SUCCESS;
 }

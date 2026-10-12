@@ -59,6 +59,7 @@ Enclave::prepareEnclaveMemory(size_t requiredPages, uintptr_t alternatePhysAddr)
 
   /* Call Enclave Driver */
   if (pDevice->create(minPages) != Error::Success) {
+    ERROR("Failed to set enclave configuration");
     return false;
   }
 

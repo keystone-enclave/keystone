@@ -54,6 +54,9 @@ struct utm {
 struct enclave
 {
   unsigned long eid;
+  //Oussama
+  unsigned long config_value;
+  //Oussama
   int close_on_pexit;
   struct utm* utm;
   struct epm* epm;

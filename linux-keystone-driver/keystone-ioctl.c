@@ -219,6 +219,29 @@ int keystone_resume_enclave(unsigned long data)
 
   return 0;
 }
+//Oussama
+int keystone_set_enclave_config(unsigned long data)
+{
+  struct sbiret ret;
+  struct keystone_ioctl_set_config *arg = (struct keystone_ioctl_set_config*) data;
+  struct enclave* enclave = get_enclave_by_id(arg->eid);
+  if (!enclave) {
+    keystone_err("Invalid enclave ID in set_config\n");
+    return -EINVAL;
+  }
+
+  if (enclave->eid < 0) {
+    keystone_err("real enclave does not exist\n");
+    return -EINVAL;
+  }
+
+  ret = sbi_sm_set_enclave_config(enclave->eid, arg->config_id);
+  keystone_info("Enclave config set via SBI\n");
+
+  return 0;
+}
+
+//Fin Oussama
 
 long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 {
@@ -259,6 +282,11 @@ long keystone_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
     case KEYSTONE_IOC_UTM_INIT:
       ret = utm_init_ioctl(filep, (unsigned long) data);
       break;
+      //Oussama
+    case KEYSTONE_IOC_SET_ENCLAVE_CONFIG:
+      ret = keystone_set_enclave_config((unsigned long) data);
+      break;
+    //Fin Oussama
     default:
       return -ENOSYS;
   }

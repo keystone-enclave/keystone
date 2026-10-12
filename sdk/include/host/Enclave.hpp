@@ -66,6 +66,10 @@ class Enclave {
       uintptr_t alternatePhysAddr);
   Error destroy();
   Error run(uintptr_t* ret = nullptr);
+  //Oussama
+  Error setEnclaveConfig(unsigned long config_id) {
+  return pDevice->setEnclaveConfig(config_id);}
+  //Oussama
 };
 
 uint64_t

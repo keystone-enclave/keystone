@@ -9,6 +9,7 @@ set(eyrie_plugins "none")
 # eapp
 
 add_executable(${eapp_bin} ${eapp_src})
+target_compile_options(${eapp_bin} PRIVATE -g -O0) 
 target_link_libraries(${eapp_bin} "-nostdlib -static" ${KEYSTONE_LIB_EAPP} ${KEYSTONE_LIB_EDGE})
 
 target_include_directories(${eapp_bin}
@@ -18,6 +19,7 @@ target_include_directories(${eapp_bin}
 # host
 
 add_executable(${host_bin} ${host_src})
+target_compile_options(${host_bin} PRIVATE -g -O0) 
 target_link_libraries(${host_bin} ${KEYSTONE_LIB_HOST} ${KEYSTONE_LIB_EDGE})
 # add -std=c++11 flag
 set_target_properties(${host_bin}

@@ -9,6 +9,8 @@ set(eyrie_plugins "io_syscall linux_syscall env_setup")
 # eapp
 
 add_executable(${eapp_bin} ${eapp_src})
+#pour GDB
+target_compile_options(${eapp_bin} PRIVATE -g -O0) 
 target_link_libraries(${eapp_bin} "-static")
 
 # host

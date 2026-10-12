@@ -16,6 +16,9 @@
 #define SBI_SM_RUN_ENCLAVE       2003
 #define SBI_SM_RESUME_ENCLAVE    2005
 #define FID_RANGE_HOST           2999
+//Oussama
+#define SBI_SM_SET_ENCLAVE_CONFIG 2006
+//FIn Oussama
 
 /* 3000-3999 are called by enclave */
 #define SBI_SM_RANDOM            3001

@@ -46,6 +46,9 @@ class KeystoneDevice {
   virtual Error destroy();
   virtual Error run(uintptr_t* ret);
   virtual Error resume(uintptr_t* ret);
+    //Oussama
+  virtual Error setEnclaveConfig(unsigned long config_id);
+  //fin Oussama
   virtual void* map(uintptr_t addr, size_t size);
 };
 

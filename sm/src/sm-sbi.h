@@ -8,6 +8,7 @@
 #include <sbi/sbi_types.h>
 #include <sbi/sbi_trap.h>
 
+
 unsigned long
 sbi_sm_create_enclave(unsigned long *out_val, uintptr_t create_args);
 
@@ -34,7 +35,9 @@ sbi_sm_get_sealing_key(uintptr_t seal_key, uintptr_t key_ident, size_t key_ident
 
 unsigned long
 sbi_sm_random(void);
-
+//Oussama
+unsigned long sbi_sm_set_enclave_config(unsigned long eid, unsigned long config_id);
+//Fin Oussama
 unsigned long
 sbi_sm_call_plugin(uintptr_t plugin_id, uintptr_t call_id, uintptr_t arg0, uintptr_t arg1);
 

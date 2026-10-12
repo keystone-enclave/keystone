@@ -40,6 +40,11 @@ static int sbi_ecall_keystone_enclave_handler(unsigned long extid, unsigned long
     case SBI_SM_DESTROY_ENCLAVE:
       retval = sbi_sm_destroy_enclave(regs->a0);
       break;
+    //Oussama
+     case SBI_SM_SET_ENCLAVE_CONFIG:
+      retval = sbi_sm_set_enclave_config(regs->a0,regs->a1);
+      break;
+    //Oussama  
     case SBI_SM_RUN_ENCLAVE:
       retval = sbi_sm_run_enclave((struct sbi_trap_regs*) regs, regs->a0);
       __builtin_unreachable();

@@ -41,6 +41,8 @@ class PMPDump(gdb.Command):
 
                 # Keep track of previous addresses for TOR regions
                 prev_addr = None
+                prev_cfg = None
+                prev_reg_idx = None
 
                 # Parse configurations first
                 for i, reg in enumerate(self.cfg_regs):
@@ -48,6 +50,7 @@ class PMPDump(gdb.Command):
 
                         # Now parse addresses
                         for j in range(self.pmp_per_group):
+                                reg_idx = self.pmp_per_group * i + j
                                 reg_cfg = (cfg_val >> (8 * j)) & 0xFF
                                 r = (reg_cfg & 0b00000001) != 0
                                 w = (reg_cfg & 0b00000010) != 0
@@ -60,12 +63,20 @@ class PMPDump(gdb.Command):
                                         # Disabled region, continue
                                         type = "disabled"
                                         prev_addr = reg_addr << 2
+                                        prev_cfg = reg_cfg
+                                        prev_reg_idx = reg_idx
                                         continue
                                 elif a == 1:
                                         # TOR region
                                         type = "TOR"
                                         range_bottom = (0 if prev_addr is None else prev_addr)
                                         range_top = reg_addr << 2
+
+                                        if prev_cfg is not None and prev_reg_idx is not None:
+                                              print(f'PMP reg {prev_reg_idx} START of adress region for TOR config (A=0)')
+                                              print(f'\tcfg\t{hex(prev_cfg)} {"R" if prev_cfg & 0x1 else ""}{"W" if prev_cfg & 0x2 else ""}{"X" if prev_cfg & 0x4 else ""}{"L" if prev_cfg & 0x80 else ""}')
+                                              print(f'\taddr\t{hex(prev_addr >> 2)} = {hex(prev_addr)}')
+
                                 elif a == 2:
                                         # NA4 region
                                         type = "NA4"

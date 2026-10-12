@@ -12,6 +12,13 @@
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_console.h>
 
+/*void random_delay() {
+    unsigned long delay = platform_random() % 1000;  
+    for (volatile unsigned long i = 0; i < delay; i++) {
+        asm volatile("nop"); 
+    }
+}*/
+
 unsigned long sbi_sm_create_enclave(unsigned long* eid, uintptr_t create_args)
 {
   struct keystone_sbi_create_t create_args_local;
@@ -35,6 +42,7 @@ unsigned long sbi_sm_destroy_enclave(unsigned long eid)
 
 unsigned long sbi_sm_run_enclave(struct sbi_trap_regs *regs, unsigned long eid)
 {
+ // random_delay();
   regs->a0 = run_enclave(regs, (unsigned int) eid);
   regs->mepc += 4;
   sbi_trap_exit(regs);
@@ -69,7 +77,15 @@ unsigned long sbi_sm_stop_enclave(struct sbi_trap_regs *regs, unsigned long requ
   sbi_trap_exit(regs);
   return 0;
 }
+//Oussama
 
+unsigned long sbi_sm_set_enclave_config(unsigned long eid, unsigned long config_id)
+{
+  unsigned long ret;
+  ret = set_enclave_config(eid, config_id);
+  return ret;
+}
+//Fin Oussama
 unsigned long sbi_sm_attest_enclave(uintptr_t report, uintptr_t data, uintptr_t size)
 {
   unsigned long ret;
