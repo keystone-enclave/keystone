@@ -1,0 +1,37 @@
+--- a/arch/riscv/boot/dts/starfive/jh7110-starfive-visionfive-2.dtsi	2024-06-24 17:10:56.102667746 +0000
++++ "b/arch/riscv/boot/dts/starfive/jh7110-starfive-visionfive-2.dtsi"	2024-06-24 17:15:17.500790752 +0000
+@@ -8,6 +8,8 @@
+ #include "jh7110.dtsi"
+ #include "jh7110-pinfunc.h"
+ #include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/leds/common.h>
+ 
+ / {
+ 	aliases {
+@@ -21,6 +23,7 @@
+ 		mmc1 = &mmc1;
+ 		serial0 = &uart0;
+ 	};
++	
+ 
+ 	chosen {
+ 		stdout-path = "serial0:115200n8";
+@@ -67,6 +70,17 @@
+ 			};
+ 		};
+ 	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		led-0 {
++			gpios = <&aongpio 3 GPIO_ACTIVE_HIGH>;
++			color = <LED_COLOR_ID_GREEN>;
++			function = LED_FUNCTION_HEARTBEAT;
++			linux,default-trigger = "heartbeat";
++		};
++	};
+ };
+ 
+ &dvp_clk {

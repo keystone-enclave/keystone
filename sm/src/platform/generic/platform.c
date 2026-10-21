@@ -46,6 +46,8 @@ uint64_t platform_random(){
 
 // Initialization functions
 
+// Not optimal, but otherwise we get undefined reference errors
+#ifndef BOARD_VISIONFIVE2
 /* from Sanctum BootROM */
 extern byte sanctum_sm_hash[MDSIZE];
 extern byte sanctum_sm_signature[SIGNATURE_SIZE];
@@ -67,3 +69,4 @@ void sm_copy_key(void)
   sbi_memcpy(sm_private_key, sanctum_sm_secret_key, PRIVATE_KEY_SIZE);
   sbi_memcpy(dev_public_key, sanctum_dev_public_key, PUBLIC_KEY_SIZE);
 }
+#endif

@@ -1,0 +1,1027 @@
+diff -Naur opensbi/firmware/Kconfig ../opensbi/firmware/Kconfig
+--- opensbi/firmware/Kconfig	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/firmware/Kconfig	1970-01-01 00:00:00.000000000 +0000
+@@ -1 +0,0 @@
+-# SPDX-License-Identifier: BSD-2-Clause
+diff -Naur opensbi/include/sbi_utils/fdt/fdt_domain.h ../opensbi/include/sbi_utils/fdt/fdt_domain.h
+--- opensbi/include/sbi_utils/fdt/fdt_domain.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/fdt/fdt_domain.h	2024-06-14 15:14:32.539517864 +0000
+@@ -13,8 +13,6 @@
+ 
+ #include <sbi/sbi_types.h>
+ 
+-#ifdef CONFIG_FDT_DOMAIN
+-
+ struct sbi_domain;
+ 
+ /**
+@@ -72,11 +70,4 @@
+  */
+ int fdt_domains_populate(void *fdt);
+ 
+-#else
+-
+-static inline void fdt_domain_fixup(void *fdt) { }
+-static inline int fdt_domains_populate(void *fdt) { return 0; }
+-
+-#endif
+-
+ #endif /* __FDT_DOMAIN_H__ */
+diff -Naur opensbi/include/sbi_utils/fdt/fdt_pmu.h ../opensbi/include/sbi_utils/fdt/fdt_pmu.h
+--- opensbi/include/sbi_utils/fdt/fdt_pmu.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/fdt/fdt_pmu.h	2024-06-14 15:15:16.352491872 +0000
+@@ -13,8 +13,6 @@
+ 
+ #include <sbi/sbi_types.h>
+ 
+-#ifdef CONFIG_FDT_PMU
+-
+ /**
+  * Fix up the PMU node in the device tree
+  *
+@@ -45,12 +43,4 @@
+  */
+ uint64_t fdt_pmu_get_select_value(uint32_t event_idx);
+ 
+-#else
+-
+-static inline void fdt_pmu_fixup(void *fdt) { }
+-static inline int fdt_pmu_setup(void *fdt) { return 0; }
+-static inline uint64_t fdt_pmu_get_select_value(uint32_t event_idx) { return 0; }
+-
+-#endif
+-
+ #endif
+diff -Naur opensbi/include/sbi_utils/ipi/fdt_ipi.h ../opensbi/include/sbi_utils/ipi/fdt_ipi.h
+--- opensbi/include/sbi_utils/ipi/fdt_ipi.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/ipi/fdt_ipi.h	2024-06-14 15:15:25.948705708 +0000
+@@ -12,8 +12,6 @@
+ 
+ #include <sbi/sbi_types.h>
+ 
+-#ifdef CONFIG_FDT_IPI
+-
+ struct fdt_ipi {
+ 	const struct fdt_match *match_table;
+ 	int (*cold_init)(void *fdt, int nodeoff, const struct fdt_match *match);
+@@ -25,11 +23,4 @@
+ 
+ int fdt_ipi_init(bool cold_boot);
+ 
+-#else
+-
+-static inline void fdt_ipi_exit(void) { }
+-static inline int fdt_ipi_init(bool cold_boot) { return 0; }
+-
+-#endif
+-
+ #endif
+diff -Naur opensbi/include/sbi_utils/irqchip/fdt_irqchip.h ../opensbi/include/sbi_utils/irqchip/fdt_irqchip.h
+--- opensbi/include/sbi_utils/irqchip/fdt_irqchip.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/irqchip/fdt_irqchip.h	2024-06-14 15:15:33.992885093 +0000
+@@ -12,8 +12,6 @@
+ 
+ #include <sbi/sbi_types.h>
+ 
+-#ifdef CONFIG_FDT_IRQCHIP
+-
+ struct fdt_irqchip {
+ 	const struct fdt_match *match_table;
+ 	int (*cold_init)(void *fdt, int nodeoff, const struct fdt_match *match);
+@@ -24,13 +22,4 @@
+ void fdt_irqchip_exit(void);
+ 
+ int fdt_irqchip_init(bool cold_boot);
+-
+-#else
+-
+-static inline void fdt_irqchip_exit(void) { }
+-
+-static inline int fdt_irqchip_init(bool cold_boot) { return 0; }
+-
+-#endif
+-
+ #endif
+diff -Naur opensbi/include/sbi_utils/irqchip/imsic.h ../opensbi/include/sbi_utils/irqchip/imsic.h
+--- opensbi/include/sbi_utils/irqchip/imsic.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/irqchip/imsic.h	2024-06-14 15:15:51.381273260 +0000
+@@ -33,8 +33,6 @@
+ 	struct imsic_regs regs[IMSIC_MAX_REGS];
+ };
+ 
+-#ifdef CONFIG_IRQCHIP_IMSIC
+-
+ int imsic_map_hartid_to_data(u32 hartid, struct imsic_data *imsic, int file);
+ 
+ struct imsic_data *imsic_get_data(u32 hartid);
+@@ -49,12 +47,4 @@
+ 
+ int imsic_cold_irqchip_init(struct imsic_data *imsic);
+ 
+-#else
+-
+-static inline void imsic_local_irqchip_init(void) { }
+-
+-static inline int imsic_data_check(struct imsic_data *imsic) { return 0; }
+-
+-#endif
+-
+ #endif
+diff -Naur opensbi/include/sbi_utils/reset/fdt_reset.h ../opensbi/include/sbi_utils/reset/fdt_reset.h
+--- opensbi/include/sbi_utils/reset/fdt_reset.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/reset/fdt_reset.h	2024-06-14 15:16:06.077601754 +0000
+@@ -17,8 +17,6 @@
+ 	int (*init)(void *fdt, int nodeoff, const struct fdt_match *match);
+ };
+ 
+-#ifdef CONFIG_FDT_RESET
+-
+ /**
+  * fdt_reset_driver_init() - initialize reset driver based on the device-tree
+  */
+@@ -31,14 +29,4 @@
+  */
+ void fdt_reset_init(void);
+ 
+-#else
+-
+-static inline int fdt_reset_driver_init(void *fdt, struct fdt_reset *drv)
+-{
+-	return 0;
+-}
+-static inline void fdt_reset_init(void) { }
+-
+-#endif
+-
+ #endif
+diff -Naur opensbi/include/sbi_utils/serial/fdt_serial.h ../opensbi/include/sbi_utils/serial/fdt_serial.h
+--- opensbi/include/sbi_utils/serial/fdt_serial.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/serial/fdt_serial.h	2024-06-14 15:16:16.209828449 +0000
+@@ -12,8 +12,6 @@
+ 
+ #include <sbi/sbi_types.h>
+ 
+-#ifdef CONFIG_FDT_SERIAL
+-
+ struct fdt_serial {
+ 	const struct fdt_match *match_table;
+ 	int (*init)(void *fdt, int nodeoff, const struct fdt_match *match);
+@@ -21,10 +19,4 @@
+ 
+ int fdt_serial_init(void);
+ 
+-#else
+-
+-static inline int fdt_serial_init(void) { return 0; }
+-
+-#endif
+-
+ #endif
+diff -Naur opensbi/include/sbi_utils/serial/semihosting.h ../opensbi/include/sbi_utils/serial/semihosting.h
+--- opensbi/include/sbi_utils/serial/semihosting.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/serial/semihosting.h	2024-06-14 15:16:30.594150580 +0000
+@@ -36,12 +36,7 @@
+ 	MODE_APPEND	= 0x8,
+ };
+ 
+-#ifdef CONFIG_SERIAL_SEMIHOSTING
+ int semihosting_init(void);
+ int semihosting_enabled(void);
+-#else
+-static inline int semihosting_init(void) { return SBI_ENODEV; }
+-static inline int semihosting_enabled(void) { return 0; }
+-#endif
+ 
+ #endif
+diff -Naur opensbi/include/sbi_utils/timer/fdt_timer.h ../opensbi/include/sbi_utils/timer/fdt_timer.h
+--- opensbi/include/sbi_utils/timer/fdt_timer.h	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/include/sbi_utils/timer/fdt_timer.h	2024-06-14 15:16:58.658780052 +0000
+@@ -12,8 +12,6 @@
+ 
+ #include <sbi/sbi_types.h>
+ 
+-#ifdef CONFIG_FDT_TIMER
+-
+ struct fdt_timer {
+ 	const struct fdt_match *match_table;
+ 	int (*cold_init)(void *fdt, int nodeoff, const struct fdt_match *match);
+@@ -25,11 +23,4 @@
+ 
+ int fdt_timer_init(bool cold_boot);
+ 
+-#else
+-
+-static inline void fdt_timer_exit(void) { }
+-static inline int fdt_timer_init(bool cold_boot) { return 0; }
+-
+-#endif
+-
+ #endif
+diff -Naur opensbi/Kconfig ../opensbi/Kconfig
+--- opensbi/Kconfig	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/Kconfig	1970-01-01 00:00:00.000000000 +0000
+@@ -1,25 +0,0 @@
+-# SPDX-License-Identifier: BSD-2-Clause
+-
+-mainmenu "OpenSBI $(OPENSBI_PLATFORM) Configuration"
+-
+-config OPENSBI_SRC_DIR
+-	string
+-	option env="OPENSBI_SRC_DIR"
+-
+-config OPENSBI_PLATFORM
+-	string
+-	option env="OPENSBI_PLATFORM"
+-
+-config OPENSBI_PLATFORM_SRC_DIR
+-	string
+-	option env="OPENSBI_PLATFORM_SRC_DIR"
+-
+-menu "Platform Options"
+-source "$(OPENSBI_PLATFORM_SRC_DIR)/Kconfig"
+-endmenu
+-
+-source "$(OPENSBI_SRC_DIR)/lib/sbi/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/firmware/Kconfig"
+diff -Naur opensbi/lib/sbi/objects.mk ../opensbi/lib/sbi/objects.mk
+--- opensbi/lib/sbi/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/sbi/objects.mk	2024-06-14 15:06:51.753151513 +0000
+@@ -16,38 +16,38 @@
+ libsbi-objs-y += sbi_ecall_exts.o
+ 
+ # The order of below extensions is performance optimized
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_TIME) += ecall_time
+-libsbi-objs-$(CONFIG_SBI_ECALL_TIME) += sbi_ecall_time.o
++carray-sbi_ecall_exts-y += ecall_time
++libsbi-objs-y += sbi_ecall_time.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_RFENCE) += ecall_rfence
+-libsbi-objs-$(CONFIG_SBI_ECALL_RFENCE) += sbi_ecall_rfence.o
++carray-sbi_ecall_exts-y += ecall_rfence
++libsbi-objs-y += sbi_ecall_rfence.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_IPI) += ecall_ipi
+-libsbi-objs-$(CONFIG_SBI_ECALL_IPI) += sbi_ecall_ipi.o
++carray-sbi_ecall_exts-y += ecall_ipi
++libsbi-objs-y += sbi_ecall_ipi.o
+ 
+ carray-sbi_ecall_exts-y += ecall_base
+ libsbi-objs-y += sbi_ecall_base.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_HSM) += ecall_hsm
+-libsbi-objs-$(CONFIG_SBI_ECALL_HSM) += sbi_ecall_hsm.o
++carray-sbi_ecall_exts-y += ecall_hsm
++libsbi-objs-y += sbi_ecall_hsm.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_SRST) += ecall_srst
+-libsbi-objs-$(CONFIG_SBI_ECALL_SRST) += sbi_ecall_srst.o
++carray-sbi_ecall_exts-y += ecall_srst
++libsbi-objs-y += sbi_ecall_srst.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_SUSP) += ecall_susp
+-libsbi-objs-$(CONFIG_SBI_ECALL_SUSP) += sbi_ecall_susp.o
++carray-sbi_ecall_exts-y += ecall_susp
++libsbi-objs-y += sbi_ecall_susp.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_PMU) += ecall_pmu
+-libsbi-objs-$(CONFIG_SBI_ECALL_PMU) += sbi_ecall_pmu.o
++carray-sbi_ecall_exts-y += ecall_pmu
++libsbi-objs-y += sbi_ecall_pmu.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_DBCN) += ecall_dbcn
+-libsbi-objs-$(CONFIG_SBI_ECALL_DBCN) += sbi_ecall_dbcn.o
++carray-sbi_ecall_exts-y += ecall_dbcn
++libsbi-objs-y += sbi_ecall_dbcn.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_LEGACY) += ecall_legacy
+-libsbi-objs-$(CONFIG_SBI_ECALL_LEGACY) += sbi_ecall_legacy.o
++carray-sbi_ecall_exts-y += ecall_legacy
++libsbi-objs-y += sbi_ecall_legacy.o
+ 
+-carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_VENDOR) += ecall_vendor
+-libsbi-objs-$(CONFIG_SBI_ECALL_VENDOR) += sbi_ecall_vendor.o
++carray-sbi_ecall_exts-y += ecall_vendor
++libsbi-objs-y += sbi_ecall_vendor.o
+ 
+ libsbi-objs-y += sbi_bitmap.o
+ libsbi-objs-y += sbi_bitops.o
+diff -Naur opensbi/lib/utils/fdt/objects.mk ../opensbi/lib/utils/fdt/objects.mk
+--- opensbi/lib/utils/fdt/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/fdt/objects.mk	2024-06-14 15:18:07.940339146 +0000
+@@ -4,7 +4,7 @@
+ # Copyright (C) 2020 Bin Meng <bmeng.cn@gmail.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_FDT_DOMAIN) += fdt/fdt_domain.o
+-libsbiutils-objs-$(CONFIG_FDT_PMU) += fdt/fdt_pmu.o
+-libsbiutils-objs-$(CONFIG_FDT) += fdt/fdt_helper.o
+-libsbiutils-objs-$(CONFIG_FDT) += fdt/fdt_fixup.o
++libsbiutils-objs-y += fdt/fdt_domain.o
++libsbiutils-objs-y += fdt/fdt_pmu.o
++libsbiutils-objs-y += fdt/fdt_helper.o
++libsbiutils-objs-y += fdt/fdt_fixup.o
+diff -Naur opensbi/lib/utils/gpio/objects.mk ../opensbi/lib/utils/gpio/objects.mk
+--- opensbi/lib/utils/gpio/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/gpio/objects.mk	2024-06-14 15:18:28.584805037 +0000
+@@ -7,13 +7,13 @@
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_FDT_GPIO) += gpio/fdt_gpio.o
+-libsbiutils-objs-$(CONFIG_FDT_GPIO) += gpio/fdt_gpio_drivers.o
++libsbiutils-objs-y += gpio/fdt_gpio.o
++libsbiutils-objs-y += gpio/fdt_gpio_drivers.o
+ 
+-carray-fdt_gpio_drivers-$(CONFIG_FDT_GPIO_SIFIVE) += fdt_gpio_sifive
+-libsbiutils-objs-$(CONFIG_FDT_GPIO_SIFIVE) += gpio/fdt_gpio_sifive.o
++carray-fdt_gpio_drivers-y += fdt_gpio_sifive
++libsbiutils-objs-y += gpio/fdt_gpio_sifive.o
+ 
+-carray-fdt_gpio_drivers-$(CONFIG_FDT_GPIO_STARFIVE) += fdt_gpio_starfive
+-libsbiutils-objs-$(CONFIG_FDT_GPIO_STARFIVE) += gpio/fdt_gpio_starfive.o
++carray-fdt_gpio_drivers-y += fdt_gpio_starfive
++libsbiutils-objs-y += gpio/fdt_gpio_starfive.o
+ 
+-libsbiutils-objs-$(CONFIG_GPIO) += gpio/gpio.o
++libsbiutils-objs-y += gpio/gpio.o
+diff -Naur opensbi/lib/utils/i2c/objects.mk ../opensbi/lib/utils/i2c/objects.mk
+--- opensbi/lib/utils/i2c/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/i2c/objects.mk	2024-06-14 15:18:50.077290660 +0000
+@@ -7,15 +7,15 @@
+ #   Nikita Shubin <n.shubin@yadro.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_I2C) += i2c/i2c.o
++libsbiutils-objs-y += i2c/i2c.o
+ 
+-libsbiutils-objs-$(CONFIG_FDT_I2C) += i2c/fdt_i2c.o
+-libsbiutils-objs-$(CONFIG_FDT_I2C) += i2c/fdt_i2c_adapter_drivers.o
++libsbiutils-objs-y += i2c/fdt_i2c.o
++libsbiutils-objs-y += i2c/fdt_i2c_adapter_drivers.o
+ 
+-carray-fdt_i2c_adapter_drivers-$(CONFIG_FDT_I2C_SIFIVE) += fdt_i2c_adapter_sifive
+-libsbiutils-objs-$(CONFIG_FDT_I2C_SIFIVE) += i2c/fdt_i2c_sifive.o
++carray-fdt_i2c_adapter_drivers-y += fdt_i2c_adapter_sifive
++libsbiutils-objs-y += i2c/fdt_i2c_sifive.o
+ 
+-carray-fdt_i2c_adapter_drivers-$(CONFIG_FDT_I2C_DW) += fdt_i2c_adapter_dw
+-libsbiutils-objs-$(CONFIG_FDT_I2C_DW) += i2c/fdt_i2c_dw.o
++carray-fdt_i2c_adapter_drivers-y += fdt_i2c_adapter_dw
++libsbiutils-objs-y += i2c/fdt_i2c_dw.o
+ 
+-libsbiutils-objs-$(CONFIG_I2C_DW) += i2c/dw_i2c.o
++libsbiutils-objs-y += i2c/dw_i2c.o
+diff -Naur opensbi/lib/utils/ipi/objects.mk ../opensbi/lib/utils/ipi/objects.mk
+--- opensbi/lib/utils/ipi/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/ipi/objects.mk	2024-06-14 15:19:17.785917594 +0000
+@@ -7,14 +7,14 @@
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_IPI_MSWI) += ipi/aclint_mswi.o
+-libsbiutils-objs-$(CONFIG_IPI_PLICSW) += ipi/andes_plicsw.o
++libsbiutils-objs-y += ipi/aclint_mswi.o
++libsbiutils-objs-y += ipi/andes_plicsw.o
+ 
+-libsbiutils-objs-$(CONFIG_FDT_IPI) += ipi/fdt_ipi.o
+-libsbiutils-objs-$(CONFIG_FDT_IPI) += ipi/fdt_ipi_drivers.o
++libsbiutils-objs-y += ipi/fdt_ipi.o
++libsbiutils-objs-y += ipi/fdt_ipi_drivers.o
+ 
+-carray-fdt_ipi_drivers-$(CONFIG_FDT_IPI_MSWI) += fdt_ipi_mswi
+-libsbiutils-objs-$(CONFIG_FDT_IPI_MSWI) += ipi/fdt_ipi_mswi.o
++carray-fdt_ipi_drivers-y += fdt_ipi_mswi
++libsbiutils-objs-y += ipi/fdt_ipi_mswi.o
+ 
+-carray-fdt_ipi_drivers-$(CONFIG_FDT_IPI_PLICSW) += fdt_ipi_plicsw
+-libsbiutils-objs-$(CONFIG_FDT_IPI_PLICSW) += ipi/fdt_ipi_plicsw.o
++carray-fdt_ipi_drivers-y += fdt_ipi_plicsw
++libsbiutils-objs-y += ipi/fdt_ipi_plicsw.o
+diff -Naur opensbi/lib/utils/irqchip/objects.mk ../opensbi/lib/utils/irqchip/objects.mk
+--- opensbi/lib/utils/irqchip/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/irqchip/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -7,18 +7,18 @@
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_FDT_IRQCHIP) += irqchip/fdt_irqchip.o
+-libsbiutils-objs-$(CONFIG_FDT_IRQCHIP) += irqchip/fdt_irqchip_drivers.o
++libsbiutils-objs-y += irqchip/fdt_irqchip.o
++libsbiutils-objs-y += irqchip/fdt_irqchip_drivers.o
+ 
+-carray-fdt_irqchip_drivers-$(CONFIG_FDT_IRQCHIP_APLIC) += fdt_irqchip_aplic
+-libsbiutils-objs-$(CONFIG_FDT_IRQCHIP_APLIC) += irqchip/fdt_irqchip_aplic.o
++carray-fdt_irqchip_drivers-y += fdt_irqchip_aplic
++libsbiutils-objs-y += irqchip/fdt_irqchip_aplic.o
+ 
+-carray-fdt_irqchip_drivers-$(CONFIG_FDT_IRQCHIP_IMSIC) += fdt_irqchip_imsic
+-libsbiutils-objs-$(CONFIG_FDT_IRQCHIP_IMSIC) += irqchip/fdt_irqchip_imsic.o
++carray-fdt_irqchip_drivers-y += fdt_irqchip_imsic
++libsbiutils-objs-y += irqchip/fdt_irqchip_imsic.o
+ 
+-carray-fdt_irqchip_drivers-$(CONFIG_FDT_IRQCHIP_PLIC) += fdt_irqchip_plic
+-libsbiutils-objs-$(CONFIG_FDT_IRQCHIP_PLIC) += irqchip/fdt_irqchip_plic.o
++carray-fdt_irqchip_drivers-y += fdt_irqchip_plic
++libsbiutils-objs-y += irqchip/fdt_irqchip_plic.o
+ 
+-libsbiutils-objs-$(CONFIG_IRQCHIP_APLIC) += irqchip/aplic.o
+-libsbiutils-objs-$(CONFIG_IRQCHIP_IMSIC) += irqchip/imsic.o
+-libsbiutils-objs-$(CONFIG_IRQCHIP_PLIC) += irqchip/plic.o
++libsbiutils-objs-y += irqchip/aplic.o
++libsbiutils-objs-y += irqchip/imsic.o
++libsbiutils-objs-y += irqchip/plic.o
+diff -Naur opensbi/lib/utils/Kconfig ../opensbi/lib/utils/Kconfig
+--- opensbi/lib/utils/Kconfig	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/Kconfig	1970-01-01 00:00:00.000000000 +0000
+@@ -1,25 +0,0 @@
+-# SPDX-License-Identifier: BSD-2-Clause
+-
+-menu "Utils and Drivers Support"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/fdt/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/gpio/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/i2c/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/ipi/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/irqchip/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/libfdt/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/reset/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/serial/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/sys/Kconfig"
+-
+-source "$(OPENSBI_SRC_DIR)/lib/utils/timer/Kconfig"
+-
+-endmenu
+diff -Naur opensbi/lib/utils/libfdt/objects.mk ../opensbi/lib/utils/libfdt/objects.mk
+--- opensbi/lib/utils/libfdt/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/libfdt/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -12,5 +12,5 @@
+ $(foreach file, $(libfdt_files), \
+         $(eval CFLAGS_$(file) = -I$(src)/../../utils/libfdt))
+ 
+-libsbiutils-objs-$(CONFIG_LIBFDT) += $(addprefix libfdt/,$(libfdt_files))
++libsbiutils-objs-y += $(addprefix libfdt/,$(libfdt_files))
+ libsbiutils-genflags-y  += -I$(libsbiutils_dir)/libfdt/
+diff -Naur opensbi/lib/utils/reset/objects.mk ../opensbi/lib/utils/reset/objects.mk
+--- opensbi/lib/utils/reset/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/reset/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -7,25 +7,25 @@
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_FDT_RESET) += reset/fdt_reset.o
+-libsbiutils-objs-$(CONFIG_FDT_RESET) += reset/fdt_reset_drivers.o
++libsbiutils-objs-y += reset/fdt_reset.o
++libsbiutils-objs-y += reset/fdt_reset_drivers.o
+ 
+-carray-fdt_reset_drivers-$(CONFIG_FDT_RESET_ATCWDT200) += fdt_reset_atcwdt200
+-libsbiutils-objs-$(CONFIG_FDT_RESET_ATCWDT200) += reset/fdt_reset_atcwdt200.o
++carray-fdt_reset_drivers-y += fdt_reset_atcwdt200
++libsbiutils-objs-y += reset/fdt_reset_atcwdt200.o
+ 
+-carray-fdt_reset_drivers-$(CONFIG_FDT_RESET_GPIO) += fdt_poweroff_gpio
+-carray-fdt_reset_drivers-$(CONFIG_FDT_RESET_GPIO) += fdt_reset_gpio
+-libsbiutils-objs-$(CONFIG_FDT_RESET_GPIO) += reset/fdt_reset_gpio.o
++carray-fdt_reset_drivers-y += fdt_poweroff_gpio
++carray-fdt_reset_drivers-y += fdt_reset_gpio
++libsbiutils-objs-y += reset/fdt_reset_gpio.o
+ 
+-carray-fdt_reset_drivers-$(CONFIG_FDT_RESET_HTIF) += fdt_reset_htif
+-libsbiutils-objs-$(CONFIG_FDT_RESET_HTIF) += reset/fdt_reset_htif.o
++carray-fdt_reset_drivers-y += fdt_reset_htif
++libsbiutils-objs-y += reset/fdt_reset_htif.o
+ 
+-carray-fdt_reset_drivers-$(CONFIG_FDT_RESET_SIFIVE_TEST) += fdt_reset_sifive_test
+-libsbiutils-objs-$(CONFIG_FDT_RESET_SIFIVE_TEST) += reset/fdt_reset_sifive_test.o
++carray-fdt_reset_drivers-y += fdt_reset_sifive_test
++libsbiutils-objs-y += reset/fdt_reset_sifive_test.o
+ 
+-carray-fdt_reset_drivers-$(CONFIG_FDT_RESET_SUNXI_WDT) += fdt_reset_sunxi_wdt
+-libsbiutils-objs-$(CONFIG_FDT_RESET_SUNXI_WDT) += reset/fdt_reset_sunxi_wdt.o
++carray-fdt_reset_drivers-y += fdt_reset_sunxi_wdt
++libsbiutils-objs-y += reset/fdt_reset_sunxi_wdt.o
+ 
+-carray-fdt_reset_drivers-$(CONFIG_FDT_RESET_THEAD) += fdt_reset_thead
+-libsbiutils-objs-$(CONFIG_FDT_RESET_THEAD) += reset/fdt_reset_thead.o
+-libsbiutils-objs-$(CONFIG_FDT_RESET_THEAD) += reset/fdt_reset_thead_asm.o
++carray-fdt_reset_drivers-y += fdt_reset_thead
++libsbiutils-objs-y += reset/fdt_reset_thead.o
++libsbiutils-objs-y += reset/fdt_reset_thead_asm.o
+diff -Naur opensbi/lib/utils/serial/objects.mk ../opensbi/lib/utils/serial/objects.mk
+--- opensbi/lib/utils/serial/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/serial/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -7,42 +7,42 @@
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL) += serial/fdt_serial.o
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL) += serial/fdt_serial_drivers.o
++libsbiutils-objs-y += serial/fdt_serial.o
++libsbiutils-objs-y += serial/fdt_serial_drivers.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_CADENCE) += fdt_serial_cadence
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_CADENCE) += serial/fdt_serial_cadence.o
++carray-fdt_serial_drivers-y += fdt_serial_cadence
++libsbiutils-objs-y += serial/fdt_serial_cadence.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_GAISLER) += fdt_serial_gaisler
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_GAISLER) += serial/fdt_serial_gaisler.o
++carray-fdt_serial_drivers-y += fdt_serial_gaisler
++libsbiutils-objs-y += serial/fdt_serial_gaisler.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_HTIF) += fdt_serial_htif
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_HTIF) += serial/fdt_serial_htif.o
++carray-fdt_serial_drivers-y += fdt_serial_htif
++libsbiutils-objs-y += serial/fdt_serial_htif.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_RENESAS_SCIF) += fdt_serial_renesas_scif
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_RENESAS_SCIF) += serial/fdt_serial_renesas_scif.o
++carray-fdt_serial_drivers-y += fdt_serial_renesas_scif
++libsbiutils-objs-y += serial/fdt_serial_renesas_scif.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_SHAKTI) += fdt_serial_shakti
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_SHAKTI) += serial/fdt_serial_shakti.o
++carray-fdt_serial_drivers-y += fdt_serial_shakti
++libsbiutils-objs-y += serial/fdt_serial_shakti.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_SIFIVE) += fdt_serial_sifive
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_SIFIVE) += serial/fdt_serial_sifive.o
++carray-fdt_serial_drivers-y += fdt_serial_sifive
++libsbiutils-objs-y += serial/fdt_serial_sifive.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_LITEX) += fdt_serial_litex
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_LITEX) += serial/fdt_serial_litex.o
++carray-fdt_serial_drivers-y += fdt_serial_litex
++libsbiutils-objs-y += serial/fdt_serial_litex.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_UART8250) += fdt_serial_uart8250
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_UART8250) += serial/fdt_serial_uart8250.o
++carray-fdt_serial_drivers-y += fdt_serial_uart8250
++libsbiutils-objs-y += serial/fdt_serial_uart8250.o
+ 
+-carray-fdt_serial_drivers-$(CONFIG_FDT_SERIAL_XILINX_UARTLITE) += fdt_serial_xlnx_uartlite
+-libsbiutils-objs-$(CONFIG_FDT_SERIAL_XILINX_UARTLITE) += serial/fdt_serial_xlnx_uartlite.o
++carray-fdt_serial_drivers-y += fdt_serial_xlnx_uartlite
++libsbiutils-objs-y += serial/fdt_serial_xlnx_uartlite.o
+ 
+-libsbiutils-objs-$(CONFIG_SERIAL_CADENCE) += serial/cadence-uart.o
+-libsbiutils-objs-$(CONFIG_SERIAL_GAISLER) += serial/gaisler-uart.o
+-libsbiutils-objs-$(CONFIG_SERIAL_RENESAS_SCIF) += serial/renesas_scif.o
+-libsbiutils-objs-$(CONFIG_SERIAL_SHAKTI) += serial/shakti-uart.o
+-libsbiutils-objs-$(CONFIG_SERIAL_SIFIVE) += serial/sifive-uart.o
+-libsbiutils-objs-$(CONFIG_SERIAL_LITEX) += serial/litex-uart.o
+-libsbiutils-objs-$(CONFIG_SERIAL_UART8250) += serial/uart8250.o
+-libsbiutils-objs-$(CONFIG_SERIAL_XILINX_UARTLITE) += serial/xlnx-uartlite.o
+-libsbiutils-objs-$(CONFIG_SERIAL_SEMIHOSTING) += serial/semihosting.o
++libsbiutils-objs-y += serial/cadence-uart.o
++libsbiutils-objs-y += serial/gaisler-uart.o
++libsbiutils-objs-y += serial/renesas_scif.o
++libsbiutils-objs-y += serial/shakti-uart.o
++libsbiutils-objs-y += serial/sifive-uart.o
++libsbiutils-objs-y += serial/litex-uart.o
++libsbiutils-objs-y += serial/uart8250.o
++libsbiutils-objs-y += serial/xlnx-uartlite.o
++libsbiutils-objs-y += serial/semihosting.o
+diff -Naur opensbi/lib/utils/sys/objects.mk ../opensbi/lib/utils/sys/objects.mk
+--- opensbi/lib/utils/sys/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/sys/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -7,6 +7,6 @@
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_SYS_HTIF) += sys/htif.o
+-libsbiutils-objs-$(CONFIG_SYS_SIFIVE_TEST) += sys/sifive_test.o
+-libsbiutils-objs-$(CONFIG_SYS_ATCSMU) += sys/atcsmu.o
++libsbiutils-objs-y += sys/htif.o
++libsbiutils-objs-y += sys/sifive_test.o
++libsbiutils-objs-y += sys/atcsmu.o
+diff -Naur opensbi/lib/utils/timer/objects.mk ../opensbi/lib/utils/timer/objects.mk
+--- opensbi/lib/utils/timer/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/lib/utils/timer/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -7,14 +7,14 @@
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+ 
+-libsbiutils-objs-$(CONFIG_TIMER_MTIMER) += timer/aclint_mtimer.o
+-libsbiutils-objs-$(CONFIG_TIMER_PLMT) += timer/andes_plmt.o
++libsbiutils-objs-y += timer/aclint_mtimer.o
++libsbiutils-objs-y += timer/andes_plmt.o
+ 
+-libsbiutils-objs-$(CONFIG_FDT_TIMER) += timer/fdt_timer.o
+-libsbiutils-objs-$(CONFIG_FDT_TIMER) += timer/fdt_timer_drivers.o
++libsbiutils-objs-y += timer/fdt_timer.o
++libsbiutils-objs-y += timer/fdt_timer_drivers.o
+ 
+-carray-fdt_timer_drivers-$(CONFIG_FDT_TIMER_MTIMER) += fdt_timer_mtimer
+-libsbiutils-objs-$(CONFIG_FDT_TIMER_MTIMER) += timer/fdt_timer_mtimer.o
++carray-fdt_timer_drivers-y += fdt_timer_mtimer
++libsbiutils-objs-y += timer/fdt_timer_mtimer.o
+ 
+-carray-fdt_timer_drivers-$(CONFIG_FDT_TIMER_PLMT) += fdt_timer_plmt
+-libsbiutils-objs-$(CONFIG_FDT_TIMER_PLMT) += timer/fdt_timer_plmt.o
++carray-fdt_timer_drivers-y += fdt_timer_plmt
++libsbiutils-objs-y += timer/fdt_timer_plmt.o
+diff -Naur opensbi/Makefile ../opensbi/Makefile
+--- opensbi/Makefile	2024-06-14 14:50:11.653732185 +0000
++++ ../opensbi/Makefile	2024-06-14 15:01:44.909955082 +0000
+@@ -6,19 +6,16 @@
+ # Authors:
+ #   Anup Patel <anup.patel@wdc.com>
+ #
+-
+ # Select Make Options:
+ # o  Do not use make's built-in rules
+ # o  Do not print "Entering directory ...";
+ MAKEFLAGS += -r --no-print-directory
+-
+ # Readlink -f requires GNU readlink
+ ifeq ($(shell uname -s),Darwin)
+ READLINK ?= greadlink
+ else
+ READLINK ?= readlink
+ endif
+-
+ # Find out source, build, and install directories
+ src_dir=$(CURDIR)
+ ifdef O
+@@ -47,14 +44,11 @@
+     platform_parent_dir=$(platform_dir_path)
+   else
+     PLATFORM=$(shell basename $(platform_dir_path))
+-    platform_parent_dir=$(shell realpath ${platform_dir_path}/..)
++    platform_parent_dir=$(subst $(PLATFORM),,$(platform_dir_path))
+   endif
+ else
+  platform_parent_dir=$(src_dir)/platform
+ endif
+-ifndef PLATFORM_DEFCONFIG
+-PLATFORM_DEFCONFIG=defconfig
+-endif
+ 
+ # Check if verbosity is ON for build process
+ CMD_PREFIX_DEFAULT := @
+@@ -73,20 +67,6 @@
+ export libsbiutils_dir=$(CURDIR)/lib/utils
+ export firmware_dir=$(CURDIR)/firmware
+ 
+-# Setup variables for kconfig
+-ifdef PLATFORM
+-export PYTHONDONTWRITEBYTECODE=1
+-export KCONFIG_DIR=$(platform_build_dir)/kconfig
+-export KCONFIG_AUTOLIST=$(KCONFIG_DIR)/auto.list
+-export KCONFIG_AUTOHEADER=$(KCONFIG_DIR)/autoconf.h
+-export KCONFIG_AUTOCMD=$(KCONFIG_DIR)/auto.conf.cmd
+-export KCONFIG_CONFIG=$(KCONFIG_DIR)/.config
+-# Additional exports for include paths in Kconfig files
+-export OPENSBI_SRC_DIR=$(src_dir)
+-export OPENSBI_PLATFORM=$(PLATFORM)
+-export OPENSBI_PLATFORM_SRC_DIR=$(platform_src_dir)
+-endif
+-
+ # Find library version
+ OPENSBI_VERSION_MAJOR=`grep "define OPENSBI_VERSION_MAJOR" $(include_dir)/sbi/sbi_version.h | sed 's/.*MAJOR.*\([0-9][0-9]*\)/\1/'`
+ OPENSBI_VERSION_MINOR=`grep "define OPENSBI_VERSION_MINOR" $(include_dir)/sbi/sbi_version.h | sed 's/.*MINOR.*\([0-9][0-9]*\)/\1/'`
+@@ -200,35 +180,9 @@
+ libsbiutils-object-mks=$(shell if [ -d $(libsbiutils_dir) ]; then find $(libsbiutils_dir) -iname "objects.mk" | sort -r; fi)
+ firmware-object-mks=$(shell if [ -d $(firmware_dir) ]; then find $(firmware_dir) -iname "objects.mk" | sort -r; fi)
+ 
+-# The "make all" rule should always be first rule
+-.PHONY: all
+-all:
+ 
+-# Include platform specific .config
+ ifdef PLATFORM
+-.PHONY: menuconfig
+-menuconfig: $(platform_src_dir)/Kconfig $(src_dir)/Kconfig
+-	$(CMD_PREFIX)mkdir -p $(KCONFIG_DIR)
+-	$(CMD_PREFIX)$(src_dir)/scripts/Kconfiglib/menuconfig.py $(src_dir)/Kconfig
+-	$(CMD_PREFIX)$(src_dir)/scripts/Kconfiglib/genconfig.py --header-path $(KCONFIG_AUTOHEADER) --sync-deps $(KCONFIG_DIR) --file-list $(KCONFIG_AUTOLIST) $(src_dir)/Kconfig
+-
+-.PHONY: savedefconfig
+-savedefconfig: $(platform_src_dir)/Kconfig $(src_dir)/Kconfig
+-	$(CMD_PREFIX)mkdir -p $(KCONFIG_DIR)
+-	$(CMD_PREFIX)$(src_dir)/scripts/Kconfiglib/savedefconfig.py --kconfig $(src_dir)/Kconfig --out $(KCONFIG_DIR)/defconfig
+-
+-$(KCONFIG_CONFIG): $(platform_src_dir)/configs/$(PLATFORM_DEFCONFIG) $(platform_src_dir)/Kconfig $(src_dir)/Kconfig
+-	$(CMD_PREFIX)mkdir -p $(KCONFIG_DIR)
+-	$(CMD_PREFIX)$(src_dir)/scripts/Kconfiglib/defconfig.py --kconfig $(src_dir)/Kconfig $(platform_src_dir)/configs/$(PLATFORM_DEFCONFIG)
+-	$(CMD_PREFIX)$(src_dir)/scripts/Kconfiglib/genconfig.py --header-path $(KCONFIG_AUTOHEADER) --sync-deps $(KCONFIG_DIR) --file-list $(KCONFIG_AUTOLIST) $(src_dir)/Kconfig
+-
+-$(KCONFIG_AUTOCMD): $(KCONFIG_CONFIG)
+-	$(CMD_PREFIX)mkdir -p $(KCONFIG_DIR)
+-	$(CMD_PREFIX)printf "%s: " $(KCONFIG_CONFIG) > $(KCONFIG_AUTOCMD)
+-	$(CMD_PREFIX)cat $(KCONFIG_AUTOLIST) | tr '\n' ' ' >> $(KCONFIG_AUTOCMD)
+-
+-include $(KCONFIG_CONFIG)
+-include $(KCONFIG_AUTOCMD)
++include $(platform_src_dir)/config.mk
+ endif
+ 
+ # Include all objects.mk files
+@@ -324,9 +278,6 @@
+ GENFLAGS	+=	-DOPENSBI_BUILD_TIME_STAMP="\"$(OPENSBI_BUILD_TIME_STAMP)\""
+ GENFLAGS	+=	-DOPENSBI_BUILD_COMPILER_VERSION="\"$(OPENSBI_BUILD_COMPILER_VERSION)\""
+ endif
+-ifdef PLATFORM
+-GENFLAGS	+=	-include $(KCONFIG_AUTOHEADER)
+-endif
+ GENFLAGS	+=	$(libsbiutils-genflags-y)
+ GENFLAGS	+=	$(platform-genflags-y)
+ GENFLAGS	+=	$(firmware-genflags-y)
+@@ -489,14 +440,14 @@
+ $(platform_build_dir)/lib/libplatsbi.a: $(libsbi-objs-path-y) $(libsbiutils-objs-path-y) $(platform-objs-path-y)
+ 	$(call compile_ar,$@,$^)
+ 
+-$(build_dir)/%.dep: $(src_dir)/%.carray $(KCONFIG_CONFIG)
+-	$(call compile_gen_dep,$@,.c,$< $(KCONFIG_CONFIG))
++$(build_dir)/%.dep: $(src_dir)/%.carray
++	$(call compile_gen_dep,$@,.c,$<)
+ 	$(call compile_gen_dep,$@,.o,$(@:.dep=.c))
+ 
+ $(build_dir)/%.c: $(src_dir)/%.carray
+ 	$(call compile_carray,$@,$<)
+ 
+-$(build_dir)/%.dep: $(src_dir)/%.c $(KCONFIG_CONFIG)
++$(build_dir)/%.dep: $(src_dir)/%.c
+ 	$(call compile_cc_dep,$@,$<)
+ 
+ $(build_dir)/%.o: $(src_dir)/%.c
+@@ -510,24 +461,24 @@
+ 	$(call compile_cc,$@,$<)
+ endif
+ 
+-$(build_dir)/%.dep: $(src_dir)/%.S $(KCONFIG_CONFIG)
++$(build_dir)/%.dep: $(src_dir)/%.S
+ 	$(call compile_as_dep,$@,$<)
+ 
+ $(build_dir)/%.o: $(src_dir)/%.S
+ 	$(call compile_as,$@,$<)
+ 
+ # Rules for platform sources
+-$(platform_build_dir)/%.dep: $(platform_src_dir)/%.carray $(KCONFIG_CONFIG)
+-	$(call compile_gen_dep,$@,.c,$< $(KCONFIG_CONFIG))
++$(platform_build_dir)/%.dep: $(platform_src_dir)/%.carray
++	$(call compile_gen_dep,$@,.c,$<)
+ 	$(call compile_gen_dep,$@,.o,$(@:.dep=.c))
+ 
+ $(platform_build_dir)/%.c: $(platform_src_dir)/%.carray
+ 	$(call compile_carray,$@,$<)
+ 
+-$(platform_build_dir)/%.dep: $(platform_src_dir)/%.c $(KCONFIG_CONFIG)
++$(platform_build_dir)/%.dep: $(platform_src_dir)/%.c
+ 	$(call compile_cc_dep,$@,$<)
+ 
+-$(platform_build_dir)/%.o: $(platform_src_dir)/%.c $(KCONFIG_CONFIG)
++$(platform_build_dir)/%.o: $(platform_src_dir)/%.c
+ 	$(call compile_cc,$@,$<)
+ 
+ $(platform_build_dir)/%.dep: $(platform_src_dir)/%.S
+@@ -536,8 +487,8 @@
+ $(platform_build_dir)/%.o: $(platform_src_dir)/%.S
+ 	$(call compile_as,$@,$<)
+ 
+-$(platform_build_dir)/%.dep: $(platform_src_dir)/%.dts $(KCONFIG_CONFIG)
+-	$(call compile_gen_dep,$@,.dtb,$< $(KCONFIG_CONFIG))
++$(platform_build_dir)/%.dep: $(platform_src_dir)/%.dts
++	$(call compile_gen_dep,$@,.dtb,$<)
+ 	$(call compile_gen_dep,$@,.c,$(@:.dep=.dtb))
+ 	$(call compile_gen_dep,$@,.o,$(@:.dep=.c))
+ 
+@@ -554,26 +505,26 @@
+ $(platform_build_dir)/%.elf: $(platform_build_dir)/%.o $(platform_build_dir)/%.elf.ld $(platform_build_dir)/lib/libplatsbi.a
+ 	$(call compile_elf,$@,$@.ld,$< $(platform_build_dir)/lib/libplatsbi.a)
+ 
+-$(platform_build_dir)/%.dep: $(src_dir)/%.ldS $(KCONFIG_CONFIG)
++$(platform_build_dir)/%.dep: $(src_dir)/%.ldS
+ 	$(call compile_cpp_dep,$@,.ld,$<)
+ 
+ $(platform_build_dir)/%.ld: $(src_dir)/%.ldS
+ 	$(call compile_cpp,$@,$<)
+ 
+-$(platform_build_dir)/%.dep: $(src_dir)/%.carray $(KCONFIG_CONFIG)
+-	$(call compile_gen_dep,$@,.c,$< $(KCONFIG_CONFIG))
++$(platform_build_dir)/%.dep: $(src_dir)/%.carray
++	$(call compile_gen_dep,$@,.c,$<)
+ 	$(call compile_gen_dep,$@,.o,$(@:.dep=.c))
+ 
+ $(platform_build_dir)/%.c: $(src_dir)/%.carray
+ 	$(call compile_carray,$@,$<)
+ 
+-$(platform_build_dir)/%.dep: $(src_dir)/%.c $(KCONFIG_CONFIG)
++$(platform_build_dir)/%.dep: $(src_dir)/%.c
+ 	$(call compile_cc_dep,$@,$<)
+ 
+ $(platform_build_dir)/%.o: $(src_dir)/%.c
+ 	$(call compile_cc,$@,$<)
+ 
+-$(platform_build_dir)/%.dep: $(src_dir)/%.S $(KCONFIG_CONFIG)
++$(platform_build_dir)/%.dep: $(src_dir)/%.S
+ 	$(call compile_as_dep,$@,$<)
+ 
+ $(platform_build_dir)/%.o: $(src_dir)/%.S
+diff -Naur opensbi/platform/generic/allwinner/objects.mk ../opensbi/platform/generic/allwinner/objects.mk
+--- opensbi/platform/generic/allwinner/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/allwinner/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -2,5 +2,5 @@
+ # SPDX-License-Identifier: BSD-2-Clause
+ #
+ 
+-carray-platform_override_modules-$(CONFIG_PLATFORM_ALLWINNER_D1) += sun20i_d1
+-platform-objs-$(CONFIG_PLATFORM_ALLWINNER_D1) += allwinner/sun20i-d1.o
++carray-platform_override_modules-y += sun20i_d1
++platform-objs-y += allwinner/sun20i-d1.o
+diff -Naur opensbi/platform/generic/andes/objects.mk ../opensbi/platform/generic/andes/objects.mk
+--- opensbi/platform/generic/andes/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/andes/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -2,7 +2,7 @@
+ # SPDX-License-Identifier: BSD-2-Clause
+ #
+ 
+-carray-platform_override_modules-$(CONFIG_PLATFORM_ANDES_AE350) += andes_ae350
+-platform-objs-$(CONFIG_PLATFORM_ANDES_AE350) += andes/ae350.o andes/sleep.o
++carray-platform_override_modules-y += andes_ae350
++platform-objs-y += andes/ae350.o andes/sleep.o
+ 
+-platform-objs-$(CONFIG_ANDES45_PMA) += andes/andes45-pma.o
++platform-objs-y += andes/andes45-pma.o
+diff -Naur opensbi/platform/generic/configs/defconfig ../opensbi/platform/generic/configs/defconfig
+--- opensbi/platform/generic/configs/defconfig	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/configs/defconfig	1970-01-01 00:00:00.000000000 +0000
+@@ -1,40 +0,0 @@
+-CONFIG_PLATFORM_ALLWINNER_D1=y
+-CONFIG_PLATFORM_ANDES_AE350=y
+-CONFIG_PLATFORM_RENESAS_RZFIVE=y
+-CONFIG_PLATFORM_SIFIVE_FU540=y
+-CONFIG_PLATFORM_SIFIVE_FU740=y
+-CONFIG_PLATFORM_STARFIVE_JH7110=y
+-CONFIG_FDT_GPIO=y
+-CONFIG_FDT_GPIO_SIFIVE=y
+-CONFIG_FDT_GPIO_STARFIVE=y
+-CONFIG_FDT_I2C=y
+-CONFIG_FDT_I2C_SIFIVE=y
+-CONFIG_FDT_I2C_DW=y
+-CONFIG_FDT_IPI=y
+-CONFIG_FDT_IPI_MSWI=y
+-CONFIG_FDT_IPI_PLICSW=y
+-CONFIG_FDT_IRQCHIP=y
+-CONFIG_FDT_IRQCHIP_APLIC=y
+-CONFIG_FDT_IRQCHIP_IMSIC=y
+-CONFIG_FDT_IRQCHIP_PLIC=y
+-CONFIG_FDT_RESET=y
+-CONFIG_FDT_RESET_ATCWDT200=y
+-CONFIG_FDT_RESET_GPIO=y
+-CONFIG_FDT_RESET_HTIF=y
+-CONFIG_FDT_RESET_SIFIVE_TEST=y
+-CONFIG_FDT_RESET_SUNXI_WDT=y
+-CONFIG_FDT_RESET_THEAD=y
+-CONFIG_FDT_SERIAL=y
+-CONFIG_FDT_SERIAL_CADENCE=y
+-CONFIG_FDT_SERIAL_GAISLER=y
+-CONFIG_FDT_SERIAL_HTIF=y
+-CONFIG_FDT_SERIAL_RENESAS_SCIF=y
+-CONFIG_FDT_SERIAL_SHAKTI=y
+-CONFIG_FDT_SERIAL_SIFIVE=y
+-CONFIG_FDT_SERIAL_LITEX=y
+-CONFIG_FDT_SERIAL_UART8250=y
+-CONFIG_FDT_SERIAL_XILINX_UARTLITE=y
+-CONFIG_FDT_TIMER=y
+-CONFIG_FDT_TIMER_MTIMER=y
+-CONFIG_FDT_TIMER_PLMT=y
+-CONFIG_SERIAL_SEMIHOSTING=y
+diff -Naur opensbi/platform/generic/Kconfig ../opensbi/platform/generic/Kconfig
+--- opensbi/platform/generic/Kconfig	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/Kconfig	1970-01-01 00:00:00.000000000 +0000
+@@ -1,56 +0,0 @@
+-# SPDX-License-Identifier: BSD-2-Clause
+-
+-config PLATFORM_GENERIC
+-	bool
+-	select FDT
+-	select FDT_DOMAIN
+-	select FDT_PMU
+-	default y
+-
+-if PLATFORM_GENERIC
+-
+-config PLATFORM_GENERIC_NAME
+-	string "Platform default name"
+-	default "Generic"
+-
+-config PLATFORM_GENERIC_MAJOR_VER
+-	int "Platform major version"
+-	range 0 65535
+-	default 0
+-
+-config PLATFORM_GENERIC_MINOR_VER
+-	int "Platform minor version"
+-	range 0 65535
+-	default 1
+-
+-config PLATFORM_ALLWINNER_D1
+-	bool "Allwinner D1 support"
+-	depends on FDT_IRQCHIP_PLIC
+-	default n
+-
+-config PLATFORM_ANDES_AE350
+-	bool "Andes AE350 support"
+-	select SYS_ATCSMU
+-	default n
+-
+-config PLATFORM_RENESAS_RZFIVE
+-	bool "Renesas RZ/Five support"
+-	select ANDES45_PMA
+-	default n
+-
+-config PLATFORM_SIFIVE_FU540
+-	bool "SiFive FU540 support"
+-	default n
+-
+-config PLATFORM_SIFIVE_FU740
+-	bool "SiFive FU740 support"
+-	depends on FDT_RESET && FDT_I2C
+-	default n
+-
+-config PLATFORM_STARFIVE_JH7110
+-	bool "StarFive JH7110 support"
+-	default n
+-
+-source "$(OPENSBI_SRC_DIR)/platform/generic/andes/Kconfig"
+-
+-endif
+diff -Naur opensbi/platform/generic/objects.mk ../opensbi/platform/generic/objects.mk
+--- opensbi/platform/generic/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/objects.mk	2024-06-14 16:49:10.847765389 +0000
+@@ -22,7 +22,9 @@
+ platform-objs-y += platform_override_modules.o
+ 
+ # Blobs to build
+-FW_TEXT_START=0x80000000
++#FW_TEXT_START=0x80000000
++# Needs to be changed for Starfive
++FW_TEXT_START=0x40000000
+ FW_DYNAMIC=y
+ FW_JUMP=y
+ ifeq ($(PLATFORM_RISCV_XLEN), 32)
+diff -Naur opensbi/platform/generic/platform.c ../opensbi/platform/generic/platform.c
+--- opensbi/platform/generic/platform.c	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/platform.c	2024-06-14 17:37:45.480098837 +0000
+@@ -308,9 +308,8 @@
+ struct sbi_platform platform = {
+ 	.opensbi_version	= OPENSBI_VERSION,
+ 	.platform_version	=
+-		SBI_PLATFORM_VERSION(CONFIG_PLATFORM_GENERIC_MAJOR_VER,
+-				     CONFIG_PLATFORM_GENERIC_MINOR_VER),
+-	.name			= CONFIG_PLATFORM_GENERIC_NAME,
++		SBI_PLATFORM_VERSION(0,1),
++	.name			= "Generic",
+ 	.features		= SBI_PLATFORM_DEFAULT_FEATURES,
+ 	.hart_count		= SBI_HARTMASK_MAX_BITS,
+ 	.hart_index2id		= generic_hart_index2id,
+diff -Naur opensbi/platform/generic/renesas/rzfive/objects.mk ../opensbi/platform/generic/renesas/rzfive/objects.mk
+--- opensbi/platform/generic/renesas/rzfive/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/renesas/rzfive/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -4,5 +4,5 @@
+ # Copyright (C) 2022 Renesas Electronics Corp.
+ #
+ 
+-carray-platform_override_modules-$(CONFIG_PLATFORM_RENESAS_RZFIVE) += renesas_rzfive
+-platform-objs-$(CONFIG_PLATFORM_RENESAS_RZFIVE) += renesas/rzfive/rzfive.o
++carray-platform_override_modules-y += renesas_rzfive
++platform-objs-y += renesas/rzfive/rzfive.o
+diff -Naur opensbi/platform/generic/sifive/objects.mk ../opensbi/platform/generic/sifive/objects.mk
+--- opensbi/platform/generic/sifive/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/sifive/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -2,8 +2,8 @@
+ # SPDX-License-Identifier: BSD-2-Clause
+ #
+ 
+-carray-platform_override_modules-$(CONFIG_PLATFORM_SIFIVE_FU540) += sifive_fu540
+-platform-objs-$(CONFIG_PLATFORM_SIFIVE_FU540) += sifive/fu540.o
++carray-platform_override_modules-y += sifive_fu540
++platform-objs-y += sifive/fu540.o
+ 
+-carray-platform_override_modules-$(CONFIG_PLATFORM_SIFIVE_FU740) += sifive_fu740
+-platform-objs-$(CONFIG_PLATFORM_SIFIVE_FU740) += sifive/fu740.o
++carray-platform_override_modules-y += sifive_fu740
++platform-objs-y += sifive/fu740.o
+diff -Naur opensbi/platform/generic/starfive/objects.mk ../opensbi/platform/generic/starfive/objects.mk
+--- opensbi/platform/generic/starfive/objects.mk	2024-06-14 14:50:11.657732278 +0000
++++ ../opensbi/platform/generic/starfive/objects.mk	2024-06-14 15:20:30.915576500 +0000
+@@ -2,5 +2,5 @@
+ # SPDX-License-Identifier: BSD-2-Clause
+ #
+ 
+-carray-platform_override_modules-$(CONFIG_PLATFORM_STARFIVE_JH7110) += starfive_jh7110
+-platform-objs-$(CONFIG_PLATFORM_STARFIVE_JH7110) += starfive/jh7110.o
++carray-platform_override_modules-y += starfive_jh7110
++platform-objs-y += starfive/jh7110.o

@@ -141,7 +141,10 @@ void sm_init(bool cold_boot)
       sbi_hart_hang();
     }
     // Copy the keypair from the root of trust
+    // Dont supported on visionfive2 for now
+    #ifndef BOARD_VISIONFIVE2
     sm_copy_key();
+    #endif
 
     // Init the enclave metadata
     enclave_init_metadata();
